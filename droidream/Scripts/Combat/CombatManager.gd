@@ -55,7 +55,11 @@ func _enemy_turn():
 	turn = "enemy"
 	print("Enemy attacks!")
 	# TO-DO Enemy AI to identify possible moves
-	_enemy_attack() # For now – ideally I want enemy AIs to act in specific ways, not just attack all the time
+	
+	# Picks a random pattern of the current enemy
+	var pattern = enemy.attack_patterns.pick_random()
+	_play_enemy_attack_pattern(pattern)
+	# _enemy_attack() # For now – ideally I want enemy AIs to act in specific ways, not just attack all the time
 
 func _end_combat(victory: bool):
 	# Freeze turn logic (not necessary anymore)
@@ -155,6 +159,64 @@ func on_minigame_complete(success: bool):
 		player.hp -= enemy.attack_power # TO-DO Adjust for player gear reducing damage in the future
 		print("Minigame failed. Enemy defense restored to %.1f" % enemy.defense)
 
+func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
+	print("Enemy uses attack pattern:", pattern.pattern_id)
+
+	var elapsed := 0.0
+	var hit_index := 0
+
+	# TO-DO Be driven by AnimationPlayer
+	while elapsed < pattern.total_duration:
+		await get_tree().process_frame
+		elapsed += get_process_delta_time()
+
+		# Hit processing logic
+		if hit_index < pattern.hits.size(): # Checks for how many times the attack will hit, also is a failsafe for checking if the pattern is valid/exists at all
+			var hit := pattern.hits[hit_index]
+			if elapsed >= hit.time:
+				# Works the attack's hitting logic, including the player's blocking window
+				_apply_enemy_hit(hit)
+				hit_index += 1 # If the attack has multiple hits, it'll process all of them
+
+	# End of attack
+	if player.hp <= 0:
+		_end_combat(false)
+	else:
+		_player_turn()
+
+
+# Logic for applying an enemy attack's damage
+func _apply_enemy_hit(hit: Dictionary):
+	var base_damage := enemy.attack_power
+	var hit_mult = hit.damage_multiplier
+	
+	# TO-DO Check if "- player.defense" is fair, maybe multiplier based negation is better
+	var damage = max(0, base_damage * hit_mult - player.defense)
+	var block_window: Vector2 = hit.block_window
+	
+	# Checks if the player blocked the attack
+	var blocked = _check_player_block(block_window)
+	
+	if blocked:
+		damage *= 0.5
+		print("Blocked! Damage reduced.")
+		
+	player.hp -= damage
+	print("Player takes %.1f damage → HP %.1f" % [damage, player.hp])
+	
+# Logic for checking if the player has blocked an enemy attack
+func _check_player_block(window: Vector2) -> bool:
+	# window.x = block start time
+	# window.y = block end time
+
+	# TO-DO:
+	# - Show UI prompt
+	# - Listen for input
+	# - Check if input happened within window
+
+	return false
+
+	
 # The enemy's attacking logic, doesn't take any parameters as the player is not affected by type attacks
 func _enemy_attack():
 	# If for some reason it is not the player's turn

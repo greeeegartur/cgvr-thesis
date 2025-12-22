@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="EnemyInfo" load_steps=4 format=3 uid="uid://uakolov6gkf"]
+
+[ext_resource type="Script" uid="uid://by18pvdsekurc" path="res://Scripts/Data/EnemyAttackPattern.gd" id="1_ua3kc"]
+[ext_resource type="Resource" uid="uid://domaj7lm4s3o8" path="res://Scripts/Data/Attack_Patterns/beetle_tackle.tres" id="2_ijlsq"]
+[ext_resource type="Script" uid="uid://c8hmcdrkefq7i" path="res://Scripts/Data/EnemyInfo.gd" id="2_osir5"]
+
+[resource]
+script = ExtResource("2_osir5")
+enemy_id = "enemy_beetle"
+name = "Giant Beetle"
+max_hp = 7.0
+attack = 1
+defense = 10.0
+snapped_max = 1
+minigame_id = "beetle_rush"
+attack_patterns = Array[ExtResource("1_ua3kc")]([ExtResource("2_ijlsq")])
+metadata/_custom_type_script = "uid://c8hmcdrkefq7i"

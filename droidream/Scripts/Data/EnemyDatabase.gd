@@ -1,8 +1,8 @@
 extends Node
 
-# Global script that holds all necessary enemy info as dictionary entries.
+# Global script that loads all enemy info from Data folder resources
 
-# FORMAT FOR ADDING ENTRIES
+# FORMAT FOR ENEMY INFO
 # Key: string like "monkey1", "monkey_basic" etc.
 # Value: list of dictionaries with following values:
 #	name: string, full name of enemy, like "Jungle Monkey"
@@ -12,22 +12,46 @@ extends Node
 #	defense: enemy's defense that negates/reduces damage taken, can be reduced
 #	snapped_max: max number of "snaps" for minigame victory condition, meaning how many minigame wins needed for victory
 #	minigame_id: id for loading enemy's specific minigame
+#	attack_patterns: all attack patterns for the enemy, more details in EnemyAttackPattern.gd
+
+# Data folder that contains resources of all enemies
+var FOLDER = "res://Scripts/Data/Enemies/"
+
+# List of enemies that gets filled by Data folder resources
+var ENEMIES : Dictionary
+
+func _ready():
+	_load_enemy_resources()
+
+# Method that loads all enemies from the Data folder path on game startup
+func _load_enemy_resources():
+	ENEMIES.clear()
+	
+	var dir := DirAccess.open(FOLDER)
+	if dir == null:
+		push_error("Enemy folder not found: %s" % FOLDER)
+		return
+		
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	
+	while file_name != "":
+		if file_name.ends_with(".tres"):
+			var path : String = FOLDER + file_name
+			var enemy = load(path)
+			
+			# Checks correct type
+			if enemy is EnemyInfo:
+				ENEMIES[enemy.enemy_id] = enemy
+			else:
+				push_warning("Not an EnemyInfo resource: %s" % path)
+				
+		file_name = dir.get_next()
+		
+	dir.list_dir_end()
 
 
-# List of enemies in the format {string: list[dictionary]}, where the list holds dictionary values
-var ENEMIES := {
-	"enemy_beetle": {
-		"name": "Giant Beetle",
-		"type": CombatTypes.EntityType.GROUNDED,
-		"max_hp": 7,
-		"attack": 1,
-		"defense": 10,
-		"snapped_max": 1,
-		"minigame_id": "beetle_rush"
-	}
-}
-
-func get_enemy(id: String) -> Dictionary:
+func get_enemy(id: String):
 	if not ENEMIES.has(id):
 		push_warning("Enemy ID not found: %s" % id)
 		return {}
