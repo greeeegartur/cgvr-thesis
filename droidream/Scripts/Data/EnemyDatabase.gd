@@ -13,6 +13,7 @@ extends Node
 #	snapped_max: max number of "snaps" for minigame victory condition, meaning how many minigame wins needed for victory
 #	minigame_id: id for loading enemy's specific minigame
 #	attack_patterns: all attack patterns for the enemy, more details in EnemyAttackPattern.gd
+#	visual_scene: enemy's scene with its visuals and animations
 
 # Data folder that contains resources of all enemies
 var FOLDER = "res://Scripts/Data/Enemies/"

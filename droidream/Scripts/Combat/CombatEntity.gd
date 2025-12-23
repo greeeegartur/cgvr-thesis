@@ -14,6 +14,7 @@ var defense := 0
 var snapped_max := 1
 var snapped := 0
 var attack_patterns : Array[EnemyAttackPattern]
+var visual_scene : PackedScene
 var type : CombatTypes.EntityType # can be "GROUNDED", "FLYING" and "SPECIAL", never "PLAYER"
 var minigame_id := ""
 
@@ -31,7 +32,7 @@ func load_from_enemy_id(enemy_id: String) -> void:
 	snapped_max = data.snapped_max
 	minigame_id = data.minigame_id
 	attack_patterns = data.attack_patterns
-
+	visual_scene = data.visual_scene
 
 #Loads player data from PlayerData object
 func load_from_player() -> void:

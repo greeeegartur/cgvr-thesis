@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_bn2bn")
 pattern_id = "beetle_tackle"
-animation_name = "tackle"
+animation_name = "beetle_tackle"
 total_duration = 3.0
 hits = Array[Dictionary]([{
 "block_window": Vector2(2, 2.2),

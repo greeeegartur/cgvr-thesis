@@ -16,3 +16,4 @@ class_name EnemyInfo
 @export var minigame_id: String
 
 @export var attack_patterns: Array[EnemyAttackPattern]
+@export var visual_scene: PackedScene

@@ -1,0 +1,68 @@
+[gd_scene load_steps=6 format=3 uid="uid://buy3a8wt3qe8f"]
+
+[ext_resource type="Texture2D" uid="uid://dqqukw2jmv5vm" path="res://Scenes/Enemies/Beetle/beetle.png" id="1_8bngv"]
+[ext_resource type="Script" uid="uid://cx4ejov60luxh" path="res://Scripts/Combat/EnemyVisual.gd" id="1_edmr7"]
+
+[sub_resource type="Animation" id="Animation_edmr7"]
+resource_name = "beetle_tackle"
+length = 3.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.8, 1.2666667, 1.8, 2.0333333, 3),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0, 0), Vector2(33, 0), Vector2(33, 0), Vector2(-53, 0), Vector2(-53.5, 0), Vector2(0, 0)]
+}
+tracks/1/type = "method"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(2.0333333),
+"transitions": PackedFloat32Array(1),
+"values": [{
+"args": [],
+"method": &"on_attack_hit"
+}]
+}
+
+[sub_resource type="Animation" id="Animation_5xyne"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(33, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_5wbek"]
+_data = {
+&"RESET": SubResource("Animation_5xyne"),
+&"beetle_tackle": SubResource("Animation_edmr7")
+}
+
+[node name="EnemyVisual" type="Node2D"]
+script = ExtResource("1_edmr7")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(33, 0)
+scale = Vector2(1.5, 1.5)
+texture = ExtResource("1_8bngv")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_5wbek")
+}

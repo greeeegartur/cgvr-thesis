@@ -10,12 +10,15 @@ extends Node
 
 class_name CombatManager
 
-@export var enemy_id := "enemy_beetle"
+@export var enemy_id = "enemy_beetle"
 
 # The player and enemy's starting values
-var player: CombatEntity
-var enemy: CombatEntity
-var turn := "player" # Player always starts first, this variable is a failsafe check condition in case turn logic goes wrong
+var player : CombatEntity
+var enemy : CombatEntity
+var turn = "player" # Player always starts first, this variable is a failsafe check condition in case turn logic goes wrong
+
+# Enemy scene to load for animations
+var enemy_visual : EnemyVisual
 
 # COMBAT SETUP FUNCTIONS
 # These are functions that run before combat begins, i.e entity data and loading the first turn
@@ -35,8 +38,12 @@ func _setup_entities():
 	enemy = CombatEntity.new()
 	enemy.load_from_enemy_id(enemy_id)
 	add_child(enemy)
-	get_parent().get_node("EnemySprite").texture = load("res://Graphics/Placeholders/Combat/Enemy.png")
-
+	enemy_visual = enemy.visual_scene.instantiate()
+	get_parent().add_child.call_deferred(enemy_visual)
+	
+	# TO-DO Adjust this automatically somehow (later will add multiple enemies at once so it can't just be set like so)
+	enemy_visual.position = Vector2(522, 274)
+	
 func _start_combat():
 	print("Combat started: PLAYER vs %s" % enemy.entity_name)
 	_player_turn()
@@ -161,28 +168,30 @@ func on_minigame_complete(success: bool):
 
 func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 	print("Enemy uses attack pattern:", pattern.pattern_id)
-
-	var elapsed := 0.0
 	var hit_index := 0
-
-	# TO-DO Be driven by AnimationPlayer
-	while elapsed < pattern.total_duration:
-		await get_tree().process_frame
-		elapsed += get_process_delta_time()
-
+	
+	# Lambda functions for connecting with enemy visual script emitters
+	enemy_visual.attack_hit.connect(
 		# Hit processing logic
-		if hit_index < pattern.hits.size(): # Checks for how many times the attack will hit, also is a failsafe for checking if the pattern is valid/exists at all
-			var hit := pattern.hits[hit_index]
-			if elapsed >= hit.time:
+		func():
+			if hit_index < pattern.hits.size():
 				# Works the attack's hitting logic, including the player's blocking window
-				_apply_enemy_hit(hit)
-				hit_index += 1 # If the attack has multiple hits, it'll process all of them
-
-	# End of attack
-	if player.hp <= 0:
-		_end_combat(false)
-	else:
-		_player_turn()
+				_apply_enemy_hit(pattern.hits[hit_index])
+				hit_index += 1, # If the attack has multiple hits, it'll process all of them
+		CONNECT_ONE_SHOT
+	)
+	
+	# Checks if combat has ended
+	enemy_visual.attack_finished.connect(
+		func():
+			if player.hp <= 0:
+				_end_combat(false)
+			else:
+				_player_turn(),
+		CONNECT_ONE_SHOT
+	)
+	
+	enemy_visual.play_attack(pattern.animation_name)
 
 
 # Logic for applying an enemy attack's damage
@@ -217,7 +226,7 @@ func _check_player_block(window: Vector2) -> bool:
 	return false
 
 	
-# The enemy's attacking logic, doesn't take any parameters as the player is not affected by type attacks
+# LEGACY: The enemy's attacking logic, doesn't take any parameters as the player is not affected by type attacks
 func _enemy_attack():
 	# If for some reason it is not the player's turn
 	if turn != "enemy":
