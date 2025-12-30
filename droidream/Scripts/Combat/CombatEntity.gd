@@ -6,11 +6,11 @@ class_name CombatEntity
 # Initial values for loading enemies
 var entity_name := ""
 var is_player := false
-var max_hp := 0
-var hp := 0
-var attack_power := 0
-var defense_max := 0
-var defense := 0
+var max_hp := 0.0
+var hp := 0.0
+var attack_power := 0.0
+var defense_max := 0.0
+var defense := 0.0
 var snapped_max := 1
 var snapped := 0
 var attack_patterns : Array[EnemyAttackPattern]

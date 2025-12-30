@@ -10,6 +10,8 @@ extends Node
 
 class_name CombatManager
 
+
+# SCRIPT VARIABLES
 @export var enemy_id = "enemy_beetle"
 
 # The player and enemy's starting values
@@ -17,19 +19,24 @@ var player : CombatEntity
 var enemy : CombatEntity
 var turn = "player" # Player always starts first, this variable is a failsafe check condition in case turn logic goes wrong
 
-# Signals for UI
+# Signals for UI script to react
 signal player_turn_started 
 signal enemy_turn_started
 
+# Player block window variables for handling blocking logic
+var block_window_open = false
+var block_success = false
 
 # Enemy scene to load for animations
 var enemy_visual : EnemyVisual
+
 
 # COMBAT SETUP FUNCTIONS
 # These are functions that run before combat begins, i.e entity data and loading the first turn
 
 # Prepares combat by loading entities (player and enemy(s)) and starting combat
 func _ready():
+	set_process_input(true)
 	_setup_entities()
 	_start_combat()
 
@@ -203,37 +210,54 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 
 # Logic for applying an enemy attack's damage
 func _apply_enemy_hit(hit: Dictionary):
-	var base_damage := enemy.attack_power
+	var base_damage = enemy.attack_power
 	var hit_mult = hit.damage_multiplier
+	var block_window = hit.block_window
+	
+	# Bool, checks if the player blocked the attack
+	var blocked = await _check_player_block(block_window)
 	
 	# TO-DO Check if "- player.defense" is fair, maybe multiplier based negation is better
-	var damage = max(0, base_damage * hit_mult - player.defense)
-	var block_window: Vector2 = hit.block_window
-	
-	# Checks if the player blocked the attack
-	var blocked = _check_player_block(block_window)
-	
+	var damage = max(0.0, base_damage * hit_mult - player.defense)
 	if blocked:
 		damage *= 0.5
 		print("Blocked! Damage reduced.")
-		
-	player.hp -= damage
+		_load_sprite_for_testing("block")
+	else:
+		_load_sprite_for_testing("damaged")
+	print("Player HP is: ", player.hp)
+	print("Damage is: ", float(damage))
+	player.hp -= float(damage)
 	print("Player takes %.1f damage → HP %.1f" % [damage, player.hp])
 	
-# Logic for checking if the player has blocked an enemy attack
-func _check_player_block(window: Vector2) -> bool:
-	# window.x = block start time
-	# window.y = block end time
+# Logic for checking if the player has blocked an enemy attack, here "window" is the block_window parameter of an enemy (time frame when the block registers)
+func _check_player_block(window: Vector2):
+	# Block variables reset, block window opens
+	block_success = false
+	block_window_open = true
 
-	# TO-DO:
-	# - Show UI prompt
-	# - Listen for input
-	# - Check if input happened within window
+	# Open block window
+	await get_tree().create_timer(window.x).timeout
 
-	return false
+	# Close window after block window is finished
+	await get_tree().create_timer(window.y - window.x).timeout
+	block_window_open = false
 
+	return block_success
+
+# Listens for player input during an enemy's attack
+func _input(event):
+	# Failsafe to check if function should even be run
+	if not block_window_open:
+		return
 	
-# LEGACY: The enemy's attacking logic, doesn't take any parameters as the player is not affected by type attacks
+	# Block variable triggers
+	if event.is_action_pressed("block"):
+		block_success = true
+		block_window_open = false
+		print("Block input registered!")
+
+# LEGACY (not used): The enemy's attacking logic, doesn't take any parameters as the player is not affected by type attacks
 func _enemy_attack():
 	# If for some reason it is not the player's turn
 	if turn != "enemy":
