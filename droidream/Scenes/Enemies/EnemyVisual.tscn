@@ -6,8 +6,10 @@
 [node name="EnemyVisual" type="Node2D"]
 script = ExtResource("1_p4v3j")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="Visual"]
 texture = ExtResource("2_dv6s2")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
-root_node = NodePath("../Sprite2D")
+root_node = NodePath("../Visual/Sprite2D")

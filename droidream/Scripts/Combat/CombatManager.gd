@@ -17,6 +17,11 @@ var player : CombatEntity
 var enemy : CombatEntity
 var turn = "player" # Player always starts first, this variable is a failsafe check condition in case turn logic goes wrong
 
+# Signals for UI
+signal player_turn_started 
+signal enemy_turn_started
+
+
 # Enemy scene to load for animations
 var enemy_visual : EnemyVisual
 
@@ -54,12 +59,14 @@ func _start_combat():
 # Handles the player's turn
 func _player_turn():
 	turn = "player"
+	emit_signal("player_turn_started")
 	# TO-DO Show buttons in UI, use corresponding action function to progress turn
 	print("Player turn: choose ATTACK, ITEMS or RUN")
 
 
 func _enemy_turn():
 	turn = "enemy"
+	emit_signal("enemy_turn_started")
 	print("Enemy attacks!")
 	# TO-DO Enemy AI to identify possible moves
 	
