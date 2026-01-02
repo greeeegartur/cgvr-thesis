@@ -10,6 +10,9 @@ extends Node
 
 class_name CombatManager
 
+# DEBUGGING VARIABLES
+var attack_time = 0.0
+var attack_timer_running := false
 
 # SCRIPT VARIABLES
 @export var enemy_id = "enemy_beetle"
@@ -24,8 +27,14 @@ signal player_turn_started
 signal enemy_turn_started
 
 # Player block window variables for handling blocking logic
+var last_block_press_time := -1.0
+var current_block_window = Vector2.ZERO
+var block_window_active = false
 var block_window_open = false
 var block_success = false
+var block_on_cooldown = false
+const BLOCK_COOLDOWN = 0.7
+@onready var block_visual : PlayerBlockVisual = get_parent().get_node("PlayerBlockVisual")
 
 # Enemy scene to load for animations
 var enemy_visual : EnemyVisual
@@ -39,6 +48,10 @@ func _ready():
 	set_process_input(true)
 	_setup_entities()
 	_start_combat()
+
+func _process(delta):
+	if attack_timer_running:
+		attack_time += delta
 
 func _setup_entities():
 	player = CombatEntity.new()
@@ -180,9 +193,19 @@ func on_minigame_complete(success: bool):
 		player.hp -= enemy.attack_power # TO-DO Adjust for player gear reducing damage in the future
 		print("Minigame failed. Enemy defense restored to %.1f" % enemy.defense)
 
+# Plays the given enemy attack pattern during the enemy turn
+# TO-DO: make enemy-specific so a specific enemy performs the attack (when multiple enemies are added into combat)
 func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 	print("Enemy uses attack pattern:", pattern.pattern_id)
 	var hit_index := 0
+	
+	# DEBUGGING ATTACK PATTERNS
+	attack_time = 0.0
+	attack_timer_running = true
+	
+	# Set current block window
+	current_block_window = pattern.hits[0].block_window
+	block_window_active = true
 	
 	# Lambda functions for connecting with enemy visual script emitters
 	enemy_visual.attack_hit.connect(
@@ -198,6 +221,10 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 	# Checks if combat has ended
 	enemy_visual.attack_finished.connect(
 		func():
+			# DEBUG WHEN ATTACK HAS FINISHED
+			attack_timer_running = false
+			print("!!! DEBUG: attack finished at:", "%.3f" % attack_time)
+			
 			if player.hp <= 0:
 				_end_combat(false)
 			else:
@@ -208,54 +235,111 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 	enemy_visual.play_attack(pattern.animation_name)
 
 
-# Logic for applying an enemy attack's damage
+# Logic for applying an enemy attack's damage that takes the enemy's attack pattern for blocking into consideration
 func _apply_enemy_hit(hit: Dictionary):
+	current_block_window = hit.block_window
+	block_window_active = true
+	block_success = false
+	
+	# Attack pattern duration and timer, listens to _input here to check for block and calculates damage after
+	var window_duration = hit.block_window.y - hit.block_window.x
+	# Block can happen during this timer, calculates the enemy's damage
+	get_tree().create_timer(window_duration).timeout.connect(
+		func():
+			_resolve_enemy_hit(hit),
+		CONNECT_ONE_SHOT
+	)
+	
+
+# Finalises the enemy hit after player blocks during the enemy turn
+func _resolve_enemy_hit(hit: Dictionary):
+	var window_start = hit.block_window.x
+	var window_end = hit.block_window.y
+
+	var blocked = (
+		last_block_press_time >= window_start
+		and last_block_press_time <= window_end
+	)
+
 	var base_damage = enemy.attack_power
 	var hit_mult = hit.damage_multiplier
-	var block_window = hit.block_window
-	
-	# Bool, checks if the player blocked the attack
-	var blocked = await _check_player_block(block_window)
-	
 	# TO-DO Check if "- player.defense" is fair, maybe multiplier based negation is better
 	var damage = max(0.0, base_damage * hit_mult - player.defense)
+
 	if blocked:
 		damage *= 0.5
-		print("Blocked! Damage reduced.")
+		block_visual.play_success()
 		_load_sprite_for_testing("block")
+		print("Successful block!")
 	else:
+		block_visual.play_fail()
 		_load_sprite_for_testing("damaged")
+		print("Failed block")
+
 	print("Player HP is: ", player.hp)
-	print("Damage is: ", float(damage))
-	player.hp -= float(damage)
+	print("Damage is: ", damage)
+
+	player.hp -= damage
 	print("Player takes %.1f damage → HP %.1f" % [damage, player.hp])
-	
+
+
+# UNUSED, but keeping as reference
 # Logic for checking if the player has blocked an enemy attack, here "window" is the block_window parameter of an enemy (time frame when the block registers)
 func _check_player_block(window: Vector2):
+	# Here:
+	# window.x = start time
+	# window.y = end time
+	
 	# Block variables reset, block window opens
-	block_success = false
-	block_window_open = true
-
-	# Open block window
-	await get_tree().create_timer(window.x).timeout
-
-	# Close window after block window is finished
-	await get_tree().create_timer(window.y - window.x).timeout
-	block_window_open = false
+	#block_success = false
+	#block_window_open = true
+#
+	## Waits until the window is open
+	#await get_tree().create_timer(window.x).timeout
+	#
+	## Block must happen between these two lines (_input must be triggered here)
+	#
+	## Close window after block window is finished
+	#await get_tree().create_timer(window.y - window.x).timeout
+	#block_window_open = false
 
 	return block_success
 
-# Listens for player input during an enemy's attack
+
+# Listens for player block during an enemy's attack
 func _input(event):
-	# Failsafe to check if function should even be run
-	if not block_window_open:
+	# Failsafes to check if the function is running by accident
+	if turn != "enemy":
+		return
+	if not event.is_action_pressed("block"):
 		return
 	
-	# Block variable triggers
-	if event.is_action_pressed("block"):
-		block_success = true
-		block_window_open = false
-		print("Block input registered!")
+	# Checks if block is currently on cooldown
+	if block_on_cooldown:
+		return
+	
+	# Records block press time
+	last_block_press_time = attack_time
+	
+	# DEBUG CHECK
+	print("!!! DEBUG: Block pressed at: ", "%.3f" % attack_time)
+	
+	# If all previous checks passed then block was triggered -> cooldown starts here
+	_start_block_cooldown()
+
+
+# Starts the player's block cooldown during the enemy turn
+func _start_block_cooldown():
+	block_on_cooldown = true
+	block_visual.set_cooldown_active(true)
+	
+	# Actual cooldown timer
+	await get_tree().create_timer(BLOCK_COOLDOWN).timeout
+	
+	# After cooldown resets previous changes
+	block_on_cooldown = false
+	block_visual.set_cooldown_active(false)
+
 
 # LEGACY (not used): The enemy's attacking logic, doesn't take any parameters as the player is not affected by type attacks
 func _enemy_attack():

@@ -8,8 +8,8 @@ pattern_id = "beetle_tackle"
 animation_name = "beetle_tackle"
 total_duration = 3.0
 hits = Array[Dictionary]([{
-"block_window": Vector2(1.65, 2),
+"block_window": Vector2(1.55, 1.9),
 "damage_multiplier": 1.0,
-"time": 2.0
+"time": 1.9
 }])
 metadata/_custom_type_script = "uid://by18pvdsekurc"

@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://b0as27ombq3yp"]
+[gd_scene load_steps=8 format=3 uid="uid://b0as27ombq3yp"]
 
 [ext_resource type="Script" uid="uid://b3u2bq3dgrvtu" path="res://Scripts/Combat/CombatManager.gd" id="1_2mqg5"]
 [ext_resource type="Script" uid="uid://dcdpqt4rgapox" path="res://Scripts/Combat/CombatUI.gd" id="1_memue"]
 [ext_resource type="Texture2D" uid="uid://4yosobdr5m3h" path="res://Graphics/Placeholders/Combat/Combat BG.jpg" id="2_dqj0d"]
 [ext_resource type="Texture2D" uid="uid://dnuk5tccbude4" path="res://Graphics/Placeholders/Combat/PlayerIdle.png" id="3_eel7g"]
 [ext_resource type="Texture2D" uid="uid://cij8c6ssb2cuk" path="res://Graphics/Placeholders/Combat/Enemy.png" id="4_memue"]
+[ext_resource type="PackedScene" uid="uid://bk1q6iqy2c08b" path="res://Scenes/VFX/PlayerBlockVisual.tscn" id="5_6puio"]
 [ext_resource type="Texture2D" uid="uid://dxbd5kdjuqyr5" path="res://Graphics/Placeholders/Combat/Combat Select.png" id="6_2p17o"]
 
 [node name="CombatScene" type="Node2D"]
@@ -22,6 +23,10 @@ texture = ExtResource("2_dqj0d")
 position = Vector2(96, 271)
 scale = Vector2(1.6, 1.6)
 texture = ExtResource("3_eel7g")
+
+[node name="PlayerBlockVisual" parent="." instance=ExtResource("5_6puio")]
+position = Vector2(96, 271)
+scale = Vector2(1.6, 1.6)
 
 [node name="EnemyVisual" type="Sprite2D" parent="."]
 visible = false

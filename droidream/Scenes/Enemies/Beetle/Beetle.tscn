@@ -46,7 +46,7 @@ _data = {
 script = ExtResource("1_edmr7")
 
 [node name="Visual" type="Node2D" parent="."]
-position = Vector2(-48.1625, 0)
+position = Vector2(-53.192856, 0)
 
 [node name="Sprite2D" type="Sprite2D" parent="Visual"]
 scale = Vector2(1.5, 1.5)
