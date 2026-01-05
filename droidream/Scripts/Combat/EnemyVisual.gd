@@ -4,6 +4,7 @@ extends Node2D
 
 class_name EnemyVisual
 
+signal attack_started
 signal attack_hit
 signal attack_finished
 
@@ -16,6 +17,7 @@ var attack_position : Vector2 # The position where the enemy's pattern will conn
 # Enemy moves to position, attacks, returns back to original position
 func play_attack(animation_name: String):
 	await _move_to_attack_position()
+	attack_started.emit()
 	anim.play(animation_name)
 
 func on_attack_hit():
@@ -32,7 +34,7 @@ func on_anim_finished(name: String):
 	await _move_to_home_position()
 	attack_finished.emit()
 
-# Movement methods for connecting patterns using tweens
+# Movement methods for connecting patterns using tweens (same methods just in reverse)
 func _move_to_attack_position():
 	var tween := create_tween()
 	tween.tween_property(self, "global_position", attack_position, 1.5)\

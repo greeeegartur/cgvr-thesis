@@ -199,15 +199,20 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 	print("Enemy uses attack pattern:", pattern.pattern_id)
 	var hit_index := 0
 	
-	# DEBUGGING ATTACK PATTERNS
-	attack_time = 0.0
-	attack_timer_running = true
-	
 	# Set current block window
 	current_block_window = pattern.hits[0].block_window
 	block_window_active = true
 	
 	# Lambda functions for connecting with enemy visual script emitters
+	enemy_visual.attack_started.connect(
+		# Marks start of the attacking animation for block timing
+		func():
+			attack_time = 0.0
+			attack_timer_running = true
+			print("!!! DEBUG: attack timer started"),
+		CONNECT_ONE_SHOT
+		)
+	
 	enemy_visual.attack_hit.connect(
 		# Hit processing logic
 		func():
@@ -216,7 +221,7 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 				_apply_enemy_hit(pattern.hits[hit_index])
 				hit_index += 1, # If the attack has multiple hits, it'll process all of them
 		CONNECT_ONE_SHOT
-	)
+		)
 	
 	# Checks if combat has ended
 	enemy_visual.attack_finished.connect(
@@ -230,7 +235,7 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 			else:
 				_player_turn(),
 		CONNECT_ONE_SHOT
-	)
+		)
 	
 	enemy_visual.play_attack(pattern.animation_name)
 
@@ -290,7 +295,7 @@ func _check_player_block(window: Vector2):
 	# window.x = start time
 	# window.y = end time
 	
-	# Block variables reset, block window opens
+# Block variables reset, block window opens
 	#block_success = false
 	#block_window_open = true
 #
