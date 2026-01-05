@@ -2,10 +2,32 @@ extends Node
 
 # This script acts as the frontend manager for the backend CombatManager script, also leaving print statements here for debugging
 
+# Nodes
 @onready var manager := $CombatManager
 @onready var main_menu := $UI/MainMenu
 @onready var attack_menu := $UI/AttackTypeMenu
 @onready var target_menu := $UI/TargetSelectMenu
+@onready var arrows := $UI/TypeTriangle/Arrows
+@onready var icons := $UI/TypeTriangle/Icons
+
+# Node (or node specific) variables
+@onready var arrow_default_color = $UI/TypeTriangle/Arrows/FlyingToGrounded.modulate
+
+# Type triangle container logic
+const TYPE_ADVANTAGE = {
+	"Flying": {
+		"strong": "Grounded",
+		"weak": "Special"
+	},
+	"Grounded": {
+		"strong": "Special",
+		"weak": "Flying"
+	},
+	"Special": {
+		"strong": "Flying",
+		"weak": "Grounded"
+	}
+}
 
 # Always as the first option
 var selected_attack_type := CombatTypes.EntityType.GROUNDED
@@ -23,6 +45,10 @@ func _ready():
 	$UI/AttackTypeMenu/SpecialButton.pressed.connect(func(): _select_attack_type(CombatTypes.EntityType.SPECIAL))
 
 	$UI/TargetSelectMenu/EnemyButton.pressed.connect(_on_enemy_target_selected)
+	
+	for icon in icons.get_children():
+		icon.mouse_entered.connect(_on_mouse_entered.bind(icon))
+		icon.mouse_exited.connect(_on_mouse_exited)
 
 func _on_attack_pressed():
 	main_menu.visible = false
@@ -37,7 +63,7 @@ func _on_run_pressed():
 func _select_attack_type(atype):
 	selected_attack_type = atype
 	attack_menu.visible = false
-	target_menu.visible = true  # now choose target
+	target_menu.visible = true 
 
 func _on_enemy_target_selected():
 	target_menu.visible = false
@@ -46,6 +72,25 @@ func _on_enemy_target_selected():
 	
 	# After attack animation return to main menu if player’s turn again
 	main_menu.visible = true
+
+# Functions for type triangle icons
+func _on_mouse_entered(icon : TextureRect):
+	var type = icon.get_meta("type")
+	var data = TYPE_ADVANTAGE[type]
+	
+	_clear_type_relations()
+	_highlight_arrow(type, data.strong, Color.LAWN_GREEN)
+
+func _on_mouse_exited():
+	_clear_type_relations()
+
+func _clear_type_relations():
+	for arrow in arrows.get_children():
+		arrow.modulate = arrow_default_color
+
+func _highlight_arrow(from_type, to_type, color):
+	var arrow_name = "%sTo%s" % [from_type, to_type]
+	arrows.get_node(arrow_name).modulate = color
 
 # Functions for CombatManager signals
 # TO-DO change this on UI update

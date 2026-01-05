@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3 uid="uid://buy3a8wt3qe8f"]
+[gd_scene load_steps=7 format=3 uid="uid://buy3a8wt3qe8f"]
 
 [ext_resource type="Texture2D" uid="uid://dqqukw2jmv5vm" path="res://Scenes/Enemies/Beetle/beetle.png" id="1_8bngv"]
 [ext_resource type="Script" uid="uid://cx4ejov60luxh" path="res://Scripts/Combat/EnemyVisual.gd" id="1_edmr7"]
+[ext_resource type="Texture2D" uid="uid://bf3wdxow78lp8" path="res://Graphics/Placeholders/Combat/snapped_empty.png" id="3_5xyne"]
 
 [sub_resource type="Animation" id="Animation_5xyne"]
 length = 0.001
@@ -45,8 +46,94 @@ _data = {
 [node name="EnemyVisual" type="Node2D"]
 script = ExtResource("1_edmr7")
 
+[node name="EnemyHUD" type="Control" parent="."]
+z_index = 1
+layout_mode = 3
+anchors_preset = 0
+offset_left = -29.0
+offset_top = -53.0
+offset_right = 38.0
+offset_bottom = -29.0
+
+[node name="HPBar" type="Control" parent="EnemyHUD"]
+anchors_preset = 0
+offset_right = 67.0
+offset_bottom = 12.0
+
+[node name="Background" type="ColorRect" parent="EnemyHUD/HPBar"]
+layout_mode = 0
+offset_right = 67.0
+offset_bottom = 12.0
+color = Color(0.37334123, 0.041883618, 0.08140624, 1)
+
+[node name="Fill" type="ColorRect" parent="EnemyHUD/HPBar"]
+layout_mode = 0
+offset_right = 67.0
+offset_bottom = 12.0
+color = Color(0.9669108, 0.10701466, 0.24572787, 1)
+
+[node name="Label" type="Label" parent="EnemyHUD/HPBar"]
+z_index = 3
+layout_mode = 0
+offset_left = 2.0
+offset_right = 69.0
+offset_bottom = 23.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 8
+
+[node name="DefenseBar" type="Control" parent="EnemyHUD"]
+anchors_preset = 0
+offset_top = 12.0
+offset_right = 67.0
+offset_bottom = 24.0
+
+[node name="Label" type="Label" parent="EnemyHUD/DefenseBar"]
+z_index = 2
+layout_mode = 0
+offset_left = 2.0
+offset_right = 69.0
+offset_bottom = 23.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 8
+
+[node name="Background" type="ColorRect" parent="EnemyHUD/DefenseBar"]
+layout_mode = 0
+offset_right = 67.0
+offset_bottom = 12.0
+color = Color(6.9789587e-07, 0, 0.3833953, 1)
+
+[node name="Fill" type="ColorRect" parent="EnemyHUD/DefenseBar"]
+layout_mode = 0
+offset_right = 67.0
+offset_bottom = 12.0
+color = Color(0.33631077, 0.95860225, 0.94271743, 1)
+
+[node name="SnappedContainer" type="HBoxContainer" parent="EnemyHUD"]
+layout_mode = 0
+offset_left = -1.0
+offset_top = -10.0
+offset_right = 34.0
+offset_bottom = -1.0
+
+[node name="1" type="TextureRect" parent="EnemyHUD/SnappedContainer"]
+visible = false
+layout_mode = 2
+texture = ExtResource("3_5xyne")
+expand_mode = 3
+
+[node name="2" type="TextureRect" parent="EnemyHUD/SnappedContainer"]
+visible = false
+layout_mode = 2
+texture = ExtResource("3_5xyne")
+expand_mode = 3
+
+[node name="3" type="TextureRect" parent="EnemyHUD/SnappedContainer"]
+visible = false
+layout_mode = 2
+texture = ExtResource("3_5xyne")
+expand_mode = 3
+
 [node name="Visual" type="Node2D" parent="."]
-position = Vector2(-53.192856, 0)
 
 [node name="Sprite2D" type="Sprite2D" parent="Visual"]
 scale = Vector2(1.5, 1.5)

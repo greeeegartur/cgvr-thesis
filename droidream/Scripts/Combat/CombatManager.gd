@@ -10,10 +10,6 @@ extends Node
 
 class_name CombatManager
 
-# DEBUGGING VARIABLES
-var attack_time = 0.0
-var attack_timer_running := false
-
 # SCRIPT VARIABLES
 @export var enemy_id = "enemy_beetle"
 
@@ -26,12 +22,13 @@ var turn = "player" # Player always starts first, this variable is a failsafe ch
 signal player_turn_started 
 signal enemy_turn_started
 
+# Attack time trackers for blocking
+var attack_time = 0.0
+var attack_timer_running = false
+
 # Player block window variables for handling blocking logic
-var last_block_press_time := -1.0
+var last_block_press_time = -1.0
 var current_block_window = Vector2.ZERO
-var block_window_active = false
-var block_window_open = false
-var block_success = false
 var block_on_cooldown = false
 const BLOCK_COOLDOWN = 0.7
 @onready var block_visual : PlayerBlockVisual = get_parent().get_node("PlayerBlockVisual")
@@ -58,7 +55,6 @@ func _setup_entities():
 	player.load_from_player()
 	add_child(player)
 	get_parent().get_node("PlayerSprite").texture = load("res://Graphics/Placeholders/Combat/PlayerIdle.png")
-
 	
 	enemy = CombatEntity.new()
 	enemy.load_from_enemy_id(enemy_id)
@@ -66,8 +62,16 @@ func _setup_entities():
 	enemy_visual = enemy.visual_scene.instantiate()
 	get_parent().add_child.call_deferred(enemy_visual)
 	
+	# Enemy UI setup
+	await enemy_visual.ready
+	enemy_visual.update_hp(enemy.hp, enemy.max_hp)
+	enemy_visual.update_hp(enemy.defense, enemy.defense_max)
+	enemy_visual.update_snapped(enemy.snapped, enemy.snapped_max)
+	
 	# TO-DO Adjust this automatically somehow (later will add multiple enemies at once so it can't just be set like so)
-	enemy_visual.position = Vector2(522, 274)
+	enemy_visual.position = Vector2(524, 272)
+	enemy_visual.set_home_position()
+	
 	
 func _start_combat():
 	print("Combat started: PLAYER vs %s" % enemy.entity_name)
@@ -94,6 +98,10 @@ func _enemy_turn():
 	var pattern = enemy.attack_patterns.pick_random()
 	_play_enemy_attack_pattern(pattern)
 	# _enemy_attack() # For now – ideally I want enemy AIs to act in specific ways, not just attack all the time
+	
+	# For now tutorial text
+	# TO-DO: remove/tweak this
+	$"../UI/TempIndicator".visible = false
 
 func _end_combat(victory: bool):
 	# Freeze turn logic (not necessary anymore)
@@ -138,6 +146,7 @@ func player_attack(attack_type: CombatTypes.EntityType):
 		print("Effective type!")
 		var defense_damage := player.attack_power * type_multiplier
 		enemy.defense -= defense_damage
+		enemy_visual.update_defense(enemy.defense, enemy.defense_max)
 		print("Enemy defense reduced by %.2f → %.2f now" % [defense_damage, enemy.defense])
 		
 		# Checks if defense has been broken, minigame entering condition
@@ -154,6 +163,7 @@ func player_attack(attack_type: CombatTypes.EntityType):
 		var defense_factor = float(enemy.defense) / enemy.defense_max if enemy.defense_max > 0 else 0 # Calculates a defense multiplier based on current defense
 		var damage = player.attack_power * type_multiplier * (1.0 - defense_factor)
 		enemy.hp -= damage
+		enemy_visual.update_hp(enemy.hp, enemy.max_hp)
 		print("Enemy takes %.2f HP damage → %.2f left, current defense is %.2f" % [damage, enemy.hp, enemy.defense])
 	
 	# Empty print for visual clarity in terminal while debugging and TO-DO Animation, sprite set to attack with visual cooldown of 1.5s
@@ -182,6 +192,7 @@ func _start_minigame(minigame_id: String):
 func on_minigame_complete(success: bool):
 	if success:
 		enemy.snapped += 1
+		enemy_visual.update_snapped(enemy.snapped, enemy.snapped_max)
 		print("Minigame success! Snapped: %d / %d" % [enemy.snapped, enemy.snapped_max])
 		if enemy.snapped >= enemy.snapped_max:
 			_end_combat(true)  # 2. Minigame win: enemy subdued 
@@ -189,6 +200,7 @@ func on_minigame_complete(success: bool):
 		# When failed, restore enemy's defense by a random amount from 20-35%
 		var restore_ratio := randf_range(0.2, 0.35)
 		enemy.defense = enemy.defense_max * restore_ratio
+		enemy_visual.update_defense(enemy.defense, enemy.defense_max)
 		# Also deal damage to player
 		player.hp -= enemy.attack_power # TO-DO Adjust for player gear reducing damage in the future
 		print("Minigame failed. Enemy defense restored to %.1f" % enemy.defense)
@@ -201,7 +213,6 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 	
 	# Set current block window
 	current_block_window = pattern.hits[0].block_window
-	block_window_active = true
 	
 	# Lambda functions for connecting with enemy visual script emitters
 	enemy_visual.attack_started.connect(
@@ -238,13 +249,12 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 		)
 	
 	enemy_visual.play_attack(pattern.animation_name)
+	$"../UI/TempIndicator".visible = false
 
 
 # Logic for applying an enemy attack's damage that takes the enemy's attack pattern for blocking into consideration
 func _apply_enemy_hit(hit: Dictionary):
 	current_block_window = hit.block_window
-	block_window_active = true
-	block_success = false
 	
 	# Attack pattern duration and timer, listens to _input here to check for block and calculates damage after
 	var window_duration = hit.block_window.y - hit.block_window.x
@@ -290,7 +300,7 @@ func _resolve_enemy_hit(hit: Dictionary):
 
 # UNUSED, but keeping as reference
 # Logic for checking if the player has blocked an enemy attack, here "window" is the block_window parameter of an enemy (time frame when the block registers)
-func _check_player_block(window: Vector2):
+# func _check_player_block(window: Vector2):
 	# Here:
 	# window.x = start time
 	# window.y = end time
@@ -308,7 +318,7 @@ func _check_player_block(window: Vector2):
 	#await get_tree().create_timer(window.y - window.x).timeout
 	#block_window_open = false
 
-	return block_success
+	# return block_success
 
 
 # Listens for player block during an enemy's attack

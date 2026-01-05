@@ -16,3 +16,13 @@ const ENTITY_TYPE_NAMES := {
 
 func entity_type_to_string(type: EntityType) -> String:
 	return ENTITY_TYPE_NAMES[type]
+
+func string_to_entity_type(type: String) -> EntityType:
+	if type == "grounded":
+		return EntityType.GROUNDED
+	elif type == "flying":
+		return EntityType.FLYING
+	elif type == "special":
+		return EntityType.SPECIAL
+	
+	return EntityType

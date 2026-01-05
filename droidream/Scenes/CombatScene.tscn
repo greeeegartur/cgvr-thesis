@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://b0as27ombq3yp"]
+[gd_scene load_steps=12 format=3 uid="uid://b0as27ombq3yp"]
 
 [ext_resource type="Script" uid="uid://b3u2bq3dgrvtu" path="res://Scripts/Combat/CombatManager.gd" id="1_2mqg5"]
 [ext_resource type="Script" uid="uid://dcdpqt4rgapox" path="res://Scripts/Combat/CombatUI.gd" id="1_memue"]
@@ -7,6 +7,10 @@
 [ext_resource type="Texture2D" uid="uid://cij8c6ssb2cuk" path="res://Graphics/Placeholders/Combat/Enemy.png" id="4_memue"]
 [ext_resource type="PackedScene" uid="uid://bk1q6iqy2c08b" path="res://Scenes/VFX/PlayerBlockVisual.tscn" id="5_6puio"]
 [ext_resource type="Texture2D" uid="uid://dxbd5kdjuqyr5" path="res://Graphics/Placeholders/Combat/Combat Select.png" id="6_2p17o"]
+[ext_resource type="Texture2D" uid="uid://bhmce12ju8pk0" path="res://Graphics/Placeholders/Combat/flying_icon.png" id="8_clp52"]
+[ext_resource type="Texture2D" uid="uid://cphqftx2fqhmw" path="res://Graphics/Placeholders/Combat/ground_icon.png" id="9_b8x4h"]
+[ext_resource type="Texture2D" uid="uid://bg6w8bj32ojvp" path="res://Graphics/Placeholders/Combat/special_icon.png" id="10_7d6hk"]
+[ext_resource type="Texture2D" uid="uid://kuykw8cl6bqd" path="res://Graphics/Placeholders/Combat/arrow.png" id="11_vruw2"]
 
 [node name="CombatScene" type="Node2D"]
 script = ExtResource("1_memue")
@@ -85,3 +89,84 @@ scale = Vector2(0.1, 0.1)
 [node name="EnemyButton" type="Button" parent="UI/TargetSelectMenu"]
 layout_mode = 2
 icon = ExtResource("6_2p17o")
+
+[node name="TypeTriangle" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 538.0
+offset_right = 638.0
+offset_bottom = 96.0
+
+[node name="Icons" type="Node" parent="UI/TypeTriangle"]
+
+[node name="FlyingIcon" type="TextureRect" parent="UI/TypeTriangle/Icons"]
+offset_left = 568.0
+offset_top = 1.0
+offset_right = 696.0
+offset_bottom = 129.0
+scale = Vector2(0.3, 0.3)
+texture = ExtResource("8_clp52")
+metadata/type = "Flying"
+
+[node name="GroundedIcon" type="TextureRect" parent="UI/TypeTriangle/Icons"]
+offset_left = 536.0
+offset_top = 50.0
+offset_right = 664.0
+offset_bottom = 178.0
+scale = Vector2(0.3, 0.3)
+texture = ExtResource("9_b8x4h")
+metadata/type = "Grounded"
+
+[node name="SpecialIcon" type="TextureRect" parent="UI/TypeTriangle/Icons"]
+offset_left = 600.0
+offset_top = 50.0
+offset_right = 728.0
+offset_bottom = 178.0
+scale = Vector2(0.3, 0.3)
+texture = ExtResource("10_7d6hk")
+metadata/type = "Special"
+
+[node name="Arrows" type="Node" parent="UI/TypeTriangle"]
+
+[node name="FlyingToGrounded" type="TextureRect" parent="UI/TypeTriangle/Arrows"]
+offset_left = 572.0
+offset_top = 57.000008
+offset_right = 700.0
+offset_bottom = 185.0
+rotation = 3.6651914
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("11_vruw2")
+
+[node name="GroundedToSpecial" type="TextureRect" parent="UI/TypeTriangle/Arrows"]
+offset_left = 597.0
+offset_top = 61.000008
+offset_right = 725.0
+offset_bottom = 189.0
+rotation = -4.712389
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("11_vruw2")
+
+[node name="SpecialToFlying" type="TextureRect" parent="UI/TypeTriangle/Arrows"]
+offset_left = 593.0
+offset_top = 39.999992
+offset_right = 721.0
+offset_bottom = 168.0
+rotation = -0.5235988
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("11_vruw2")
+
+[node name="TempIndicator" type="RichTextLabel" parent="UI"]
+offset_left = 112.0
+offset_top = 34.0
+offset_right = 534.0
+offset_bottom = 114.0
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/normal_font_size = 24
+text = "Press \"Z\" at the right time to block!"
+
+[connection signal="mouse_entered" from="UI/TypeTriangle/Arrows/FlyingToGrounded" to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="UI/TypeTriangle/Arrows/FlyingToGrounded" to="." method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="UI/TypeTriangle/Arrows/GroundedToSpecial" to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="UI/TypeTriangle/Arrows/GroundedToSpecial" to="." method="_on_mouse_exited"]
+[connection signal="mouse_entered" from="UI/TypeTriangle/Arrows/SpecialToFlying" to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="UI/TypeTriangle/Arrows/SpecialToFlying" to="." method="_on_mouse_exited"]
