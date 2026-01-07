@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://by18pvdsekurc" path="res://Scripts/Data/EnemyAttackPattern.gd" id="1_ua3kc"]
 [ext_resource type="Resource" uid="uid://domaj7lm4s3o8" path="res://Scripts/Data/Attack_Patterns/beetle_tackle.tres" id="2_ijlsq"]
 [ext_resource type="Script" uid="uid://c8hmcdrkefq7i" path="res://Scripts/Data/EnemyInfo.gd" id="2_osir5"]
-[ext_resource type="PackedScene" uid="uid://buy3a8wt3qe8f" path="res://Scenes/Enemies/Beetle/Beetle.tscn" id="4_ijlsq"]
+[ext_resource type="PackedScene" uid="uid://buy3a8wt3qe8f" path="res://Scenes/Entities/Beetle/Beetle.tscn" id="4_ijlsq"]
 
 [resource]
 script = ExtResource("2_osir5")
@@ -11,7 +11,7 @@ enemy_id = "enemy_beetle"
 name = "Giant Beetle"
 max_hp = 7.0
 attack = 1
-defense = 10.0
+defense = 8.0
 snapped_max = 1
 minigame_id = "beetle_rush"
 attack_patterns = Array[ExtResource("1_ua3kc")]([ExtResource("2_ijlsq")])

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dqqukw2jmv5vm"
-path="res://.godot/imported/beetle.png-873db827843991b30772dea6904b31fb.ctex"
+uid="uid://kc6gbkrwm471"
+path="res://.godot/imported/player_idle.png-333bd02e750ae6458c7f87e3cf8d77a8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Scenes/Enemies/Beetle/beetle.png"
-dest_files=["res://.godot/imported/beetle.png-873db827843991b30772dea6904b31fb.ctex"]
+source_file="res://Graphics/Placeholders/Combat/player_idle.png"
+dest_files=["res://.godot/imported/player_idle.png-333bd02e750ae6458c7f87e3cf8d77a8.ctex"]
 
 [params]
 

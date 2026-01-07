@@ -21,10 +21,14 @@ var turn = "player" # Player always starts first, this variable is a failsafe ch
 # Signals for UI script to react
 signal player_turn_started 
 signal enemy_turn_started
+signal combat_end
 
-# Attack time trackers for blocking
+# Attack time trackers for player blocking and criical hits
 var attack_time = 0.0
 var attack_timer_running = false
+var critical_window = Vector2.ZERO
+var last_attack_press_time = -1.0
+
 
 # Player block window variables for handling blocking logic
 var last_block_press_time = -1.0
@@ -33,8 +37,9 @@ var block_on_cooldown = false
 const BLOCK_COOLDOWN = 0.7
 @onready var block_visual : PlayerBlockVisual = get_parent().get_node("PlayerBlockVisual")
 
-# Enemy scene to load for animations
+# Entity visual scenes to load for animations and UI
 var enemy_visual : EnemyVisual
+var player_visual : PlayerVisual
 
 
 # COMBAT SETUP FUNCTIONS
@@ -50,12 +55,20 @@ func _process(delta):
 	if attack_timer_running:
 		attack_time += delta
 
+# Sets up the player and enemy(s) battle data
 func _setup_entities():
+	# PLAYER
 	player = CombatEntity.new()
 	player.load_from_player()
+	player_visual = get_parent().get_node("PlayerVisual")
+	player_visual.block_attempted.connect(_on_player_block_attempted)
 	add_child(player)
 	get_parent().get_node("PlayerSprite").texture = load("res://Graphics/Placeholders/Combat/PlayerIdle.png")
 	
+	player_visual.position = Vector2(96, 271)
+	player_visual.set_home_position()
+	
+	# ENEMY
 	enemy = CombatEntity.new()
 	enemy.load_from_enemy_id(enemy_id)
 	add_child(enemy)
@@ -65,7 +78,7 @@ func _setup_entities():
 	# Enemy UI setup
 	await enemy_visual.ready
 	enemy_visual.update_hp(enemy.hp, enemy.max_hp)
-	enemy_visual.update_hp(enemy.defense, enemy.defense_max)
+	enemy_visual.update_defense(enemy.defense, enemy.defense_max)
 	enemy_visual.update_snapped(enemy.snapped, enemy.snapped_max)
 	
 	# TO-DO Adjust this automatically somehow (later will add multiple enemies at once so it can't just be set like so)
@@ -104,8 +117,11 @@ func _enemy_turn():
 	$"../UI/TempIndicator".visible = false
 
 func _end_combat(victory: bool):
-	# Freeze turn logic (not necessary anymore)
+	# Freeze turn logic (not necessary anymore but keeping just in case)
 	turn = ""
+	
+	# TO-DO: make specific for victory/defeat (separate methods in CombatUI might be easiest)
+	combat_end.emit()
 
 	if victory:
 		# Player won, checks whether win is by kill or snaps
@@ -118,12 +134,10 @@ func _end_combat(victory: bool):
 	else:
 		# Player lost
 		print("Player defeated! Game over.")
-		# TO-DO Sprite animation here, right now defeated visual with cooldown of 1.5s
-		_load_sprite_for_testing("defeated")
+		player_visual.play_defeat()
 		
 		# TO-DO: Implement fallback (retry, save and quit.)
-
-	# TO-DO emit signal to UI or overworld
+	
 	# emit_signal("combat_ended", victory)
 
 
@@ -136,15 +150,69 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	if turn != "player":
 		print("Enemy turn in player_attack.")
 		return
+	
+	# Not blocking, so no need for _input in PlayerVisual
+	player_visual.set_input_enabled(true)
+	
+	# Communication with PlayerVisual to calculate hit damage (check for critical hits) and play attack animations
+	player_visual.attack_started.connect(
+		func():
+			# Opens the critical window for the player to hit the opponent for additional damage
+			_start_player_critical_window(),
+		CONNECT_ONE_SHOT
+	)
+	
+	player_visual.attack_hit.connect(
+		func():
+			# Calculaes the hit damage
+			_apply_player_attack_hit(attack_type),
+		CONNECT_ONE_SHOT
+	)
+	
+	# End of the turn
+	player_visual.attack_finished.connect(
+		func():
+			# Check if enemy defeated
+			if enemy.hp <= 0:
+				_end_combat(true) # 1. Classic RPG win: enemy defeated
+			else:
+				# Else switch turn to enemy
+				_enemy_turn(),
+		CONNECT_ONE_SHOT
+	)
+	
+	player_visual.play_attack()
+	
+	# Empty print for visual clarity in terminal while debugging
+	print("")
 
+# Opens the player critical hit window during player's atack
+func _start_player_critical_window():
+	last_attack_press_time = -1.0
+	critical_window = Vector2(1.80, 2.05) # TO-DO: tweak this for good hit feel
+	attack_time = 0.0
+	attack_timer_running = true
+
+# Processes the player hit damage by checking for critical hits and applying necessary damage to either HP or defense
+func _apply_player_attack_hit(attack_type):
+	attack_timer_running = false
+	
+	var critical = (
+		last_attack_press_time >= critical_window.x
+		and last_attack_press_time <= critical_window.y
+	)
+	
+	var critical_multiplier = 1.5 if critical else 1.0
+	if critical:
+		print("CRITICAL HIT!")
+	
 	# Checks player's attack type against enemy's type
 	var type_multiplier := _get_type_multiplier(attack_type, enemy.type)
-	print("It's the player's %s against the enemy's %s" % [CombatTypes.entity_type_to_string(attack_type), CombatTypes.entity_type_to_string(enemy.type)])
 	
 	# Reduce enemy defense if attacking type > defending type
 	if enemy.defense > 0 and type_multiplier > 1.0:
 		print("Effective type!")
-		var defense_damage := player.attack_power * type_multiplier
+		var defense_damage = player.attack_power * type_multiplier * critical_multiplier
 		enemy.defense -= defense_damage
 		enemy_visual.update_defense(enemy.defense, enemy.defense_max)
 		print("Enemy defense reduced by %.2f → %.2f now" % [defense_damage, enemy.defense])
@@ -160,24 +228,14 @@ func player_attack(attack_type: CombatTypes.EntityType):
 		#	if enemy's snapped == their max_snapped, then end combat
 	else:
 		# Regular damage to HP if attacking type !> enemy type
-		var defense_factor = float(enemy.defense) / enemy.defense_max if enemy.defense_max > 0 else 0 # Calculates a defense multiplier based on current defense
-		var damage = player.attack_power * type_multiplier * (1.0 - defense_factor)
+		var defense_factor = float(enemy.defense) / enemy.defense_max if enemy.defense_max > 0 else 0 # Calculates a defense multiplier (how much damage is negated) based on current defense
+		var damage = player.attack_power * type_multiplier * critical_multiplier * (1.0 - defense_factor)
 		enemy.hp -= damage
 		enemy_visual.update_hp(enemy.hp, enemy.max_hp)
 		print("Enemy takes %.2f HP damage → %.2f left, current defense is %.2f" % [damage, enemy.hp, enemy.defense])
-	
-	# Empty print for visual clarity in terminal while debugging and TO-DO Animation, sprite set to attack with visual cooldown of 1.5s
-	print("")
-	_load_sprite_for_testing("attack")
-	await get_tree().create_timer(1.5).timeout
-	
-	# Check if enemy defeated
-	if enemy.hp <= 0:
-		_end_combat(true) # 1. Classic RPG win: enemy defeated
-	else:
-		# Switch turn to enemy
-		_enemy_turn()
 
+
+# Logic for starting enemy's minigame in combat
 func _start_minigame(minigame_id: String):
 	# ... TO-DO minigame appears on screen
 	var is_success: bool # TO-DO make the minigame's result carry over to a bool value. separate for each minigame?
@@ -213,6 +271,9 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 	
 	# Set current block window
 	current_block_window = pattern.hits[0].block_window
+	
+	# Blocking, so setting up PlayerVisual for blocking
+	player_visual.set_input_enabled(true)
 	
 	# Lambda functions for connecting with enemy visual script emitters
 	enemy_visual.attack_started.connect(
@@ -256,7 +317,7 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 func _apply_enemy_hit(hit: Dictionary):
 	current_block_window = hit.block_window
 	
-	# Attack pattern duration and timer, listens to _input here to check for block and calculates damage after
+	# Attack pattern duration and timer, listens to _on_player_block_atempted here to check for block and calculates damage after
 	var window_duration = hit.block_window.y - hit.block_window.x
 	# Block can happen during this timer, calculates the enemy's damage
 	get_tree().create_timer(window_duration).timeout.connect(
@@ -283,12 +344,10 @@ func _resolve_enemy_hit(hit: Dictionary):
 
 	if blocked:
 		damage *= 0.5
-		block_visual.play_success()
-		_load_sprite_for_testing("block")
+		player_visual.play_block_success()
 		print("Successful block!")
 	else:
-		block_visual.play_fail()
-		_load_sprite_for_testing("damaged")
+		player_visual.play_block_fail()
 		print("Failed block")
 
 	print("Player HP is: ", player.hp)
@@ -320,13 +379,17 @@ func _resolve_enemy_hit(hit: Dictionary):
 
 	# return block_success
 
+# Listens for player attack presses for critical hit logic
+func _on_player_attack_pressed():
+	# Failsafe to check if the function is running by accident (as part of signal logic)
+	if turn != "player":
+		return
+	last_attack_press_time = attack_time
 
 # Listens for player block during an enemy's attack
-func _input(event):
-	# Failsafes to check if the function is running by accident
+func _on_player_block_attempted():
+	# Failsafe to check if the function is running by accident (as part of signal logic)
 	if turn != "enemy":
-		return
-	if not event.is_action_pressed("block"):
 		return
 	
 	# Checks if block is currently on cooldown
@@ -337,7 +400,7 @@ func _input(event):
 	last_block_press_time = attack_time
 	
 	# DEBUG CHECK
-	print("!!! DEBUG: Block pressed at: ", "%.3f" % attack_time)
+	print("!!! DEBUG: Block pressed at:", "%.3f" % attack_time)
 	
 	# If all previous checks passed then block was triggered -> cooldown starts here
 	_start_block_cooldown()
@@ -346,15 +409,14 @@ func _input(event):
 # Starts the player's block cooldown during the enemy turn
 func _start_block_cooldown():
 	block_on_cooldown = true
-	block_visual.set_cooldown_active(true)
+	player_visual.set_block_cooldown(true)
 	
 	# Actual cooldown timer
 	await get_tree().create_timer(BLOCK_COOLDOWN).timeout
 	
 	# After cooldown resets previous changes
 	block_on_cooldown = false
-	block_visual.set_cooldown_active(false)
-
+	player_visual.set_block_cooldown(false)
 
 # LEGACY (not used): The enemy's attacking logic, doesn't take any parameters as the player is not affected by type attacks
 func _enemy_attack():
@@ -378,7 +440,7 @@ func _enemy_attack():
 		# Upon successful block, enemy damage is reduced by half
 		
 		# TO-DO Sprite animation here, right now block visual with cooldown of 1.5s
-		_load_sprite_for_testing("block")
+		
 		
 		# Damage calculation, i.e if damage is an uneven number like 5, blocked damage will be 2 -> creates incentive to block
 		damage = floor(damage * 0.5)
@@ -391,7 +453,7 @@ func _enemy_attack():
 	print("")
 	
 	# TO-DO Sprite animation here, right now damaged visual with cooldown of 1.5s
-	_load_sprite_for_testing("damaged")
+	
 
 	# Check if player has been defeated at the end of the turn
 	if player.hp <= 0:
@@ -417,16 +479,3 @@ func _get_type_multiplier(player_type: CombatTypes.EntityType, enemy_type: Comba
 		return 2.0
 	else:
 		return 1.0  # Normal damage multiplier
-
-# For testing purposes to check if sprites are loaded properly
-func _load_sprite_for_testing(sprite: String):
-	if (sprite == "attack"):
-		get_parent().get_node("PlayerSprite").texture = load("res://Graphics/Placeholders/Combat/PlayerAttacked.png")
-	elif (sprite == "block"):
-		get_parent().get_node("PlayerSprite").texture = load("res://Graphics/Placeholders/Combat/PlayerBlocked.png")
-	elif (sprite == "damaged"):
-		get_parent().get_node("PlayerSprite").texture = load("res://Graphics/Placeholders/Combat/PlayerDamaged.png")
-	elif (sprite == "defeated"):
-		get_parent().get_node("PlayerSprite").texture = load("res://Graphics/Placeholders/Combat/PlayerDefeated.png")
-	await get_tree().create_timer(1.5).timeout
-	get_parent().get_node("PlayerSprite").texture = load("res://Graphics/Placeholders/Combat/PlayerIdle.png")

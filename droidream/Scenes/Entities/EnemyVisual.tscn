@@ -1,11 +1,11 @@
 [gd_scene load_steps=4 format=3 uid="uid://dlpw77ahti2kx"]
 
-[ext_resource type="Script" uid="uid://cx4ejov60luxh" path="res://Scripts/Combat/EnemyVisual.gd" id="1_p4v3j"]
-[ext_resource type="Texture2D" uid="uid://cij8c6ssb2cuk" path="res://Graphics/Placeholders/Combat/Enemy.png" id="2_dv6s2"]
-[ext_resource type="Texture2D" uid="uid://bf3wdxow78lp8" path="res://Graphics/Placeholders/Combat/snapped_empty.png" id="3_dv6s2"]
+[ext_resource type="Script" uid="uid://cx4ejov60luxh" path="res://Scripts/Combat/EnemyVisual.gd" id="1_n88dy"]
+[ext_resource type="Texture2D" uid="uid://bf3wdxow78lp8" path="res://Graphics/Placeholders/Combat/snapped_empty.png" id="2_y02r4"]
+[ext_resource type="Texture2D" uid="uid://cij8c6ssb2cuk" path="res://Graphics/Placeholders/Combat/Enemy.png" id="3_7l13l"]
 
 [node name="EnemyVisual" type="Node2D"]
-script = ExtResource("1_p4v3j")
+script = ExtResource("1_n88dy")
 
 [node name="EnemyHUD" type="Control" parent="."]
 z_index = 1
@@ -34,26 +34,20 @@ offset_bottom = 12.0
 color = Color(0.9669108, 0.10701466, 0.24572787, 1)
 
 [node name="Label" type="Label" parent="EnemyHUD/HPBar"]
-z_index = 2
-layout_mode = 0
-offset_left = 2.0
-offset_right = 69.0
-offset_bottom = 23.0
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-
-[node name="DefenseBar" type="Control" parent="EnemyHUD"]
-anchors_preset = 0
-offset_top = 12.0
-offset_right = 67.0
-offset_bottom = 24.0
-
-[node name="Label" type="Label" parent="EnemyHUD/DefenseBar"]
 z_index = 3
 layout_mode = 0
 offset_left = 2.0
 offset_right = 69.0
 offset_bottom = 23.0
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 8
+text = "h"
+
+[node name="DefenseBar" type="Control" parent="EnemyHUD"]
+anchors_preset = 0
+offset_top = 12.0
+offset_right = 67.0
+offset_bottom = 24.0
 
 [node name="Background" type="ColorRect" parent="EnemyHUD/DefenseBar"]
 layout_mode = 0
@@ -67,6 +61,16 @@ offset_right = 67.0
 offset_bottom = 12.0
 color = Color(0.33631077, 0.95860225, 0.94271743, 1)
 
+[node name="Label" type="Label" parent="EnemyHUD/DefenseBar"]
+z_index = 2
+layout_mode = 0
+offset_left = 2.0
+offset_right = 69.0
+offset_bottom = 23.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 8
+text = "h"
+
 [node name="SnappedContainer" type="HBoxContainer" parent="EnemyHUD"]
 layout_mode = 0
 offset_left = -1.0
@@ -77,25 +81,25 @@ offset_bottom = -1.0
 [node name="1" type="TextureRect" parent="EnemyHUD/SnappedContainer"]
 visible = false
 layout_mode = 2
-texture = ExtResource("3_dv6s2")
+texture = ExtResource("2_y02r4")
 expand_mode = 3
 
 [node name="2" type="TextureRect" parent="EnemyHUD/SnappedContainer"]
 visible = false
 layout_mode = 2
-texture = ExtResource("3_dv6s2")
+texture = ExtResource("2_y02r4")
 expand_mode = 3
 
 [node name="3" type="TextureRect" parent="EnemyHUD/SnappedContainer"]
 visible = false
 layout_mode = 2
-texture = ExtResource("3_dv6s2")
+texture = ExtResource("2_y02r4")
 expand_mode = 3
 
 [node name="Visual" type="Node2D" parent="."]
 
 [node name="Sprite2D" type="Sprite2D" parent="Visual"]
-texture = ExtResource("2_dv6s2")
+texture = ExtResource("3_7l13l")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 root_node = NodePath("../Visual/Sprite2D")

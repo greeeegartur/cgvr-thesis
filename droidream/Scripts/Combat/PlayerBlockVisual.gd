@@ -28,7 +28,7 @@ func play_success():
 func play_fail():
 	ring.visible = true
 	ring.scale = initial_scale
-	ring.modulate = Color(1, 0.3, 0.3, 0.8)
+	ring.modulate = Color(1.0, 0.302, 0.302, 1.0)
 
 	var tween := create_tween()
 	tween.tween_property(ring, "modulate:a", 0.0, 0.2)

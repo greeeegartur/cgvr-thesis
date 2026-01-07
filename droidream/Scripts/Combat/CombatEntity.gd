@@ -26,6 +26,7 @@ func load_from_enemy_id(enemy_id: String) -> void:
 	entity_name = data.name
 	type = data.type
 	hp = data.max_hp
+	max_hp = data.max_hp
 	attack_power = data.attack
 	defense_max = data.defense
 	defense = defense_max

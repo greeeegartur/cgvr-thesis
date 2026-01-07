@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://buy3a8wt3qe8f"]
 
-[ext_resource type="Texture2D" uid="uid://dqqukw2jmv5vm" path="res://Scenes/Enemies/Beetle/beetle.png" id="1_8bngv"]
+[ext_resource type="Texture2D" uid="uid://dqqukw2jmv5vm" path="res://Scenes/Entities/Beetle/beetle.png" id="1_8bngv"]
 [ext_resource type="Script" uid="uid://cx4ejov60luxh" path="res://Scripts/Combat/EnemyVisual.gd" id="1_edmr7"]
 [ext_resource type="Texture2D" uid="uid://bf3wdxow78lp8" path="res://Graphics/Placeholders/Combat/snapped_empty.png" id="3_5xyne"]
 
@@ -80,21 +80,13 @@ offset_right = 69.0
 offset_bottom = 23.0
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 8
+text = "h"
 
 [node name="DefenseBar" type="Control" parent="EnemyHUD"]
 anchors_preset = 0
 offset_top = 12.0
 offset_right = 67.0
 offset_bottom = 24.0
-
-[node name="Label" type="Label" parent="EnemyHUD/DefenseBar"]
-z_index = 2
-layout_mode = 0
-offset_left = 2.0
-offset_right = 69.0
-offset_bottom = 23.0
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 8
 
 [node name="Background" type="ColorRect" parent="EnemyHUD/DefenseBar"]
 layout_mode = 0
@@ -107,6 +99,16 @@ layout_mode = 0
 offset_right = 67.0
 offset_bottom = 12.0
 color = Color(0.33631077, 0.95860225, 0.94271743, 1)
+
+[node name="Label" type="Label" parent="EnemyHUD/DefenseBar"]
+z_index = 2
+layout_mode = 0
+offset_left = 2.0
+offset_right = 69.0
+offset_bottom = 23.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 8
+text = "h"
 
 [node name="SnappedContainer" type="HBoxContainer" parent="EnemyHUD"]
 layout_mode = 0

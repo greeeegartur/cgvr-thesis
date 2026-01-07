@@ -41,6 +41,7 @@ func _ready():
 	hp_fill_max_width = hp_fill.size.x
 	def_fill_max_width = def_fill.size.x
 
+# Unused for now
 func on_anim_finished(name: String):
 	if name == "idle":
 		return
@@ -67,7 +68,7 @@ func set_home_position():
 	home_position = global_position
 	attack_position = home_position + Vector2(-320, 0)
 
-# Updates UI for player/enemy stats with helper functions
+# Updates UI for enemy stats with helper functions
 func update_hp(current: float, max_hp):
 	var ratio = clamp(current / max_hp, 0.0, 1.0)
 	hp_fill.size.x = hp_fill_max_width * ratio
