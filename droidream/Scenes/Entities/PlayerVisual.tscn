@@ -135,12 +135,9 @@ tracks/3/path = NodePath(".")
 tracks/3/interp = 1
 tracks/3/loop_wrap = true
 tracks/3/keys = {
-"times": PackedFloat32Array(1.7333333, 2),
-"transitions": PackedFloat32Array(1, 1),
+"times": PackedFloat32Array(2),
+"transitions": PackedFloat32Array(1),
 "values": [{
-"args": [],
-"method": &"_start_player_critical_window"
-}, {
 "args": [],
 "method": &"on_attack_hit"
 }]
@@ -325,12 +322,13 @@ script = ExtResource("1_sbipa")
 z_index = 1
 layout_mode = 3
 anchors_preset = 0
-offset_left = -31.0
-offset_top = -76.0
-offset_right = 36.0
-offset_bottom = -52.0
+offset_left = -37.0
+offset_top = -67.0
+offset_right = 30.0
+offset_bottom = -43.0
 
 [node name="HPBar" type="Control" parent="PlayerHUD"]
+z_index = 1
 anchors_preset = 0
 offset_right = 67.0
 offset_bottom = 12.0
@@ -358,6 +356,8 @@ theme_override_font_sizes/font_size = 8
 text = "h"
 
 [node name="DefenseBar" type="Control" parent="PlayerHUD"]
+visible = false
+z_index = 1
 anchors_preset = 0
 offset_top = 12.0
 offset_right = 67.0

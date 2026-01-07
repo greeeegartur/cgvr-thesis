@@ -4,17 +4,11 @@ extends Node2D
 
 class_name PlayerVisual
 
-# Attack and block signals + variables for critical hit reading
+# Attack and action signals
 signal attack_started
 signal attack_hit
 signal attack_finished
-
-signal block_attempted
-signal block_success
-signal block_failed
-
-var critical_window_open = false
-var attack_timer = 0.0
+signal action_pressed
 
 # _unhandled_input method check variable
 var input_enabled = true
@@ -29,10 +23,10 @@ var home_position : Vector2 # The player's original position
 var attack_position : Vector2 # The position where the player's pattern will connect to the enemy sprite
 
 # HUD variables
-@onready var hp_fill = $PlayerHUD/HPBar/Fill
-@onready var hp_label = $PlayerHUD/HPBar/Label
-@onready var def_fill = $PlayerHUD/DefenseBar/Fill
-@onready var def_label = $PlayerHUD/DefenseBar/Label
+@onready var hp_fill := $PlayerHUD/HPBar/Fill
+@onready var hp_label := $PlayerHUD/HPBar/Label
+@onready var def_fill := $PlayerHUD/DefenseBar/Fill
+@onready var def_label := $PlayerHUD/DefenseBar/Label
 
 var hp_fill_max_width = 10.0
 var def_fill_max_width = 10.0
@@ -40,16 +34,11 @@ var def_fill_max_width = 10.0
 func _ready():
 	home_position = global_position
 	anim.animation_finished.connect(_on_anim_finished)
-	hud.top_level = true
 	
 	hp_fill_max_width = hp_fill.size.x
 	def_fill_max_width = def_fill.size.x
 	
 	anim.play("player_idle")
-
-func _process(delta):
-	if critical_window_open:
-		attack_timer += delta
 
 # Enables _input during enemy turn
 func set_input_enabled(enabled):
@@ -62,13 +51,7 @@ func play_attack():
 	anim.play("player_attack")
 
 func on_attack_hit():
-	critical_window_open = false
 	attack_hit.emit()
-
-# Starts the critical window at the correct window for "player_attack", TO-DO: make specific for future attacks
-func _start_player_critical_window():
-	critical_window_open = true
-	attack_timer = 0.0
 
 # Movement methods for connecting patterns using tweens (same methods just in reverse, identical to EnemyVisual)
 func _move_to_attack_position():
@@ -91,27 +74,25 @@ func _move_to_home_position():
 # Sets the home position in CombatManager
 func set_home_position():
 	home_position = global_position
-	attack_position = home_position + Vector2(320, 0)
+	attack_position = home_position + Vector2(365, 0)
 
-# Listens to block input for CombatManager to play according PlayerBlockVisual animations
+# Listens to block/critical input for CombatManager to play according PlayerBlockVisual animations
 func _unhandled_input(event):
 	if not input_enabled:
 		return
 	
-	if event.is_action_pressed("action") or critical_window_open:
-		block_attempted.emit()
+	if event.is_action_pressed("action"):
+		action_pressed.emit()
 		# action_pressed emit here
 
 # PlayerBlockVisual methods to call
 func play_block_success():
 	anim.play("player_block")
 	block_visual.play_success()
-	block_success.emit()
 
 func play_block_fail():
 	anim.play("player_hurt")
 	block_visual.play_fail()
-	block_failed.emit()
 	
 func play_defeat():
 	input_enabled = false

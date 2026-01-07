@@ -35,7 +35,6 @@ var last_block_press_time = -1.0
 var current_block_window = Vector2.ZERO
 var block_on_cooldown = false
 const BLOCK_COOLDOWN = 0.7
-@onready var block_visual : PlayerBlockVisual = get_parent().get_node("PlayerBlockVisual")
 
 # Entity visual scenes to load for animations and UI
 var enemy_visual : EnemyVisual
@@ -61,12 +60,17 @@ func _setup_entities():
 	player = CombatEntity.new()
 	player.load_from_player()
 	player_visual = get_parent().get_node("PlayerVisual")
-	player_visual.block_attempted.connect(_on_player_block_attempted)
+	player_visual.action_pressed.connect(_on_player_action_pressed)
 	add_child(player)
 	get_parent().get_node("PlayerSprite").texture = load("res://Graphics/Placeholders/Combat/PlayerIdle.png")
 	
 	player_visual.position = Vector2(96, 271)
 	player_visual.set_home_position()
+	
+	# Player UI setup
+	await player_visual.ready
+	player_visual.update_hp(player.hp, player.max_hp)
+	player_visual.update_defense(player.defense, player.defense)
 	
 	# ENEMY
 	enemy = CombatEntity.new()
@@ -87,7 +91,6 @@ func _setup_entities():
 	
 	
 func _start_combat():
-	print("Combat started: PLAYER vs %s" % enemy.entity_name)
 	_player_turn()
 
 # TURN FUNCTIONS
@@ -316,6 +319,7 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 # Logic for applying an enemy attack's damage that takes the enemy's attack pattern for blocking into consideration
 func _apply_enemy_hit(hit: Dictionary):
 	current_block_window = hit.block_window
+	print("!!! DEBUG: last block press time: ", last_block_press_time)
 	
 	# Attack pattern duration and timer, listens to _on_player_block_atempted here to check for block and calculates damage after
 	var window_duration = hit.block_window.y - hit.block_window.x
@@ -325,23 +329,22 @@ func _apply_enemy_hit(hit: Dictionary):
 			_resolve_enemy_hit(hit),
 		CONNECT_ONE_SHOT
 	)
-	
 
 # Finalises the enemy hit after player blocks during the enemy turn
 func _resolve_enemy_hit(hit: Dictionary):
 	var window_start = hit.block_window.x
 	var window_end = hit.block_window.y
-
+	
 	var blocked = (
 		last_block_press_time >= window_start
 		and last_block_press_time <= window_end
 	)
-
+	
 	var base_damage = enemy.attack_power
 	var hit_mult = hit.damage_multiplier
 	# TO-DO Check if "- player.defense" is fair, maybe multiplier based negation is better
 	var damage = max(0.0, base_damage * hit_mult - player.defense)
-
+	
 	if blocked:
 		damage *= 0.5
 		player_visual.play_block_success()
@@ -354,6 +357,7 @@ func _resolve_enemy_hit(hit: Dictionary):
 	print("Damage is: ", damage)
 
 	player.hp -= damage
+	player_visual.update_hp(player.hp, player.max_hp)
 	print("Player takes %.1f damage → HP %.1f" % [damage, player.hp])
 
 
@@ -381,14 +385,14 @@ func _resolve_enemy_hit(hit: Dictionary):
 
 # Listens for player attack presses for critical hit logic
 func _on_player_attack_pressed():
-	# Failsafe to check if the function is running by accident (as part of signal logic)
+	# Failsafe to check if the function is running by accident
 	if turn != "player":
 		return
 	last_attack_press_time = attack_time
 
 # Listens for player block during an enemy's attack
 func _on_player_block_attempted():
-	# Failsafe to check if the function is running by accident (as part of signal logic)
+	# Failsafe to check if the function is running by accident
 	if turn != "enemy":
 		return
 	
@@ -405,6 +409,12 @@ func _on_player_block_attempted():
 	# If all previous checks passed then block was triggered -> cooldown starts here
 	_start_block_cooldown()
 
+# Decides if action is player block or critical hit
+func _on_player_action_pressed():
+	if turn == "enemy":
+		_on_player_block_attempted()
+	elif turn == "player":
+		_on_player_attack_pressed()
 
 # Starts the player's block cooldown during the enemy turn
 func _start_block_cooldown():
