@@ -39,6 +39,8 @@ func _ready():
 	def_fill_max_width = def_fill.size.x
 	
 	anim.play("player_idle")
+	# Combat scene's process mode (pausing) for minigames
+	process_mode = Node.PROCESS_MODE_PAUSABLE
 
 # Enables _input during enemy turn
 func set_input_enabled(enabled):

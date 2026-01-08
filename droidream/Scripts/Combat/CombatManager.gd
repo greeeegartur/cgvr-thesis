@@ -23,12 +23,11 @@ signal player_turn_started
 signal enemy_turn_started
 signal combat_end
 
-# Attack time trackers for player blocking and criical hits
+# Attack time trackers for player blocking and critical hits
 var attack_time = 0.0
 var attack_timer_running = false
 var critical_window = Vector2.ZERO
 var last_attack_press_time = -1.0
-
 
 # Player block window variables for handling blocking logic
 var last_block_press_time = -1.0
@@ -40,6 +39,11 @@ const BLOCK_COOLDOWN = 0.7
 var enemy_visual : EnemyVisual
 var player_visual : PlayerVisual
 
+# Minigame variables
+var in_minigame = false # Default
+var MINIGAME_SCENES = {
+	"base": preload("res://Scenes/Minigames/BaseMinigame.tscn")
+}
 
 # COMBAT SETUP FUNCTIONS
 # These are functions that run before combat begins, i.e entity data and loading the first turn
@@ -49,8 +53,14 @@ func _ready():
 	set_process_input(true)
 	_setup_entities()
 	_start_combat()
+	# Combat scene's process mode (pausing) for minigames
+	process_mode = Node.PROCESS_MODE_PAUSABLE
 
 func _process(delta):
+	# Pauses combat logic
+	if in_minigame:
+		return
+	
 	if attack_timer_running:
 		attack_time += delta
 
@@ -245,30 +255,52 @@ func _apply_player_attack_hit(attack_type):
 
 # Logic for starting enemy's minigame in combat
 func _start_minigame(minigame_id: String):
-	# ... TO-DO minigame appears on screen
-	var is_success: bool # TO-DO make the minigame's result carry over to a bool value. separate for each minigame?
+	if not MINIGAME_SCENES.has(minigame_id):
+		push_error("Missing minigame: " + minigame_id)
+		return
+		
+	in_minigame = true
 	
-	# If successful win in minigame
-	is_success = true
-	# Else
-	is_success = false
+	# TO-DO: Player subdue sprite animation here once finished
+	# await player_visual.play_subdue()
 	
-	on_minigame_complete(is_success)
+	# Pausing all combat (turn) logic
+	get_tree().paused = true
 	
+	# Instantiate minigame scene
+	var minigame = MINIGAME_SCENES[minigame_id].instantiate()
+	get_parent().add_child(minigame)
+	minigame.global_position = Vector2(320, 190)
+	
+	minigame.completed.connect(
+		func(success):
+			# Minigame ease in transition
+			get_tree().paused = false # Process mode sate already set in BaseMinigame.gd, but just in case
+			in_minigame = false
+			on_minigame_complete(success),
+		CONNECT_ONE_SHOT
+	)
+	
+	await minigame.play()
+
+# Decides minigame outcome on minigame end
 func on_minigame_complete(success: bool):
 	if success:
+		var restore_ratio := randf_range(0.2, 0.35)
+		enemy.defense = enemy.defense_max * restore_ratio
+		enemy_visual.update_defense(enemy.defense, enemy.defense_max)
 		enemy.snapped += 1
 		enemy_visual.update_snapped(enemy.snapped, enemy.snapped_max)
 		print("Minigame success! Snapped: %d / %d" % [enemy.snapped, enemy.snapped_max])
 		if enemy.snapped >= enemy.snapped_max:
 			_end_combat(true)  # 2. Minigame win: enemy subdued 
 	else:
-		# When failed, restore enemy's defense by a random amount from 20-35%
+		# Restore enemy's defense by a random amount from 20-35%
 		var restore_ratio := randf_range(0.2, 0.35)
 		enemy.defense = enemy.defense_max * restore_ratio
 		enemy_visual.update_defense(enemy.defense, enemy.defense_max)
 		# Also deal damage to player
-		#player.hp -= enemy.attack_power # TO-DO Make minigame specific and take into account defense
+		# player.hp -= enemy.attack_power # TO-DO Make minigame specific and take into account defense
 		print("Minigame failed. Enemy defense restored to %.1f" % enemy.defense)
 
 # Plays the given enemy attack pattern during the enemy turn
@@ -418,6 +450,9 @@ func _on_player_block_attempted():
 
 # Decides if action is player block or critical hit
 func _on_player_action_pressed():
+	# Does not allow combat actions in minigames, only minigame centered logic handled by another script
+	if in_minigame:
+		return
 	if turn == "enemy":
 		_on_player_block_attempted()
 	elif turn == "player":

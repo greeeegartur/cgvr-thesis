@@ -4,7 +4,7 @@ extends Node2D
 
 # Plays a tween animation and decides label properties based on given hit type
 func play(value: float, is_critical: bool):
-	$Label.text = str(round(value)) + "!" if is_critical else str(round(value))
+	$Label.text = str((value)) + "!" if is_critical else str((value))
 	$Label.modulate = Color.YELLOW if is_critical else Color.RED
 	$Label.scale = Vector2.ONE * (1.4 if is_critical else 1.0)
 

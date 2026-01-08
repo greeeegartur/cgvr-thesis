@@ -53,6 +53,8 @@ func _ready():
 	
 	hp_fill_max_width = hp_fill.size.x
 	def_fill_max_width = def_fill.size.x
+	# Combat scene's process mode (pausing) for minigames
+	process_mode = Node.PROCESS_MODE_PAUSABLE
 
 # Unused for now
 func on_anim_finished(name: String):
