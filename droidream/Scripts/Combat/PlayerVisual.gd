@@ -117,9 +117,9 @@ func set_block_cooldown(active: bool):
 func update_hp(current: float, max_hp):
 	var ratio = clamp(current / max_hp, 0.0, 1.0)
 	hp_fill.size.x = hp_fill_max_width * ratio
-	hp_label.text = "%d / %d" % [current, max_hp]
+	hp_label.text = "%.1f / %.1f" % [current, max_hp]
 
 func update_defense(current: float, max_def: float):
 	var ratio = clamp(current / max_def, 0.0, 1.0)
 	def_fill.size.x = def_fill_max_width * ratio
-	def_label.text = "%d / %d" % [current, max_def]
+	def_label.text = "%.1f / %.1f" % [current, max_def]

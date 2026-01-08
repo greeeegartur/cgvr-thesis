@@ -1,11 +1,13 @@
-[gd_scene load_steps=4 format=3 uid="uid://dlpw77ahti2kx"]
+[gd_scene load_steps=5 format=3 uid="uid://dlpw77ahti2kx"]
 
 [ext_resource type="Script" uid="uid://cx4ejov60luxh" path="res://Scripts/Combat/EnemyVisual.gd" id="1_n88dy"]
+[ext_resource type="PackedScene" uid="uid://bjh0w31eegrg2" path="res://Scenes/VFX/DamageNumber.tscn" id="2_7l13l"]
 [ext_resource type="Texture2D" uid="uid://bf3wdxow78lp8" path="res://Graphics/Placeholders/Combat/snapped_empty.png" id="2_y02r4"]
 [ext_resource type="Texture2D" uid="uid://cij8c6ssb2cuk" path="res://Graphics/Placeholders/Combat/Enemy.png" id="3_7l13l"]
 
 [node name="EnemyVisual" type="Node2D"]
 script = ExtResource("1_n88dy")
+damage_number_scene = ExtResource("2_7l13l")
 
 [node name="EnemyHUD" type="Control" parent="."]
 z_index = 1
@@ -103,3 +105,13 @@ texture = ExtResource("3_7l13l")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 root_node = NodePath("../Visual/Sprite2D")
+
+[node name="DamageFX" type="Node2D" parent="."]
+position = Vector2(-19, -26)
+
+[node name="DamageFlash" type="ColorRect" parent="."]
+visible = false
+offset_left = -19.0
+offset_top = -26.0
+offset_right = 21.0
+offset_bottom = 14.0

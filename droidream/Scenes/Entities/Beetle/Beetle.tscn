@@ -1,7 +1,8 @@
-[gd_scene load_steps=7 format=3 uid="uid://buy3a8wt3qe8f"]
+[gd_scene load_steps=8 format=3 uid="uid://buy3a8wt3qe8f"]
 
 [ext_resource type="Texture2D" uid="uid://dqqukw2jmv5vm" path="res://Scenes/Entities/Beetle/beetle.png" id="1_8bngv"]
 [ext_resource type="Script" uid="uid://cx4ejov60luxh" path="res://Scripts/Combat/EnemyVisual.gd" id="1_edmr7"]
+[ext_resource type="PackedScene" uid="uid://bjh0w31eegrg2" path="res://Scenes/VFX/DamageNumber.tscn" id="2_betge"]
 [ext_resource type="Texture2D" uid="uid://bf3wdxow78lp8" path="res://Graphics/Placeholders/Combat/snapped_empty.png" id="3_5xyne"]
 
 [sub_resource type="Animation" id="Animation_5xyne"]
@@ -45,6 +46,7 @@ _data = {
 
 [node name="EnemyVisual" type="Node2D"]
 script = ExtResource("1_edmr7")
+damage_number_scene = ExtResource("2_betge")
 
 [node name="EnemyHUD" type="Control" parent="."]
 z_index = 1
@@ -145,3 +147,13 @@ texture = ExtResource("1_8bngv")
 libraries = {
 &"": SubResource("AnimationLibrary_5wbek")
 }
+
+[node name="DamageFX" type="Node2D" parent="."]
+position = Vector2(-20, -19)
+
+[node name="DamageFlash" type="ColorRect" parent="."]
+visible = false
+offset_left = -36.0
+offset_top = -19.0
+offset_right = 38.0
+offset_bottom = 21.0

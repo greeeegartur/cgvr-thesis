@@ -156,13 +156,14 @@ scale = Vector2(0.15, 0.15)
 texture = ExtResource("11_vruw2")
 
 [node name="TempIndicator" type="RichTextLabel" parent="UI"]
-offset_left = 112.0
-offset_top = 34.0
-offset_right = 534.0
-offset_bottom = 114.0
+offset_left = 108.0
+offset_top = 21.0
+offset_right = 530.0
+offset_bottom = 101.0
 theme_override_colors/default_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/normal_font_size = 24
-text = "Press \"Z\" at the right time to block!"
+text = "Press \"Z\" at the right time to block
+and deal critical hits!"
 
 [connection signal="mouse_entered" from="UI/TypeTriangle/Arrows/FlyingToGrounded" to="." method="_on_mouse_entered"]
 [connection signal="mouse_exited" from="UI/TypeTriangle/Arrows/FlyingToGrounded" to="." method="_on_mouse_exited"]

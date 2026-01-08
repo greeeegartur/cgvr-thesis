@@ -110,6 +110,9 @@ func _enemy_turn():
 	print("Enemy attacks!")
 	# TO-DO Enemy AI to identify possible moves
 	
+	last_block_press_time = -1.0
+	block_on_cooldown = false
+	
 	# Picks a random pattern of the current enemy
 	var pattern = enemy.attack_patterns.pick_random()
 	_play_enemy_attack_pattern(pattern)
@@ -218,6 +221,7 @@ func _apply_player_attack_hit(attack_type):
 		var defense_damage = player.attack_power * type_multiplier * critical_multiplier
 		enemy.defense -= defense_damage
 		enemy_visual.update_defense(enemy.defense, enemy.defense_max)
+		enemy_visual.play_damage_vfx(defense_damage, critical)
 		print("Enemy defense reduced by %.2f → %.2f now" % [defense_damage, enemy.defense])
 		
 		# Checks if defense has been broken, minigame entering condition
@@ -235,6 +239,7 @@ func _apply_player_attack_hit(attack_type):
 		var damage = player.attack_power * type_multiplier * critical_multiplier * (1.0 - defense_factor)
 		enemy.hp -= damage
 		enemy_visual.update_hp(enemy.hp, enemy.max_hp)
+		enemy_visual.play_damage_vfx(damage, critical)
 		print("Enemy takes %.2f HP damage → %.2f left, current defense is %.2f" % [damage, enemy.hp, enemy.defense])
 
 
@@ -263,7 +268,7 @@ func on_minigame_complete(success: bool):
 		enemy.defense = enemy.defense_max * restore_ratio
 		enemy_visual.update_defense(enemy.defense, enemy.defense_max)
 		# Also deal damage to player
-		player.hp -= enemy.attack_power # TO-DO Adjust for player gear reducing damage in the future
+		#player.hp -= enemy.attack_power # TO-DO Make minigame specific and take into account defense
 		print("Minigame failed. Enemy defense restored to %.1f" % enemy.defense)
 
 # Plays the given enemy attack pattern during the enemy turn
@@ -359,6 +364,8 @@ func _resolve_enemy_hit(hit: Dictionary):
 	player.hp -= damage
 	player_visual.update_hp(player.hp, player.max_hp)
 	print("Player takes %.1f damage → HP %.1f" % [damage, player.hp])
+	
+	last_block_press_time = -1.0
 
 
 # UNUSED, but keeping as reference
@@ -445,7 +452,7 @@ func _enemy_attack():
 	# TO-DO Blocking logic for the player during enemy attack animation
 	# This will be replaced with actual timing-based blocking like in Paper Mario
 	var player_blocked := false
-
+	
 	if player_blocked:
 		# Upon successful block, enemy damage is reduced by half
 		
@@ -457,14 +464,11 @@ func _enemy_attack():
 		print("Player BLOCKED! Damage reduced to %.1f." % damage)
 	else:
 		print("Player failed to block. Taking full damage of %1.f." % damage)
-
+	
 	player.hp -= damage
 	print("Player HP: %.1f" % player.hp)
 	print("")
 	
-	# TO-DO Sprite animation here, right now damaged visual with cooldown of 1.5s
-	
-
 	# Check if player has been defeated at the end of the turn
 	if player.hp <= 0:
 		_end_combat(false)
