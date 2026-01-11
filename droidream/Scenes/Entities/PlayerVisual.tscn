@@ -1,14 +1,17 @@
-[gd_scene load_steps=18 format=3 uid="uid://wgkbwlbxucav"]
+[gd_scene load_steps=22 format=3 uid="uid://wgkbwlbxucav"]
 
 [ext_resource type="Texture2D" uid="uid://kc6gbkrwm471" path="res://Graphics/Placeholders/Combat/player_idle.png" id="1_ofpci"]
 [ext_resource type="Script" uid="uid://dfpecfsx8ofrf" path="res://Scripts/Combat/PlayerVisual.gd" id="1_sbipa"]
+[ext_resource type="PackedScene" uid="uid://bjh0w31eegrg2" path="res://Scenes/VFX/DamageNumber.tscn" id="2_o0c40"]
 [ext_resource type="Texture2D" uid="uid://rakqgp68ofme" path="res://Graphics/Placeholders/Combat/player_attack.png" id="2_sbipa"]
 [ext_resource type="Texture2D" uid="uid://vy8qc508qglt" path="res://Graphics/Placeholders/Combat/player_block.png" id="3_fttp1"]
 [ext_resource type="Texture2D" uid="uid://bc580qfjim3gv" path="res://Graphics/Placeholders/Combat/Block_Effect.png" id="3_i8n88"]
 [ext_resource type="Texture2D" uid="uid://bmc0pukfqywrx" path="res://Graphics/Placeholders/Combat/player_defeat.png" id="4_i8n88"]
 [ext_resource type="Texture2D" uid="uid://ddoq6bcqgyk8m" path="res://Graphics/Placeholders/Combat/player_hurt.png" id="5_j66ac"]
 [ext_resource type="Texture2D" uid="uid://d1wibcksjvhpd" path="res://Graphics/Placeholders/Combat/player_walk.png" id="6_f34bn"]
+[ext_resource type="Texture2D" uid="uid://my5gd5gscar2" path="res://Graphics/Placeholders/Combat/blocked.png" id="6_o0c40"]
 [ext_resource type="PackedScene" uid="uid://bk1q6iqy2c08b" path="res://Scenes/VFX/PlayerBlockVisual.tscn" id="8_fttp1"]
+[ext_resource type="Texture2D" uid="uid://lgahh1wv3uj1" path="res://Graphics/Placeholders/Combat/player_enter.png" id="9_j66ac"]
 
 [sub_resource type="Animation" id="Animation_ksby0"]
 length = 0.001
@@ -201,7 +204,7 @@ tracks/7/keys = {
 
 [sub_resource type="Animation" id="Animation_24p3j"]
 resource_name = "player_block"
-length = 0.28
+length = 0.5
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
@@ -209,7 +212,7 @@ tracks/0/path = NodePath("Visual/Sprite2D:frame")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0.033333335, 0.100000024, 0.13333333, 0.23333335, 0.3),
+"times": PackedFloat32Array(0, 0.1, 0.23333333, 0.3, 0.4),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 3, 4]
@@ -237,6 +240,54 @@ tracks/2/keys = {
 "transitions": PackedFloat32Array(1),
 "update": 1,
 "values": [5]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Visual/VFX:texture")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [ExtResource("6_o0c40")]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Visual/VFX:position")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(49, -23), Vector2(49, -39)]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Visual/VFX:modulate")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0, 0.26666668, 0.5),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("Visual/VFX:scale")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(0.15, 0.15), Vector2(0.2, 0.2)]
 }
 
 [sub_resource type="Animation" id="Animation_n26i4"]
@@ -401,6 +452,58 @@ tracks/2/keys = {
 "values": [0, 1, 2, 3]
 }
 
+[sub_resource type="Animation" id="Animation_f34bn"]
+resource_name = "player_subdue"
+length = 2.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Visual/Sprite2D:texture")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [ExtResource("9_j66ac")]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Visual/Sprite2D:frame")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.13333334, 0.26666668, 0.46666667, 0.8, 1, 1.2, 1.4, 1.6, 1.8),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3, 4, 5, 6, 4, 5, 6]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Visual/Sprite2D:vframes")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [7]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Visual/VFX:modulate")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 0)]
+}
+
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_ilwea"]
 _data = {
 &"RESET": SubResource("Animation_ksby0"),
@@ -409,11 +512,13 @@ _data = {
 &"player_defeat": SubResource("Animation_n26i4"),
 &"player_hurt": SubResource("Animation_ud6ce"),
 &"player_idle": SubResource("Animation_o0c40"),
+&"player_subdue": SubResource("Animation_f34bn"),
 &"player_walk": SubResource("Animation_1q2bo")
 }
 
 [node name="PlayerVisual" type="Node2D"]
 script = ExtResource("1_sbipa")
+damage_number_scene = ExtResource("2_o0c40")
 
 [node name="PlayerHUD" type="Control" parent="."]
 z_index = 1
@@ -503,3 +608,6 @@ scale = Vector2(0.15, 0.15)
 texture = ExtResource("3_i8n88")
 
 [node name="PlayerBlockVisual" parent="." instance=ExtResource("8_fttp1")]
+
+[node name="DamageFX" type="Node2D" parent="."]
+position = Vector2(2, -3)

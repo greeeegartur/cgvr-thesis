@@ -167,7 +167,6 @@ func player_attack(attack_type: CombatTypes.EntityType):
 		print("Enemy turn in player_attack.")
 		return
 	
-	# Not blocking, so no need for _input in PlayerVisual
 	player_visual.set_input_enabled(true)
 	
 	# Communication with PlayerVisual to calculate hit damage (check for critical hits) and play attack animations
@@ -180,7 +179,7 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	
 	player_visual.attack_hit.connect(
 		func():
-			# Calculaes the hit damage
+			# Calculates the hit damage
 			_apply_player_attack_hit(attack_type),
 		CONNECT_ONE_SHOT
 	)
@@ -252,7 +251,6 @@ func _apply_player_attack_hit(attack_type):
 		enemy_visual.play_damage_vfx(damage, critical)
 		print("Enemy takes %.2f HP damage → %.2f left, current defense is %.2f" % [damage, enemy.hp, enemy.defense])
 
-
 # Logic for starting enemy's minigame in combat
 func _start_minigame(minigame_id: String):
 	if not MINIGAME_SCENES.has(minigame_id):
@@ -261,13 +259,14 @@ func _start_minigame(minigame_id: String):
 		
 	in_minigame = true
 	
-	# TO-DO: Player subdue sprite animation here once finished
-	# await player_visual.play_subdue()
+	# Subduing visuals
+	enemy_visual.play_subdue_vfx()
+	await player_visual.play_subdue()
 	
 	# Pausing all combat (turn) logic
 	get_tree().paused = true
 	
-	# Instantiate minigame scene
+	# Minigame scene instantiation
 	var minigame = MINIGAME_SCENES[minigame_id].instantiate()
 	get_parent().add_child(minigame)
 	minigame.global_position = Vector2(320, 190)
@@ -275,9 +274,11 @@ func _start_minigame(minigame_id: String):
 	minigame.completed.connect(
 		func(success):
 			# Minigame ease in transition
-			get_tree().paused = false # Process mode sate already set in BaseMinigame.gd, but just in case
+			get_tree().paused = false # Process mode state already set in BaseMinigame.gd, but just in case
 			in_minigame = false
-			on_minigame_complete(success),
+			on_minigame_complete(success)
+			await player_visual.return_to_home()
+			_enemy_turn(),
 		CONNECT_ONE_SHOT
 	)
 	
@@ -395,6 +396,7 @@ func _resolve_enemy_hit(hit: Dictionary):
 
 	player.hp -= damage
 	player_visual.update_hp(player.hp, player.max_hp)
+	player_visual.play_damage_number(damage)
 	print("Player takes %.1f damage → HP %.1f" % [damage, player.hp])
 	
 	last_block_press_time = -1.0

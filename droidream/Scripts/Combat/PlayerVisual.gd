@@ -28,6 +28,11 @@ var attack_position : Vector2 # The position where the player's pattern will con
 @onready var def_fill := $PlayerHUD/DefenseBar/Fill
 @onready var def_label := $PlayerHUD/DefenseBar/Label
 
+# Damage FX variables
+@onready var fx_root: Node2D = $DamageFX
+@export var damage_number_scene: PackedScene
+
+
 var hp_fill_max_width = 10.0
 var def_fill_max_width = 10.0
 
@@ -78,6 +83,11 @@ func set_home_position():
 	home_position = global_position
 	attack_position = home_position + Vector2(365, 0)
 
+# Post-minigame return logic after subdue animation
+func return_to_home():
+	await _move_to_home_position()
+	anim.play("player_idle")
+
 # Listens to block/critical input for CombatManager to play according PlayerBlockVisual animations
 func _unhandled_input(event):
 	if not input_enabled:
@@ -100,8 +110,18 @@ func play_defeat():
 	input_enabled = false
 	anim.play("player_defeat")
 
+func play_subdue():
+	anim.play("player_subdue")
+	# Waits for the animation to finish
+	while anim.current_animation == "player_subdue":
+		await anim.animation_finished
+
 # Logic for animations after they have ended
 func _on_anim_finished(anim_name):
+	# Coroutine method
+	_handle_animation_finished(anim_name)
+
+func _handle_animation_finished(anim_name):
 	if anim_name == "player_attack":
 		await _move_to_home_position()
 		attack_finished.emit()
@@ -125,3 +145,13 @@ func update_defense(current: float, max_def: float):
 	var ratio = clamp(current / max_def, 0.0, 1.0)
 	def_fill.size.x = def_fill_max_width * ratio
 	def_label.text = "%.1f / %.1f" % [current, max_def]
+
+# Reusing EnemyVisual.gd method, just never called with critical (player can't take critical hits)
+func play_damage_number(damage: float, is_critical = false):
+	if not damage_number_scene:
+		return
+	
+	var num = damage_number_scene.instantiate()
+	fx_root.add_child(num)
+	num.position = Vector2.ZERO
+	num.play(damage, is_critical)

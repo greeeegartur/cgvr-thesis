@@ -26,9 +26,10 @@ signal attack_finished
 var hp_fill_max_width = 10.0
 var def_fill_max_width = 10.0
 
-# VFX variables
+# VFX variables, will change these in the future
 @export var normal_flash_color = Color(0.904, 0.135, 0.214, 1.0)
 @export var crit_flash_color = Color(1.0, 0.949, 0.2, 1.0)
+@export var subdue_flash_color = Color(0.602, 0.181, 0.64, 1.0)
 @export var shake_strength = 1.0
 @export var crit_shake_strength = 3.0
 
@@ -141,3 +142,18 @@ func _spawn_damage_number(damage: float, is_critical: bool):
 	fx_root.add_child(num)
 	num.position = Vector2(randf_range(-3, 3), randf_range(-3, 3))
 	num.play(damage, is_critical)
+
+# Subduing VFX
+func play_subdue_vfx():
+	_flash_color(subdue_flash_color, 2.4)
+
+# Refactored _flash that accepts color and duration
+func _flash_color(color: Color, duration = 0.15):
+	flash.modulate = color
+	flash.visible = true
+	
+	var tween := create_tween()
+	tween.tween_property(flash, "modulate:a", 0.0, duration)
+	tween.finished.connect(func():
+		flash.visible = false
+	)
