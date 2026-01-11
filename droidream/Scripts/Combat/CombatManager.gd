@@ -11,7 +11,12 @@ extends Node
 class_name CombatManager
 
 # SCRIPT VARIABLES
+# TO-DO: change this to load on random depending on area
 @export var enemy_id = "enemy_beetle"
+
+# Nodes to use for visual effects in the combat scene
+@onready var camera : CombatCamera = get_parent().get_node("Camera2D")
+@onready var tutorial_text: TutorialText = get_parent().get_node("UI/TutorialText")
 
 # The player and enemy's starting values
 var player : CombatEntity
@@ -69,10 +74,10 @@ func _setup_entities():
 	# PLAYER
 	player = CombatEntity.new()
 	player.load_from_player()
-	player_visual = get_parent().get_node("PlayerVisual")
+	player_visual = get_parent().get_node("World/PlayerVisual")
 	player_visual.action_pressed.connect(_on_player_action_pressed)
 	add_child(player)
-	get_parent().get_node("PlayerSprite").texture = load("res://Graphics/Placeholders/Combat/PlayerIdle.png")
+	get_parent().get_node("World/PlayerSprite").texture = load("res://Graphics/Placeholders/Combat/PlayerIdle.png")
 	
 	player_visual.position = Vector2(96, 271)
 	player_visual.set_home_position()
@@ -118,6 +123,9 @@ func _enemy_turn():
 	turn = "enemy"
 	emit_signal("enemy_turn_started")
 	print("Enemy attacks!")
+	# Shows block hint text for the player
+	tutorial_text.show_block_hint()
+	
 	# TO-DO Enemy AI to identify possible moves
 	
 	last_block_press_time = -1.0
@@ -127,10 +135,6 @@ func _enemy_turn():
 	var pattern = enemy.attack_patterns.pick_random()
 	_play_enemy_attack_pattern(pattern)
 	# _enemy_attack() # For now – ideally I want enemy AIs to act in specific ways, not just attack all the time
-	
-	# For now tutorial text
-	# TO-DO: remove/tweak this
-	$"../UI/TempIndicator".visible = false
 
 func _end_combat(victory: bool):
 	# Freeze turn logic (not necessary anymore but keeping just in case)
@@ -167,6 +171,12 @@ func player_attack(attack_type: CombatTypes.EntityType):
 		print("Enemy turn in player_attack.")
 		return
 	
+	# Camera settings
+	camera.follow(player_visual, 60)
+	
+	# Shows crit hint text for the player
+	tutorial_text.show_crit_hint()
+	
 	player_visual.set_input_enabled(true)
 	
 	# Communication with PlayerVisual to calculate hit damage (check for critical hits) and play attack animations
@@ -179,6 +189,9 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	
 	player_visual.attack_hit.connect(
 		func():
+			# Hides hint text
+			tutorial_text.hide_text()
+			
 			# Calculates the hit damage
 			_apply_player_attack_hit(attack_type),
 		CONNECT_ONE_SHOT
@@ -187,6 +200,8 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	# End of the turn
 	player_visual.attack_finished.connect(
 		func():
+			# Reseting camera
+			camera.stop_follow()
 			# Check if enemy defeated
 			if enemy.hp <= 0:
 				_end_combat(true) # 1. Classic RPG win: enemy defeated
@@ -219,6 +234,9 @@ func _apply_player_attack_hit(attack_type):
 	
 	var critical_multiplier = 1.5 if critical else 1.0
 	if critical:
+		# Freezing frame and shaking camera for good hit feel
+		camera.shake(7.0, 0.15)
+		freeze_frame(0.13)
 		print("CRITICAL HIT!")
 	
 	# Checks player's attack type against enemy's type
@@ -231,6 +249,7 @@ func _apply_player_attack_hit(attack_type):
 		enemy.defense -= defense_damage
 		enemy_visual.update_defense(enemy.defense, enemy.defense_max)
 		enemy_visual.play_damage_vfx(defense_damage, critical)
+		camera.shake(3.0, 0.1)
 		print("Enemy defense reduced by %.2f → %.2f now" % [defense_damage, enemy.defense])
 		
 		# Checks if defense has been broken, minigame entering condition
@@ -269,7 +288,7 @@ func _start_minigame(minigame_id: String):
 	# Minigame scene instantiation
 	var minigame = MINIGAME_SCENES[minigame_id].instantiate()
 	get_parent().add_child(minigame)
-	minigame.global_position = Vector2(320, 190)
+	minigame.global_position = camera.global_position + Vector2(0, 15)
 	
 	minigame.completed.connect(
 		func(success):
@@ -316,7 +335,10 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 	# Blocking, so setting up PlayerVisual for blocking
 	player_visual.set_input_enabled(true)
 	
-	# Lambda functions for connecting with enemy visual script emitters
+	# Camera settings
+	camera.follow(enemy_visual, -60)
+	
+	# Connecting with enemy visual script emitters
 	enemy_visual.attack_started.connect(
 		# Marks start of the attacking animation for block timing
 		func():
@@ -330,6 +352,9 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 		# Hit processing logic
 		func():
 			if hit_index < pattern.hits.size():
+				# Hides hint text
+				tutorial_text.hide_text()
+				
 				# Works the attack's hitting logic, including the player's blocking window
 				_apply_enemy_hit(pattern.hits[hit_index])
 				hit_index += 1, # If the attack has multiple hits, it'll process all of them
@@ -339,6 +364,8 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 	# Checks if combat has ended
 	enemy_visual.attack_finished.connect(
 		func():
+			# Camera reset
+			camera.stop_follow()
 			# DEBUG WHEN ATTACK HAS FINISHED
 			attack_timer_running = false
 			print("!!! DEBUG: attack finished at:", "%.3f" % attack_time)
@@ -351,7 +378,6 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 		)
 	
 	enemy_visual.play_attack(pattern.animation_name)
-	$"../UI/TempIndicator".visible = false
 
 
 # Logic for applying an enemy attack's damage that takes the enemy's attack pattern for blocking into consideration
@@ -386,9 +412,12 @@ func _resolve_enemy_hit(hit: Dictionary):
 	if blocked:
 		damage *= 0.5
 		player_visual.play_block_success()
+		camera.shake(2.0, 0.15)
+		freeze_frame(0.09)
 		print("Successful block!")
 	else:
 		player_visual.play_block_fail()
+		camera.shake(5.0, 0.12)
 		print("Failed block")
 
 	print("Player HP is: ", player.hp)
@@ -530,3 +559,9 @@ func _get_type_multiplier(player_type: CombatTypes.EntityType, enemy_type: Comba
 		return 2.0
 	else:
 		return 1.0  # Normal damage multiplier
+
+# Freezes the scene for a given parameter of time to show impact
+func freeze_frame(time = 0.05):
+	get_tree().paused = true
+	await get_tree().create_timer(time, true).timeout
+	get_tree().paused = false
