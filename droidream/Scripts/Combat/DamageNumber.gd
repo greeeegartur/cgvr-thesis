@@ -2,7 +2,7 @@ extends Node2D
 
 # This script is for controlling and animating damage number visuals for EnemyVisual to use
 
-@onready var label := $Label
+@onready var label : Label = $Label
 
 # Plays a tween animation and decides label properties based on given hit type
 func play(value: float, is_critical: bool):

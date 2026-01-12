@@ -177,6 +177,9 @@ visible = false
 position = Vector2(112, 30.000002)
 scale = Vector2(2.5, 2.5)
 
+[node name="Minigames" type="CanvasLayer" parent="."]
+layer = 10
+
 [connection signal="mouse_entered" from="UI/TypeTriangle/Arrows/FlyingToGrounded" to="." method="_on_mouse_entered"]
 [connection signal="mouse_exited" from="UI/TypeTriangle/Arrows/FlyingToGrounded" to="." method="_on_mouse_exited"]
 [connection signal="mouse_entered" from="UI/TypeTriangle/Arrows/GroundedToSpecial" to="." method="_on_mouse_entered"]

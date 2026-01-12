@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bcc3t8f0csrd8"
-path="res://.godot/imported/Keyboard Letters and Symbols.png-5812e7ecf941000d6bbe2c1124b798d3.ctex"
+uid="uid://dj7ssepbfk5x"
+path="res://.godot/imported/border.png-ad74b35b1bc16b2a31c8fe7f76a05e37.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Scenes/VFX/Keyboard Letters and Symbols.png"
-dest_files=["res://.godot/imported/Keyboard Letters and Symbols.png-5812e7ecf941000d6bbe2c1124b798d3.ctex"]
+source_file="res://Graphics/Placeholders/Minigames/Beetle Rush/border.png"
+dest_files=["res://.godot/imported/border.png-ad74b35b1bc16b2a31c8fe7f76a05e37.ctex"]
 
 [params]
 

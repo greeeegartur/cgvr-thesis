@@ -17,6 +17,7 @@ class_name CombatManager
 # Nodes to use for visual effects in the combat scene
 @onready var camera : CombatCamera = get_parent().get_node("Camera2D")
 @onready var tutorial_text: TutorialText = get_parent().get_node("UI/TutorialText")
+@onready var minigame_layer = get_parent().get_node("Minigames")
 
 # The player and enemy's starting values
 var player : CombatEntity
@@ -47,7 +48,8 @@ var player_visual : PlayerVisual
 # Minigame variables
 var in_minigame = false # Default
 var MINIGAME_SCENES = {
-	"base": preload("res://Scenes/Minigames/BaseMinigame.tscn")
+	"base": preload("res://Scenes/Minigames/BaseMinigame.tscn"), # Default, only for testing
+	"beetle_rush": preload("res://Scenes/Minigames/Beetle Rush/BeetleRush.tscn")
 }
 
 # COMBAT SETUP FUNCTIONS
@@ -282,26 +284,43 @@ func _start_minigame(minigame_id: String):
 	enemy_visual.play_subdue_vfx()
 	await player_visual.play_subdue()
 	
-	# Pausing all combat (turn) logic
-	get_tree().paused = true
-	
 	# Minigame scene instantiation
 	var minigame = MINIGAME_SCENES[minigame_id].instantiate()
-	get_parent().add_child(minigame)
-	minigame.global_position = camera.global_position + Vector2(0, 15)
+	minigame.process_mode = Node.PROCESS_MODE_ALWAYS
+	get_parent().get_node("World").modulate.a = 0.6 # Minigame focus effect
+	minigame_layer.add_child(minigame)
+	
+	minigame.set_anchors_preset(Control.PRESET_FULL_RECT)
+	minigame.size = get_viewport().size
+	minigame.position = Vector2.ZERO
+	
+	# Minigame's damage signal
+	minigame.damage_taken.connect(_on_minigame_damage_taken)
 	
 	minigame.completed.connect(
 		func(success):
 			# Minigame ease in transition
 			get_tree().paused = false # Process mode state already set in BaseMinigame.gd, but just in case
+			get_parent().process_mode = Node.PROCESS_MODE_INHERIT
 			in_minigame = false
 			on_minigame_complete(success)
+			get_parent().get_node("World").modulate.a = 1.0 # Back to normal
 			await player_visual.return_to_home()
 			_enemy_turn(),
 		CONNECT_ONE_SHOT
 	)
 	
 	await minigame.play()
+	
+	# Pausing all combat (turn) logic
+	get_tree().paused = true
+
+func _on_minigame_damage_taken(amount: float, pos: Vector2):
+	player.hp -= amount
+	player_visual.play_damage_number(amount)
+	freeze_frame(0.08)
+	camera.shake(1.0, 0.15)
+
 
 # Decides minigame outcome on minigame end
 func on_minigame_complete(success: bool):
