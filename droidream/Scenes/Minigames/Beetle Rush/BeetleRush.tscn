@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3 uid="uid://becs0nn0eomo7"]
+[gd_scene load_steps=29 format=3 uid="uid://becs0nn0eomo7"]
 
 [ext_resource type="Script" uid="uid://d1175ka40exha" path="res://Scripts/Minigames/BeetleRush.gd" id="1_4y3s6"]
 [ext_resource type="PackedScene" uid="uid://dtr6w15nmc20o" path="res://Scenes/Minigames/Beetle Rush/BeetleEntity.tscn" id="2_be64l"]
@@ -11,6 +11,7 @@
 [ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="10_2x2e5"]
 [ext_resource type="Texture2D" uid="uid://bag5h7g375v1b" path="res://Scenes/Minigames/Beetle Rush/LEFT.png" id="10_7dn3n"]
 [ext_resource type="Texture2D" uid="uid://cf6ba2b82jfas" path="res://Scenes/Minigames/Beetle Rush/RIGHT.png" id="11_w632w"]
+[ext_resource type="Texture2D" uid="uid://drlquwpqjffsc" path="res://Graphics/Placeholders/Minigames/Beetle Rush/health.png" id="12_lm3u6"]
 
 [sub_resource type="Animation" id="Animation_utgyu"]
 length = 0.001
@@ -311,7 +312,7 @@ position = Vector2(-45, 109)
 rotation = -0.23561946
 
 [node name="Spawn" type="Marker2D" parent="VisualRoot/Lanes/LeftLane"]
-position = Vector2(-6, -162)
+position = Vector2(-7, -162)
 
 [node name="Control" type="Marker2D" parent="VisualRoot/Lanes/LeftLane"]
 
@@ -467,3 +468,25 @@ libraries = {
 &"": SubResource("AnimationLibrary_5bvr3")
 }
 autoplay = "press"
+
+[node name="HealthContainer" type="HBoxContainer" parent="VisualRoot/UI"]
+offset_left = -33.0
+offset_top = 130.0
+offset_right = 2.0
+offset_bottom = 139.0
+scale = Vector2(2, 2)
+
+[node name="1" type="TextureRect" parent="VisualRoot/UI/HealthContainer"]
+layout_mode = 2
+texture = ExtResource("12_lm3u6")
+expand_mode = 3
+
+[node name="2" type="TextureRect" parent="VisualRoot/UI/HealthContainer"]
+layout_mode = 2
+texture = ExtResource("12_lm3u6")
+expand_mode = 3
+
+[node name="3" type="TextureRect" parent="VisualRoot/UI/HealthContainer"]
+layout_mode = 2
+texture = ExtResource("12_lm3u6")
+expand_mode = 3

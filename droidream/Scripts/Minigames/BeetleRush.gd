@@ -19,6 +19,7 @@ class_name BeetleRush
 @onready var progress_bar := $VisualRoot/UI/ProgressBar
 @onready var timer_label := $VisualRoot/UI/ProgressBar/Timer
 @onready var hand_anim := $VisualRoot/PlayerHand/AnimationPlayer
+@onready var health_container := $VisualRoot/UI/HealthContainer
 
 # Lane variables
 enum Lane { LEFT, MIDDLE, RIGHT }
@@ -42,18 +43,18 @@ enum Lane { LEFT, MIDDLE, RIGHT }
 var current_lane := Lane.MIDDLE # Starts from middle
 var can_move := true
 var hand_cooldown := false
+@export var max_hits := 3
+var hits_taken := 0 # Default
 
 # Constants
 const FLICK_DISTANCE := 80.0
 const DAMAGE := 0.3 # Damage player takes if hurt, TO-DO: change this to consider for defense in the future
 
-# Pause variable
+# Start/Pause variables
+var collision_enabled := false
 var beetles_paused := false
 
 func _ready():
-	# Setting duration of 5.6 seconds (0.6 seconds tween)
-	set_duration(5.6)
-	
 	# Progress bar setup
 	progress_bar.max_value = max_duration
 	progress_bar.value = max_duration
@@ -63,9 +64,8 @@ func _ready():
 	beetles_node.z_index = 3
 	hand_anim.animation_finished.connect(_on_hand_anim_finished)
 	
-	# Starting minigame
-	start()
-	spawn_loop()
+	# Starting minigame – FOR TESTING INSIDE SCENE, DO NOT TURN ON FOR COMBATMANAGER
+	#play()
 
 func _process(delta):
 	super._process(delta) # for elapsing variable and minigame end condition
@@ -85,6 +85,15 @@ func _unhandled_input(event):
 		try_flick_move("left")
 	elif event.is_action_pressed("ui_right"):
 		try_flick_move("right")
+
+# Overriding base function for collision reading
+func play():
+	await animate_in()
+	# Setting duration of 5 seconds
+	set_duration(5.0)
+	collision_enabled = true
+	start()
+	spawn_loop()
 
 # Moves hand to position and flicks with try_flick
 func try_flick_move(dir: String):
@@ -124,32 +133,42 @@ func flick_beetle(beetle):
 	if beetle.flicked:
 		return
 	
+	# Stop beetle activity
 	beetle.flicked = true
-	var dir = Vector2.LEFT if beetle.lane == Lane.LEFT else Vector2.RIGHT
-	var rotation_dir = randf_range(-1, 1)
-	
+	beetle.set_process(false)
 	beetle.reset_animation()
+	
+	# Flick direction
+	var dir = Vector2.LEFT if beetle.lane == Lane.LEFT else Vector2.RIGHT
+	var rotation_dir = -0.8 if beetle.lane == Lane.LEFT else 0.8
+	
+	# Tween animation
 	var tween = create_tween()
 	tween.tween_property(beetle, "global_position",
 		beetle.global_position + dir * 40,
 		0.25)
-	tween.parallel().tween_property(beetle, "rotation", rotation_dir, 0.25)
+	tween.parallel().tween_property(beetle, "rotation", rotation_dir, randf_range(0.2, 0.3))
 	
+	# Individual beetle despawning
 	tween.finished.connect(beetle.despawn)
 
 # Checks if player has collided with a beetle or taken damage
 func check_collisions():
-	if beetles_paused:
+	if beetles_paused or not collision_enabled:
 		return
 	
 	for beetle in beetles_node.get_children():
+		# For rotation tween
+		if beetle.flicked:
+			continue
+		
 		# Beetle touches player hand
 		if beetle.distance_to_hand(hand) < 33: # in pixels
 			deal_damage()
 			beetle.despawn()
 			
 		# Beetle passes
-		elif beetle.global_position.distance_to(lane_data[beetle.lane]["target"]) < 7: # in pixels
+		elif beetle.global_position.distance_to(lane_data[beetle.lane]["target"]) < 7: # in pixels, both set for good feel
 			deal_damage()
 			beetle.despawn()
 
@@ -159,11 +178,17 @@ func deal_damage():
 		return
 	
 	damage_cooldown = true
-	# TO-DO: edit this when defense is considered in future
+	hits_taken += 1
+	# TO-DO: edit the DAMAGE amount when defense is considered in future
 	damage_taken.emit(DAMAGE, hand.global_position)
 	spawn_damage_number(DAMAGE)
 	
-	await get_tree().create_timer(0.15).timeout
+	update_health()
+	if hits_taken >= max_hits:
+		end(false)
+		return
+	
+	await get_tree().create_timer(0.25).timeout # Damage cooldown
 	damage_cooldown = false
 
 # Spawns combat scene's damage number near the player hand
@@ -172,7 +197,7 @@ func spawn_damage_number(damage: float):
 		return
 	
 	var dmg_scene = DamageNumberScene.instantiate()
-	dmg_scene.global_position = hand.position
+	dmg_scene.global_position = hand.global_position
 	add_child(dmg_scene)
 	dmg_scene.z_index = 5 # Above player hand
 	dmg_scene.play(damage, false)
@@ -181,12 +206,12 @@ func spawn_damage_number(damage: float):
 func spawn_loop():
 	while running:
 		spawn_beetles()
-		await get_tree().create_timer(randf_range(0.7, 1.1)).timeout
+		await get_tree().create_timer(randf_range(0.55, 0.9)).timeout
 
 # Spawns BeetleEntity instantiations in a random amount from 1-3
 func spawn_beetles():
 	var lane = [Lane.LEFT, Lane.RIGHT].pick_random()
-	var count := randi_range(1, 2) # max 2 at once to not overwhelm player (beetle is 1st enemy after all)
+	var count := randi_range(1, 3) # max 3 at once to not overwhelm player (beetle is 1st enemy after all)
 	
 	for i in count:
 		spawn_beetle(lane)
@@ -206,6 +231,13 @@ func update_timer_ui():
 	var remaining : float = max_duration - elapsed
 	progress_bar.value = remaining
 	timer_label.text = "%.1fs" % max(remaining, 0.0)
+
+# Updates health UI element
+func update_health():
+	for i in range(health_container.get_child_count()):
+		var icon := health_container.get_child(i)
+		icon.visible = i < max_hits
+		icon.modulate = Color("ffffffff") if i + 1 > hits_taken else Color(1.0, 1.0, 1.0, 0.094)
 
 # Hand reset method, including animation
 func _on_hand_anim_finished(anim_name: String):
