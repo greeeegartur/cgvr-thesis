@@ -50,17 +50,20 @@ func on_attack_hit():
 	attack_hit.emit()
 
 func _ready():
-	# Checking for damage number scene (must be added as export, otherwise won't load)
-	assert(damage_number_scene, "EnemyVisual: damage_number_scene not assigned!")
+	# Making visual visible (for some reason does not render otherwise)
+	top_level = true
+	visible = true
+	z_index = 1
+	
+	if not damage_number_scene:
+		push_warning("EnemyVisual: damage_number_scene not assigned")
 	anim.animation_finished.connect(on_anim_finished)
-
-	# Combat scene's process mode (pausing) for minigames
-	process_mode = Node.PROCESS_MODE_PAUSABLE
-
-# For combat scene, setting up UI
-func _enter_tree():
+	
 	hp_fill_max_width = hp_fill.size.x
 	def_fill_max_width = def_fill.size.x
+	
+	# Combat scene's process mode (pausing) for minigames
+	process_mode = Node.PROCESS_MODE_PAUSABLE
 
 # Unused for now
 func on_anim_finished(name: String):
@@ -90,10 +93,6 @@ func _move_to_home_position():
 		.set_ease(Tween.EASE_IN)
 	await tween.finished
 
-# Sets the home position in CombatManager
-func set_home_position():
-	home_position = global_position
-
 # Updates UI for enemy stats with helper functions
 func update_hp(current: float, max_hp):
 	var ratio = clamp(current / max_hp, 0.0, 1.0)
@@ -119,7 +118,7 @@ func play_damage_vfx(damage: float, is_critical: bool):
 
 # Light flash effect
 func _flash(is_critical: bool):
-	flash.modulate = crit_flash_color if is_critical else normal_flash_color
+	flash.color = crit_flash_color if is_critical else normal_flash_color
 	flash.visible = true
 	
 	var tween := create_tween()
@@ -176,3 +175,4 @@ func show_target_arrow():
 
 func hide_target_arrow():
 	target_arrow.visible = false
+	target_arrow_anim.play("RESET")

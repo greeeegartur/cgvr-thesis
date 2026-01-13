@@ -66,6 +66,7 @@ var MINIGAME_SCENES = {
 func _ready():
 	set_process_input(true)
 	await _setup_entities()
+	_start_combat()
 	# Combat scene's process mode (pausing) for minigames
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 
@@ -78,7 +79,7 @@ func _process(delta):
 		attack_time += delta
 
 # Sets up the player and enemy(s) battle data
-func _setup_entities():
+func _setup_entities() -> void:
 	# PLAYER SETUP
 	# Data
 	player = CombatEntity.new()
@@ -99,30 +100,31 @@ func _setup_entities():
 	# ENEMIES SETUP
 	var size = enemy_ids.size()
 	print("Size of array is: ", size)
-	for i in range(enemy_ids.size()):
+	for i in enemy_ids.size():
 		# Data
 		var entity := CombatEntity.new()
 		entity.load_from_enemy_id(enemy_ids[i])
 		add_child(entity)
 		enemies.append(entity)
-		print("Added enemy: ", entity.entity_name)
+		print(i, entity)
+		print(enemies[i].entity_name)
 		
 		# Visual
 		var visual := entity.visual_scene.instantiate()
-		get_parent().get_node("World").add_child(visual)
-		visual.global_position = enemy_positions[i].global_position
-		print("Enemy visual position:", visual.global_position)
-		visual.set_home_position()
+		get_parent().get_node("World").add_child.call_deferred(visual)
+		print("Position before moving: ", visual.position)
+		visual.global_position = enemy_positions[i].global_position # Moving to intended position
+		visual.home_position = visual.global_position # Setting as home position
+		print("Position after moving: ", visual.position)
 		enemy_visuals[entity] = visual # Adding to enemy_visuals
-		print("enemy_visuals size: ", enemy_visuals.size())
 		
 		# UI
-		visual._ready()
+		await visual.ready
 		visual.update_hp(entity.hp, entity.max_hp)
 		visual.update_defense(entity.defense, entity.defense_max)
 		visual.update_snapped(entity.snapped, entity.snapped_max)
-		
-	call_deferred("_start_combat")
+	
+	print("Enemy visuals loaded: ", enemy_visuals.size())
 	
 func _start_combat():
 	_player_turn()
@@ -412,6 +414,9 @@ func _play_enemy_attack_pattern(enemy: CombatEntity, enemy_visual: EnemyVisual, 
 	# Blocking, so setting up PlayerVisual for blocking
 	player_visual.set_input_enabled(true)
 	
+	# Start animation
+	await enemy_visual.play_attack(pattern.animation_name)
+	
 	# Connecting with enemy visual script emitters
 	enemy_visual.attack_started.connect(
 		# Marks start of the attacking animation for block timing
@@ -448,8 +453,7 @@ func _play_enemy_attack_pattern(enemy: CombatEntity, enemy_visual: EnemyVisual, 
 		CONNECT_ONE_SHOT
 		)
 	
-	enemy_visual.play_attack(pattern.animation_name)
-
+	await enemy_visual.attack_finished
 
 # Logic for applying an enemy attack's damage that takes the enemy's attack pattern for blocking into consideration
 func _apply_enemy_hit(enemy: CombatEntity, hit: Dictionary):
@@ -699,10 +703,14 @@ func cycle_target(dir: int):
 func _set_selected_enemy(enemy: CombatEntity):
 	# Hides all enemy arrows
 	for e in enemy_visuals.keys():
-		var visual = enemy_visuals[e]
-		if visual:
-			enemy_visuals[e].hide_target_arrow()
+		enemy_visuals[e].hide_target_arrow()
 	
-	# Shows only selected enemy arrow
+	# Shows only one selected enemy arrow
 	selected_enemy = enemy
 	enemy_visuals[enemy].show_target_arrow()
+	
+
+# Finalizing target selection after _set_selected_enemy (hiding enemy_visual's target arrow)
+func _confirm_target_selection():
+	if selected_enemy:
+		enemy_visuals[selected_enemy].hide_target_arrow()

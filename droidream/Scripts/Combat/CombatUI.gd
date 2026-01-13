@@ -86,6 +86,9 @@ func _select_attack_type(atype):
 func _confirm_target():
 	targeting = false
 	target_menu.visible = false
+	
+	# Hiding arrow on selection
+	manager._confirm_target_selection()
 
 	print("Player attacks enemy with type:",
 		CombatTypes.entity_type_to_string(selected_attack_type))

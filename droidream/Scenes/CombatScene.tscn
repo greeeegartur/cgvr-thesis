@@ -27,7 +27,7 @@ scale = Vector2(1.6243901, 1.035533)
 texture = ExtResource("2_dqj0d")
 
 [node name="PlayerVisual" parent="World" instance=ExtResource("4_b8x4h")]
-z_index = 1
+z_index = 3
 position = Vector2(96, 271)
 
 [node name="PlayerSprite" type="Sprite2D" parent="World"]
@@ -44,15 +44,15 @@ texture = ExtResource("4_memue")
 
 [node name="EnemyPosition1" type="Node2D" parent="World"]
 z_index = 1
-position = Vector2(352, 297)
+position = Vector2(363, 283)
 
 [node name="EnemyPosition2" type="Node2D" parent="World"]
 z_index = 1
-position = Vector2(452, 297)
+position = Vector2(463, 283)
 
 [node name="EnemyPosition3" type="Node2D" parent="World"]
 z_index = 1
-position = Vector2(552, 297)
+position = Vector2(563, 283)
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(320, 180)
