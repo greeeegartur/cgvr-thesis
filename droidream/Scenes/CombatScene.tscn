@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://b0as27ombq3yp"]
+[gd_scene load_steps=13 format=3 uid="uid://b0as27ombq3yp"]
 
 [ext_resource type="Script" uid="uid://b3u2bq3dgrvtu" path="res://Scripts/Combat/CombatManager.gd" id="1_2mqg5"]
 [ext_resource type="Script" uid="uid://dcdpqt4rgapox" path="res://Scripts/Combat/CombatUI.gd" id="1_memue"]
@@ -6,7 +6,6 @@
 [ext_resource type="Texture2D" uid="uid://dnuk5tccbude4" path="res://Graphics/Placeholders/Combat/PlayerIdle.png" id="3_eel7g"]
 [ext_resource type="PackedScene" uid="uid://wgkbwlbxucav" path="res://Scenes/Entities/PlayerVisual.tscn" id="4_b8x4h"]
 [ext_resource type="Texture2D" uid="uid://cij8c6ssb2cuk" path="res://Graphics/Placeholders/Combat/Enemy.png" id="4_memue"]
-[ext_resource type="Texture2D" uid="uid://dxbd5kdjuqyr5" path="res://Graphics/Placeholders/Combat/Combat Select.png" id="6_2p17o"]
 [ext_resource type="Script" uid="uid://dqcuun735xvqm" path="res://Scripts/Combat/CameraController.gd" id="7_b8x4h"]
 [ext_resource type="Texture2D" uid="uid://bhmce12ju8pk0" path="res://Graphics/Placeholders/Combat/flying_icon.png" id="8_clp52"]
 [ext_resource type="Texture2D" uid="uid://cphqftx2fqhmw" path="res://Graphics/Placeholders/Combat/ground_icon.png" id="9_b8x4h"]
@@ -28,6 +27,7 @@ scale = Vector2(1.6243901, 1.035533)
 texture = ExtResource("2_dqj0d")
 
 [node name="PlayerVisual" parent="World" instance=ExtResource("4_b8x4h")]
+z_index = 1
 position = Vector2(96, 271)
 
 [node name="PlayerSprite" type="Sprite2D" parent="World"]
@@ -43,13 +43,16 @@ scale = Vector2(1.8, 1.8)
 texture = ExtResource("4_memue")
 
 [node name="EnemyPosition1" type="Node2D" parent="World"]
-position = Vector2(552, 297)
+z_index = 1
+position = Vector2(352, 297)
 
 [node name="EnemyPosition2" type="Node2D" parent="World"]
+z_index = 1
 position = Vector2(452, 297)
 
 [node name="EnemyPosition3" type="Node2D" parent="World"]
-position = Vector2(352, 297)
+z_index = 1
+position = Vector2(552, 297)
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(320, 180)
@@ -102,10 +105,6 @@ offset_right = 1070.0
 offset_bottom = 690.0
 rotation = 1.5707964
 scale = Vector2(0.1, 0.1)
-
-[node name="EnemyButton" type="Button" parent="UI/TargetSelectMenu"]
-layout_mode = 2
-icon = ExtResource("6_2p17o")
 
 [node name="TypeTriangle" type="Control" parent="UI"]
 layout_mode = 3

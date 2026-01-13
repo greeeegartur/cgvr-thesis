@@ -12,17 +12,24 @@ class_name CombatManager
 
 # SCRIPT VARIABLES
 # TO-DO: change this to load on random depending on area
-@export var enemy_id = "enemy_beetle"
+@export var enemy_ids: Array[String] = ["enemy_beetle", "enemy_beetle"] # Can not exceed 3
 
 # Nodes to use for visual effects in the combat scene
 @onready var camera : CombatCamera = get_parent().get_node("Camera2D")
 @onready var tutorial_text: TutorialText = get_parent().get_node("UI/TutorialText")
 @onready var minigame_layer = get_parent().get_node("Minigames")
+@onready var enemy_positions := [
+	get_parent().get_node("World/EnemyPosition1"),
+	get_parent().get_node("World/EnemyPosition2"),
+	get_parent().get_node("World/EnemyPosition3")
+]
 
 # The player and enemy's starting values
 var player : CombatEntity
-var enemy : CombatEntity
+var enemies: Array[CombatEntity] = [] # Initially empty, TO-DO: make this load area-specific
 var turn = "player" # Player always starts first, this variable is a failsafe check condition in case turn logic goes wrong
+var selected_enemy : CombatEntity
+var target_index = 0
 
 # Signals for UI script to react
 signal player_turn_started 
@@ -42,7 +49,7 @@ var block_on_cooldown = false
 const BLOCK_COOLDOWN = 0.7
 
 # Entity visual scenes to load for animations and UI
-var enemy_visual : EnemyVisual
+var enemy_visuals: Dictionary = {} # Loads from CombatEntity and gives a dict of EnemyVisuals for enemies
 var player_visual : PlayerVisual
 
 # Minigame variables
@@ -58,8 +65,7 @@ var MINIGAME_SCENES = {
 # Prepares combat by loading entities (player and enemy(s)) and starting combat
 func _ready():
 	set_process_input(true)
-	_setup_entities()
-	_start_combat()
+	await _setup_entities()
 	# Combat scene's process mode (pausing) for minigames
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 
@@ -73,39 +79,50 @@ func _process(delta):
 
 # Sets up the player and enemy(s) battle data
 func _setup_entities():
-	# PLAYER
+	# PLAYER SETUP
+	# Data
 	player = CombatEntity.new()
 	player.load_from_player()
+	
+	# Visual
 	player_visual = get_parent().get_node("World/PlayerVisual")
 	player_visual.action_pressed.connect(_on_player_action_pressed)
 	add_child(player)
-	get_parent().get_node("World/PlayerSprite").texture = load("res://Graphics/Placeholders/Combat/PlayerIdle.png")
-	
 	player_visual.position = Vector2(96, 271)
 	player_visual.set_home_position()
 	
-	# Player UI setup
+	# UI
 	await player_visual.ready
 	player_visual.update_hp(player.hp, player.max_hp)
 	player_visual.update_defense(player.defense, player.defense)
 	
-	# ENEMY
-	enemy = CombatEntity.new()
-	enemy.load_from_enemy_id(enemy_id)
-	add_child(enemy)
-	enemy_visual = enemy.visual_scene.instantiate()
-	get_parent().add_child.call_deferred(enemy_visual)
-	
-	# Enemy UI setup
-	await enemy_visual.ready
-	enemy_visual.update_hp(enemy.hp, enemy.max_hp)
-	enemy_visual.update_defense(enemy.defense, enemy.defense_max)
-	enemy_visual.update_snapped(enemy.snapped, enemy.snapped_max)
-	
-	# TO-DO Adjust this automatically somehow (later will add multiple enemies at once so it can't just be set like so)
-	enemy_visual.position = Vector2(524, 272)
-	enemy_visual.set_home_position()
-	
+	# ENEMIES SETUP
+	var size = enemy_ids.size()
+	print("Size of array is: ", size)
+	for i in range(enemy_ids.size()):
+		# Data
+		var entity := CombatEntity.new()
+		entity.load_from_enemy_id(enemy_ids[i])
+		add_child(entity)
+		enemies.append(entity)
+		print("Added enemy: ", entity.entity_name)
+		
+		# Visual
+		var visual := entity.visual_scene.instantiate()
+		get_parent().get_node("World").add_child(visual)
+		visual.global_position = enemy_positions[i].global_position
+		print("Enemy visual position:", visual.global_position)
+		visual.set_home_position()
+		enemy_visuals[entity] = visual # Adding to enemy_visuals
+		print("enemy_visuals size: ", enemy_visuals.size())
+		
+		# UI
+		visual._ready()
+		visual.update_hp(entity.hp, entity.max_hp)
+		visual.update_defense(entity.defense, entity.defense_max)
+		visual.update_snapped(entity.snapped, entity.snapped_max)
+		
+	call_deferred("_start_combat")
 	
 func _start_combat():
 	_player_turn()
@@ -117,26 +134,38 @@ func _start_combat():
 func _player_turn():
 	turn = "player"
 	emit_signal("player_turn_started")
-	# TO-DO Show buttons in UI, use corresponding action function to progress turn
-	print("Player turn: choose ATTACK, ITEMS or RUN")
+	
+	# Targeting only alive enemies
+	var alive := _get_alive_enemies()
+	if alive.is_empty():
+		_end_combat(true)
+		return
+	
+	selected_enemy = alive[0]
+	print("Player turn: choose ATTACK or ITEMS")
 
-
+# Handles the enemies turn
 func _enemy_turn():
 	turn = "enemy"
 	emit_signal("enemy_turn_started")
-	print("Enemy attacks!")
-	# Shows block hint text for the player
-	tutorial_text.show_block_hint()
+	
+	# 1) Turn order is decided
+	var order := _get_enemy_turn_order()
+	# 2) Turns are executed
+	await _execute_enemy_turns(order)
+	# 3) If player survived, player turn
+	_player_turn()
 	
 	# TO-DO Enemy AI to identify possible moves
-	
-	last_block_press_time = -1.0
-	block_on_cooldown = false
-	
-	# Picks a random pattern of the current enemy
-	var pattern = enemy.attack_patterns.pick_random()
-	_play_enemy_attack_pattern(pattern)
-	# _enemy_attack() # For now – ideally I want enemy AIs to act in specific ways, not just attack all the time
+
+# Executes each individual enemy's turn based on the given order
+func _execute_enemy_turns(order: Array):
+	for enemy in order:
+		if player.hp <= 0:
+			return
+		
+		# Performs enemy attack
+		await _enemy_attack_single(enemy)
 
 func _end_combat(victory: bool):
 	# Freeze turn logic (not necessary anymore but keeping just in case)
@@ -146,13 +175,10 @@ func _end_combat(victory: bool):
 	combat_end.emit()
 
 	if victory:
-		# Player won, checks whether win is by kill or snaps
-		if enemy.hp <= 0:
-			print("Enemy defeated! Classic RPG victory.")
-			# TO-DO Give rewards, XP
-		else:
-			print("Enemy subdued via minigames! Victory without killing.")
-			# TO-DO Give rewards, XP
+		print("All enemies defeated or subdued.")
+		# TO-DO Give rewards, XP based on if enemy is defeated/subdued
+		# Defeated = more currency, less items + karma (makes enemies harder, will look into how)
+		# Subdued = more items, medium currency
 	else:
 		# Player lost
 		print("Player defeated! Game over.")
@@ -173,12 +199,20 @@ func player_attack(attack_type: CombatTypes.EntityType):
 		print("Enemy turn in player_attack.")
 		return
 	
+	# Extra check to see if there is a selected enemy
+	if not selected_enemy:
+		push_error("No selected enemy")
+		return
+	
+	# Setting player's attack position to target enemy (relative to enemy_visual position)
+	var enemy_visual = enemy_visuals[selected_enemy]
+	player_visual.attack_position = _get_player_attack_position(enemy_visual)
+	
 	# Camera settings
 	camera.follow(player_visual, 60)
 	
-	# Shows crit hint text for the player
+	# Shows crit hint text for the player + allows inputs for crit
 	tutorial_text.show_crit_hint()
-	
 	player_visual.set_input_enabled(true)
 	
 	# Communication with PlayerVisual to calculate hit damage (check for critical hits) and play attack animations
@@ -195,7 +229,7 @@ func player_attack(attack_type: CombatTypes.EntityType):
 			tutorial_text.hide_text()
 			
 			# Calculates the hit damage
-			_apply_player_attack_hit(attack_type),
+			_apply_player_attack_hit(selected_enemy, attack_type),
 		CONNECT_ONE_SHOT
 	)
 	
@@ -205,7 +239,7 @@ func player_attack(attack_type: CombatTypes.EntityType):
 			# Reseting camera
 			camera.stop_follow()
 			# Check if enemy defeated
-			if enemy.hp <= 0:
+			if _check_victory():
 				_end_combat(true) # 1. Classic RPG win: enemy defeated
 			else:
 				# Else switch turn to enemy
@@ -226,7 +260,11 @@ func _start_player_critical_window():
 	attack_timer_running = true
 
 # Processes the player hit damage by checking for critical hits and applying necessary damage to either HP or defense
-func _apply_player_attack_hit(attack_type):
+func _apply_player_attack_hit(enemy: CombatEntity, attack_type):
+	# Selected player target
+	var enemy_visual = enemy_visuals[enemy]
+	
+	# Only for enemies, so not necessary here
 	attack_timer_running = false
 	
 	var critical = (
@@ -257,7 +295,7 @@ func _apply_player_attack_hit(attack_type):
 		# Checks if defense has been broken, minigame entering condition
 		if enemy.defense <= 0:
 			print("Enemy defense broken! Triggering minigame now.")
-			_start_minigame(enemy.minigame_id)
+			_start_minigame(enemy)
 		# If player loses... minigame's damage logic
 		#	player.hp -= enemy.attack... in the future gear multiplier logic so player would take less damage
 		#	enemy.defense = random value between 0.2-0.35 times initial max defense
@@ -273,11 +311,14 @@ func _apply_player_attack_hit(attack_type):
 		print("Enemy takes %.2f HP damage → %.2f left, current defense is %.2f" % [damage, enemy.hp, enemy.defense])
 
 # Logic for starting enemy's minigame in combat
-func _start_minigame(minigame_id: String):
-	if not MINIGAME_SCENES.has(minigame_id):
-		push_error("Missing minigame: " + minigame_id)
+func _start_minigame(enemy: CombatEntity):
+	if not MINIGAME_SCENES.has(enemy.minigame_id):
+		push_error("Missing minigame: " + enemy.minigame_id)
 		return
-		
+	
+	# Enemy visual with necessary minigame data
+	var enemy_visual = enemy_visuals[enemy]
+	
 	in_minigame = true
 	
 	# Subduing visuals
@@ -285,11 +326,12 @@ func _start_minigame(minigame_id: String):
 	await player_visual.play_subdue()
 	
 	# Minigame scene instantiation
-	var minigame = MINIGAME_SCENES[minigame_id].instantiate()
+	var minigame = MINIGAME_SCENES[enemy.minigame_id].instantiate()
 	minigame.process_mode = Node.PROCESS_MODE_ALWAYS
 	get_parent().get_node("World").modulate.a = 0.6 # Minigame focus effect
 	minigame_layer.add_child(minigame)
 	
+	# Minigame on-screen position settings
 	minigame.set_anchors_preset(Control.PRESET_FULL_RECT)
 	minigame.size = get_viewport().size
 	minigame.position = Vector2.ZERO
@@ -303,17 +345,16 @@ func _start_minigame(minigame_id: String):
 			get_tree().paused = false # Process mode state already set in BaseMinigame.gd, but just in case
 			get_parent().process_mode = Node.PROCESS_MODE_INHERIT
 			in_minigame = false
-			on_minigame_complete(success)
+			on_minigame_complete(enemy, success)
 			get_parent().get_node("World").modulate.a = 1.0 # Back to normal
 			await player_visual.return_to_home()
 			_enemy_turn(),
 		CONNECT_ONE_SHOT
 	)
 	
-	await minigame.play()
-	
 	# Pausing all combat (turn) logic
 	get_tree().paused = true
+	await minigame.play()
 
 func _on_minigame_damage_taken(amount: float, pos: Vector2):
 	player.hp -= amount
@@ -323,7 +364,10 @@ func _on_minigame_damage_taken(amount: float, pos: Vector2):
 
 
 # Decides minigame outcome on minigame end
-func on_minigame_complete(success: bool):
+func on_minigame_complete(enemy: CombatEntity, success: bool):
+	# Getting enemy visual
+	var enemy_visual = enemy_visuals[enemy]
+	
 	if success:
 		var restore_ratio := randf_range(0.2, 0.35)
 		enemy.defense = enemy.defense_max * restore_ratio
@@ -332,7 +376,8 @@ func on_minigame_complete(success: bool):
 		enemy_visual.update_snapped(enemy.snapped, enemy.snapped_max)
 		print("Minigame success! Snapped: %d / %d" % [enemy.snapped, enemy.snapped_max])
 		if enemy.snapped >= enemy.snapped_max:
-			_end_combat(true)  # 2. Minigame win: enemy subdued 
+			if _check_victory():  # 2. Minigame win: enemy subdued
+				_end_combat(true)
 	else:
 		# Restore enemy's defense by a random amount from 20-35%
 		var restore_ratio := randf_range(0.2, 0.35)
@@ -342,20 +387,30 @@ func on_minigame_complete(success: bool):
 		# player.hp -= enemy.attack_power # TO-DO Make minigame specific and take into account defense
 		print("Minigame failed. Enemy defense restored to %.1f" % enemy.defense)
 
+# Performs a single enemy's attack pattern based on existing logic
+func _enemy_attack_single(enemy: CombatEntity):
+	var visual = enemy_visuals[enemy]
+	var pattern = enemy.attack_patterns.pick_random()
+	
+	# Setting attack position for enemy (relative to player)
+	visual.attack_position = _get_enemy_attack_position(visual)
+	
+	# Camera controls + tutorial text visible
+	camera.follow(visual, -60)
+	tutorial_text.show_block_hint()
+	await _play_enemy_attack_pattern(enemy, visual, pattern)
+	camera.stop_follow()
+
+
 # Plays the given enemy attack pattern during the enemy turn
-# TO-DO: make enemy-specific so a specific enemy performs the attack (when multiple enemies are added into combat)
-func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
-	print("Enemy uses attack pattern:", pattern.pattern_id)
+func _play_enemy_attack_pattern(enemy: CombatEntity, enemy_visual: EnemyVisual, pattern: EnemyAttackPattern):
+	print("Enemy uses attack pattern: ", pattern.pattern_id)
 	var hit_index := 0
 	
 	# Set current block window
 	current_block_window = pattern.hits[0].block_window
-	
 	# Blocking, so setting up PlayerVisual for blocking
 	player_visual.set_input_enabled(true)
-	
-	# Camera settings
-	camera.follow(enemy_visual, -60)
 	
 	# Connecting with enemy visual script emitters
 	enemy_visual.attack_started.connect(
@@ -375,7 +430,7 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 				tutorial_text.hide_text()
 				
 				# Works the attack's hitting logic, including the player's blocking window
-				_apply_enemy_hit(pattern.hits[hit_index])
+				_apply_enemy_hit(enemy, pattern.hits[hit_index])
 				hit_index += 1, # If the attack has multiple hits, it'll process all of them
 		CONNECT_ONE_SHOT
 		)
@@ -383,16 +438,13 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 	# Checks if combat has ended
 	enemy_visual.attack_finished.connect(
 		func():
-			# Camera reset
-			camera.stop_follow()
 			# DEBUG WHEN ATTACK HAS FINISHED
 			attack_timer_running = false
 			print("!!! DEBUG: attack finished at:", "%.3f" % attack_time)
 			
+			# Cancels next enemy turns if player loses before all enemy turns are over (loop is quicker)
 			if player.hp <= 0:
-				_end_combat(false)
-			else:
-				_player_turn(),
+				_end_combat(false),
 		CONNECT_ONE_SHOT
 		)
 	
@@ -400,7 +452,7 @@ func _play_enemy_attack_pattern(pattern: EnemyAttackPattern):
 
 
 # Logic for applying an enemy attack's damage that takes the enemy's attack pattern for blocking into consideration
-func _apply_enemy_hit(hit: Dictionary):
+func _apply_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	current_block_window = hit.block_window
 	print("!!! DEBUG: last block press time: ", last_block_press_time)
 	
@@ -409,12 +461,12 @@ func _apply_enemy_hit(hit: Dictionary):
 	# Block can happen during this timer, calculates the enemy's damage
 	get_tree().create_timer(window_duration).timeout.connect(
 		func():
-			_resolve_enemy_hit(hit),
+			_resolve_enemy_hit(enemy, hit),
 		CONNECT_ONE_SHOT
 	)
 
 # Finalises the enemy hit after player blocks during the enemy turn
-func _resolve_enemy_hit(hit: Dictionary):
+func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	var window_start = hit.block_window.x
 	var window_end = hit.block_window.y
 	
@@ -521,46 +573,46 @@ func _start_block_cooldown():
 	player_visual.set_block_cooldown(false)
 
 # LEGACY (not used): The enemy's attacking logic, doesn't take any parameters as the player is not affected by type attacks
-func _enemy_attack():
-	# If for some reason it is not the player's turn
-	if turn != "enemy":
-		print("Player turn in enemy_attack.")
-		return
-		
-	print("%s attacks!" % enemy.entity_name)
-	
-	# Enemy's initial attack power
-	var damage := enemy.attack_power
-	
-	# TO-DO Attack animation and timing here
-	
-	# TO-DO Blocking logic for the player during enemy attack animation
-	# This will be replaced with actual timing-based blocking like in Paper Mario
-	var player_blocked := false
-	
-	if player_blocked:
-		# Upon successful block, enemy damage is reduced by half
-		
-		# TO-DO Sprite animation here, right now block visual with cooldown of 1.5s
-		
-		
-		# Damage calculation, i.e if damage is an uneven number like 5, blocked damage will be 2 -> creates incentive to block
-		damage = floor(damage * 0.5)
-		print("Player BLOCKED! Damage reduced to %.1f." % damage)
-	else:
-		print("Player failed to block. Taking full damage of %1.f." % damage)
-	
-	player.hp -= damage
-	print("Player HP: %.1f" % player.hp)
-	print("")
-	
-	# Check if player has been defeated at the end of the turn
-	if player.hp <= 0:
-		_end_combat(false)
-		return
-
-	# Switch back to player's turn
-	_player_turn()
+#func _enemy_attack():
+	## If for some reason it is not the player's turn
+	#if turn != "enemy":
+		#print("Player turn in enemy_attack.")
+		#return
+		#
+	#print("%s attacks!" % enemy.entity_name)
+	#
+	## Enemy's initial attack power
+	#var damage := enemy.attack_power
+	#
+	## TO-DO Attack animation and timing here
+	#
+	## TO-DO Blocking logic for the player during enemy attack animation
+	## This will be replaced with actual timing-based blocking like in Paper Mario
+	#var player_blocked := false
+	#
+	#if player_blocked:
+		## Upon successful block, enemy damage is reduced by half
+		#
+		## TO-DO Sprite animation here, right now block visual with cooldown of 1.5s
+		#
+		#
+		## Damage calculation, i.e if damage is an uneven number like 5, blocked damage will be 2 -> creates incentive to block
+		#damage = floor(damage * 0.5)
+		#print("Player BLOCKED! Damage reduced to %.1f." % damage)
+	#else:
+		#print("Player failed to block. Taking full damage of %1.f." % damage)
+	#
+	#player.hp -= damage
+	#print("Player HP: %.1f" % player.hp)
+	#print("")
+	#
+	## Check if player has been defeated at the end of the turn
+	#if player.hp <= 0:
+		#_end_combat(false)
+		#return
+#
+	## Switch back to player's turn
+	#_player_turn()
 	
 
 # HELPER FUNCTIONS
@@ -579,8 +631,78 @@ func _get_type_multiplier(player_type: CombatTypes.EntityType, enemy_type: Comba
 	else:
 		return 1.0  # Normal damage multiplier
 
+# Filters from all existing enemies the ones that are not 1) defeated or 2) subdued
+func _get_alive_enemies() -> Array:
+	return enemies.filter(func(e):
+		return e.hp > 0 and e.snapped < e.snapped_max
+	)
+
+# Gets the enemy turn order at the start of enemy turn
+# This is decided by 1) which enemy has higher HP or (if some or all enemies have same HP) 2) by position to player
+func _get_enemy_turn_order() -> Array:
+	var alive := _get_alive_enemies()
+	
+	alive.sort_custom(func(a, b):
+		if a.hp != b.hp:
+			return a.hp > b.hp # Higher HP first
+			
+		# Distance
+		var va = enemy_visuals[a]
+		var vb = enemy_visuals[b]
+		return va.global_position.distance_to(player_visual.global_position) \
+			< vb.global_position.distance_to(player_visual.global_position)
+	)
+	
+	return alive
+
+# Checks if victory has been achieved by checking alive enemies list
+func _check_victory():
+	return _get_alive_enemies().is_empty()
+
 # Freezes the scene for a given parameter of time to show impact
 func freeze_frame(time = 0.05):
 	get_tree().paused = true
 	await get_tree().create_timer(time, true).timeout
 	get_tree().paused = false
+
+# Getter for enemy attack position relative to player_visual position
+func _get_enemy_attack_position(enemy_visual: EnemyVisual) -> Vector2:
+	return player_visual.global_position + Vector2(80, 0)
+
+# Getter for player attack position relative to enemy_visual position
+func _get_player_attack_position(enemy_visual: EnemyVisual) -> Vector2:
+	return enemy_visual.global_position + Vector2(-80, 0)
+
+# Starts attack target selection during player turn
+func start_target_selection():
+	# Only alive enemies can be targeted
+	var alive := _get_alive_enemies()
+	if alive.is_empty():
+		return
+	
+	# Targeting always starts at index 0 out of alive enemies
+	target_index = 0
+	_set_selected_enemy(alive[target_index])
+
+# Cycling method for UI enemy selection
+func cycle_target(dir: int):
+	# Only alive enemies can be targeted, double checking just in case
+	var alive := _get_alive_enemies()
+	if alive.is_empty():
+		return
+	
+	# Finds index for the selected enemy based on dir
+	target_index = wrapi(target_index + dir, 0, alive.size())
+	_set_selected_enemy(alive[target_index])
+
+# Setter for selected_enemy -> listens to UI and sets the currently selected enemy (and keeps it after selection is confirmed)
+func _set_selected_enemy(enemy: CombatEntity):
+	# Hides all enemy arrows
+	for e in enemy_visuals.keys():
+		var visual = enemy_visuals[e]
+		if visual:
+			enemy_visuals[e].hide_target_arrow()
+	
+	# Shows only selected enemy arrow
+	selected_enemy = enemy
+	enemy_visuals[enemy].show_target_arrow()

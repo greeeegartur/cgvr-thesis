@@ -21,6 +21,7 @@ var input_enabled = true
 # Position variables
 var home_position : Vector2 # The player's original position
 var attack_position : Vector2 # The position where the player's pattern will connect to the enemy sprite
+@export var move_speed := 400.0 # Pixels per second
 
 # HUD variables
 @onready var hp_fill := $PlayerHUD/HPBar/Fill
@@ -37,7 +38,7 @@ var hp_fill_max_width = 10.0
 var def_fill_max_width = 10.0
 
 func _ready():
-	home_position = global_position
+	set_home_position()
 	anim.animation_finished.connect(_on_anim_finished)
 	
 	hp_fill_max_width = hp_fill.size.x
@@ -53,7 +54,7 @@ func set_input_enabled(enabled):
 
 # Attack methods for critical hit timing
 func play_attack():
-	await _move_to_attack_position()
+	await _move_to_attack_position(attack_position)
 	attack_started.emit()
 	anim.play("player_attack")
 
@@ -61,18 +62,24 @@ func on_attack_hit():
 	attack_hit.emit()
 
 # Movement methods for connecting patterns using tweens (same methods just in reverse, identical to EnemyVisual)
-func _move_to_attack_position():
+func _move_to_attack_position(target: Vector2):
+	var dist = global_position.distance_to(target)
+	var duration = dist / move_speed # t = d/v
+	
 	anim.play("player_walk")
 	var tween := create_tween()
-	tween.tween_property(self, "global_position", attack_position, 1.5)\
+	tween.tween_property(self, "global_position", target, duration)\
 		.set_trans(Tween.TRANS_LINEAR)\
 		.set_ease(Tween.EASE_OUT)
 	await tween.finished
 
 func _move_to_home_position():
+	var dist = global_position.distance_to(home_position)
+	var duration = dist / move_speed # t = d/v
+	
 	anim.play("player_walk")
 	var tween := create_tween()
-	tween.tween_property(self, "global_position", home_position, 1.5)\
+	tween.tween_property(self, "global_position", home_position, duration)\
 		.set_trans(Tween.TRANS_LINEAR)\
 		.set_ease(Tween.EASE_IN)
 	await tween.finished
@@ -81,7 +88,6 @@ func _move_to_home_position():
 # Sets the home position in CombatManager
 func set_home_position():
 	home_position = global_position
-	attack_position = home_position + Vector2(365, 0)
 
 # Post-minigame return logic after subdue animation
 func return_to_home():

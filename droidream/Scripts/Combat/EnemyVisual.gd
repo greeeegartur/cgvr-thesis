@@ -15,6 +15,8 @@ signal attack_finished
 @onready var flash: ColorRect = $DamageFlash
 @onready var fx_root: Node2D = $DamageFX
 @export var damage_number_scene: PackedScene
+@onready var target_arrow := $TargetArrow
+@onready var target_arrow_anim := $TargetArrow/AnimationPlayer
 
 # HUD variables
 @onready var hp_fill = $EnemyHUD/HPBar/Fill
@@ -36,10 +38,11 @@ var def_fill_max_width = 10.0
 # Position variables
 var home_position : Vector2 # The enemy's original position
 var attack_position : Vector2 # The position where the enemy's pattern will connect to the (intended) player sprite
+@export var move_speed := 400.0 # Pixels per second
 
 # Enemy moves to position, attacks, returns back to original position
 func play_attack(animation_name: String):
-	await _move_to_attack_position()
+	await _move_to_attack_position(attack_position)
 	attack_started.emit()
 	anim.play(animation_name)
 
@@ -49,13 +52,15 @@ func on_attack_hit():
 func _ready():
 	# Checking for damage number scene (must be added as export, otherwise won't load)
 	assert(damage_number_scene, "EnemyVisual: damage_number_scene not assigned!")
-	attack_position = home_position + Vector2(-320, 0)
 	anim.animation_finished.connect(on_anim_finished)
-	
-	hp_fill_max_width = hp_fill.size.x
-	def_fill_max_width = def_fill.size.x
+
 	# Combat scene's process mode (pausing) for minigames
 	process_mode = Node.PROCESS_MODE_PAUSABLE
+
+# For combat scene, setting up UI
+func _enter_tree():
+	hp_fill_max_width = hp_fill.size.x
+	def_fill_max_width = def_fill.size.x
 
 # Unused for now
 func on_anim_finished(name: String):
@@ -65,16 +70,22 @@ func on_anim_finished(name: String):
 	attack_finished.emit()
 
 # Movement methods for connecting patterns using tweens (same methods just in reverse)
-func _move_to_attack_position():
+func _move_to_attack_position(target: Vector2):
+	var dist = global_position.distance_to(target)
+	var duration = dist / move_speed # t = d/v
+	
 	var tween := create_tween()
-	tween.tween_property(self, "global_position", attack_position, 1.5)\
+	tween.tween_property(self, "global_position", target, duration)\
 		.set_trans(Tween.TRANS_LINEAR)\
 		.set_ease(Tween.EASE_OUT)
 	await tween.finished
 
 func _move_to_home_position():
+	var dist = global_position.distance_to(home_position)
+	var duration = dist / move_speed # t = d/v
+	
 	var tween := create_tween()
-	tween.tween_property(self, "global_position", home_position, 1.5)\
+	tween.tween_property(self, "global_position", home_position, duration)\
 		.set_trans(Tween.TRANS_LINEAR)\
 		.set_ease(Tween.EASE_IN)
 	await tween.finished
@@ -82,7 +93,6 @@ func _move_to_home_position():
 # Sets the home position in CombatManager
 func set_home_position():
 	home_position = global_position
-	attack_position = home_position + Vector2(-320, 0)
 
 # Updates UI for enemy stats with helper functions
 func update_hp(current: float, max_hp):
@@ -99,7 +109,7 @@ func update_snapped(snapped: int, snapped_max: int):
 	for i in range(snapped_container.get_child_count()):
 		var icon := snapped_container.get_child(i)
 		icon.visible = i < snapped_max
-		icon.modulate = Color.WHITE if i < snapped else Color(1, 1, 1, 0.25)
+		icon.modulate = subdue_flash_color if i < snapped else Color("ffffffff")
 
 # Universal VFX methods for all enemies to use (using tweens) 
 func play_damage_vfx(damage: float, is_critical: bool):
@@ -140,6 +150,7 @@ func _spawn_damage_number(damage: float, is_critical: bool):
 	
 	var num = damage_number_scene.instantiate()
 	fx_root.add_child(num)
+	await num.ready
 	num.position = Vector2(randf_range(-3, 3), randf_range(-3, 3))
 	num.play(damage, is_critical)
 
@@ -157,3 +168,11 @@ func _flash_color(color: Color, duration = 0.15):
 	tween.finished.connect(func():
 		flash.visible = false
 	)
+
+# Target arrow UI elements
+func show_target_arrow():
+	target_arrow.visible = true
+	target_arrow_anim.play("idle")
+
+func hide_target_arrow():
+	target_arrow.visible = false

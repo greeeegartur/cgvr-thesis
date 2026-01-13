@@ -29,8 +29,9 @@ const TYPE_ADVANTAGE = {
 	}
 }
 
-# Always as the first option
-var selected_attack_type := CombatTypes.EntityType.GROUNDED
+# Selection variables
+var selected_attack_type := CombatTypes.EntityType.GROUNDED # Default first attack choice
+var targeting := false
 
 func _ready():
 	manager.player_turn_started.connect(_show_ui)
@@ -44,34 +45,52 @@ func _ready():
 	$UI/AttackTypeMenu/GroundedButton.pressed.connect(func(): _select_attack_type(CombatTypes.EntityType.GROUNDED))
 	$UI/AttackTypeMenu/FlyingButton.pressed.connect(func(): _select_attack_type(CombatTypes.EntityType.FLYING))
 	$UI/AttackTypeMenu/SpecialButton.pressed.connect(func(): _select_attack_type(CombatTypes.EntityType.SPECIAL))
-
-	$UI/TargetSelectMenu/EnemyButton.pressed.connect(_on_enemy_target_selected)
 	
 	for icon in icons.get_children():
 		icon.mouse_entered.connect(_on_mouse_entered.bind(icon))
 		icon.mouse_exited.connect(_on_mouse_exited)
 
+# Input handling for enemy visual selection
+func _unhandled_input(event):
+	if not targeting:
+		return
+
+	if event.is_action_pressed("ui_left"):
+		manager.cycle_target(-1)
+	elif event.is_action_pressed("ui_right"):
+		manager.cycle_target(1)
+	elif event.is_action_pressed("action"):
+		_confirm_target()
+
+# Shows attack menu
 func _on_attack_pressed():
 	main_menu.visible = false
 	attack_menu.visible = true
 
+# TO-DO: implement
 func _on_items_pressed():
 	print("Items not implemented yet")
 
 func _on_run_pressed():
 	print("Run not implemented yet")
 
+# Starts targeting in CombatManager (EnemyVisual has separate targeting)
 func _select_attack_type(atype):
 	selected_attack_type = atype
 	attack_menu.visible = false
 	target_menu.visible = true 
-
-func _on_enemy_target_selected():
-	target_menu.visible = false
-	print("Player attacks enemy with type: %s" % CombatTypes.entity_type_to_string(selected_attack_type))
-	manager.player_attack(selected_attack_type)
 	
-	# After attack animation return to main menu if player’s turn again
+	targeting = true
+	manager.start_target_selection()
+
+func _confirm_target():
+	targeting = false
+	target_menu.visible = false
+
+	print("Player attacks enemy with type:",
+		CombatTypes.entity_type_to_string(selected_attack_type))
+
+	manager.player_attack(selected_attack_type)
 
 # Functions for type triangle icons
 func _on_mouse_entered(icon : TextureRect):
