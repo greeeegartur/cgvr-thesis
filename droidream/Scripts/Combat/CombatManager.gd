@@ -11,6 +11,8 @@ extends Node
 class_name CombatManager
 
 # SCRIPT VARIABLES
+
+# Exported variables
 # TO-DO: change this to load on random depending on area
 @export var enemy_ids: Array[String] = ["enemy_beetle", "enemy_beetle"] # Can not exceed 3
 
@@ -18,6 +20,7 @@ class_name CombatManager
 @onready var camera : CombatCamera = get_parent().get_node("Camera2D")
 @onready var tutorial_text: TutorialText = get_parent().get_node("UI/TutorialText")
 @onready var minigame_layer = get_parent().get_node("Minigames")
+@onready var vfx: VFXCombatManager = get_parent().get_node("VFX/VFXCombatManager")
 @onready var enemy_positions := [
 	get_parent().get_node("World/EnemyPosition1"),
 	get_parent().get_node("World/EnemyPosition2"),
@@ -31,10 +34,11 @@ var turn = "player" # Player always starts first, this variable is a failsafe ch
 var selected_enemy : CombatEntity
 var target_index = 0
 
-# Signals for UI script to react
+# Signals for UI script to react + turn variables
 signal player_turn_started 
 signal enemy_turn_started
 signal combat_end
+var enemy_turn_active = false
 
 # Attack time trackers for player blocking and critical hits
 var attack_time = 0.0
@@ -54,10 +58,6 @@ var player_visual : PlayerVisual
 
 # Minigame variables
 var in_minigame = false # Default
-var MINIGAME_SCENES = {
-	"base": preload("res://Scenes/Minigames/BaseMinigame.tscn"), # Default, only for testing
-	"beetle_rush": preload("res://Scenes/Minigames/Beetle Rush/BeetleRush.tscn")
-}
 
 # COMBAT SETUP FUNCTIONS
 # These are functions that run before combat begins, i.e entity data and loading the first turn
@@ -66,9 +66,10 @@ var MINIGAME_SCENES = {
 func _ready():
 	set_process_input(true)
 	await _setup_entities()
-	_start_combat()
 	# Combat scene's process mode (pausing) for minigames
 	process_mode = Node.PROCESS_MODE_PAUSABLE
+	camera.process_mode = Node.PROCESS_MODE_ALWAYS
+	_start_combat()
 
 func _process(delta):
 	# Pauses combat logic
@@ -89,7 +90,7 @@ func _setup_entities() -> void:
 	player_visual = get_parent().get_node("World/PlayerVisual")
 	player_visual.action_pressed.connect(_on_player_action_pressed)
 	add_child(player)
-	player_visual.position = Vector2(96, 271)
+	player_visual.position = Vector2(96, 283)
 	player_visual.set_home_position()
 	
 	# UI
@@ -98,24 +99,18 @@ func _setup_entities() -> void:
 	player_visual.update_defense(player.defense, player.defense)
 	
 	# ENEMIES SETUP
-	var size = enemy_ids.size()
-	print("Size of array is: ", size)
 	for i in enemy_ids.size():
 		# Data
 		var entity := CombatEntity.new()
 		entity.load_from_enemy_id(enemy_ids[i])
 		add_child(entity)
 		enemies.append(entity)
-		print(i, entity)
-		print(enemies[i].entity_name)
 		
 		# Visual
 		var visual := entity.visual_scene.instantiate()
 		get_parent().get_node("World").add_child.call_deferred(visual)
-		print("Position before moving: ", visual.position)
 		visual.global_position = enemy_positions[i].global_position # Moving to intended position
 		visual.home_position = visual.global_position # Setting as home position
-		print("Position after moving: ", visual.position)
 		enemy_visuals[entity] = visual # Adding to enemy_visuals
 		
 		# UI
@@ -124,7 +119,6 @@ func _setup_entities() -> void:
 		visual.update_defense(entity.defense, entity.defense_max)
 		visual.update_snapped(entity.snapped, entity.snapped_max)
 	
-	print("Enemy visuals loaded: ", enemy_visuals.size())
 	
 func _start_combat():
 	_player_turn()
@@ -135,6 +129,7 @@ func _start_combat():
 # Handles the player's turn
 func _player_turn():
 	turn = "player"
+	camera.stop_follow() # Reseting from previous enemy turn (or defaulting it)
 	emit_signal("player_turn_started")
 	
 	# Targeting only alive enemies
@@ -148,7 +143,13 @@ func _player_turn():
 
 # Handles the enemies turn
 func _enemy_turn():
+	# Prevents stacking turns, because this is called from multiple places
+	if enemy_turn_active:
+		return
+	
+	enemy_turn_active = true
 	turn = "enemy"
+	_set_camera_for_turn() # Setting camera for enemy turn
 	emit_signal("enemy_turn_started")
 	
 	# 1) Turn order is decided
@@ -156,6 +157,7 @@ func _enemy_turn():
 	# 2) Turns are executed
 	await _execute_enemy_turns(order)
 	# 3) If player survived, player turn
+	enemy_turn_active = false
 	_player_turn()
 	
 	# TO-DO Enemy AI to identify possible moves
@@ -238,8 +240,6 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	# End of the turn
 	player_visual.attack_finished.connect(
 		func():
-			# Reseting camera
-			camera.stop_follow()
 			# Check if enemy defeated
 			if _check_victory():
 				_end_combat(true) # 1. Classic RPG win: enemy defeated
@@ -249,7 +249,7 @@ func player_attack(attack_type: CombatTypes.EntityType):
 		CONNECT_ONE_SHOT
 	)
 	
-	player_visual.play_attack()
+	await player_visual.play_attack()
 	
 	# Empty print for visual clarity in terminal while debugging
 	print("")
@@ -287,10 +287,14 @@ func _apply_player_attack_hit(enemy: CombatEntity, attack_type):
 	# Reduce enemy defense if attacking type > defending type
 	if enemy.defense > 0 and type_multiplier > 1.0:
 		print("Effective type!")
+		# Damage calculation for effective type
 		var defense_damage = player.attack_power * type_multiplier * critical_multiplier
 		enemy.defense -= defense_damage
+		
+		# Visual effects
 		enemy_visual.update_defense(enemy.defense, enemy.defense_max)
-		enemy_visual.play_damage_vfx(defense_damage, critical)
+		enemy_visual.shake(critical) # Shake
+		vfx.play_damage_vfx(enemy_visual, defense_damage, critical) # Damage number, particles
 		camera.shake(3.0, 0.1)
 		print("Enemy defense reduced by %.2f → %.2f now" % [defense_damage, enemy.defense])
 		
@@ -304,17 +308,22 @@ func _apply_player_attack_hit(enemy: CombatEntity, attack_type):
 		# else if player wins, increase enemy's snapped value
 		#	if enemy's snapped == their max_snapped, then end combat
 	else:
-		# Regular damage to HP if attacking type !> enemy type
+		# Regular damage to HP if not effective type
 		var defense_factor = float(enemy.defense) / enemy.defense_max if enemy.defense_max > 0 else 0 # Calculates a defense multiplier (how much damage is negated) based on current defense
 		var damage = player.attack_power * type_multiplier * critical_multiplier * (1.0 - defense_factor)
 		enemy.hp -= damage
+		
+		# Visual effects
 		enemy_visual.update_hp(enemy.hp, enemy.max_hp)
-		enemy_visual.play_damage_vfx(damage, critical)
+		vfx.play_damage_vfx(enemy_visual, damage, critical)
+		
+		# Checking if enemy has been defeated
+		_resolve_enemy_state(selected_enemy)
 		print("Enemy takes %.2f HP damage → %.2f left, current defense is %.2f" % [damage, enemy.hp, enemy.defense])
 
 # Logic for starting enemy's minigame in combat
 func _start_minigame(enemy: CombatEntity):
-	if not MINIGAME_SCENES.has(enemy.minigame_id):
+	if not EnemyDatabase.MINIGAME_SCENES.has(enemy.minigame_id):
 		push_error("Missing minigame: " + enemy.minigame_id)
 		return
 	
@@ -324,13 +333,13 @@ func _start_minigame(enemy: CombatEntity):
 	in_minigame = true
 	
 	# Subduing visuals
-	enemy_visual.play_subdue_vfx()
+	vfx.play_subdue(enemy_visual)
 	await player_visual.play_subdue()
 	
 	# Minigame scene instantiation
-	var minigame = MINIGAME_SCENES[enemy.minigame_id].instantiate()
+	var minigame = EnemyDatabase.MINIGAME_SCENES[enemy.minigame_id].instantiate()
 	minigame.process_mode = Node.PROCESS_MODE_ALWAYS
-	get_parent().get_node("World").modulate.a = 0.6 # Minigame focus effect
+	_world_gray_out(true) # BG grays out as minigame appears
 	minigame_layer.add_child(minigame)
 	
 	# Minigame on-screen position settings
@@ -348,22 +357,27 @@ func _start_minigame(enemy: CombatEntity):
 			get_parent().process_mode = Node.PROCESS_MODE_INHERIT
 			in_minigame = false
 			on_minigame_complete(enemy, success)
-			get_parent().get_node("World").modulate.a = 1.0 # Back to normal
+			
+			# Check for enemy defeat
+			_resolve_enemy_state(enemy)
+			
+			# Visual reset
+			_world_gray_out(false) # Back to normal focus
 			await player_visual.return_to_home()
+			
+			# Enemy turn
 			_enemy_turn(),
 		CONNECT_ONE_SHOT
 	)
 	
 	# Pausing all combat (turn) logic
-	get_tree().paused = true
+	in_minigame = true
 	await minigame.play()
 
+# Connects BaseMinigame signal to give player damage based on minigame
 func _on_minigame_damage_taken(amount: float, pos: Vector2):
 	player.hp -= amount
-	player_visual.play_damage_number(amount)
-	freeze_frame(0.08)
-	camera.shake(1.0, 0.15)
-
+	player_visual.update_hp(player.hp, player.max_hp)
 
 # Decides minigame outcome on minigame end
 func on_minigame_complete(enemy: CombatEntity, success: bool):
@@ -385,14 +399,14 @@ func on_minigame_complete(enemy: CombatEntity, success: bool):
 		var restore_ratio := randf_range(0.2, 0.35)
 		enemy.defense = enemy.defense_max * restore_ratio
 		enemy_visual.update_defense(enemy.defense, enemy.defense_max)
-		# Also deal damage to player
-		# player.hp -= enemy.attack_power # TO-DO Make minigame specific and take into account defense
 		print("Minigame failed. Enemy defense restored to %.1f" % enemy.defense)
 
 # Performs a single enemy's attack pattern based on existing logic
 func _enemy_attack_single(enemy: CombatEntity):
+	# Setting enemy attack
 	var visual = enemy_visuals[enemy]
-	var pattern = enemy.attack_patterns.pick_random()
+	visual.z_index = 3
+	var pattern = enemy.attack_patterns.pick_random() # Picks random attack pattern assigned to the enemy
 	
 	# Setting attack position for enemy (relative to player)
 	visual.attack_position = _get_enemy_attack_position(visual)
@@ -401,21 +415,20 @@ func _enemy_attack_single(enemy: CombatEntity):
 	camera.follow(visual, -60)
 	tutorial_text.show_block_hint()
 	await _play_enemy_attack_pattern(enemy, visual, pattern)
-	camera.stop_follow()
 
 
 # Plays the given enemy attack pattern during the enemy turn
 func _play_enemy_attack_pattern(enemy: CombatEntity, enemy_visual: EnemyVisual, pattern: EnemyAttackPattern):
 	print("Enemy uses attack pattern: ", pattern.pattern_id)
+	
+	# Reseting block + setting hit index for block window timing
+	_reset_enemy_attack_timing()
 	var hit_index := 0
 	
 	# Set current block window
 	current_block_window = pattern.hits[0].block_window
-	# Blocking, so setting up PlayerVisual for blocking
+	# Setting up PlayerVisual for blocking
 	player_visual.set_input_enabled(true)
-	
-	# Start animation
-	await enemy_visual.play_attack(pattern.animation_name)
 	
 	# Connecting with enemy visual script emitters
 	enemy_visual.attack_started.connect(
@@ -447,13 +460,19 @@ func _play_enemy_attack_pattern(enemy: CombatEntity, enemy_visual: EnemyVisual, 
 			attack_timer_running = false
 			print("!!! DEBUG: attack finished at:", "%.3f" % attack_time)
 			
+			# Reset visual layering for player attack
+			enemy_visual.z_index = 1
+			
 			# Cancels next enemy turns if player loses before all enemy turns are over (loop is quicker)
 			if player.hp <= 0:
 				_end_combat(false),
 		CONNECT_ONE_SHOT
 		)
 	
+	# Start animation
+	enemy_visual.play_attack(pattern.animation_name)
 	await enemy_visual.attack_finished
+	_resolve_enemy_state(enemy)
 
 # Logic for applying an enemy attack's damage that takes the enemy's attack pattern for blocking into consideration
 func _apply_enemy_hit(enemy: CombatEntity, hit: Dictionary):
@@ -463,7 +482,7 @@ func _apply_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	# Attack pattern duration and timer, listens to _on_player_block_atempted here to check for block and calculates damage after
 	var window_duration = hit.block_window.y - hit.block_window.x
 	# Block can happen during this timer, calculates the enemy's damage
-	get_tree().create_timer(window_duration).timeout.connect(
+	get_tree().create_timer(window_duration, true, false).timeout.connect(
 		func():
 			_resolve_enemy_hit(enemy, hit),
 		CONNECT_ONE_SHOT
@@ -499,10 +518,13 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	print("Damage is: ", damage)
 
 	player.hp -= damage
+	
+	# Visual effects
 	player_visual.update_hp(player.hp, player.max_hp)
-	player_visual.play_damage_number(damage)
+	vfx.play_damage_vfx(player_visual, damage, false)
 	print("Player takes %.1f damage → HP %.1f" % [damage, player.hp])
 	
+	# Reseting block press time for next enemy attack patterns
 	last_block_press_time = -1.0
 
 
@@ -663,19 +685,26 @@ func _get_enemy_turn_order() -> Array:
 func _check_victory():
 	return _get_alive_enemies().is_empty()
 
+# Resets enemy attack timing during start of _play_enemy_attack_pattern (to ensure correct block timing)
+func _reset_enemy_attack_timing():
+	attack_time = 0.0
+	attack_timer_running = false
+	last_block_press_time = -1.0
+	block_on_cooldown = false
+
 # Freezes the scene for a given parameter of time to show impact
 func freeze_frame(time = 0.05):
-	get_tree().paused = true
+	Engine.time_scale = 0.5
 	await get_tree().create_timer(time, true).timeout
-	get_tree().paused = false
+	Engine.time_scale = 1.0
 
 # Getter for enemy attack position relative to player_visual position
 func _get_enemy_attack_position(enemy_visual: EnemyVisual) -> Vector2:
-	return player_visual.global_position + Vector2(80, 0)
+	return player_visual.global_position + Vector2(90, 0) # for Beetle right now
 
 # Getter for player attack position relative to enemy_visual position
 func _get_player_attack_position(enemy_visual: EnemyVisual) -> Vector2:
-	return enemy_visual.global_position + Vector2(-80, 0)
+	return enemy_visual.global_position + Vector2(-50, 0)
 
 # Starts attack target selection during player turn
 func start_target_selection():
@@ -695,6 +724,11 @@ func cycle_target(dir: int):
 	if alive.is_empty():
 		return
 	
+	# Checks for enemy cycling limits (if only one enemy exists then it doesn't reset animation
+	var new_index = wrapi(target_index + dir, 0, alive.size())
+	if new_index == target_index:
+		return
+	
 	# Finds index for the selected enemy based on dir
 	target_index = wrapi(target_index + dir, 0, alive.size())
 	_set_selected_enemy(alive[target_index])
@@ -708,9 +742,41 @@ func _set_selected_enemy(enemy: CombatEntity):
 	# Shows only one selected enemy arrow
 	selected_enemy = enemy
 	enemy_visuals[enemy].show_target_arrow()
-	
 
 # Finalizing target selection after _set_selected_enemy (hiding enemy_visual's target arrow)
 func _confirm_target_selection():
 	if selected_enemy:
 		enemy_visuals[selected_enemy].hide_target_arrow()
+
+# Decides if an enemy has been defeated by minigame or not
+func _resolve_enemy_state(enemy: CombatEntity):
+	var visual = enemy_visuals[enemy]
+
+	if enemy.hp <= 0:
+		await visual.play_defeat(false)
+	elif enemy.snapped >= enemy.snapped_max:
+		await visual.play_defeat(true)
+
+# Sets camera follow state for the turn with the turn variable
+func _set_camera_for_turn():
+	if turn == "player":
+		camera.follow(player_visual)
+	elif turn == "enemy":
+		var alive := _get_alive_enemies()
+		if alive.is_empty():
+			camera.follow(player_visual)
+		else:
+			camera.follow(enemy_visuals[alive[0]])
+
+# ANIMATION/FX METHODS
+# Smooth tween BG animation for minigame enter/exiting 
+func _world_gray_out(gray_out: bool):
+	var world_node = get_parent().get_node("World")
+	if gray_out:
+		var tween := create_tween()
+		tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		tween.tween_property(world_node, "modulate:a", 0.6, 0.6)
+	else:
+		var tween := create_tween()
+		tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		tween.tween_property(world_node, "modulate:a", 1.0, 0.6)

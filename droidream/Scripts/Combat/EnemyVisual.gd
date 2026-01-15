@@ -12,10 +12,10 @@ signal attack_finished
 @onready var anim := $AnimationPlayer
 @onready var visual: Node2D = $Visual
 @onready var hud := $EnemyHUD
-@onready var flash: ColorRect = $DamageFlash
 @onready var fx_root: Node2D = $DamageFX
-@export var damage_number_scene: PackedScene
+@export var explosion_fx_scene: PackedScene
 @onready var target_arrow := $TargetArrow
+@onready var hit_anchor := $HitAnchor
 @onready var target_arrow_anim := $TargetArrow/AnimationPlayer
 
 # HUD variables
@@ -28,23 +28,26 @@ signal attack_finished
 var hp_fill_max_width = 10.0
 var def_fill_max_width = 10.0
 
-# VFX variables, will change these in the future
-@export var normal_flash_color = Color(0.904, 0.135, 0.214, 1.0)
-@export var crit_flash_color = Color(1.0, 0.949, 0.2, 1.0)
-@export var subdue_flash_color = Color(0.602, 0.181, 0.64, 1.0)
-@export var shake_strength = 1.0
-@export var crit_shake_strength = 3.0
+# Shake variables
+@export var shake_strength = 2.0
+@export var crit_shake_strength = 4.0
 
-# Position variables
+# Position variables + defeated check
 var home_position : Vector2 # The enemy's original position
 var attack_position : Vector2 # The position where the enemy's pattern will connect to the (intended) player sprite
-@export var move_speed := 400.0 # Pixels per second
+@export var move_speed := 260.0 # Pixels per second, TO-DO: make adjustable for different enemies
+var is_defeated := false # Checks if visual can play any other animations
 
 # Enemy moves to position, attacks, returns back to original position
 func play_attack(animation_name: String):
 	await _move_to_attack_position(attack_position)
 	attack_started.emit()
 	anim.play(animation_name)
+
+# Plays from CombatManager to decide defeat animation
+func play_defeat(subdued: bool):
+	is_defeated = true
+	anim.play("subdue" if subdued else "death")
 
 func on_attack_hit():
 	attack_hit.emit()
@@ -55,8 +58,6 @@ func _ready():
 	visible = true
 	z_index = 1
 	
-	if not damage_number_scene:
-		push_warning("EnemyVisual: damage_number_scene not assigned")
 	anim.animation_finished.connect(on_anim_finished)
 	
 	hp_fill_max_width = hp_fill.size.x
@@ -65,9 +66,11 @@ func _ready():
 	# Combat scene's process mode (pausing) for minigames
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 
-# Unused for now
+# When animation has finished
 func on_anim_finished(name: String):
-	if name == "idle":
+	if is_defeated:
+		return
+	if name == "RESET":
 		return
 	await _move_to_home_position()
 	attack_finished.emit()
@@ -108,27 +111,10 @@ func update_snapped(snapped: int, snapped_max: int):
 	for i in range(snapped_container.get_child_count()):
 		var icon := snapped_container.get_child(i)
 		icon.visible = i < snapped_max
-		icon.modulate = subdue_flash_color if i < snapped else Color("ffffffff")
-
-# Universal VFX methods for all enemies to use (using tweens) 
-func play_damage_vfx(damage: float, is_critical: bool):
-	_flash(is_critical)
-	_shake(is_critical)
-	_spawn_damage_number(damage, is_critical)
-
-# Light flash effect
-func _flash(is_critical: bool):
-	flash.color = crit_flash_color if is_critical else normal_flash_color
-	flash.visible = true
-	
-	var tween := create_tween()
-	tween.tween_property(flash, "modulate:a", 0.0, 0.15)
-	tween.finished.connect(func():
-		flash.visible = false
-	)
+		icon.modulate = Color(0.632, 0.316, 0.781, 1.0) if i < snapped else Color("ffffffff")
 
 # Creates light position shake for enemy
-func _shake(is_critical: bool):
+func shake(is_critical: bool):
 	var strength = crit_shake_strength if is_critical else shake_strength
 	var original_pos = visual.position
 	
@@ -141,38 +127,15 @@ func _shake(is_critical: bool):
 	)
 	tween.tween_property(visual, "position", original_pos, 0.1)
 
-# Spawns a damage number from the DamageNumber scene and plays it based on given hit
-func _spawn_damage_number(damage: float, is_critical: bool):
-	# Failsafe check
-	if not damage_number_scene:
-		return
-	
-	var num = damage_number_scene.instantiate()
-	fx_root.add_child(num)
-	await num.ready
-	num.position = Vector2(randf_range(-3, 3), randf_range(-3, 3))
-	num.play(damage, is_critical)
-
-# Subduing VFX
-func play_subdue_vfx():
-	_flash_color(subdue_flash_color, 2.4)
-
-# Refactored _flash that accepts color and duration
-func _flash_color(color: Color, duration = 0.15):
-	flash.modulate = color
-	flash.visible = true
-	
-	var tween := create_tween()
-	tween.tween_property(flash, "modulate:a", 0.0, duration)
-	tween.finished.connect(func():
-		flash.visible = false
-	)
-
 # Target arrow UI elements
 func show_target_arrow():
+	if target_arrow.visible:
+		return
 	target_arrow.visible = true
 	target_arrow_anim.play("idle")
 
 func hide_target_arrow():
+	if is_defeated:
+		return
 	target_arrow.visible = false
 	target_arrow_anim.play("RESET")

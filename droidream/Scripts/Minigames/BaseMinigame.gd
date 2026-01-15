@@ -116,6 +116,26 @@ func _force_process_always(node: Node) -> void:
 	for child in node.get_children():
 		_force_process_always(child)
 
+# freeze_frame from CombatManager to go around combat scene limitations during minigame pause
+func hit_stop(time := 0.06, scale := 0.6):
+	Engine.time_scale = scale
+	await get_tree().create_timer(time, true).timeout
+	Engine.time_scale = 1.0
+
+# Creates light position shake for minigame node (from EnemyVisual)
+func shake_node(strength: float):
+	var original_pos = position
+	
+	# Tween that gets more powerful with stregnth modifier given by minigame
+	var tween := create_tween()
+	tween.tween_property(
+		self,
+		"position",
+		original_pos + Vector2(randf_range(strength * -8.0, strength * 8.0),
+		 randf_range(strength * -8.0, strength * 8.0)),
+		0.05
+	)
+	tween.tween_property(self, "position", original_pos, 0.1)
 
 # TEST MINIGAME
 #func _input(event):

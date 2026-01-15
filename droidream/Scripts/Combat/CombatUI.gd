@@ -50,7 +50,7 @@ func _ready():
 		icon.mouse_entered.connect(_on_mouse_entered.bind(icon))
 		icon.mouse_exited.connect(_on_mouse_exited)
 
-# Input handling for enemy visual selection
+# Input handling for enemy visual selection during player turn
 func _unhandled_input(event):
 	if not targeting:
 		return

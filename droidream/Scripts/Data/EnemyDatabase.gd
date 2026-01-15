@@ -21,6 +21,12 @@ var FOLDER = "res://Scripts/Data/Enemies/"
 # List of enemies that gets filled by Data folder resources
 var ENEMIES : Dictionary
 
+# List of all enemy minigames
+var MINIGAME_SCENES = {
+	"base": preload("res://Scenes/Minigames/BaseMinigame.tscn"), # Default, only for testing
+	"beetle_rush": preload("res://Scenes/Minigames/Beetle Rush/BeetleRush.tscn")
+}
+
 func _ready():
 	_load_enemy_resources()
 

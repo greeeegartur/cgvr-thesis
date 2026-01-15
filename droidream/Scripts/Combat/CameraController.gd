@@ -9,7 +9,7 @@ class_name CombatCamera
 
 # Camera movement variable
 @export var follow_speed := 3.0
-@export var x_offset := 70.0
+@export var x_offset := 60.0
 
 # Camera's position variables
 var default_position: Vector2
@@ -44,14 +44,18 @@ func follow(node: Node2D, offset := 0.0):
 	x_offset = offset
 	# Focuses on entity
 	var tween := create_tween()
-	tween.tween_property(self, "zoom", zoom_focus, 0.25)
+	tween.tween_property(self, "zoom", zoom_focus, 0.3)\
+		.set_trans(Tween.TRANS_LINEAR)\
+		.set_ease(Tween.EASE_IN)
 
 # Stops following entity
 func stop_follow():
 	follow_target = null
 	# Resets zoom
 	var tween := create_tween()
-	tween.tween_property(self, "zoom", zoom_normal, 0.25)
+	tween.tween_property(self, "zoom", zoom_normal, 0.3)\
+		.set_trans(Tween.TRANS_LINEAR)\
+		.set_ease(Tween.EASE_IN)
 
 
 # Camera shake for critical hits/powerful attacks
@@ -59,6 +63,7 @@ func shake(intensity := 6.0, time := 0.15):
 	override = true
 	
 	var tween := create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	tween.tween_method(
 		func(v):
 			offset = Vector2(randf_range(-v, v), randf_range(-v, v)),

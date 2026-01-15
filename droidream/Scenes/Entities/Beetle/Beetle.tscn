@@ -1,10 +1,10 @@
-[gd_scene load_steps=12 format=3 uid="uid://buy3a8wt3qe8f"]
+[gd_scene load_steps=14 format=3 uid="uid://buy3a8wt3qe8f"]
 
 [ext_resource type="Texture2D" uid="uid://dqqukw2jmv5vm" path="res://Scenes/Entities/Beetle/beetle.png" id="1_8bngv"]
 [ext_resource type="Script" uid="uid://cx4ejov60luxh" path="res://Scripts/Combat/EnemyVisual.gd" id="1_edmr7"]
-[ext_resource type="PackedScene" uid="uid://bjh0w31eegrg2" path="res://Scenes/VFX/DamageNumber.tscn" id="2_betge"]
 [ext_resource type="Texture2D" uid="uid://bf3wdxow78lp8" path="res://Graphics/Placeholders/Combat/snapped_empty.png" id="3_5xyne"]
 [ext_resource type="Texture2D" uid="uid://dxbd5kdjuqyr5" path="res://Graphics/Placeholders/Combat/Combat Select.png" id="5_m0kqe"]
+[ext_resource type="PackedScene" uid="uid://c7am76emgaqdv" path="res://Scenes/VFX/ExplosionFX.tscn" id="6_ex8ay"]
 
 [sub_resource type="Animation" id="Animation_ex8ay"]
 length = 0.001
@@ -70,6 +70,18 @@ _data = {
 
 [sub_resource type="Animation" id="Animation_5xyne"]
 length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("EnemyHUD:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
 
 [sub_resource type="Animation" id="Animation_edmr7"]
 resource_name = "beetle_tackle"
@@ -101,16 +113,73 @@ tracks/1/keys = {
 "values": [Vector2(0, 0), Vector2(33, 0), Vector2(33, 0), Vector2(-53, 0), Vector2(-53.5, 0), Vector2(0, 0)]
 }
 
+[sub_resource type="Animation" id="Animation_hei77"]
+resource_name = "death"
+length = 0.4
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("EnemyHUD:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.4),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Visual:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.4),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(0.9076336, 0.109008394, 0.13615158, 1), Color(1, 1, 1, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_0uxmy"]
+resource_name = "subdue"
+length = 0.4
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("EnemyHUD:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.4),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Visual:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.4),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0.39215687)]
+}
+
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_5wbek"]
 _data = {
 &"RESET": SubResource("Animation_5xyne"),
-&"beetle_tackle": SubResource("Animation_edmr7")
+&"beetle_tackle": SubResource("Animation_edmr7"),
+&"death": SubResource("Animation_hei77"),
+&"subdue": SubResource("Animation_0uxmy")
 }
 
 [node name="EnemyVisual" type="Node2D"]
 z_index = 1
 script = ExtResource("1_edmr7")
-damage_number_scene = ExtResource("2_betge")
 
 [node name="EnemyHUD" type="Control" parent="."]
 z_index = 1
@@ -208,6 +277,8 @@ z_index = 1
 scale = Vector2(1.5, 1.5)
 texture = ExtResource("1_8bngv")
 
+[node name="HitAnchor" type="Node2D" parent="."]
+
 [node name="TargetArrow" type="Node2D" parent="."]
 visible = false
 
@@ -228,11 +299,12 @@ libraries = {
 }
 
 [node name="DamageFX" type="Node2D" parent="."]
+z_index = 4
 position = Vector2(-20, -19)
 
-[node name="DamageFlash" type="ColorRect" parent="."]
-visible = false
-offset_left = -36.0
-offset_top = -19.0
-offset_right = 38.0
-offset_bottom = 21.0
+[node name="VFXLayer" type="Node2D" parent="."]
+z_index = 1
+
+[node name="ExplosionFx" parent="VFXLayer" instance=ExtResource("6_ex8ay")]
+
+[node name="1" type="Sprite2D" parent="VFXLayer"]

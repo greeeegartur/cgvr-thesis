@@ -1,10 +1,11 @@
-[gd_scene load_steps=12 format=3 uid="uid://dlpw77ahti2kx"]
+[gd_scene load_steps=14 format=3 uid="uid://cm2gkiwx4j0qh"]
 
 [ext_resource type="Script" uid="uid://cx4ejov60luxh" path="res://Scripts/Combat/EnemyVisual.gd" id="1_n88dy"]
+[ext_resource type="PackedScene" uid="uid://bjh0w31eegrg2" path="res://Scenes/VFX/DamageNumber.tscn" id="2_7l13l"]
 [ext_resource type="Texture2D" uid="uid://bf3wdxow78lp8" path="res://Graphics/Placeholders/Combat/snapped_empty.png" id="2_y02r4"]
 [ext_resource type="Texture2D" uid="uid://cij8c6ssb2cuk" path="res://Graphics/Placeholders/Combat/Enemy.png" id="3_7l13l"]
 [ext_resource type="Texture2D" uid="uid://dxbd5kdjuqyr5" path="res://Graphics/Placeholders/Combat/Combat Select.png" id="5_7l13l"]
-[ext_resource type="PackedScene" uid="uid://c7am76emgaqdv" path="res://Scenes/VFX/ExplosionFX.tscn" id="6_6ly4o"]
+[ext_resource type="PackedScene" uid="uid://b80ynv1ngxkwc" path="res://Scenes/VFX/ExplosionFX.tscn" id="6_6ly4o"]
 
 [sub_resource type="Animation" id="Animation_ex8ay"]
 length = 0.001
@@ -68,7 +69,7 @@ _data = {
 &"idle": SubResource("Animation_m0kqe")
 }
 
-[sub_resource type="Animation" id="Animation_6ly4o"]
+[sub_resource type="Animation" id="Animation_7l13l"]
 resource_name = "death"
 length = 0.4
 tracks/0/type = "value"
@@ -81,7 +82,7 @@ tracks/0/keys = {
 "times": PackedFloat32Array(0, 0.4),
 "transitions": PackedFloat32Array(1, 1),
 "update": 0,
-"values": [Color(0.9076336, 0.109008394, 0.13615158, 1), Color(1, 1, 1, 0)]
+"values": [Color(0.9098039, 0.12941177, 0.15686275, 0.9764706), Color(1, 1, 1, 0)]
 }
 tracks/1/type = "value"
 tracks/1/imported = false
@@ -94,6 +95,21 @@ tracks/1/keys = {
 "transitions": PackedFloat32Array(1, 1),
 "update": 0,
 "values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_6ly4o"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("..:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(0.9098039, 0.12941177, 0.15686275, 0.9764706)]
 }
 
 [sub_resource type="Animation" id="Animation_7naox"]
@@ -126,14 +142,15 @@ tracks/1/keys = {
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_ej3yk"]
 _data = {
-&"death": SubResource("Animation_6ly4o"),
+&"RESET": SubResource("Animation_6ly4o"),
+&"death": SubResource("Animation_7l13l"),
 &"subdue": SubResource("Animation_7naox")
 }
 
 [node name="EnemyVisual" type="Node2D"]
 z_index = 1
 script = ExtResource("1_n88dy")
-explosion_fx_scene = ExtResource("6_6ly4o")
+damage_number_scene = ExtResource("2_7l13l")
 
 [node name="EnemyHUD" type="Control" parent="."]
 z_index = 1
@@ -225,12 +242,11 @@ texture = ExtResource("2_y02r4")
 expand_mode = 3
 
 [node name="Visual" type="Node2D" parent="."]
+modulate = Color(0.9098039, 0.12941177, 0.15686275, 0.9764706)
 z_index = 1
 
 [node name="Sprite2D" type="Sprite2D" parent="Visual"]
 texture = ExtResource("3_7l13l")
-
-[node name="HitAnchor" type="Node2D" parent="."]
 
 [node name="TargetArrow" type="Node2D" parent="."]
 visible = false
@@ -253,7 +269,16 @@ libraries = {
 }
 
 [node name="DamageFX" type="Node2D" parent="."]
+z_index = 4
 position = Vector2(-19, -26)
+
+[node name="DamageFlash" type="ColorRect" parent="."]
+visible = false
+z_index = 4
+offset_left = -19.0
+offset_top = -26.0
+offset_right = 21.0
+offset_bottom = 14.0
 
 [node name="VFXLayer" type="Node2D" parent="."]
 z_index = 1

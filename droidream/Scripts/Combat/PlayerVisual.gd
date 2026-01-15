@@ -31,7 +31,6 @@ var attack_position : Vector2 # The position where the player's pattern will con
 
 # Damage FX variables
 @onready var fx_root: Node2D = $DamageFX
-@export var damage_number_scene: PackedScene
 
 
 var hp_fill_max_width = 10.0
@@ -151,13 +150,3 @@ func update_defense(current: float, max_def: float):
 	var ratio = clamp(current / max_def, 0.0, 1.0)
 	def_fill.size.x = def_fill_max_width * ratio
 	def_label.text = "%.1f / %.1f" % [current, max_def]
-
-# Reusing EnemyVisual.gd method, just never called with critical (player can't take critical hits)
-func play_damage_number(damage: float, is_critical = false):
-	if not damage_number_scene:
-		return
-	
-	var num = damage_number_scene.instantiate()
-	fx_root.add_child(num)
-	num.position = Vector2.ZERO
-	num.play(damage, is_critical)

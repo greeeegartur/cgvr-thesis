@@ -86,11 +86,11 @@ func _unhandled_input(event):
 	elif event.is_action_pressed("ui_right"):
 		try_flick_move("right")
 
-# Overriding base function for collision reading
+# Overriding base function for collision reading (player doesn't get hurt during tween animation)
 func play():
 	await animate_in()
-	# Setting duration of 5 seconds
-	set_duration(5.0)
+	# Setting duration of 7.5 seconds
+	set_duration(7.5)
 	collision_enabled = true
 	start()
 	spawn_loop()
@@ -182,6 +182,8 @@ func deal_damage():
 	# TO-DO: edit the DAMAGE amount when defense is considered in future
 	damage_taken.emit(DAMAGE, hand.global_position)
 	spawn_damage_number(DAMAGE)
+	hit_stop(0.1)
+	shake_node(hits_taken)
 	
 	update_health()
 	if hits_taken >= max_hits:
