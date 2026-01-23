@@ -18,6 +18,7 @@ class_name CombatManager
 
 # Nodes to use for visual effects in the combat scene
 @onready var camera : CombatCamera = get_parent().get_node("Camera2D")
+@onready var ui := get_parent().get_node("UI/CombatUI")
 @onready var tutorial_text: TutorialText = get_parent().get_node("UI/TutorialText")
 @onready var minigame_layer = get_parent().get_node("Minigames")
 @onready var vfx: VFXCombatManager = get_parent().get_node("VFX/VFXCombatManager")
@@ -38,7 +39,11 @@ var target_index = 0
 signal player_turn_started 
 signal enemy_turn_started
 signal combat_end
-var enemy_turn_active = false
+var enemy_turn_active := false
+var is_targeting := false # Check to see if targeting is allowed or not
+var selected_attack_type : CombatTypes.EntityType # Currently selected attack type in enemy targeting
+var turn_order_toggle_enabled := false # UI variable for turn showing enemy visual turn orders
+var locked_enemy_turn_order: Array
 
 # Attack time trackers for player blocking and critical hits
 var attack_time = 0.0
@@ -66,6 +71,7 @@ var in_minigame = false # Default
 func _ready():
 	set_process_input(true)
 	await _setup_entities()
+	_setup_ui()
 	# Combat scene's process mode (pausing) for minigames
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	camera.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -111,6 +117,8 @@ func _setup_entities() -> void:
 		get_parent().get_node("World").add_child.call_deferred(visual)
 		visual.global_position = enemy_positions[i].global_position # Moving to intended position
 		visual.home_position = visual.global_position # Setting as home position
+		visual.attack_offset = EnemyDatabase.get_attack_offset(enemy_ids[i]) # Setting offset for attack position
+		visual.move_speed = EnemyDatabase.get_move_speed(enemy_ids[i]) # Setting move speed for enemy during attacks
 		enemy_visuals[entity] = visual # Adding to enemy_visuals
 		
 		# UI
@@ -118,8 +126,22 @@ func _setup_entities() -> void:
 		visual.update_hp(entity.hp, entity.max_hp)
 		visual.update_defense(entity.defense, entity.defense_max)
 		visual.update_snapped(entity.snapped, entity.snapped_max)
+
+func _setup_ui():
+	ui.setup(self)
+	await ui.ready
 	
+	# PLAYER
+	# Player turn signals
+	ui.attack_selected.connect(_on_attack_selected)
+	ui.enemy_cycle.connect(cycle_target)
+	ui.enemy_confirm.connect(_confirm_target_selection)
+	ui.enemy_cancel.connect(_cancel_target_selection)
 	
+	# TOP UI
+	# Turn order button signal
+	ui.turn_order_toggled.connect(_on_turn_order_toggled)
+
 func _start_combat():
 	_player_turn()
 
@@ -129,8 +151,14 @@ func _start_combat():
 # Handles the player's turn
 func _player_turn():
 	turn = "player"
+	# Turn order button visbility settings
+	is_targeting = false
+	selected_enemy = null
+	locked_enemy_turn_order = _get_enemy_turn_order()
+	_update_enemy_turn_order_display()
+	
 	camera.stop_follow() # Reseting from previous enemy turn (or defaulting it)
-	emit_signal("player_turn_started")
+	player_turn_started.emit()
 	
 	# Targeting only alive enemies
 	var alive := _get_alive_enemies()
@@ -138,22 +166,23 @@ func _player_turn():
 		_end_combat(true)
 		return
 	
-	selected_enemy = alive[0]
 	print("Player turn: choose ATTACK or ITEMS")
 
 # Handles the enemies turn
 func _enemy_turn():
-	# Prevents stacking turns, because this is called from multiple places
+	# Turn order visuals settings
+	_clear_enemy_turn_order_visuals()
+	# Prevents stacking turns, because this method is called from multiple places
 	if enemy_turn_active:
 		return
 	
 	enemy_turn_active = true
 	turn = "enemy"
 	_set_camera_for_turn() # Setting camera for enemy turn
-	emit_signal("enemy_turn_started")
+	enemy_turn_started.emit()
 	
 	# 1) Turn order is decided
-	var order := _get_enemy_turn_order()
+	var order := locked_enemy_turn_order.duplicate()
 	# 2) Turns are executed
 	await _execute_enemy_turns(order)
 	# 3) If player survived, player turn
@@ -165,6 +194,9 @@ func _enemy_turn():
 # Executes each individual enemy's turn based on the given order
 func _execute_enemy_turns(order: Array):
 	for enemy in order:
+		# Skipping invalid enemies (turn order is locked during player turn)
+		if enemy.hp <= 0 or enemy.snapped >= enemy.snapped_max:
+			continue
 		if player.hp <= 0:
 			return
 		
@@ -276,9 +308,12 @@ func _apply_player_attack_hit(enemy: CombatEntity, attack_type):
 	
 	var critical_multiplier = 1.5 if critical else 1.0
 	if critical:
+		# VFX effects 
+		camera.pop_zoom()
+		vfx.play_vignette(vfx.get_vfx_color_from_string("crit"), 0.4)
 		# Freezing frame and shaking camera for good hit feel
-		camera.shake(7.0, 0.15)
-		freeze_frame(0.13)
+		camera.shake(10.0, 0.15)
+		freeze_frame(0.14)
 		print("CRITICAL HIT!")
 	
 	# Checks player's attack type against enemy's type
@@ -295,7 +330,7 @@ func _apply_player_attack_hit(enemy: CombatEntity, attack_type):
 		enemy_visual.update_defense(enemy.defense, enemy.defense_max)
 		enemy_visual.shake(critical) # Shake
 		vfx.play_damage_vfx(enemy_visual, defense_damage, critical) # Damage number, particles
-		camera.shake(3.0, 0.1)
+		camera.shake(7.0, 0.1)
 		print("Enemy defense reduced by %.2f → %.2f now" % [defense_damage, enemy.defense])
 		
 		# Checks if defense has been broken, minigame entering condition
@@ -378,6 +413,7 @@ func _start_minigame(enemy: CombatEntity):
 func _on_minigame_damage_taken(amount: float, pos: Vector2):
 	player.hp -= amount
 	player_visual.update_hp(player.hp, player.max_hp)
+	vfx.play_vignette(vfx.get_vfx_color_from_string("normal"))
 
 # Decides minigame outcome on minigame end
 func on_minigame_complete(enemy: CombatEntity, success: bool):
@@ -506,12 +542,14 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	if blocked:
 		damage *= 0.5
 		player_visual.play_block_success()
-		camera.shake(2.0, 0.15)
-		freeze_frame(0.09)
+		camera.shake(8.0, 0.15)
+		freeze_frame(0.11)
+		vfx.play_vignette(vfx.get_vfx_color_from_string("block"), 0.2)
 		print("Successful block!")
 	else:
 		player_visual.play_block_fail()
 		camera.shake(5.0, 0.12)
+		freeze_frame(0.08)
 		print("Failed block")
 
 	print("Player HP is: ", player.hp)
@@ -521,7 +559,7 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	
 	# Visual effects
 	player_visual.update_hp(player.hp, player.max_hp)
-	vfx.play_damage_vfx(player_visual, damage, false)
+	vfx.play_damage_vfx(player_visual, damage, false, blocked)
 	print("Player takes %.1f damage → HP %.1f" % [damage, player.hp])
 	
 	# Reseting block press time for next enemy attack patterns
@@ -700,14 +738,16 @@ func freeze_frame(time = 0.05):
 
 # Getter for enemy attack position relative to player_visual position
 func _get_enemy_attack_position(enemy_visual: EnemyVisual) -> Vector2:
-	return player_visual.global_position + Vector2(90, 0) # for Beetle right now
+	return player_visual.global_position + enemy_visual.attack_offset
 
 # Getter for player attack position relative to enemy_visual position
 func _get_player_attack_position(enemy_visual: EnemyVisual) -> Vector2:
-	return enemy_visual.global_position + Vector2(-50, 0)
+	return enemy_visual.global_position + Vector2(-50, 0) # for now
 
 # Starts attack target selection during player turn
 func start_target_selection():
+	is_targeting = true
+	_clear_enemy_turn_order_visuals()
 	# Only alive enemies can be targeted
 	var alive := _get_alive_enemies()
 	if alive.is_empty():
@@ -715,6 +755,7 @@ func start_target_selection():
 	
 	# Targeting always starts at index 0 out of alive enemies
 	target_index = 0
+	selected_enemy = alive[target_index]
 	_set_selected_enemy(alive[target_index])
 
 # Cycling method for UI enemy selection
@@ -743,10 +784,42 @@ func _set_selected_enemy(enemy: CombatEntity):
 	selected_enemy = enemy
 	enemy_visuals[enemy].show_target_arrow()
 
-# Finalizing target selection after _set_selected_enemy (hiding enemy_visual's target arrow)
+# Finalizing target selection after _set_selected_enemy (hiding enemy_visual's target arrow) and starting player attack
 func _confirm_target_selection():
+	is_targeting = false
 	if selected_enemy:
 		enemy_visuals[selected_enemy].hide_target_arrow()
+	_clear_enemy_turn_order_visuals()
+	player_attack(selected_attack_type) # Starting player attack
+
+# Selects an attack type and sets it during enemy selection
+func _on_attack_selected(attack_type: CombatTypes.EntityType):
+	if turn != "player":
+		return
+	if is_targeting:
+		return
+	
+	# Sets selected attack type as the selected one and hides player turn UI
+	selected_attack_type = attack_type
+	ui.hide_player_turn_ui()
+	
+	# Starts enemy targeting
+	start_target_selection()
+
+# Moves back from target selection to previous state (handled by PlayerTurnUI)
+func _cancel_target_selection():
+	if not is_targeting:
+		return
+	is_targeting = false
+	
+	# Hides all enemy arrows and defaults selected enemy and index
+	for v in enemy_visuals.values():
+		v.hide_target_arrow()
+	selected_enemy = null
+	target_index = 0
+	
+	_update_enemy_turn_order_display()
+	ui.show_player_turn_ui()
 
 # Decides if an enemy has been defeated by minigame or not
 func _resolve_enemy_state(enemy: CombatEntity):
@@ -759,16 +832,48 @@ func _resolve_enemy_state(enemy: CombatEntity):
 
 # Sets camera follow state for the turn with the turn variable
 func _set_camera_for_turn():
-	if turn == "player":
-		camera.follow(player_visual)
-	elif turn == "enemy":
+	if turn == "enemy":
 		var alive := _get_alive_enemies()
 		if alive.is_empty():
 			camera.follow(player_visual)
 		else:
 			camera.follow(enemy_visuals[alive[0]])
 
-# ANIMATION/FX METHODS
+# Reacts to CombatUI signal to turn on turn order UI elements by button
+func _on_turn_order_toggled(enabled: bool):
+	turn_order_toggle_enabled = enabled
+	_update_enemy_turn_order_display()
+
+# Updates turn order visibility based on combat situation
+func _update_enemy_turn_order_display():
+	# Clearing all current displays before applying new ones
+	for v in enemy_visuals.values():
+		v.hide_turn_order()
+	
+	# Constraints to limit turn order number visibility in specific circumstances
+	if not turn_order_toggle_enabled: # Obvious one being if the toggle is disabled
+		return
+	if turn != "player": # During enemy attacks
+		return
+	if is_targeting: # While targeting
+		return
+	
+	var index := 1
+	for enemy in locked_enemy_turn_order:
+		# Skips invalid enemies visually
+		if enemy.hp <= 0 or enemy.snapped >= enemy.snapped_max:
+			continue
+		
+		enemy_visuals[enemy].show_turn_order(index)
+		index += 1
+
+# Hides enemy turn order from visuals (to apply new turn order visuals at the start of player turn)
+func _clear_enemy_turn_order_visuals():
+	for v in enemy_visuals.values():
+		v.hide_turn_order()
+
+
+# ANIMATION METHODS
 # Smooth tween BG animation for minigame enter/exiting 
 func _world_gray_out(gray_out: bool):
 	var world_node = get_parent().get_node("World")

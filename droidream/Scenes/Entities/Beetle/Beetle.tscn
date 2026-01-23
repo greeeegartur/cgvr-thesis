@@ -3,8 +3,8 @@
 [ext_resource type="Texture2D" uid="uid://dqqukw2jmv5vm" path="res://Scenes/Entities/Beetle/beetle.png" id="1_8bngv"]
 [ext_resource type="Script" uid="uid://cx4ejov60luxh" path="res://Scripts/Combat/EnemyVisual.gd" id="1_edmr7"]
 [ext_resource type="Texture2D" uid="uid://bf3wdxow78lp8" path="res://Graphics/Placeholders/Combat/snapped_empty.png" id="3_5xyne"]
+[ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="5_ex8ay"]
 [ext_resource type="Texture2D" uid="uid://dxbd5kdjuqyr5" path="res://Graphics/Placeholders/Combat/Combat Select.png" id="5_m0kqe"]
-[ext_resource type="PackedScene" uid="uid://c7am76emgaqdv" path="res://Scenes/VFX/ExplosionFX.tscn" id="6_ex8ay"]
 
 [sub_resource type="Animation" id="Animation_ex8ay"]
 length = 0.001
@@ -277,8 +277,6 @@ z_index = 1
 scale = Vector2(1.5, 1.5)
 texture = ExtResource("1_8bngv")
 
-[node name="HitAnchor" type="Node2D" parent="."]
-
 [node name="TargetArrow" type="Node2D" parent="."]
 visible = false
 
@@ -298,13 +296,16 @@ libraries = {
 &"": SubResource("AnimationLibrary_5wbek")
 }
 
-[node name="DamageFX" type="Node2D" parent="."]
-z_index = 4
-position = Vector2(-20, -19)
-
-[node name="VFXLayer" type="Node2D" parent="."]
-z_index = 1
-
-[node name="ExplosionFx" parent="VFXLayer" instance=ExtResource("6_ex8ay")]
-
-[node name="1" type="Sprite2D" parent="VFXLayer"]
+[node name="TurnOrder" type="Label" parent="."]
+visible = false
+offset_left = 8.0
+offset_top = -78.0
+offset_right = 48.0
+offset_bottom = -53.0
+theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
+theme_override_constants/outline_size = 5
+theme_override_fonts/font = ExtResource("5_ex8ay")
+theme_override_font_sizes/font_size = 24
+text = "..."
+horizontal_alignment = 1
+vertical_alignment = 1

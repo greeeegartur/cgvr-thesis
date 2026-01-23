@@ -75,3 +75,9 @@ func shake(intensity := 6.0, time := 0.15):
 		offset = Vector2.ZERO
 		override = false
 	)
+
+# For critical hits
+func pop_zoom(amount := 0.1, duration := 0.12):
+	var tween := create_tween()
+	tween.tween_property(self, "zoom", zoom * (1.0 - amount), duration * 0.4)
+	tween.tween_property(self, "zoom", zoom, duration * 0.6)

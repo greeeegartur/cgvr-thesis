@@ -12,11 +12,9 @@ signal attack_finished
 @onready var anim := $AnimationPlayer
 @onready var visual: Node2D = $Visual
 @onready var hud := $EnemyHUD
-@onready var fx_root: Node2D = $DamageFX
-@export var explosion_fx_scene: PackedScene
 @onready var target_arrow := $TargetArrow
-@onready var hit_anchor := $HitAnchor
 @onready var target_arrow_anim := $TargetArrow/AnimationPlayer
+@onready var turn_order_label: Label = $TurnOrder
 
 # HUD variables
 @onready var hp_fill = $EnemyHUD/HPBar/Fill
@@ -29,13 +27,14 @@ var hp_fill_max_width = 10.0
 var def_fill_max_width = 10.0
 
 # Shake variables
-@export var shake_strength = 2.0
-@export var crit_shake_strength = 4.0
+@export var shake_strength = 3.0
+@export var crit_shake_strength = 6.0
 
 # Position variables + defeated check
 var home_position : Vector2 # The enemy's original position
 var attack_position : Vector2 # The position where the enemy's pattern will connect to the (intended) player sprite
-@export var move_speed := 260.0 # Pixels per second, TO-DO: make adjustable for different enemies
+var attack_offset := Vector2.ZERO # The attack position's offset for the enemy (different for every enemy)
+var move_speed := 0 # Pixels per second, different for every enemy
 var is_defeated := false # Checks if visual can play any other animations
 
 # Enemy moves to position, attacks, returns back to original position
@@ -139,3 +138,11 @@ func hide_target_arrow():
 		return
 	target_arrow.visible = false
 	target_arrow_anim.play("RESET")
+
+# Turn order UI elements
+func show_turn_order(n: int):
+	turn_order_label.text = str(n)
+	turn_order_label.visible = true
+
+func hide_turn_order():
+	turn_order_label.visible = false

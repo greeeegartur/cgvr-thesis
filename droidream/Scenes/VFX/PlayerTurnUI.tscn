@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3 uid="uid://6f0q2xbuuu16"]
+
+[ext_resource type="Script" uid="uid://d3goy7jibvf76" path="res://Scripts/Combat/PlayerTurnUI.gd" id="1_0fa56"]
+
+[node name="PlayerTurnUi" type="CanvasLayer"]
+script = ExtResource("1_0fa56")
+
+[node name="GearMenu" type="Node2D" parent="."]
+
+[node name="GearSprite" type="Sprite2D" parent="GearMenu"]
+
+[node name="Options" type="Node2D" parent="GearMenu"]
+
+[node name="Attack" type="Sprite2D" parent="GearMenu/Options"]
+
+[node name="Abilities" type="Sprite2D" parent="GearMenu/Options"]
+
+[node name="Items" type="Sprite2D" parent="GearMenu/Options"]
+
+[node name="AttackTypeMenu" type="Node" parent="."]
+
+[node name="Panel" type="Panel" parent="AttackTypeMenu"]
+anchors_preset = -1
+anchor_right = 0.23
+anchor_bottom = 0.57000005
+offset_left = 185.0
+offset_top = 148.0
+offset_right = 137.8
+offset_bottom = 22.799988
+
+[node name="VBox" type="VBoxContainer" parent="AttackTypeMenu/Panel"]
+layout_mode = 0
+offset_right = 100.0
+offset_bottom = 80.0
+
+[node name="FlyingOption" type="Node2D" parent="AttackTypeMenu/Panel/VBox"]
+
+[node name="Label" type="Label" parent="AttackTypeMenu/Panel/VBox/FlyingOption"]
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="Sprite2D" type="Sprite2D" parent="AttackTypeMenu/Panel/VBox/FlyingOption"]
+
+[node name="GroundedOption" type="Node2D" parent="AttackTypeMenu/Panel/VBox"]
+
+[node name="SpecialOption" type="Node2D" parent="AttackTypeMenu/Panel/VBox"]

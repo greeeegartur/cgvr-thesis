@@ -27,6 +27,14 @@ var MINIGAME_SCENES = {
 	"beetle_rush": preload("res://Scenes/Minigames/Beetle Rush/BeetleRush.tscn")
 }
 
+# List of all enemy specific attributes that don't fit into their resources
+const DATA = {
+	"enemy_beetle": {
+		"attack_offset": Vector2(90, 0),
+		"move_speed": 260.0,
+	}
+}
+
 func _ready():
 	_load_enemy_resources()
 
@@ -63,3 +71,9 @@ func get_enemy(id: String):
 		push_warning("Enemy ID not found: %s" % id)
 		return {}
 	return ENEMIES[id]
+
+func get_attack_offset(enemy_id: String) -> Vector2:
+	return DATA[enemy_id].attack_offset
+
+func get_move_speed(enemy_id: String) -> float:
+	return DATA[enemy_id].move_speed
