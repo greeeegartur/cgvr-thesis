@@ -19,6 +19,7 @@ class_name CombatManager
 # Nodes to use for visual effects in the combat scene
 @onready var camera : CombatCamera = get_parent().get_node("Camera2D")
 @onready var ui := get_parent().get_node("UI/CombatUI")
+@onready var player_turn_ui := get_parent().get_node("UI/CombatUI/PlayerTurnUi")
 @onready var tutorial_text: TutorialText = get_parent().get_node("UI/TutorialText")
 @onready var minigame_layer = get_parent().get_node("Minigames")
 @onready var vfx: VFXCombatManager = get_parent().get_node("VFX/VFXCombatManager")
@@ -129,18 +130,19 @@ func _setup_entities() -> void:
 
 func _setup_ui():
 	ui.setup(self)
-	await ui.ready
 	
 	# PLAYER
 	# Player turn signals
-	ui.attack_selected.connect(_on_attack_selected)
-	ui.enemy_cycle.connect(cycle_target)
-	ui.enemy_confirm.connect(_confirm_target_selection)
-	ui.enemy_cancel.connect(_cancel_target_selection)
+	player_turn_ui.attack_type_selected.connect(_on_attack_selected)
+	player_turn_ui.cycle_enemy.connect(cycle_target)
+	player_turn_ui.confirm_enemy.connect(_confirm_target_selection)
+	player_turn_ui.cancel_enemy.connect(_cancel_target_selection)
 	
 	# TOP UI
 	# Turn order button signal
 	ui.turn_order_toggled.connect(_on_turn_order_toggled)
+	
+	await ui.ready
 
 func _start_combat():
 	_player_turn()
@@ -157,7 +159,9 @@ func _player_turn():
 	locked_enemy_turn_order = _get_enemy_turn_order()
 	_update_enemy_turn_order_display()
 	
+	# Player turn base defaults + signal emit
 	camera.stop_follow() # Reseting from previous enemy turn (or defaulting it)
+	player_turn_ui.start_player_turn()
 	player_turn_started.emit()
 	
 	# Targeting only alive enemies
@@ -272,6 +276,7 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	# End of the turn
 	player_visual.attack_finished.connect(
 		func():
+			player_visual.set_input_enabled(false)
 			# Check if enemy defeated
 			if _check_victory():
 				_end_combat(true) # 1. Classic RPG win: enemy defeated
@@ -496,10 +501,11 @@ func _play_enemy_attack_pattern(enemy: CombatEntity, enemy_visual: EnemyVisual, 
 			attack_timer_running = false
 			print("!!! DEBUG: attack finished at:", "%.3f" % attack_time)
 			
-			# Reset visual layering for player attack
+			# Reset visual layering for player attack and setting input to false
 			enemy_visual.z_index = 1
+			player_visual.set_input_enabled(false)
 			
-			# Cancels next enemy turns if player loses before all enemy turns are over (loop is quicker)
+			# Cancels next enemy turns if player loses before all enemy turns are over
 			if player.hp <= 0:
 				_end_combat(false),
 		CONNECT_ONE_SHOT
@@ -565,29 +571,6 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	# Reseting block press time for next enemy attack patterns
 	last_block_press_time = -1.0
 
-
-# UNUSED, but keeping as reference
-# Logic for checking if the player has blocked an enemy attack, here "window" is the block_window parameter of an enemy (time frame when the block registers)
-# func _check_player_block(window: Vector2):
-	# Here:
-	# window.x = start time
-	# window.y = end time
-	
-# Block variables reset, block window opens
-	#block_success = false
-	#block_window_open = true
-#
-	## Waits until the window is open
-	#await get_tree().create_timer(window.x).timeout
-	#
-	## Block must happen between these two lines (_input must be triggered here)
-	#
-	## Close window after block window is finished
-	#await get_tree().create_timer(window.y - window.x).timeout
-	#block_window_open = false
-
-	# return block_success
-
 # Listens for player attack presses for critical hit logic
 func _on_player_attack_pressed():
 	# Failsafe to check if the function is running by accident
@@ -635,49 +618,6 @@ func _start_block_cooldown():
 	# After cooldown resets previous changes
 	block_on_cooldown = false
 	player_visual.set_block_cooldown(false)
-
-# LEGACY (not used): The enemy's attacking logic, doesn't take any parameters as the player is not affected by type attacks
-#func _enemy_attack():
-	## If for some reason it is not the player's turn
-	#if turn != "enemy":
-		#print("Player turn in enemy_attack.")
-		#return
-		#
-	#print("%s attacks!" % enemy.entity_name)
-	#
-	## Enemy's initial attack power
-	#var damage := enemy.attack_power
-	#
-	## TO-DO Attack animation and timing here
-	#
-	## TO-DO Blocking logic for the player during enemy attack animation
-	## This will be replaced with actual timing-based blocking like in Paper Mario
-	#var player_blocked := false
-	#
-	#if player_blocked:
-		## Upon successful block, enemy damage is reduced by half
-		#
-		## TO-DO Sprite animation here, right now block visual with cooldown of 1.5s
-		#
-		#
-		## Damage calculation, i.e if damage is an uneven number like 5, blocked damage will be 2 -> creates incentive to block
-		#damage = floor(damage * 0.5)
-		#print("Player BLOCKED! Damage reduced to %.1f." % damage)
-	#else:
-		#print("Player failed to block. Taking full damage of %1.f." % damage)
-	#
-	#player.hp -= damage
-	#print("Player HP: %.1f" % player.hp)
-	#print("")
-	#
-	## Check if player has been defeated at the end of the turn
-	#if player.hp <= 0:
-		#_end_combat(false)
-		#return
-#
-	## Switch back to player's turn
-	#_player_turn()
-	
 
 # HELPER FUNCTIONS
 # These functions help ACTION functions with calculations and more
@@ -786,10 +726,16 @@ func _set_selected_enemy(enemy: CombatEntity):
 
 # Finalizing target selection after _set_selected_enemy (hiding enemy_visual's target arrow) and starting player attack
 func _confirm_target_selection():
+	if not is_targeting:
+		return
 	is_targeting = false
 	if selected_enemy:
 		enemy_visuals[selected_enemy].hide_target_arrow()
 	_clear_enemy_turn_order_visuals()
+	
+	# Hiding player UI and locking input from it
+	player_turn_ui.hide_player_turn_ui()
+	player_turn_ui.lock_input()
 	player_attack(selected_attack_type) # Starting player attack
 
 # Selects an attack type and sets it during enemy selection
@@ -801,7 +747,6 @@ func _on_attack_selected(attack_type: CombatTypes.EntityType):
 	
 	# Sets selected attack type as the selected one and hides player turn UI
 	selected_attack_type = attack_type
-	ui.hide_player_turn_ui()
 	
 	# Starts enemy targeting
 	start_target_selection()
@@ -819,7 +764,7 @@ func _cancel_target_selection():
 	target_index = 0
 	
 	_update_enemy_turn_order_display()
-	ui.show_player_turn_ui()
+	player_turn_ui.cancel_enemy_selection()
 
 # Decides if an enemy has been defeated by minigame or not
 func _resolve_enemy_state(enemy: CombatEntity):

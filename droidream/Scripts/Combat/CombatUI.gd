@@ -13,12 +13,6 @@ extends Node
 
 # Signals
 signal turn_order_toggled(enabled: bool)
-# Forwarded signals from PlayerTurnUI
-signal attack_selected(type)
-signal enemy_cycle(dir)
-signal enemy_confirm
-signal enemy_cancel
-
 
 # Type triangle container logic
 const TYPE_ADVANTAGE = {
@@ -67,7 +61,7 @@ func _unhandled_input(event):
 		manager.cycle_target(-1)
 	elif event.is_action_pressed("ui_right"):
 		manager.cycle_target(1)
-	elif event.is_action_pressed("action"):
+	elif event.is_action_pressed("ui_accept"):
 		_confirm_target()
 
 # Starts targeting in CombatManager (EnemyVisual has separate targeting)

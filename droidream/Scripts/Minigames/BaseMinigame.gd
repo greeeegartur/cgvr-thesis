@@ -142,7 +142,7 @@ func shake_node(strength: float):
 	#if not running:
 		#return
 #
-	#if event.is_action_pressed("action"):
+	#if event.is_action_pressed("ui_accept"):
 		#if elapsed >= success_window.x and elapsed <= success_window.y:
 			#print("pressed - victory!")
 			#end(true)

@@ -98,7 +98,7 @@ func _unhandled_input(event):
 	if not input_enabled:
 		return
 	
-	if event.is_action_pressed("action"):
+	if event.is_action_pressed("ui_accept"):
 		action_pressed.emit()
 		# action_pressed emit here
 
