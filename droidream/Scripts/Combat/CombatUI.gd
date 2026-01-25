@@ -14,24 +14,8 @@ extends Node
 # Signals
 signal turn_order_toggled(enabled: bool)
 
-# Type triangle container logic
-const TYPE_ADVANTAGE = {
-	"Flying": {
-		"strong": "Grounded",
-		"weak": "Special"
-	},
-	"Grounded": {
-		"strong": "Special",
-		"weak": "Flying"
-	},
-	"Special": {
-		"strong": "Flying",
-		"weak": "Grounded"
-	}
-}
-
 # Selection variables
-var selected_attack_type := CombatTypes.EntityType.GROUNDED # Default first attack choice
+var selected_attack_type := CombatTypes.EntityType.SKY # Default first guess choice
 var targeting := false
 
 func _ready():
@@ -41,10 +25,6 @@ func _ready():
 		func(enabled):
 			emit_signal("turn_order_toggled", enabled)
 	)
-	
-	for icon in icons.get_children():
-		icon.mouse_entered.connect(_on_mouse_entered.bind(icon))
-		icon.mouse_exited.connect(_on_mouse_exited)
 
 # CombatManager's setup method
 func setup(combat_manager: CombatManager):
@@ -76,30 +56,10 @@ func _confirm_target():
 	
 	# Hiding arrow on selection
 	manager._confirm_target_selection()
-
 	print("Player attacks enemy with type:",
 		CombatTypes.entity_type_to_string(selected_attack_type))
 
 	manager.player_attack(selected_attack_type)
-
-# Functions for type triangle icons
-func _on_mouse_entered(icon : TextureRect):
-	var type = icon.get_meta("type")
-	var data = TYPE_ADVANTAGE[type]
-	
-	_clear_type_relations()
-	_highlight_arrow(type, data.strong, Color.LAWN_GREEN)
-
-func _on_mouse_exited():
-	_clear_type_relations()
-
-func _clear_type_relations():
-	for arrow in arrows.get_children():
-		arrow.modulate = arrow_default_color
-
-func _highlight_arrow(from_type, to_type, color):
-	var arrow_name = "%sTo%s" % [from_type, to_type]
-	arrows.get_node(arrow_name).modulate = color
 
 # When combat has ended
 func _combat_end():

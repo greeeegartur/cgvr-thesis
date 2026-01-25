@@ -8,6 +8,12 @@ extends CanvasLayer
 @onready var gear_options_root := $GearMenu/Options
 @onready var attack_panel := $AttackTypeMenu/Panel
 @onready var attack_list := $AttackTypeMenu/Panel/VBox
+@onready var abilities_panel := $AbilitiesMenu/Panel
+@onready var items_panel := $ItemsMenu/Panel
+# Count labels for tame UI
+@onready var sky_count = $AttackTypeMenu/Panel/VBox/SkyOption/Count
+@onready var earth_count = $AttackTypeMenu/Panel/VBox/EarthOption/Count
+@onready var water_count = $AttackTypeMenu/Panel/VBox/WaterOption/Count
 
 # Signals to use with CombatManager
 signal attack_type_selected(type)
@@ -20,6 +26,8 @@ enum State {
 	NONE,
 	OPTION_SELECT,
 	ATTACK_TYPE_SELECT,
+	ABILITIES_SELECT,
+	ITEMS_SELECT,
 	ENEMY_SELECT,
 	LOCKED
 }
@@ -35,24 +43,31 @@ var option_slots := [ # Intended option positions in scene
 	Vector2(44.615, -59.59), # Left
 	Vector2(-50.769, -59.59) # Right
 ]
-@export var gear_scale_in_scene = 0.75 # In scene intended scale
+var gear_scale_in_scene = 0.75 # In scene intended scale
 
 # Attack options and base index
 const ATTACK_OPTIONS := [
 	{
-		"id": CombatTypes.EntityType.FLYING,
-		"label": "Flying"
+		"id": CombatTypes.EntityType.SKY,
+		"label": "Sky"
 	},
 	{
-		"id": CombatTypes.EntityType.GROUNDED,
-		"label": "Grounded"
+		"id": CombatTypes.EntityType.EARTH,
+		"label": "Earth"
 	},
 	{
-		"id": CombatTypes.EntityType.SPECIAL,
-		"label": "Special"
+		"id": CombatTypes.EntityType.WATER,
+		"label": "Water"
 	}
 ]
 var attack_index := 0 # Default index
+var last_selected_attack_type : CombatTypes.EntityType
+
+# TO-DO: Abilities options
+var abilities_index := 0 # Default index
+
+# TO-DO: Items options
+var items_index := 0 # Default index
 
 # Animation options
 var gear_spin_tween: Tween
@@ -71,6 +86,10 @@ func _unhandled_input(event):
 		_handle_gear_input(event)
 	elif state == State.ATTACK_TYPE_SELECT:
 		_handle_attack_type_input(event)
+	elif state == State.ABILITIES_SELECT:
+		_handle_abilities_input(event)
+	elif state == State.ITEMS_SELECT:
+		_handle_items_input(event)
 	elif state == State.ENEMY_SELECT:
 		_handle_enemy_select_input(event)
 
@@ -83,7 +102,7 @@ func _handle_gear_input(event):
 	elif event.is_action_pressed("ui_accept"): # Player presses Z
 		_confirm_gear_option()
 	elif event.is_action_pressed("ui_cancel"): # Player presses X
-		pass # nothing to go back to
+		pass
 
 # Moves options in the ATTACK_TYPE_SELECT state based on player inputs
 func _handle_attack_type_input(event):
@@ -94,7 +113,17 @@ func _handle_attack_type_input(event):
 	elif event.is_action_pressed("ui_accept"):
 		_confirm_attack_type()
 	elif event.is_action_pressed("ui_cancel"):
-		_cancel_attack_type()
+		_cancel_select(gear_options[gear_index])
+
+# TO-DO: Abilities inputs
+func _handle_abilities_input(event):
+	if event.is_action_pressed("ui_cancel"):
+		_cancel_select(gear_options[gear_index])
+
+# TO-DO: Items inputs
+func _handle_items_input(event):
+	if event.is_action_pressed("ui_cancel"):
+		_cancel_select(gear_options[gear_index])
 
 # Emits signals to CombatManager methods which in turn moves enemy options and confirms them
 func _handle_enemy_select_input(event):
@@ -115,17 +144,21 @@ func _move_attack_type(dir: int):
 	_update_attack_type_visuals()
 
 # Animation for hiding the attack option menu when canceling attack or starting enemy select state
-func _hide_attack_type_menu():
+func _hide_menu(selected_option: String):
+	var panel = _correct_panel(selected_option)
+	
 	var tween := create_tween()
-	tween.tween_property(attack_panel, "scale", Vector2.ZERO, 0.15)
-	tween.tween_property(attack_panel, "modulate:a", 0.0, 0.15)
+	tween.tween_property(panel, "scale", Vector2.ZERO, 0.15)
+	tween.tween_property(panel, "modulate:a", 0.0, 0.15)
 	await tween.finished
-	attack_panel.visible = false
+	panel.visible = false
 
 # Backing out of enemy selection to attack select state (pressing X)
 func cancel_enemy_selection():
+	# TO-DO: Make dependant on state so always returns to previous intended state
 	state = State.ATTACK_TYPE_SELECT
-	_show_attack_type_menu()
+	PlayerData.add_guesses(last_selected_attack_type, 1) # Returns consumed guess
+	_show_menu()
 
 # Hides all player turn UI when enemy has been selected and confirmed, after which the player turn is executed
 func hide_all():
@@ -173,7 +206,7 @@ func _show_gear_menu():
 	create_tween().tween_property(
 		gear_menu,
 		"scale",
-		Vector2.ONE * gear_scale_in_scene,
+		Vector2.ONE * 0.75,
 		0.4
 	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
@@ -198,6 +231,49 @@ func hide_player_turn_ui():
 	_stop_gear_spin()
 	gear_menu.visible = false
 	visible = false
+
+# Animation logic for preparing player options after OPTION_SELECT state
+func _start_action_transition():
+	# Darkens gear UI
+	create_tween().tween_property(
+		gear_menu,
+		"modulate",
+		Color(0.6, 0.6, 0.6),
+		0.2
+	)
+	
+	# Starts spinning gear (preparing for attack)
+	_start_gear_spin()
+	
+	# Shows the attack menu after a small delay
+	await get_tree().create_timer(0.05).timeout
+	_show_menu()
+
+# Gear spinning loop animation during attack menu selection
+func _start_gear_spin():
+	_stop_gear_spin() # Default just in case
+
+	gear_spin_tween = create_tween()
+	gear_spin_tween.set_loops()
+	gear_spin_tween.tween_property(
+		gear_sprite,
+		"rotation",
+		TAU,
+		3.5
+	).set_trans(Tween.TRANS_LINEAR).as_relative()
+
+
+# Stops gear spinning if active (when exiting back to option selection)
+func _stop_gear_spin():
+	if gear_spin_tween:
+		gear_spin_tween.kill()
+		gear_spin_tween = null
+		create_tween().tween_property(
+			gear_sprite,
+			"rotation",
+			round(gear_sprite.rotation / PI) * PI,
+			0.12
+		).set_trans(Tween.TRANS_LINEAR)
 
 # Animates gear visual options with tweens based on player input
 func _update_gear_visuals():
@@ -243,7 +319,9 @@ func _update_gear_positions(dir: int):
 	for i in gear_options_root.get_child_count():
 		var option = _get_gear_option_node(i)
 		var slot_index := wrapi(i - gear_index, 0, option_slots.size())
-		var target_pos = option_slots[slot_index]
+		var selected := i == gear_index
+		# Offset up if selected
+		var target_pos = option_slots[slot_index] + Vector2(0, -5) if selected else option_slots[slot_index]
 		
 		var tween := create_tween()
 		# Icon moves to target_pos and fades out
@@ -257,11 +335,11 @@ func _update_gear_positions(dir: int):
 
 # Confirms option and sets the current state to locked so no more player inputs can be given
 func _confirm_gear_option():
-	if gear_options[gear_index] != "attack":
+	if gear_options[gear_index] not in gear_options:
 		return
 	
 	state = State.LOCKED
-	_start_attack_transition()
+	_start_action_transition()
 
 # Getter for the specific node option that the player selects
 func _get_gear_option_node(index: int):
@@ -277,65 +355,31 @@ func _restore_gear_menu():
 		0.15
 	)
 
-# Animation logic for preparing attacks in ATTACK_TYPE_SELECT state
-func _start_attack_transition():
-	# Darkens gear UI
-	create_tween().tween_property(
-		gear_menu,
-		"modulate",
-		Color(0.6, 0.6, 0.6),
-		0.2
-	)
+# Shows the corresponding menu panel after an option has been selected
+func _show_menu():
+	var selected_option = gear_options[gear_index]
+	var panel = _correct_panel(selected_option)
+	if selected_option == "attack":
+		state = State.ATTACK_TYPE_SELECT
+		attack_index = 0
+	elif selected_option == "abilities":
+		state = State.ABILITIES_SELECT
+		abilities_index = 0
+	elif selected_option == "items":
+		state = State.ITEMS_SELECT
+		items_index = 0
 	
-	# Starts spinning gear (preparing for attack)
-	_start_gear_spin()
-	
-	# Shows the attack menu after a small delay
-	await get_tree().create_timer(0.05).timeout
-	_show_attack_type_menu()
-
-# Gear spinning loop animation during attack menu selection
-func _start_gear_spin():
-	_stop_gear_spin() # Default just in case
-
-	gear_spin_tween = create_tween()
-	gear_spin_tween.set_loops()
-	gear_spin_tween.tween_property(
-		gear_sprite,
-		"rotation",
-		TAU,
-		3.5
-	).set_trans(Tween.TRANS_LINEAR).as_relative()
-
-
-# Stops gear spinning if active (when exiting back to option selection)
-func _stop_gear_spin():
-	if gear_spin_tween:
-		gear_spin_tween.kill()
-		gear_spin_tween = null
-		create_tween().tween_property(
-			gear_sprite,
-			"rotation",
-			round(gear_sprite.rotation / PI) * PI,
-			0.12
-		).set_trans(Tween.TRANS_LINEAR)
-
-
-# Shows the attack menu after the attack option has been selected
-func _show_attack_type_menu():
-	state = State.ATTACK_TYPE_SELECT
-	attack_index = 0
-	
-	attack_panel.visible = true
-	attack_panel.scale = Vector2.ZERO
-	attack_panel.modulate.a = 0.0
-	_update_attack_type_visuals()
+	panel.visible = true
+	panel.scale = Vector2.ZERO
+	panel.modulate.a = 0.0
+	if selected_option == "attack":
+		_update_attack_type_visuals()
+	# TO-DO: add other panel update methods here or make _update_attack_type_visuals universal
 	
 	var tween = create_tween()
-	tween.tween_property(attack_panel, "scale", Vector2.ONE, 0.15)
-	tween.parallel().tween_property(attack_panel, "modulate:a", 1.0, 0.15)
+	tween.tween_property(panel, "scale", Vector2.ONE, 0.15)
+	tween.parallel().tween_property(panel, "modulate:a", 1.0, 0.15)
 	await tween.finished
-	
 
 # Updates the attack options visuals in the attack menu so they stay centered and get highlighted
 func _update_attack_type_visuals():
@@ -365,7 +409,7 @@ func _update_attack_type_visuals():
 			y_offset = -10
 		else:
 			y_offset = 0
-
+		
 		tween.parallel().tween_property(
 			option,
 			"position:y",
@@ -373,11 +417,22 @@ func _update_attack_type_visuals():
 			0.12
 		)
 
+func update_guess_display():
+	var g = PlayerData.guesses
+	sky_count.text = "x%d" % g[CombatTypes.EntityType.SKY]
+	earth_count.text = "x%d" % g[CombatTypes.EntityType.EARTH]
+	water_count.text = "x%d" % g[CombatTypes.EntityType.WATER]
+
 # Backing out of attack type select state to option select (pressing X)
-func _cancel_attack_type():
-	_hide_attack_type_menu()
+func _cancel_select(selected_option: String):
+	if selected_option == "attack":
+		attack_index = 0
+	if selected_option == "abilities":
+		abilities_index = 0
+	if selected_option == "items":
+		items_index = 0
+	_hide_menu(selected_option)
 	_stop_gear_spin()
-	attack_index = 0
 	
 	state = State.OPTION_SELECT
 	_restore_gear_menu()
@@ -385,11 +440,47 @@ func _cancel_attack_type():
 # Selecting attack type and starting enemy select state
 func _confirm_attack_type():
 	var chosen_type: CombatTypes.EntityType = ATTACK_OPTIONS[attack_index].id
-	_hide_attack_type_menu()
-
+	if not PlayerData.has_guess(chosen_type):
+		shake_panel()
+		return
+	
+	_hide_menu(gear_options[gear_index])
+	PlayerData.consume_guess(chosen_type)
+	last_selected_attack_type = chosen_type
+	
 	state = State.ENEMY_SELECT
 	emit_signal("attack_type_selected", chosen_type)
 
 # For locking player inputs in the combat scene
 func lock_input():
 	state = State.LOCKED
+
+# Shakes panel when invalid option is selected (i.e guess type that has no guesses)
+func shake_panel(strength: float = 1):
+	var panel = _correct_panel(gear_options[gear_index])
+	var original_pos = panel.position
+	
+	var tween := create_tween()
+	tween.tween_property(
+		panel,
+		"position",
+		original_pos + Vector2(randf_range(strength * -8.0, strength * 8.0),
+		 randf_range(strength * -8.0, strength * 8.0)),
+		0.05
+	)
+	tween.tween_property(panel, "position", original_pos, 0.2)
+
+# Finds the correct panel depending on the selected option
+func _correct_panel(selected_option: String):
+	var panel : Panel
+	if selected_option == "attack":
+		panel = attack_panel
+	if selected_option == "abilities":
+		panel = abilities_panel
+	if selected_option == "items":
+		panel = items_panel
+	return panel
+
+# Checking if tame type option can be used
+func _is_option_available(t: CombatTypes.EntityType) -> bool:
+	return PlayerData.has_guess(t)

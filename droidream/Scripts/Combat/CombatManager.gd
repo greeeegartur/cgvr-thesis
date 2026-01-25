@@ -159,9 +159,10 @@ func _player_turn():
 	locked_enemy_turn_order = _get_enemy_turn_order()
 	_update_enemy_turn_order_display()
 	
-	# Player turn base defaults + signal emit
+	# Player turn base defaults, signal emit and guess display update
 	camera.stop_follow() # Reseting from previous enemy turn (or defaulting it)
 	player_turn_ui.start_player_turn()
+	player_turn_ui.update_guess_display()
 	player_turn_started.emit()
 	
 	# Targeting only alive enemies
@@ -210,6 +211,8 @@ func _execute_enemy_turns(order: Array):
 func _end_combat(victory: bool):
 	# Freeze turn logic (not necessary anymore but keeping just in case)
 	turn = ""
+	player_turn_ui.hide_player_turn_ui()
+	player_turn_ui.lock_input()
 	
 	# TO-DO: make specific for victory/defeat (separate methods in CombatUI might be easiest)
 	combat_end.emit()
@@ -276,7 +279,6 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	# End of the turn
 	player_visual.attack_finished.connect(
 		func():
-			player_visual.set_input_enabled(false)
 			# Check if enemy defeated
 			if _check_victory():
 				_end_combat(true) # 1. Classic RPG win: enemy defeated
@@ -300,6 +302,7 @@ func _start_player_critical_window():
 
 # Processes the player hit damage by checking for critical hits and applying necessary damage to either HP or defense
 func _apply_player_attack_hit(enemy: CombatEntity, attack_type):
+	
 	# Selected player target
 	var enemy_visual = enemy_visuals[enemy]
 	
@@ -322,13 +325,13 @@ func _apply_player_attack_hit(enemy: CombatEntity, attack_type):
 		print("CRITICAL HIT!")
 	
 	# Checks player's attack type against enemy's type
-	var type_multiplier := _get_type_multiplier(attack_type, enemy.type)
+	var correct_guess := _is_correct_guess(attack_type, enemy.type)
 	
-	# Reduce enemy defense if attacking type > defending type
-	if enemy.defense > 0 and type_multiplier > 1.0:
+	# Reduce enemy defense (moving towards tamed) if guessed type = enemy type
+	if enemy.defense > 0 and correct_guess:
 		print("Effective type!")
 		# Damage calculation for effective type
-		var defense_damage = player.attack_power * type_multiplier * critical_multiplier
+		var defense_damage = player.attack_power * critical_multiplier
 		enemy.defense -= defense_damage
 		
 		# Visual effects
@@ -350,7 +353,7 @@ func _apply_player_attack_hit(enemy: CombatEntity, attack_type):
 	else:
 		# Regular damage to HP if not effective type
 		var defense_factor = float(enemy.defense) / enemy.defense_max if enemy.defense_max > 0 else 0 # Calculates a defense multiplier (how much damage is negated) based on current defense
-		var damage = player.attack_power * type_multiplier * critical_multiplier * (1.0 - defense_factor)
+		var damage = player.attack_power * critical_multiplier * (1.0 - defense_factor)
 		enemy.hp -= damage
 		
 		# Visual effects
@@ -622,18 +625,11 @@ func _start_block_cooldown():
 # HELPER FUNCTIONS
 # These functions help ACTION functions with calculations and more
 
-# Calculates the damage multiplier based on the player's attacking type and the entity's type
-# It follows the logic of rock-paper-scissors in the order of flying-grounded-special
-# Effective moves give a 2.0 multiplier while anything else is 1.0
-func _get_type_multiplier(player_type: CombatTypes.EntityType, enemy_type: CombatTypes.EntityType) -> float:
-	if player_type == CombatTypes.EntityType.FLYING and enemy_type == CombatTypes.EntityType.GROUNDED:
-		return 2.0
-	elif player_type == CombatTypes.EntityType.GROUNDED and enemy_type == CombatTypes.EntityType.SPECIAL:
-		return 2.0
-	elif player_type == CombatTypes.EntityType.SPECIAL and enemy_type == CombatTypes.EntityType.FLYING:
-		return 2.0
-	else:
-		return 1.0  # Normal damage multiplier
+# Decides correct guess type by comparing the player's guessing type with the enemy's type
+# If the two types are the same, the player has made a correct guess
+# Types are Sky, Earth and Water
+func _is_correct_guess(player_type: CombatTypes.EntityType, enemy_type: CombatTypes.EntityType) -> bool:
+	return player_type == enemy_type
 
 # Filters from all existing enemies the ones that are not 1) defeated or 2) subdued
 func _get_alive_enemies() -> Array:

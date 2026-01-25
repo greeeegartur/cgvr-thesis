@@ -5,7 +5,7 @@ class_name CombatEntity
 
 # Initial values for loading enemies
 var entity_name := ""
-var is_player := false
+var is_player := false # Possibly will use
 var max_hp := 0.0
 var hp := 0.0
 var attack_power := 0.0
@@ -15,7 +15,9 @@ var snapped_max := 1
 var snapped := 0
 var attack_patterns : Array[EnemyAttackPattern]
 var visual_scene : PackedScene
-var type : CombatTypes.EntityType # can be "GROUNDED", "FLYING" and "SPECIAL", never "PLAYER"
+var type : CombatTypes.EntityType # can be "Sky", "Earth" and "Water"
+var trust := 0.0
+var trust_max := 100.0
 var minigame_id := ""
 
 # Loads enemy info for entity via enemy_id string
