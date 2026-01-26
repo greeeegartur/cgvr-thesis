@@ -11,9 +11,9 @@ extends CanvasLayer
 @onready var abilities_panel := $AbilitiesMenu/Panel
 @onready var items_panel := $ItemsMenu/Panel
 # Count labels for tame UI
-@onready var sky_count = $AttackTypeMenu/Panel/VBox/SkyOption/Count
-@onready var earth_count = $AttackTypeMenu/Panel/VBox/EarthOption/Count
-@onready var water_count = $AttackTypeMenu/Panel/VBox/WaterOption/Count
+@onready var sky_count = $AttackTypeMenu/Panel/Counts/SkyCount
+@onready var earth_count = $AttackTypeMenu/Panel/Counts/EarthCount
+@onready var water_count = $AttackTypeMenu/Panel/Counts/WaterCount
 
 # Signals to use with CombatManager
 signal attack_type_selected(type)

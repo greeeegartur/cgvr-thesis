@@ -10,7 +10,7 @@ extends Node
 #	max_hp: enemy's max HP value
 #	attack: enemy's attack power, used for calculating damage to the player
 #	defense: enemy's defense that negates/reduces damage taken, can be reduced
-#	snapped_max: max number of "snaps" for minigame victory condition, meaning how many minigame wins needed for victory
+#	trust_max: max number of "trusts" for minigame victory condition, meaning how many minigame wins needed for victory
 #	minigame_id: id for loading enemy's specific minigame
 #	attack_patterns: all attack patterns for the enemy, more details in EnemyAttackPattern.gd
 #	visual_scene: enemy's scene with its visuals and animations

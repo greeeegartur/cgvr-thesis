@@ -1,0 +1,79 @@
+[gd_scene load_steps=6 format=3 uid="uid://ngw3am72av6"]
+
+[ext_resource type="Script" uid="uid://bl5c13pmccb0n" path="res://Scripts/Combat/EnemyAxisBar.gd" id="1_oris0"]
+[ext_resource type="Texture2D" uid="uid://dq7phes8wx543" path="res://Graphics/Placeholders/Combat/axis_meter.png" id="2_m8r4c"]
+[ext_resource type="Texture2D" uid="uid://unc0jsq2owev" path="res://Graphics/Placeholders/Combat/axis_select.png" id="3_c4hqs"]
+[ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="4_n6l88"]
+[ext_resource type="Texture2D" uid="uid://bnhreeky4g2pf" path="res://Graphics/Placeholders/Combat/tameBall.png" id="5_fkhjb"]
+
+[node name="EnemyAxisBar" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_oris0")
+
+[node name="AxisBar" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 80.0
+offset_bottom = 17.0
+texture = ExtResource("2_m8r4c")
+
+[node name="AxisLine" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 37.0
+offset_top = 2.0
+offset_right = 42.0
+offset_bottom = 14.5
+pivot_offset = Vector2(2.5, 6.25)
+texture = ExtResource("3_c4hqs")
+
+[node name="Kill" type="Label" parent="."]
+layout_mode = 0
+offset_left = 1.0
+offset_top = -11.0
+offset_right = 16.0
+offset_bottom = -1.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("4_n6l88")
+theme_override_font_sizes/font_size = 9
+text = "Kill"
+
+[node name="Tame" type="Label" parent="."]
+layout_mode = 0
+offset_left = 64.0
+offset_top = -11.0
+offset_right = 81.0
+offset_bottom = -1.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("4_n6l88")
+theme_override_font_sizes/font_size = 9
+text = "Tame"
+horizontal_alignment = 2
+
+[node name="TameContainer" type="HBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 25.0
+offset_top = -8.0
+offset_right = 60.0
+offset_bottom = 1.0
+scale = Vector2(0.83, 0.83)
+alignment = 1
+
+[node name="1" type="TextureRect" parent="TameContainer"]
+visible = false
+layout_mode = 2
+texture = ExtResource("5_fkhjb")
+expand_mode = 3
+
+[node name="2" type="TextureRect" parent="TameContainer"]
+visible = false
+layout_mode = 2
+texture = ExtResource("5_fkhjb")
+expand_mode = 2
+
+[node name="3" type="TextureRect" parent="TameContainer"]
+visible = false
+layout_mode = 2
+texture = ExtResource("5_fkhjb")
+expand_mode = 3

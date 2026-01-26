@@ -10,9 +10,8 @@ class_name EnemyInfo
 
 @export var max_hp: float
 @export var attack: int
-@export var defense: float
 
-@export var snapped_max: int
+@export var trust_max: int
 @export var minigame_id: String
 
 @export var attack_patterns: Array[EnemyAttackPattern]

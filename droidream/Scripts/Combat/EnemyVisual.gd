@@ -15,16 +15,7 @@ signal attack_finished
 @onready var target_arrow := $TargetArrow
 @onready var target_arrow_anim := $TargetArrow/AnimationPlayer
 @onready var turn_order_label: Label = $TurnOrder
-
-# HUD variables
-@onready var hp_fill = $EnemyHUD/HPBar/Fill
-@onready var hp_label = $EnemyHUD/HPBar/Label
-@onready var def_fill = $EnemyHUD/DefenseBar/Fill
-@onready var def_label = $EnemyHUD/DefenseBar/Label
-@onready var snapped_container = $EnemyHUD/SnappedContainer
-
-var hp_fill_max_width = 10.0
-var def_fill_max_width = 10.0
+@onready var axis_bar := $EnemyAxisBar
 
 # Shake variables
 @export var shake_strength = 3.0
@@ -59,9 +50,6 @@ func _ready():
 	
 	anim.animation_finished.connect(on_anim_finished)
 	
-	hp_fill_max_width = hp_fill.size.x
-	def_fill_max_width = def_fill.size.x
-	
 	# Combat scene's process mode (pausing) for minigames
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 
@@ -95,22 +83,17 @@ func _move_to_home_position():
 		.set_ease(Tween.EASE_IN)
 	await tween.finished
 
-# Updates UI for enemy stats with helper functions
-func update_hp(current: float, max_hp):
-	var ratio = clamp(current / max_hp, 0.0, 1.0)
-	hp_fill.size.x = hp_fill_max_width * ratio
-	hp_label.text = "%.1f / %.1f" % [current, max_hp]
+# Sets up axis UI info for CombatManager
+func setup_axis(axis_max: float, trust_max: int):
+	axis_bar.axis_max = axis_max
+	axis_bar.setup_trust(trust_max)
 
-func update_defense(current: float, max_def: float):
-	var ratio = clamp(current / max_def, 0.0, 1.0)
-	def_fill.size.x = def_fill_max_width * ratio
-	def_label.text = "%.1f / %.1f" % [current, max_def]
+# Updates axis UI info for enemy with EnemyAxisBar functions
+func update_axis(value: float, delta_value := 0):
+	axis_bar.update_axis(value, delta_value)
 
-func update_snapped(snapped: int, snapped_max: int):
-	for i in range(snapped_container.get_child_count()):
-		var icon := snapped_container.get_child(i)
-		icon.visible = i < snapped_max
-		icon.modulate = Color(0.632, 0.316, 0.781, 1.0) if i < snapped else Color("ffffffff")
+func update_axis_trust():
+	axis_bar.gain_trust()
 
 # Creates light position shake for enemy
 func shake(is_critical: bool):

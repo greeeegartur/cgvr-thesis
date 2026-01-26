@@ -124,9 +124,7 @@ func _setup_entities() -> void:
 		
 		# UI
 		await visual.ready
-		visual.update_hp(entity.hp, entity.max_hp)
-		visual.update_defense(entity.defense, entity.defense_max)
-		visual.update_snapped(entity.snapped, entity.snapped_max)
+		visual.setup_axis(entity.axis_max, entity.trust_max)
 
 func _setup_ui():
 	ui.setup(self)
@@ -200,7 +198,7 @@ func _enemy_turn():
 func _execute_enemy_turns(order: Array):
 	for enemy in order:
 		# Skipping invalid enemies (turn order is locked during player turn)
-		if enemy.hp <= 0 or enemy.snapped >= enemy.snapped_max:
+		if enemy.is_killed() or enemy.is_tamed():
 			continue
 		if player.hp <= 0:
 			return
@@ -247,6 +245,8 @@ func player_attack(attack_type: CombatTypes.EntityType):
 		push_error("No selected enemy")
 		return
 	
+	print("Player attacks with: ", attack_type)
+	
 	# Setting player's attack position to target enemy (relative to enemy_visual position)
 	var enemy_visual = enemy_visuals[selected_enemy]
 	player_visual.attack_position = _get_player_attack_position(enemy_visual)
@@ -272,7 +272,7 @@ func player_attack(attack_type: CombatTypes.EntityType):
 			tutorial_text.hide_text()
 			
 			# Calculates the hit damage
-			_apply_player_attack_hit(selected_enemy, attack_type),
+			_apply_axis_shift(selected_enemy, attack_type),
 		CONNECT_ONE_SHOT
 	)
 	
@@ -300,22 +300,23 @@ func _start_player_critical_window():
 	attack_time = 0.0
 	attack_timer_running = true
 
-# Processes the player hit damage by checking for critical hits and applying necessary damage to either HP or defense
-func _apply_player_attack_hit(enemy: CombatEntity, attack_type):
-	
-	# Selected player target
+# Processes the player's hit to shift the enemy's axis bar in a specific direction (kill, left or tame, right)
+func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 	var enemy_visual = enemy_visuals[enemy]
 	
 	# Only for enemies, so not necessary here
 	attack_timer_running = false
+	
+	# Base damage calculation based on if crit or not
+	var base = player.attack_power
 	
 	var critical = (
 		last_attack_press_time >= critical_window.x
 		and last_attack_press_time <= critical_window.y
 	)
 	
-	var critical_multiplier = 1.5 if critical else 1.0
 	if critical:
+		base *= 1.5
 		# VFX effects 
 		camera.pop_zoom()
 		vfx.play_vignette(vfx.get_vfx_color_from_string("crit"), 0.4)
@@ -324,45 +325,57 @@ func _apply_player_attack_hit(enemy: CombatEntity, attack_type):
 		freeze_frame(0.14)
 		print("CRITICAL HIT!")
 	
-	# Checks player's attack type against enemy's type
-	var correct_guess := _is_correct_guess(attack_type, enemy.type)
+	var correct = _is_correct_guess(guess_type, enemy.type) # Checks if correct guess type
 	
-	# Reduce enemy defense (moving towards tamed) if guessed type = enemy type
-	if enemy.defense > 0 and correct_guess:
-		print("Effective type!")
-		# Damage calculation for effective type
-		var defense_damage = player.attack_power * critical_multiplier
-		enemy.defense -= defense_damage
+	# Moves towards tame side on the right based on resistance
+	# If axis_value is on kill side, enemy resistance is up and correct guess will move axis_value less
+	if correct:
+		var resistance := 1.0 # Base resistance
+		if enemy.axis_value < 0:
+			# Enemy is hostile again and is harder to tame, so resistance increases
+			resistance = lerp(1.5, 2.5, abs(enemy.axis_ratio()))
+		
+		# Damage calculation
+		var value_shift = round_quarter(base / resistance) # Just base if previous change did not apply
+		var before = enemy.axis_value
+		enemy.axis_value += value_shift
+		enemy.axis_value = round_quarter(min(enemy.axis_value, enemy.axis_max)) # Ensures the bar does not go beyond axis bar limits (to look good)
+		var actual_shift = enemy.axis_value - before
 		
 		# Visual effects
-		enemy_visual.update_defense(enemy.defense, enemy.defense_max)
-		enemy_visual.shake(critical) # Shake
-		vfx.play_damage_vfx(enemy_visual, defense_damage, critical) # Damage number, particles
+		enemy_visual.shake(critical)
+		enemy_visual.update_axis(enemy.axis_value, actual_shift)
+		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical) # Damage number, particles
 		camera.shake(7.0, 0.1)
-		print("Enemy defense reduced by %.2f → %.2f now" % [defense_damage, enemy.defense])
 		
-		# Checks if defense has been broken, minigame entering condition
-		if enemy.defense <= 0:
-			print("Enemy defense broken! Triggering minigame now.")
+		print("Enemy gets %.2f tame progress, now axis line is %.2f and %.2f away from tame." % [value_shift, enemy.axis_value, enemy.max_hp - value_shift])
+		
+		# Checks if enemy's axis value is at max, if it is, starts minigame
+		if enemy.is_minigame_ready():
+			print("Enemy trust level reached! Triggering minigame now.")
 			_start_minigame(enemy)
-		# If player loses... minigame's damage logic
-		#	player.hp -= enemy.attack... in the future gear multiplier logic so player would take less damage
-		#	enemy.defense = random value between 0.2-0.35 times initial max defense
-		# else if player wins, increase enemy's snapped value
-		#	if enemy's snapped == their max_snapped, then end combat
 	else:
-		# Regular damage to HP if not effective type
-		var defense_factor = float(enemy.defense) / enemy.defense_max if enemy.defense_max > 0 else 0 # Calculates a defense multiplier (how much damage is negated) based on current defense
-		var damage = player.attack_power * critical_multiplier * (1.0 - defense_factor)
-		enemy.hp -= damage
+		# Moves towards kill side on the left based on how off guard the enemy is
+		# Off guard is calculated for an exponential multiplier that increases axis movement the more "off guard" an enemy is
+		# So 1) guessing correct once and 2) then guessing wrong will increase damage more than just 1) guessing wrong
+		var off_guard = max(0.0, enemy.axis_ratio())
+		var kill_multiplier := 0.5 + pow(off_guard, 2.0) * 2.0
+		
+		# Damage calculation
+		var value_shift = round_quarter(base * kill_multiplier) # Kill multiplier will just be 0.5 if off_guard is 0
+		var before = enemy.axis_value
+		enemy.axis_value -= value_shift
+		enemy.axis_value = round_quarter(max(enemy.axis_value, -enemy.axis_max)) # Ensures the bar does not go beyond axis bar limits (to look good)
+		var actual_shift = enemy.axis_value - before
 		
 		# Visual effects
-		enemy_visual.update_hp(enemy.hp, enemy.max_hp)
-		vfx.play_damage_vfx(enemy_visual, damage, critical)
+		enemy_visual.shake(critical)
+		enemy_visual.update_axis(enemy.axis_value, actual_shift)
+		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical)
 		
 		# Checking if enemy has been defeated
-		_resolve_enemy_state(selected_enemy)
-		print("Enemy takes %.2f HP damage → %.2f left, current defense is %.2f" % [damage, enemy.hp, enemy.defense])
+		_resolve_enemy_state(enemy)
+		print("Enemy takes %.2f damage, now is %.2f and %.2f left for kill." % [value_shift, enemy.axis_value, enemy.max_hp - value_shift])
 
 # Logic for starting enemy's minigame in combat
 func _start_minigame(enemy: CombatEntity):
@@ -375,7 +388,7 @@ func _start_minigame(enemy: CombatEntity):
 	
 	in_minigame = true
 	
-	# Subduing visuals
+	# Taming visuals
 	vfx.play_subdue(enemy_visual)
 	await player_visual.play_subdue()
 	
@@ -395,12 +408,10 @@ func _start_minigame(enemy: CombatEntity):
 	
 	minigame.completed.connect(
 		func(success):
-			# Minigame ease in transition
 			get_tree().paused = false # Process mode state already set in BaseMinigame.gd, but just in case
 			get_parent().process_mode = Node.PROCESS_MODE_INHERIT
 			in_minigame = false
 			on_minigame_complete(enemy, success)
-			
 			# Check for enemy defeat
 			_resolve_enemy_state(enemy)
 			
@@ -430,20 +441,20 @@ func on_minigame_complete(enemy: CombatEntity, success: bool):
 	
 	if success:
 		var restore_ratio := randf_range(0.2, 0.35)
-		enemy.defense = enemy.defense_max * restore_ratio
-		enemy_visual.update_defense(enemy.defense, enemy.defense_max)
-		enemy.snapped += 1
-		enemy_visual.update_snapped(enemy.snapped, enemy.snapped_max)
-		print("Minigame success! Snapped: %d / %d" % [enemy.snapped, enemy.snapped_max])
-		if enemy.snapped >= enemy.snapped_max:
-			if _check_victory():  # 2. Minigame win: enemy subdued
-				_end_combat(true)
+		enemy.axis_value = enemy.axis_max * restore_ratio
+		enemy.trust += 1
+		enemy_visual.update_axis(enemy.axis_value)
+		enemy_visual.update_axis_trust() 
+		print("Minigame success! Trust: %d / %d" % [enemy.trust, enemy.trust_max])
+		if enemy.is_tamed():
+			if _check_victory():  # 2. Minigame win: enemy tamed
+				_end_combat(true) # If last enemy
 	else:
 		# Restore enemy's defense by a random amount from 20-35%
 		var restore_ratio := randf_range(0.2, 0.35)
-		enemy.defense = enemy.defense_max * restore_ratio
-		enemy_visual.update_defense(enemy.defense, enemy.defense_max)
-		print("Minigame failed. Enemy defense restored to %.1f" % enemy.defense)
+		enemy.axis_value = enemy.axis_max * restore_ratio
+		enemy_visual.update_axis(enemy.axis_value)
+		print("Minigame failed. Enemy axis restored to %.1f" % enemy.axis_value)
 
 # Performs a single enemy's attack pattern based on existing logic
 func _enemy_attack_single(enemy: CombatEntity):
@@ -594,9 +605,6 @@ func _on_player_block_attempted():
 	# Records block press time
 	last_block_press_time = attack_time
 	
-	# DEBUG CHECK
-	print("!!! DEBUG: Block pressed at:", "%.3f" % attack_time)
-	
 	# If all previous checks passed then block was triggered -> cooldown starts here
 	_start_block_cooldown()
 
@@ -634,17 +642,17 @@ func _is_correct_guess(player_type: CombatTypes.EntityType, enemy_type: CombatTy
 # Filters from all existing enemies the ones that are not 1) defeated or 2) subdued
 func _get_alive_enemies() -> Array:
 	return enemies.filter(func(e):
-		return e.hp > 0 and e.snapped < e.snapped_max
+		return !e.is_killed() and !e.is_tamed()
 	)
 
 # Gets the enemy turn order at the start of enemy turn
-# This is decided by 1) which enemy has higher HP or (if some or all enemies have same HP) 2) by position to player
+# This is decided by 1) which enemy has higher axis value (is more tamed) or (if some or all enemies have same axis value) 2) by position to player
 func _get_enemy_turn_order() -> Array:
 	var alive := _get_alive_enemies()
 	
 	alive.sort_custom(func(a, b):
-		if a.hp != b.hp:
-			return a.hp > b.hp # Higher HP first
+		if a.axis_value != b.axis_value:
+			return a.axis_value > b.axis_value # Higher axis value first
 			
 		# Distance
 		var va = enemy_visuals[a]
@@ -652,7 +660,6 @@ func _get_enemy_turn_order() -> Array:
 		return va.global_position.distance_to(player_visual.global_position) \
 			< vb.global_position.distance_to(player_visual.global_position)
 	)
-	
 	return alive
 
 # Checks if victory has been achieved by checking alive enemies list
@@ -766,9 +773,9 @@ func _cancel_target_selection():
 func _resolve_enemy_state(enemy: CombatEntity):
 	var visual = enemy_visuals[enemy]
 
-	if enemy.hp <= 0:
+	if enemy.is_killed():
 		await visual.play_defeat(false)
-	elif enemy.snapped >= enemy.snapped_max:
+	elif enemy.is_tamed():
 		await visual.play_defeat(true)
 
 # Sets camera follow state for the turn with the turn variable
@@ -802,7 +809,7 @@ func _update_enemy_turn_order_display():
 	var index := 1
 	for enemy in locked_enemy_turn_order:
 		# Skips invalid enemies visually
-		if enemy.hp <= 0 or enemy.snapped >= enemy.snapped_max:
+		if enemy.is_killed() or enemy.is_tamed():
 			continue
 		
 		enemy_visuals[enemy].show_turn_order(index)
@@ -812,6 +819,10 @@ func _update_enemy_turn_order_display():
 func _clear_enemy_turn_order_visuals():
 	for v in enemy_visuals.values():
 		v.hide_turn_order()
+
+# Rounds damage number by quarters, so no damage will ever be something like "2.584", but rather just "2.5"
+func round_quarter(value: float) -> float:
+	return round(value * 4.0) / 4.0
 
 
 # ANIMATION METHODS

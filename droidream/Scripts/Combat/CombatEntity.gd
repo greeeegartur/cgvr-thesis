@@ -9,15 +9,14 @@ var is_player := false # Possibly will use
 var max_hp := 0.0
 var hp := 0.0
 var attack_power := 0.0
-var defense_max := 0.0
 var defense := 0.0
-var snapped_max := 1
-var snapped := 0
+var trust_max := 1
+var trust := 0
+var axis_value := 0.0 # New axis that has a value between {-axis_max; axis_max}
+var axis_max := 1.0 # axis_max = tamed, while -axis_max = killed
 var attack_patterns : Array[EnemyAttackPattern]
 var visual_scene : PackedScene
 var type : CombatTypes.EntityType # can be "Sky", "Earth" and "Water"
-var trust := 0.0
-var trust_max := 100.0
 var minigame_id := ""
 
 # Loads enemy info for entity via enemy_id string
@@ -27,20 +26,32 @@ func load_from_enemy_id(enemy_id: String) -> void:
 
 	entity_name = data.name
 	type = data.type
-	hp = data.max_hp
 	max_hp = data.max_hp
+	hp = max_hp # For some reason have to set this or else enemies break
+	axis_max = max_hp
 	attack_power = data.attack
-	defense_max = data.defense
-	defense = defense_max
-	snapped_max = data.snapped_max
+	trust_max = data.trust_max
 	minigame_id = data.minigame_id
 	attack_patterns = data.attack_patterns
 	visual_scene = data.visual_scene
 
-#Loads player data from PlayerData object
+# Loads player data from PlayerData object
 func load_from_player() -> void:
 	is_player = true
 	max_hp = PlayerData.max_hp
 	hp = PlayerData.hp
 	attack_power = PlayerData.attack
 	defense = PlayerData.defense
+
+# Methods for checking enemy defeat conditions and axis ratio
+func is_killed() -> bool:
+	return axis_value <= -axis_max
+
+func is_minigame_ready() -> bool:
+	return axis_value >= axis_max
+
+func is_tamed() -> bool:
+	return trust >= trust_max
+
+func axis_ratio() -> float:
+	return axis_value / axis_max # Range is from -1.0 to 1.0

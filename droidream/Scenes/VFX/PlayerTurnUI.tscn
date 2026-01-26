@@ -125,18 +125,6 @@ theme_override_fonts/font = ExtResource("4_7cvk2")
 text = "Sky"
 vertical_alignment = 1
 
-[node name="Count" type="Label" parent="AttackTypeMenu/Panel/VBox/SkyOption"]
-offset_left = 76.0
-offset_top = 12.0
-offset_right = 137.0
-offset_bottom = 35.0
-pivot_offset = Vector2(30.5, 11.5)
-theme_override_constants/outline_size = 3
-theme_override_fonts/font = ExtResource("4_7cvk2")
-theme_override_font_sizes/font_size = 12
-text = "x"
-vertical_alignment = 1
-
 [node name="EarthOption" type="Node2D" parent="AttackTypeMenu/Panel/VBox"]
 
 [node name="Label" type="Label" parent="AttackTypeMenu/Panel/VBox/EarthOption"]
@@ -148,18 +136,6 @@ pivot_offset = Vector2(30.5, 11.5)
 theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("4_7cvk2")
 text = "Earth"
-vertical_alignment = 1
-
-[node name="Count" type="Label" parent="AttackTypeMenu/Panel/VBox/EarthOption"]
-offset_left = 76.0
-offset_top = 30.0
-offset_right = 137.0
-offset_bottom = 53.0
-pivot_offset = Vector2(30.5, 11.5)
-theme_override_constants/outline_size = 3
-theme_override_fonts/font = ExtResource("4_7cvk2")
-theme_override_font_sizes/font_size = 12
-text = "x"
 vertical_alignment = 1
 
 [node name="WaterOption" type="Node2D" parent="AttackTypeMenu/Panel/VBox"]
@@ -175,17 +151,46 @@ theme_override_fonts/font = ExtResource("4_7cvk2")
 text = "Water"
 vertical_alignment = 1
 
-[node name="Count" type="Label" parent="AttackTypeMenu/Panel/VBox/WaterOption"]
+[node name="Counts" type="Node2D" parent="AttackTypeMenu/Panel"]
+
+[node name="SkyCount" type="Label" parent="AttackTypeMenu/Panel/Counts"]
 offset_left = 76.0
-offset_top = 48.0
-offset_right = 137.0
-offset_bottom = 71.0
+offset_top = 18.0
+offset_right = 176.0
+offset_bottom = 31.0
 pivot_offset = Vector2(30.5, 11.5)
 theme_override_constants/outline_size = 3
 theme_override_fonts/font = ExtResource("4_7cvk2")
 theme_override_font_sizes/font_size = 12
 text = "x"
 vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="EarthCount" type="Label" parent="AttackTypeMenu/Panel/Counts"]
+offset_left = 76.0
+offset_top = 36.0
+offset_right = 176.0
+offset_bottom = 49.0
+pivot_offset = Vector2(30.5, 11.5)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("4_7cvk2")
+theme_override_font_sizes/font_size = 12
+text = "x"
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="WaterCount" type="Label" parent="AttackTypeMenu/Panel/Counts"]
+offset_left = 76.0
+offset_top = 54.0
+offset_right = 176.0
+offset_bottom = 67.0
+pivot_offset = Vector2(30.5, 11.5)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("4_7cvk2")
+theme_override_font_sizes/font_size = 12
+text = "x"
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
 
 [node name="AbilitiesMenu" type="Node" parent="."]
 
