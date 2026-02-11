@@ -1,22 +1,42 @@
-[gd_scene load_steps=13 format=3 uid="uid://b0as27ombq3yp"]
+[gd_scene load_steps=20 format=3 uid="uid://b0as27ombq3yp"]
 
 [ext_resource type="Script" uid="uid://b3u2bq3dgrvtu" path="res://Scripts/Combat/CombatManager.gd" id="1_2mqg5"]
 [ext_resource type="Script" uid="uid://dcdpqt4rgapox" path="res://Scripts/Combat/CombatUI.gd" id="1_memue"]
+[ext_resource type="Script" uid="uid://8oa2o7y2orsd" path="res://Scripts/Combat/AreaManager.gd" id="1_t6l0c"]
+[ext_resource type="Script" uid="uid://c5ja5l1lreuk1" path="res://Scripts/Combat/StageFlowController.gd" id="2_7t358"]
 [ext_resource type="Texture2D" uid="uid://4yosobdr5m3h" path="res://Graphics/Placeholders/Combat/Combat BG.jpg" id="2_dqj0d"]
 [ext_resource type="PackedScene" uid="uid://bjh0w31eegrg2" path="res://Scenes/VFX/DamageNumber.tscn" id="3_7d6hk"]
+[ext_resource type="Script" uid="uid://d2qb3dxys342b" path="res://Scripts/Data/AreaData.gd" id="3_akpyy"]
 [ext_resource type="Texture2D" uid="uid://dnuk5tccbude4" path="res://Graphics/Placeholders/Combat/PlayerIdle.png" id="3_eel7g"]
 [ext_resource type="PackedScene" uid="uid://wgkbwlbxucav" path="res://Scenes/Entities/PlayerVisual.tscn" id="4_b8x4h"]
+[ext_resource type="Script" uid="uid://c0jhej6k7whtv" path="res://Scripts/Combat/StopManager.gd" id="4_dv3n3"]
+[ext_resource type="Resource" uid="uid://tktqtyrb2dww" path="res://Scripts/Data/Areas/Jungle/Jungle.tres" id="4_et1op"]
 [ext_resource type="Texture2D" uid="uid://cij8c6ssb2cuk" path="res://Graphics/Placeholders/Combat/Enemy.png" id="4_memue"]
 [ext_resource type="Script" uid="uid://b8ia03d3h01bu" path="res://Scripts/Combat/VFXCombatManager.gd" id="4_t6l0c"]
 [ext_resource type="PackedScene" uid="uid://c7am76emgaqdv" path="res://Scenes/VFX/ExplosionFX.tscn" id="5_7t358"]
+[ext_resource type="Script" uid="uid://bg2qtlv48grin" path="res://Scripts/Combat/EnemySpawner.gd" id="5_dv3n3"]
 [ext_resource type="Script" uid="uid://dqcuun735xvqm" path="res://Scripts/Combat/CameraController.gd" id="7_b8x4h"]
 [ext_resource type="PackedScene" uid="uid://6f0q2xbuuu16" path="res://Scenes/VFX/PlayerTurnUI.tscn" id="9_7t358"]
 [ext_resource type="PackedScene" uid="uid://b8tix1tnrjrpr" path="res://Scenes/VFX/TutorialText.tscn" id="13_7d6hk"]
+[ext_resource type="PackedScene" uid="uid://dcr1tuso7nppj" path="res://Scenes/VFX/RewardsScreen.tscn" id="14_et1op"]
 
 [node name="CombatScene" type="Node2D"]
 
+[node name="StageFlowController" type="Node" parent="."]
+script = ExtResource("2_7t358")
+
+[node name="AreaManager" type="Node" parent="."]
+script = ExtResource("1_t6l0c")
+areas = Array[ExtResource("3_akpyy")]([ExtResource("4_et1op")])
+
+[node name="StopManager" type="Node" parent="."]
+script = ExtResource("4_dv3n3")
+
 [node name="CombatManager" type="Node" parent="."]
 script = ExtResource("1_2mqg5")
+
+[node name="EnemySpawner" type="Node" parent="."]
+script = ExtResource("5_dv3n3")
 
 [node name="World" type="Node2D" parent="."]
 
@@ -54,6 +74,9 @@ position = Vector2(463, 283)
 z_index = 1
 position = Vector2(563, 283)
 
+[node name="StopVisual" type="Node2D" parent="World"]
+visible = false
+
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(320, 180)
 script = ExtResource("7_b8x4h")
@@ -64,6 +87,10 @@ script = ExtResource("7_b8x4h")
 visible = false
 position = Vector2(112, 30.000002)
 scale = Vector2(2.5, 2.5)
+
+[node name="RewardsScreen" parent="UI" instance=ExtResource("14_et1op")]
+position = Vector2(330, 45.000015)
+scale = Vector2(0.9, 0.9)
 
 [node name="CombatUI" type="Node" parent="UI"]
 script = ExtResource("1_memue")
@@ -80,6 +107,8 @@ theme_override_font_sizes/font_size = 10
 text = "show turn order"
 flat = true
 icon_alignment = 1
+
+[node name="StopUI" type="Node" parent="UI"]
 
 [node name="Minigames" type="CanvasLayer" parent="."]
 layer = 10

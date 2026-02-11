@@ -55,6 +55,9 @@ var collision_enabled := false
 var beetles_paused := false
 
 func _ready():
+	# Setting duration of 6 seconds
+	set_duration(6.0)
+	
 	# Progress bar setup
 	progress_bar.max_value = max_duration
 	progress_bar.value = max_duration
@@ -89,8 +92,6 @@ func _unhandled_input(event):
 # Overriding base function for collision reading (player doesn't get hurt during tween animation)
 func play():
 	await animate_in()
-	# Setting duration of 7.5 seconds
-	set_duration(7.5)
 	collision_enabled = true
 	start()
 	spawn_loop()

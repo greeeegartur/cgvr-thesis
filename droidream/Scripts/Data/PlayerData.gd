@@ -13,9 +13,10 @@ var defense : float = 0.0
 	CombatTypes.EntityType.WATER: 3
 }
 
-
-# For later...
 var currency := 0
+var experience := 0
+# For later...
+var karma := 0
 
 # Helper methods for use in CombatManager
 func has_guess(t: CombatTypes.EntityType) -> bool:

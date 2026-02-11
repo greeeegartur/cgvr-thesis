@@ -13,8 +13,6 @@ class_name CombatManager
 # SCRIPT VARIABLES
 
 # Exported variables
-# TO-DO: change this to load on random depending on area
-@export var enemy_ids: Array[String] = ["enemy_beetle", "enemy_beetle"] # Can not exceed 3
 
 # Nodes to use for visual effects in the combat scene
 @onready var camera : CombatCamera = get_parent().get_node("Camera2D")
@@ -39,7 +37,7 @@ var target_index = 0
 # Signals for UI script to react + turn variables
 signal player_turn_started 
 signal enemy_turn_started
-signal combat_end
+signal combat_end(victory: bool, rewards: Dictionary)
 var enemy_turn_active := false
 var is_targeting := false # Check to see if targeting is allowed or not
 var selected_attack_type : CombatTypes.EntityType # Currently selected attack type in enemy targeting
@@ -62,8 +60,11 @@ const BLOCK_COOLDOWN = 0.7
 var enemy_visuals: Dictionary = {} # Loads from CombatEntity and gives a dict of EnemyVisuals for enemies
 var player_visual : PlayerVisual
 
-# Minigame variables
+# Minigame and combat-specific variables
 var in_minigame = false # Default
+var combat_paused := false
+
+
 
 # COMBAT SETUP FUNCTIONS
 # These are functions that run before combat begins, i.e entity data and loading the first turn
@@ -71,12 +72,10 @@ var in_minigame = false # Default
 # Prepares combat by loading entities (player and enemy(s)) and starting combat
 func _ready():
 	set_process_input(true)
-	await _setup_entities()
 	_setup_ui()
 	# Combat scene's process mode (pausing) for minigames
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	camera.process_mode = Node.PROCESS_MODE_ALWAYS
-	_start_combat()
 
 func _process(delta):
 	# Pauses combat logic
@@ -87,7 +86,7 @@ func _process(delta):
 		attack_time += delta
 
 # Sets up the player and enemy(s) battle data
-func _setup_entities() -> void:
+func _setup_entities(enemy_ids):
 	# PLAYER SETUP
 	# Data
 	player = CombatEntity.new()
@@ -142,7 +141,32 @@ func _setup_ui():
 	
 	await ui.ready
 
-func _start_combat():
+# Resets combat for new round
+func _reset_combat_state():
+	# Global variables reset
+	selected_enemy = null
+	enemies.clear()
+	enemy_visuals.clear()
+	attack_timer_running = false
+	last_attack_press_time = 0.0
+
+func pause_combat():
+	combat_paused = true
+	set_process_input(false)
+
+func resume_combat():
+	combat_paused = false
+	set_process_input(true)
+
+
+# Called from StageFlowController with stage specific area ids to setup entities and start turns
+func _start_combat(enemy_ids):
+	_reset_combat_state()
+	await _setup_entities(enemy_ids)
+	_start_turn_loop()
+
+# Starts the actual combat
+func _start_turn_loop():
 	_player_turn()
 
 # TURN FUNCTIONS
@@ -150,6 +174,9 @@ func _start_combat():
 
 # Handles the player's turn
 func _player_turn():
+	# State check controlled by StageFlowController
+	if combat_paused:
+		return
 	turn = "player"
 	# Turn order button visbility settings
 	is_targeting = false
@@ -173,6 +200,9 @@ func _player_turn():
 
 # Handles the enemies turn
 func _enemy_turn():
+	# State check controlled by StageFlowController
+	if combat_paused:
+		return
 	# Turn order visuals settings
 	_clear_enemy_turn_order_visuals()
 	# Prevents stacking turns, because this method is called from multiple places
@@ -211,12 +241,12 @@ func _end_combat(victory: bool):
 	turn = ""
 	player_turn_ui.hide_player_turn_ui()
 	player_turn_ui.lock_input()
-	
-	# TO-DO: make specific for victory/defeat (separate methods in CombatUI might be easiest)
-	combat_end.emit()
 
 	if victory:
 		print("All enemies defeated or subdued.")
+		var rewards = _generate_rewards()
+		print(rewards)
+		combat_end.emit(victory, rewards)
 		# TO-DO Give rewards, XP based on if enemy is defeated/subdued
 		# Defeated = more currency, less items + karma (makes enemies harder, will look into how)
 		# Subdued = more items, medium currency
@@ -279,6 +309,7 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	# End of the turn
 	player_visual.attack_finished.connect(
 		func():
+			await player_visual._move_to_home_position()
 			# Check if enemy defeated
 			if _check_victory():
 				_end_combat(true) # 1. Classic RPG win: enemy defeated
@@ -447,6 +478,7 @@ func on_minigame_complete(enemy: CombatEntity, success: bool):
 		enemy_visual.update_axis_trust() 
 		print("Minigame success! Trust: %d / %d" % [enemy.trust, enemy.trust_max])
 		if enemy.is_tamed():
+			await player_visual._move_to_home_position()
 			if _check_victory():  # 2. Minigame win: enemy tamed
 				_end_combat(true) # If last enemy
 	else:
@@ -823,6 +855,34 @@ func _clear_enemy_turn_order_visuals():
 # Rounds damage number by quarters, so no damage will ever be something like "2.584", but rather just "2.5"
 func round_quarter(value: float) -> float:
 	return round(value * 4.0) / 4.0
+
+func _generate_rewards():
+	var total_currency := 0
+	
+	for enemy in enemies:
+		
+		# For currency (and XP generation in future)
+		var half_hp = round(enemy.max_hp / 2.0)
+		var min_currency: int
+		var max_currency: int
+		print("half hp: ", half_hp)
+		
+		# Rewards based on how the enemy was defeated
+		if enemy.is_killed():
+			max_currency = half_hp
+			min_currency = max(0, max_currency - 2)
+		elif enemy.is_tamed():
+			min_currency = half_hp
+			max_currency = min_currency + 2
+		else:
+			continue # Should not be possible to reach this point
+		
+		var gained_currency := randi_range(min_currency, max_currency)
+		total_currency += gained_currency
+	
+	PlayerData.currency += total_currency
+	
+	return {"currency": total_currency}
 
 
 # ANIMATION METHODS

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=2 format=3 uid="uid://dglocktr21n85"]
+
+[ext_resource type="Script" uid="uid://cq42yd5k6nmne" path="res://Scripts/Data/StageData.gd" id="1_qaku2"]
+
+[resource]
+script = ExtResource("1_qaku2")
+enemy_count_weights = {
+1: 0.05,
+2: 0.75,
+3: 0.2
+}
+allowed_enemies = Array[String](["enemy_beetle"])
+metadata/_custom_type_script = "uid://cq42yd5k6nmne"

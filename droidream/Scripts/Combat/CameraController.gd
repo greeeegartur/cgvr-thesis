@@ -77,7 +77,17 @@ func shake(intensity := 6.0, time := 0.15):
 	)
 
 # For critical hits
-func pop_zoom(amount := 0.1, duration := 0.12):
+func pop_zoom(amount := 0.17, duration := 0.17):
 	var tween := create_tween()
-	tween.tween_property(self, "zoom", zoom * (1.0 - amount), duration * 0.4)
+	tween.tween_property(self, "zoom", zoom * (1.0 + amount), duration * 0.4)
 	tween.tween_property(self, "zoom", zoom, duration * 0.6)
+
+# Zoom in for victory screen
+func victory_focus_on_player(target: Node2D) -> void:
+	var tween := create_tween()
+	tween.tween_property(self, "global_position", target, 0.4)
+	tween.parallel().tween_property(self, "zoom", Vector2(2.2, 2.2), 0.4)
+	tween.parallel().tween_property(self, "offset", Vector2(10, 65), 0.4)
+	tween.set_trans(Tween.TRANS_QUAD)
+	tween.set_ease(Tween.EASE_OUT)
+	await tween.finished
