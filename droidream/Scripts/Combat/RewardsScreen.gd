@@ -1,4 +1,4 @@
-extends Node2D
+extends Control
 
 # Script logic for the RewardsScreen scene
 
@@ -24,12 +24,12 @@ func _unhandled_input(event):
 # Spawns and shows rewards menu
 func show_rewards(rewards: Dictionary):
 	visible = true
+	panel.visible = true
 	_update_rewards_text(rewards)
 	_start_gear_spin()
 	
 	var tween := create_tween()
-	tween.tween_property(self, "scale", scene_scale, 0.4)
-	tween.parallel().tween_property(self, "modulate:a", 1.0, 0.4)
+	tween.tween_property(panel, "scale", scene_scale, 0.4)
 	await tween.finished
 
 # Hides rewards menu after input has been made
@@ -37,10 +37,10 @@ func hide_rewards() -> void:
 	_stop_gear_spin()
 
 	var tween := create_tween()
-	tween.tween_property(self, "scale", Vector2.ZERO, 0.4)
-	tween.parallel().tween_property(self, "modulate:a", 0.0, 0.4)
+	tween.tween_property(panel, "scale", Vector2.ZERO, 0.4)
 	await tween.finished
-
+	
+	panel.visible = false
 	visible = false
 
 func _update_rewards_text(rewards: Dictionary) -> void:
@@ -63,10 +63,3 @@ func _stop_gear_spin():
 	if gear_spin_tween:
 		gear_spin_tween.kill()
 		gear_spin_tween = null
-
-	create_tween().tween_property(
-		gear_sprite,
-		"rotation",
-		round(gear_sprite.rotation / PI) * PI,
-		0.12
-	).set_trans(Tween.TRANS_LINEAR)

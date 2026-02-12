@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://dy4v2mrrbu7c4"]
+
+[ext_resource type="Texture2D" uid="uid://iktyp5h7govn" path="res://Graphics/Placeholders/Combat/earth_chip.png" id="1_4dl6l"]
+[ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ItemData.gd" id="1_uroh8"]
+
+[resource]
+script = ExtResource("1_uroh8")
+id = "earth_chip"
+display_name = "Earth Chip"
+icon = ExtResource("1_4dl6l")
+max_stack = 3
+metadata/_custom_type_script = "uid://b56nw6bpevr7t"

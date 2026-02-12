@@ -8,16 +8,19 @@
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ygveb"]
 texture = ExtResource("1_18rw2")
 
-[node name="RewardsScreen" type="Node2D"]
+[node name="RewardsScreen" type="Control"]
 visible = false
-modulate = Color(1, 1, 1, 0)
-scale = Vector2(1e-05, 1e-05)
+layout_mode = 3
+anchors_preset = 0
 script = ExtResource("1_lsnnu")
 
 [node name="Panel" type="Panel" parent="."]
-anchors_preset = -1
+visible = false
+layout_mode = 0
 offset_right = 300.0
 offset_bottom = 300.0
+scale = Vector2(1e-05, 1e-05)
+pivot_offset = Vector2(150, 150)
 theme_override_styles/panel = SubResource("StyleBoxTexture_ygveb")
 metadata/_edit_use_anchors_ = true
 
@@ -25,12 +28,6 @@ metadata/_edit_use_anchors_ = true
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
-
-[node name="GearSprite" type="Sprite2D" parent="Panel"]
-show_behind_parent = true
-position = Vector2(149.99998, 149.54213)
-scale = Vector2(3.8315785, 3.8315794)
-texture = ExtResource("2_lsnnu")
 
 [node name="RewardsLabel" type="Label" parent="Panel"]
 layout_mode = 0
@@ -45,7 +42,8 @@ theme_override_font_sizes/font_size = 24
 text = "* ...
 * ..."
 
-[node name="VictoryText" type="RichTextLabel" parent="."]
+[node name="VictoryText" type="RichTextLabel" parent="Panel"]
+layout_mode = 0
 offset_left = 81.0
 offset_top = 17.0
 offset_right = 223.0
@@ -56,3 +54,9 @@ theme_override_fonts/normal_font = ExtResource("3_k2wyv")
 theme_override_font_sizes/normal_font_size = 42
 bbcode_enabled = true
 text = "[wave amp=50.0 freq=5.0 connected=1]Victory![/wave]"
+
+[node name="GearSprite" type="Sprite2D" parent="Panel"]
+z_index = -1
+position = Vector2(149, 149)
+scale = Vector2(3.8315785, 3.83158)
+texture = ExtResource("2_lsnnu")

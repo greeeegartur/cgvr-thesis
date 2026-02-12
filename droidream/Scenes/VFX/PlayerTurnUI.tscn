@@ -20,6 +20,7 @@ texture = ExtResource("8_ffjt8")
 texture = ExtResource("9_7f765")
 
 [node name="PlayerTurnUi" type="CanvasLayer"]
+visible = false
 script = ExtResource("1_0fa56")
 
 [node name="GearMenu" type="Node2D" parent="."]

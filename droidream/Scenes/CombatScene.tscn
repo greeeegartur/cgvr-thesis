@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://b0as27ombq3yp"]
+[gd_scene load_steps=21 format=3 uid="uid://b0as27ombq3yp"]
 
 [ext_resource type="Script" uid="uid://b3u2bq3dgrvtu" path="res://Scripts/Combat/CombatManager.gd" id="1_2mqg5"]
 [ext_resource type="Script" uid="uid://dcdpqt4rgapox" path="res://Scripts/Combat/CombatUI.gd" id="1_memue"]
@@ -15,6 +15,7 @@
 [ext_resource type="Script" uid="uid://b8ia03d3h01bu" path="res://Scripts/Combat/VFXCombatManager.gd" id="4_t6l0c"]
 [ext_resource type="PackedScene" uid="uid://c7am76emgaqdv" path="res://Scenes/VFX/ExplosionFX.tscn" id="5_7t358"]
 [ext_resource type="Script" uid="uid://bg2qtlv48grin" path="res://Scripts/Combat/EnemySpawner.gd" id="5_dv3n3"]
+[ext_resource type="PackedScene" uid="uid://dnjjp23rtsa8t" path="res://Scenes/StopUI.tscn" id="6_vp3lu"]
 [ext_resource type="Script" uid="uid://dqcuun735xvqm" path="res://Scripts/Combat/CameraController.gd" id="7_b8x4h"]
 [ext_resource type="PackedScene" uid="uid://6f0q2xbuuu16" path="res://Scenes/VFX/PlayerTurnUI.tscn" id="9_7t358"]
 [ext_resource type="PackedScene" uid="uid://b8tix1tnrjrpr" path="res://Scenes/VFX/TutorialText.tscn" id="13_7d6hk"]
@@ -31,6 +32,8 @@ areas = Array[ExtResource("3_akpyy")]([ExtResource("4_et1op")])
 
 [node name="StopManager" type="Node" parent="."]
 script = ExtResource("4_dv3n3")
+
+[node name="StopUI" parent="StopManager" instance=ExtResource("6_vp3lu")]
 
 [node name="CombatManager" type="Node" parent="."]
 script = ExtResource("1_2mqg5")
@@ -89,7 +92,10 @@ position = Vector2(112, 30.000002)
 scale = Vector2(2.5, 2.5)
 
 [node name="RewardsScreen" parent="UI" instance=ExtResource("14_et1op")]
-position = Vector2(330, 45.000015)
+offset_left = 330.0
+offset_top = 45.000015
+offset_right = 330.0
+offset_bottom = 45.000015
 scale = Vector2(0.9, 0.9)
 
 [node name="CombatUI" type="Node" parent="UI"]
@@ -108,8 +114,6 @@ text = "show turn order"
 flat = true
 icon_alignment = 1
 
-[node name="StopUI" type="Node" parent="UI"]
-
 [node name="Minigames" type="CanvasLayer" parent="."]
 layer = 10
 
@@ -118,6 +122,7 @@ layer = 9
 follow_viewport_enabled = true
 
 [node name="Vignette" type="ColorRect" parent="VFX"]
+visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0

@@ -1,7 +1,7 @@
 extends Node
 # Utility methods for global use everywhere (global script)
 
-# Picks an option from a dictionary based on the given probability rates
+# Picks an option from a dictionary based on its given probability rates
 func weighted_pick(weights: Dictionary):
 	var total := 0.0
 	for value in weights.values():

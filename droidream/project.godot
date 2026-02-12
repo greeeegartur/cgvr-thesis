@@ -21,6 +21,7 @@ Utils="*res://Scripts/Data/Utils.gd"
 EnemyDatabase="*res://Scripts/Data/EnemyDatabase.gd"
 CombatTypes="*res://Scripts/Data/CombatTypes.gd"
 PlayerData="*res://Scripts/Data/PlayerData.gd"
+ItemDb="*res://Scripts/Data/ItemDB.gd"
 
 [display]
 

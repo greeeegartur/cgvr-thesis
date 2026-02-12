@@ -88,21 +88,21 @@ func _process(delta):
 # Sets up the player and enemy(s) battle data
 func _setup_entities(enemy_ids):
 	# PLAYER SETUP
-	# Data
-	player = CombatEntity.new()
-	player.load_from_player()
-	
-	# Visual
-	player_visual = get_parent().get_node("World/PlayerVisual")
-	player_visual.action_pressed.connect(_on_player_action_pressed)
-	add_child(player)
-	player_visual.position = Vector2(96, 283)
-	player_visual.set_home_position()
-	
-	# UI
-	await player_visual.ready
-	player_visual.update_hp(player.hp, player.max_hp)
-	player_visual.update_defense(player.defense, player.defense)
+	# Data, only setting up when loading in
+	if player == null:
+		player = CombatEntity.new()
+		player.load_from_player()
+		
+		# Visual
+		player_visual = get_parent().get_node("World/PlayerVisual")
+		player_visual.action_pressed.connect(_on_player_action_pressed)
+		add_child(player)
+		player_visual.position = Vector2(96, 283)
+		player_visual.set_home_position()
+		
+		# UI
+		await player_visual.ready
+		player_visual.update_hp(player.hp, player.max_hp)
 	
 	# ENEMIES SETUP
 	for i in enemy_ids.size():
@@ -145,10 +145,20 @@ func _setup_ui():
 func _reset_combat_state():
 	# Global variables reset
 	selected_enemy = null
-	enemies.clear()
-	enemy_visuals.clear()
 	attack_timer_running = false
 	last_attack_press_time = 0.0
+	
+	# Freeing old enemy visuals and entities
+	for visual in enemy_visuals.values():
+		if is_instance_valid(visual):
+			visual.queue_free()
+	for enemy in enemies:
+		if is_instance_valid(enemy):
+			enemy.queue_free()
+	
+	enemies.clear()
+	enemy_visuals.clear()
+
 
 func pause_combat():
 	combat_paused = true
@@ -161,8 +171,8 @@ func resume_combat():
 
 # Called from StageFlowController with stage specific area ids to setup entities and start turns
 func _start_combat(enemy_ids):
-	_reset_combat_state()
 	await _setup_entities(enemy_ids)
+	await animate_enemy_entry()
 	_start_turn_loop()
 
 # Starts the actual combat
@@ -245,7 +255,7 @@ func _end_combat(victory: bool):
 	if victory:
 		print("All enemies defeated or subdued.")
 		var rewards = _generate_rewards()
-		print(rewards)
+		_reset_combat_state()
 		combat_end.emit(victory, rewards)
 		# TO-DO Give rewards, XP based on if enemy is defeated/subdued
 		# Defeated = more currency, less items + karma (makes enemies harder, will look into how)
@@ -865,7 +875,6 @@ func _generate_rewards():
 		var half_hp = round(enemy.max_hp / 2.0)
 		var min_currency: int
 		var max_currency: int
-		print("half hp: ", half_hp)
 		
 		# Rewards based on how the enemy was defeated
 		if enemy.is_killed():
@@ -881,6 +890,7 @@ func _generate_rewards():
 		total_currency += gained_currency
 	
 	PlayerData.currency += total_currency
+	print(PlayerData.currency)
 	
 	return {"currency": total_currency}
 
@@ -897,3 +907,15 @@ func _world_gray_out(gray_out: bool):
 		var tween := create_tween()
 		tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 		tween.tween_property(world_node, "modulate:a", 1.0, 0.6)
+
+func animate_enemy_entry():
+	for visual in enemy_visuals.values():
+		var target_pos = visual.position
+		visual.position.x += 300
+		
+		var tween := create_tween()
+		tween.tween_property(visual, "position", target_pos, 0.6)
+		tween.set_trans(Tween.TRANS_BACK)
+		tween.set_ease(Tween.EASE_OUT)
+		
+	await get_tree().create_timer(0.6).timeout

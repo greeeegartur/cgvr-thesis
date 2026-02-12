@@ -26,8 +26,6 @@ var attack_position : Vector2 # The position where the player's pattern will con
 # HUD variables
 @onready var hp_fill := $PlayerHUD/HPBar/Fill
 @onready var hp_label := $PlayerHUD/HPBar/Label
-@onready var def_fill := $PlayerHUD/DefenseBar/Fill
-@onready var def_label := $PlayerHUD/DefenseBar/Label
 
 # Damage FX variables
 @onready var fx_root: Node2D = $DamageFX
@@ -41,7 +39,6 @@ func _ready():
 	anim.animation_finished.connect(_on_anim_finished)
 	
 	hp_fill_max_width = hp_fill.size.x
-	def_fill_max_width = def_fill.size.x
 	
 	anim.play("player_idle")
 	# Combat scene's process mode (pausing) for minigames
@@ -145,8 +142,3 @@ func update_hp(current: float, max_hp):
 	var ratio = clamp(current / max_hp, 0.0, 1.0)
 	hp_fill.size.x = hp_fill_max_width * ratio
 	hp_label.text = "%.1f / %.1f" % [current, max_hp]
-
-func update_defense(current: float, max_def: float):
-	var ratio = clamp(current / max_def, 0.0, 1.0)
-	def_fill.size.x = def_fill_max_width * ratio
-	def_label.text = "%.1f / %.1f" % [current, max_def]

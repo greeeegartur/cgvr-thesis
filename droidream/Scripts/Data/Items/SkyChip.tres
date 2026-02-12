@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://cce6wjt3dawua"]
+
+[ext_resource type="Texture2D" uid="uid://cejyw1xju2nb2" path="res://Graphics/Placeholders/Combat/sky_chip.png" id="1_5wqwn"]
+[ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ItemData.gd" id="1_luwtb"]
+
+[resource]
+script = ExtResource("1_luwtb")
+id = "sky_chip"
+display_name = "Sky Chip"
+icon = ExtResource("1_5wqwn")
+max_stack = 3
+metadata/_custom_type_script = "uid://b56nw6bpevr7t"

@@ -1,0 +1,80 @@
+[gd_scene load_steps=7 format=3 uid="uid://b5lx75xmxn5hg"]
+
+[ext_resource type="Script" uid="uid://b06wg0d5rapbg" path="res://Scripts/Misc/ShopItem.gd" id="1_nbx48"]
+[ext_resource type="Texture2D" uid="uid://dxbd5kdjuqyr5" path="res://Graphics/Placeholders/Combat/Combat Select.png" id="2_5uj17"]
+[ext_resource type="Texture2D" uid="uid://cejyw1xju2nb2" path="res://Graphics/Placeholders/Combat/sky_chip.png" id="2_jxq6w"]
+[ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="4_jxq6w"]
+
+[sub_resource type="Animation" id="Animation_jxq6w"]
+resource_name = "idle"
+length = 1.6
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Arrow:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.4, 0.8, 1.2, 1.6),
+"transitions": PackedFloat32Array(1, 0.3298769, 2, 0.3298769, 2),
+"update": 0,
+"values": [Vector2(0, -27), Vector2(0, -35), Vector2(0, -27), Vector2(0, -35), Vector2(0, -27)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Arrow:scale")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.4, 0.8, 1.2, 1.6),
+"transitions": PackedFloat32Array(1, 0.329, 2, 0.329, 2),
+"update": 0,
+"values": [Vector2(0.45, 0.45), Vector2(0.6, 0.6), Vector2(0.45, 0.45), Vector2(0.6, 0.6), Vector2(0.45, 0.45)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_4100k"]
+_data = {
+&"idle": SubResource("Animation_jxq6w")
+}
+
+[node name="ShopItem" type="Node2D"]
+script = ExtResource("1_nbx48")
+
+[node name="Icon" type="Sprite2D" parent="."]
+texture = ExtResource("2_jxq6w")
+
+[node name="Arrow" type="Sprite2D" parent="."]
+position = Vector2(0, -27)
+scale = Vector2(0.45, 0.45)
+texture = ExtResource("2_5uj17")
+
+[node name="NameLabel" type="Label" parent="."]
+offset_left = -14.0
+offset_top = -18.0
+offset_right = 15.0
+offset_bottom = -8.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("4_jxq6w")
+theme_override_font_sizes/font_size = 8
+text = "Sky Chip"
+horizontal_alignment = 1
+
+[node name="CountLabel" type="Label" parent="."]
+offset_left = -8.0
+offset_right = 21.0
+offset_bottom = 10.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("4_jxq6w")
+theme_override_font_sizes/font_size = 8
+text = "x1"
+horizontal_alignment = 1
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_4100k")
+}
+autoplay = "idle"

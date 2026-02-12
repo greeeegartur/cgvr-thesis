@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://p01dfso5vlo3"]
+
+[ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ItemData.gd" id="1_iieo5"]
+[ext_resource type="Texture2D" uid="uid://nuoesnjwkg24" path="res://Graphics/Placeholders/Combat/water_chip.png" id="1_yoyre"]
+
+[resource]
+script = ExtResource("1_iieo5")
+id = "water_chip"
+display_name = "Water Chip"
+icon = ExtResource("1_yoyre")
+max_stack = 3
+metadata/_custom_type_script = "uid://b56nw6bpevr7t"
