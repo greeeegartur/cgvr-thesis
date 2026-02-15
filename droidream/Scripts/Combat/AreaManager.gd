@@ -37,5 +37,10 @@ func advance_area():
 	
 	area_changed.emit(get_current_area())
 
+# On player death, roguelike reset
+func reset_to_first_area():
+	area_index = 0
+	stage_index = 0
+
 func _run_completed():
 	print("RUN COMPLETE")

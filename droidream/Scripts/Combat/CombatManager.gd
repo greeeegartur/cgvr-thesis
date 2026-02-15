@@ -38,6 +38,7 @@ var target_index = 0
 signal player_turn_started 
 signal enemy_turn_started
 signal combat_end(victory: bool, rewards: Dictionary)
+signal player_died
 var enemy_turn_active := false
 var is_targeting := false # Check to see if targeting is allowed or not
 var selected_attack_type : CombatTypes.EntityType # Currently selected attack type in enemy targeting
@@ -103,6 +104,9 @@ func _setup_entities(enemy_ids):
 		# UI
 		await player_visual.ready
 		player_visual.update_hp(player.hp, player.max_hp)
+	# Resyncing from possible previous combats
+	player.load_from_player()
+	player_visual.update_hp(player.hp, player.max_hp)
 	
 	# ENEMIES SETUP
 	for i in enemy_ids.size():
@@ -144,6 +148,7 @@ func _setup_ui():
 # Resets combat for new round
 func _reset_combat_state():
 	# Global variables reset
+	turn = ""
 	selected_enemy = null
 	attack_timer_running = false
 	last_attack_press_time = 0.0
@@ -159,12 +164,34 @@ func _reset_combat_state():
 	enemies.clear()
 	enemy_visuals.clear()
 
+# Absolute reset for after death (reset to very first stage)
+func _force_full_reset():
+	# Base reset
+	_reset_combat_state()
+	
+	# Turn system reset
+	enemy_turn_active = false
+	target_index = 0
+	is_targeting = false
 
-func pause_combat():
+	# Timing + minigame reset
+	attack_time = 0.0
+	last_block_press_time = -1.0
+	block_on_cooldown = false
+	in_minigame = false
+
+	# UI reset
+	player_turn_ui.lock_input()
+	player_turn_ui.hide_player_turn_ui()
+
+	combat_paused = false
+	set_process_input(true)
+
+func _pause_combat():
 	combat_paused = true
 	set_process_input(false)
 
-func resume_combat():
+func _resume_combat():
 	combat_paused = false
 	set_process_input(true)
 
@@ -188,6 +215,8 @@ func _player_turn():
 	if combat_paused:
 		return
 	turn = "player"
+	tutorial_text.show_hint(TutorialText.HintType.PLAYER_TURN)
+	
 	# Turn order button visbility settings
 	is_targeting = false
 	selected_enemy = null
@@ -195,7 +224,7 @@ func _player_turn():
 	_update_enemy_turn_order_display()
 	
 	# Player turn base defaults, signal emit and guess display update
-	camera.stop_follow() # Reseting from previous enemy turn (or defaulting it)
+	await camera.stop_follow() # Reseting from previous enemy turn (or defaulting it)
 	player_turn_ui.start_player_turn()
 	player_turn_ui.update_guess_display()
 	player_turn_started.emit()
@@ -241,6 +270,7 @@ func _execute_enemy_turns(order: Array):
 		if enemy.is_killed() or enemy.is_tamed():
 			continue
 		if player.hp <= 0:
+			_end_combat(false)
 			return
 		
 		# Performs enemy attack
@@ -250,10 +280,12 @@ func _end_combat(victory: bool):
 	# Freeze turn logic (not necessary anymore but keeping just in case)
 	turn = ""
 	player_turn_ui.hide_player_turn_ui()
+	tutorial_text.hide_text()
 	player_turn_ui.lock_input()
 
 	if victory:
 		print("All enemies defeated or subdued.")
+		tutorial_text.hide_text()
 		var rewards = _generate_rewards()
 		_reset_combat_state()
 		combat_end.emit(victory, rewards)
@@ -263,11 +295,13 @@ func _end_combat(victory: bool):
 	else:
 		# Player lost
 		print("Player defeated! Game over.")
-		player_visual.play_defeat()
+		
+		tutorial_text.visible = false
+		_pause_combat()
+		_reset_combat_state()
+		player_died.emit()
 		
 		# TO-DO: Implement fallback (retry, save and quit.)
-	
-	# emit_signal("combat_ended", victory)
 
 
 # ACTION FUNCTIONS
@@ -275,6 +309,8 @@ func _end_combat(victory: bool):
 
 # The player's attacking logic, takes the player's attack type as a parameter for damage calculation
 func player_attack(attack_type: CombatTypes.EntityType):
+	tutorial_text.hide_text()
+	
 	# If for some reason it is not the player's turn
 	if turn != "player":
 		print("Enemy turn in player_attack.")
@@ -295,7 +331,7 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	camera.follow(player_visual, 60)
 	
 	# Shows crit hint text for the player + allows inputs for crit
-	tutorial_text.show_crit_hint()
+	tutorial_text.show_hint(TutorialText.HintType.CRIT)
 	player_visual.set_input_enabled(true)
 	
 	# Communication with PlayerVisual to calculate hit damage (check for critical hits) and play attack animations
@@ -510,7 +546,7 @@ func _enemy_attack_single(enemy: CombatEntity):
 	
 	# Camera controls + tutorial text visible
 	camera.follow(visual, -60)
-	tutorial_text.show_block_hint()
+	tutorial_text.show_hint(TutorialText.HintType.BLOCK)
 	await _play_enemy_attack_pattern(enemy, visual, pattern)
 
 
@@ -559,11 +595,7 @@ func _play_enemy_attack_pattern(enemy: CombatEntity, enemy_visual: EnemyVisual, 
 			
 			# Reset visual layering for player attack and setting input to false
 			enemy_visual.z_index = 1
-			player_visual.set_input_enabled(false)
-			
-			# Cancels next enemy turns if player loses before all enemy turns are over
-			if player.hp <= 0:
-				_end_combat(false),
+			player_visual.set_input_enabled(false),
 		CONNECT_ONE_SHOT
 		)
 	
@@ -626,6 +658,10 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	
 	# Reseting block press time for next enemy attack patterns
 	last_block_press_time = -1.0
+	
+	# Cancels next enemy turns if player loses before all enemy turns are over
+	if player.hp <= 0:
+		_end_combat(false)
 
 # Listens for player attack presses for critical hit logic
 func _on_player_attack_pressed():

@@ -1,0 +1,75 @@
+[gd_scene load_steps=4 format=3 uid="uid://dc0p2hfu0gp6r"]
+
+[ext_resource type="Script" uid="uid://blphtey3sf5ci" path="res://Scripts/Combat/DeathScreen.gd" id="1_mr261"]
+[ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="2_5btjl"]
+[ext_resource type="Texture2D" uid="uid://dxbd5kdjuqyr5" path="res://Graphics/Placeholders/Combat/Combat Select.png" id="3_lgt8h"]
+
+[node name="DeathScreen" type="Node2D"]
+visible = false
+script = ExtResource("1_mr261")
+
+[node name="GameOverLabel" type="Label" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 197.0
+offset_top = 6.0
+offset_right = 445.0
+offset_bottom = 70.0
+grow_horizontal = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 12
+theme_override_fonts/font = ExtResource("2_5btjl")
+theme_override_font_sizes/font_size = 64
+text = "Game Over"
+horizontal_alignment = 1
+
+[node name="Options" type="Node2D" parent="."]
+
+[node name="RetryLabel" type="Label" parent="Options"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 197.0
+offset_top = 90.0
+offset_right = 445.0
+offset_bottom = 154.0
+grow_horizontal = 2
+pivot_offset = Vector2(124, 32)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_fonts/font = ExtResource("2_5btjl")
+theme_override_font_sizes/font_size = 36
+text = "Retry"
+horizontal_alignment = 1
+
+[node name="QuitLabel" type="Label" parent="Options"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = 197.0
+offset_top = 142.0
+offset_right = 445.0
+offset_bottom = 206.0
+grow_horizontal = 2
+pivot_offset = Vector2(124, 32)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_fonts/font = ExtResource("2_5btjl")
+theme_override_font_sizes/font_size = 36
+text = "Quit"
+horizontal_alignment = 1
+
+[node name="RightArrow" type="Sprite2D" parent="."]
+visible = false
+position = Vector2(366, 162)
+rotation = 1.5707964
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("3_lgt8h")
+
+[node name="LeftArrow" type="Sprite2D" parent="."]
+visible = false
+position = Vector2(275.00003, 162)
+rotation = -1.5707964
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("3_lgt8h")

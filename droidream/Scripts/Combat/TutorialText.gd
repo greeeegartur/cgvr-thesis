@@ -1,37 +1,85 @@
-extends Node2D
+extends CanvasLayer
 
 # This script is responsible for tutorial texts during turns like "Press Z to block" etc.
 
 class_name TutorialText
 
-@onready var label := $Text/Label
-@onready var z_icon := $Text/Sprite2D
-@onready var anim := $Text/AnimationPlayer
+# Nodes that appear during the following circumstances:
+# Turn nodes
+@onready var panel := $Control/BattlePanel
+@onready var label := $Control/BattlePanel/HBoxContainer/Label
+@onready var z_icon := $Control/BattlePanel/HBoxContainer/ZIcon
+
+# Selection nodes
+@onready var x_icon := $Control/ControlsHint/XIcon
+@onready var controls_hint_node := $Control/ControlsHint
+@onready var controls_hint_label := $Control/ControlsHint/Label
+@onready var anim := $Control/AnimationPlayer
+
+# Different states for it to react accordingly
+enum HintType {
+	PLAYER_TURN,
+	SHOP,
+	CRIT,
+	BLOCK
+}
+var current_state
+
+func show_hint(type: HintType):
+	match type:
+		HintType.PLAYER_TURN:
+			current_state = HintType.PLAYER_TURN
+			panel.visible = false
+			controls_hint_node.visible = true
+			x_icon.visible = true
+			show_text("Move           / Confirm     / Cancel", controls_hint_label, controls_hint_node)
+
+		HintType.SHOP:
+			current_state = HintType.SHOP
+			panel.visible = false
+			controls_hint_node.visible = true
+			x_icon.visible = false
+			show_text("Move           / Confirm     ", controls_hint_label, controls_hint_node)
+
+		HintType.CRIT:
+			current_state = HintType.CRIT
+			panel.visible = true
+			controls_hint_node.visible = false
+			z_icon.position = Vector2(69, 10)
+			show_text("Press      right before hitting to crit!", label, panel)
+
+		HintType.BLOCK:
+			current_state = HintType.BLOCK
+			panel.visible = true
+			controls_hint_node.visible = false
+			z_icon.position = Vector2(62.3, 10)
+			show_text("Press      before a hit to block!", label, panel)
+
 
 # Methods for turns
-func show_text(text: String):
-	label.text = text
-	visible = true
-	modulate.a = 0.0
+func show_text(text: String, settable_label: Label, node):
+	settable_label.text = text
+	node.visible = true
+	node.modulate.a = 0.0
 	
 	# Press Z
-	anim.play("press")
+	if panel.visible:
+		anim.play("press")
+	elif controls_hint_node.visible:
+		anim.play("idle")
+		
 	
 	var tween := create_tween()
-	tween.tween_property(self, "modulate:a", 1.0, 0.25)
+	tween.tween_property(node, "modulate:a", 1.0, 0.25)
 
 func hide_text():
+	var node
+	if current_state == HintType.CRIT or current_state == HintType.BLOCK:
+		node = panel
+	elif current_state == HintType.PLAYER_TURN or current_state == HintType.SHOP:
+		node = controls_hint_node
 	var tween := create_tween()
-	tween.tween_property(self, "modulate:a", 0.0, 0.2)
+	tween.tween_property(node, "modulate:a", 0.0, 0.25)
 	tween.finished.connect(func():
 		anim.stop()
-		visible = false
 	)
-
-func show_crit_hint():
-	z_icon.position = Vector2(62.0, 9.0)
-	show_text("Press      right before hitting the enemy to crit!")
-
-func show_block_hint():
-	z_icon.position = Vector2(50.0, 9.0)
-	show_text("Press      right before the enemy hits to block!")

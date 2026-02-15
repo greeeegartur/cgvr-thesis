@@ -2,21 +2,44 @@ extends Node
 
 # This script is for storing and updating all player data, including functions to do so
 
-# Base player variables (self-explanatory)
-var max_hp : float = 10.0
-var hp : float = 10.0
-var attack : float = 4.0
-var defense : float = 0.0
-@export var guesses := { # Amount of guesses for each type
+# Base player variables (for reseting)
+const BASE_MAX_HP := 10.0
+const BASE_ATTACK := 4.0
+const BASE_DEFENSE := 0.0
+const BASE_GUESSES := {
 	CombatTypes.EntityType.SKY: 3,
 	CombatTypes.EntityType.EARTH: 3,
 	CombatTypes.EntityType.WATER: 3
 }
 
+# Actual adjustable player variables (can change for the player)
+var max_hp : float
+var hp : float
+var attack : float
+var defense : float
+@export var guesses := { } # Amount of guesses for each type
+
 var currency := 0
 var experience := 0
 # For later...
 var karma := 0
+
+func _ready():
+	reset_run()
+
+func reset_run():
+	# Reset stats
+	max_hp = BASE_MAX_HP
+	hp = BASE_MAX_HP
+	attack = BASE_ATTACK
+	defense = BASE_DEFENSE
+	guesses = BASE_GUESSES.duplicate(true)
+	
+	# Reset progression
+	currency = 0
+	experience = 0
+	karma = 0
+
 
 # Helper methods for use in CombatManager
 func has_guess(t: CombatTypes.EntityType) -> bool:
