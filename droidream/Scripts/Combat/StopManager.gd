@@ -181,8 +181,6 @@ func _spawn_items():
 		item_instance.scale = Vector2.ZERO
 		var tween := create_tween()
 		tween.tween_property(item_instance, "scale", Vector2.ONE, 0.2)
-	
-
 
 func _animate_items_out() -> void:
 	var children := items_container.get_children()

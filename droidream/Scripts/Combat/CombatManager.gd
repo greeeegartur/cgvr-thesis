@@ -65,8 +65,6 @@ var player_visual : PlayerVisual
 var in_minigame = false # Default
 var combat_paused := false
 
-
-
 # COMBAT SETUP FUNCTIONS
 # These are functions that run before combat begins, i.e entity data and loading the first turn
 
@@ -98,7 +96,7 @@ func _setup_entities(enemy_ids):
 		player_visual = get_parent().get_node("World/PlayerVisual")
 		player_visual.action_pressed.connect(_on_player_action_pressed)
 		add_child(player)
-		player_visual.position = Vector2(96, 283)
+		player_visual.position = Vector2(96, 277)
 		player_visual.set_home_position()
 		
 		# UI

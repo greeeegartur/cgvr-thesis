@@ -31,7 +31,6 @@ func setup(combat_manager: CombatManager):
 	manager = combat_manager
 	manager.combat_end.connect(_combat_end)
 
-
 # Input handling for enemy visual selection during player turn
 func _unhandled_input(event):
 	if not targeting:

@@ -23,7 +23,8 @@ var home_position : Vector2 # The player's original position
 var attack_position : Vector2 # The position where the player's pattern will connect to the enemy sprite
 @export var move_speed := 400.0 # Pixels per second
 
-# HUD variables
+# HUD variables, will change these 
+@onready var hp_bar := $PlayerHUD/HPBar
 @onready var hp_fill := $PlayerHUD/HPBar/Fill
 @onready var hp_label := $PlayerHUD/HPBar/Label
 
@@ -142,3 +143,17 @@ func update_hp(current: float, max_hp):
 	var ratio = clamp(current / max_hp, 0.0, 1.0)
 	hp_fill.size.x = hp_fill_max_width * ratio
 	hp_label.text = "%.1f / %.1f" % [current, max_hp]
+
+func hide_hp():
+	var tween = create_tween()
+	tween.tween_property(hp_bar, "modulate:a", 0.0, 1)
+	await tween.finished
+	
+	hp_bar.visible = false
+
+func show_hp():
+	hp_bar.visible = true
+	
+	var tween = create_tween()
+	tween.tween_property(hp_bar, "modulate:a", 1.0, 1)
+	await tween.finished

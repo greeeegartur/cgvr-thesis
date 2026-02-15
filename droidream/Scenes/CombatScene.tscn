@@ -52,7 +52,7 @@ texture = ExtResource("2_dqj0d")
 
 [node name="PlayerVisual" parent="World" instance=ExtResource("4_b8x4h")]
 z_index = 3
-position = Vector2(96, 283)
+position = Vector2(96, 277)
 
 [node name="PlayerSprite" type="Sprite2D" parent="World"]
 visible = false
@@ -78,11 +78,10 @@ position = Vector2(463, 283)
 z_index = 1
 position = Vector2(563, 283)
 
-[node name="StopVisual" type="Node2D" parent="World"]
-visible = false
-
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(320, 180)
+position_smoothing_enabled = true
+position_smoothing_speed = 8.5
 script = ExtResource("7_b8x4h")
 
 [node name="UI" type="CanvasLayer" parent="."]

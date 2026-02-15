@@ -1,0 +1,81 @@
+[gd_scene load_steps=8 format=3 uid="uid://cdsa8xop7dyes"]
+
+[ext_resource type="Texture2D" uid="uid://bivrnmnwmywuy" path="res://Graphics/Placeholders/Combat/text_bubble.png" id="1_0sqvo"]
+[ext_resource type="Script" uid="uid://bswvjjrb8t4h3" path="res://Scripts/Misc/SpeechBubble.gd" id="1_dmiig"]
+[ext_resource type="Texture2D" uid="uid://dtdcl7k1o1gdh" path="res://Graphics/Placeholders/Combat/text_bubble_tail.png" id="2_dk656"]
+[ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="2_s2jcq"]
+
+[sub_resource type="Animation" id="Animation_dmiig"]
+resource_name = "idle"
+length = 1.6
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("BubbleRoot/Bubble:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.4, 0.8, 1.2),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3]
+}
+
+[sub_resource type="Animation" id="Animation_s2jcq"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("BubbleRoot/Bubble:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_q0ggd"]
+_data = {
+&"RESET": SubResource("Animation_s2jcq"),
+&"idle": SubResource("Animation_dmiig")
+}
+
+[node name="SpeechBubble" type="CanvasLayer"]
+script = ExtResource("1_dmiig")
+
+[node name="BubbleRoot" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+scale = Vector2(0.7, 0.7)
+
+[node name="Tail" type="Sprite2D" parent="BubbleRoot"]
+z_index = 1
+position = Vector2(-56.000004, 65)
+scale = Vector2(1.5, 1.829)
+texture = ExtResource("2_dk656")
+
+[node name="Bubble" type="Sprite2D" parent="BubbleRoot"]
+scale = Vector2(2, 2)
+texture = ExtResource("1_0sqvo")
+vframes = 4
+
+[node name="RichTextLabel" type="RichTextLabel" parent="BubbleRoot"]
+layout_mode = 0
+offset_left = -42.857143
+offset_top = -40.0
+offset_right = 42.857136
+offset_bottom = 37.142853
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("2_s2jcq")
+text = "mama mia"
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_q0ggd")
+}
+autoplay = "idle"
