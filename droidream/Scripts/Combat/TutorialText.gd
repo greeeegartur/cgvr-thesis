@@ -16,9 +16,13 @@ class_name TutorialText
 @onready var controls_hint_label := $Control/ControlsHint/Label
 @onready var anim := $Control/AnimationPlayer
 
+@onready var select_hint_node := $Control/SelectHint
+@onready var select_hint_label := $Control/SelectHint/Label
+
 # Different states for it to react accordingly
 enum HintType {
 	PLAYER_TURN,
+	PLAYER_SELECT,
 	SHOP,
 	CRIT,
 	BLOCK
@@ -30,13 +34,23 @@ func show_hint(type: HintType):
 		HintType.PLAYER_TURN:
 			current_state = HintType.PLAYER_TURN
 			panel.visible = false
+			select_hint_node.visible = false
 			controls_hint_node.visible = true
 			x_icon.visible = true
 			show_text("Move           / Confirm     / Cancel", controls_hint_label, controls_hint_node)
 
+		HintType.PLAYER_SELECT:
+			current_state = HintType.PLAYER_SELECT
+			panel.visible = false
+			controls_hint_node.visible = false
+			select_hint_node.visible = true
+			x_icon.visible = false
+			show_text("Select a target creature!", select_hint_label, select_hint_node)
+
 		HintType.SHOP:
 			current_state = HintType.SHOP
 			panel.visible = false
+			select_hint_node.visible = false
 			controls_hint_node.visible = true
 			x_icon.visible = false
 			show_text("Move           / Confirm     ", controls_hint_label, controls_hint_node)
@@ -44,6 +58,7 @@ func show_hint(type: HintType):
 		HintType.CRIT:
 			current_state = HintType.CRIT
 			panel.visible = true
+			select_hint_node.visible = false
 			controls_hint_node.visible = false
 			z_icon.position = Vector2(69, 10)
 			show_text("Press      right before hitting to crit!", label, panel)
@@ -51,6 +66,7 @@ func show_hint(type: HintType):
 		HintType.BLOCK:
 			current_state = HintType.BLOCK
 			panel.visible = true
+			select_hint_node.visible = false
 			controls_hint_node.visible = false
 			z_icon.position = Vector2(62.3, 10)
 			show_text("Press      before a hit to block!", label, panel)
@@ -67,7 +83,7 @@ func show_text(text: String, settable_label: Label, node):
 		anim.play("press")
 	elif controls_hint_node.visible:
 		anim.play("idle")
-		
+	
 	
 	var tween := create_tween()
 	tween.tween_property(node, "modulate:a", 1.0, 0.25)

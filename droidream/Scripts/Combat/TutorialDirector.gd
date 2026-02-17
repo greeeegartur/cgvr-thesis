@@ -13,8 +13,29 @@ class_name TutorialDirector
 @onready var camera := $"../Camera2D"
 @onready var ufo := $"../World/TuhU"
 @onready var speech_bubble := $"../UI/SpeechBubble"
+@onready var hint_node := $"../UI/HintNode"
+
+# Timer hint logic
+var idle_timer := 0.0
+var hint_delay := 6.0
 
 var ufo_idle_tween : Tween
+
+const TUTORIAL_COLORS := {
+	"creatures": "#8df59a",        # light green
+	"taming": "#ffb347",           # light orange
+	"abilities": "#b388ff",        # purple
+	"items": "#7ec8ff",            # light blue
+	"type": "#5cff7a",             # green
+	"trust": "#ff9de2",            # dreamish pink
+	"hurt": "#ff4d4d",             # red
+	"sky": "#f7ff3c",              # neon yellow
+	"water": "#4da6ff",            # blue
+	"earth": "#8b5a2b",            # brown
+	"droid": "#bfbfbf",            # gray
+	"bolts": "#ffd700"             # golden
+}
+
 
 func _ready():
 	await speech_bubble.ready
@@ -24,6 +45,30 @@ func _ready():
 	enter_cinematic()
 	
 	intro_scene()
+
+func _process(delta: float):
+	if speech_bubble.visible and speech_bubble.mode == SpeechBubble.BubbleMode.CINEMATIC:
+		idle_timer += delta
+		
+		if Input.is_action_just_pressed("ui_accept"):
+			idle_timer = -6.0
+			hint_out()
+			hint_node.visible = false
+		
+		if idle_timer > hint_delay:
+			hint_node.visible = true
+			hint_in()
+
+func hint_in():
+	hint_node.modulate.a = 0.0
+	var tween = create_tween()
+	tween.tween_property(hint_node, "modulate:a", 1.0, 0.2)
+	await tween.finished
+
+func hint_out():
+	var tween = create_tween()
+	tween.tween_property(hint_node, "modulate:a", 0.0, 0.2)
+	await tween.finished
 
 func lock_input():
 	combat_manager._pause_combat()
@@ -98,14 +143,134 @@ func play_tutorial():
 func intro_scene():
 	_start_ufo_idle()
 	
-	await speech_bubble.say("Hey! Are you alright?")
+	speech_bubble.show_bubble()
+	await speech_bubble.say_line("Hey! Are you alright?")
+	await speech_bubble.say_line("Come on, wake up!")
+	speech_bubble.hide_bubble()
 	
+	await camera.follow(player_visual)
 	await fade_from_black()
 	speech_bubble.show_tail()
 	
-	await speech_bubble.say("..Were you... sleeping here?")
+	speech_bubble.show_bubble()
+	await speech_bubble.say_line("..Oh. You were… sleeping here?")
+	# ufo.play_happy()
+	await speech_bubble.say_line("Quite an odd place for a nap, don’t you think?")
+	speech_bubble.hide_bubble()
 	
-	print("intro before combat")
+	# *The Droid looks around, notices it’s in a jungle, question mark bubble*
+	await get_tree().create_timer(1).timeout
+	
+	# ufo.play_normal()
+	speech_bubble.show_bubble()
+	await speech_bubble.say_line("Huh? You’re lost?")
+	# ufo.play_happy()
+	await speech_bubble.say_line("So this isn’t a lifestyle choice. What a relief!")
+	speech_bubble.hide_bubble()
+	
+	# *The Droid nods at Tuh-U without emotion*
+	await get_tree().create_timer(1).timeout
+	
+	speech_bubble.show_bubble()
+	# ufo.play_normal()
+	await speech_bubble.say_line("..Oh, right. You’re actually lost.")
+	speech_bubble.hide_bubble()
+	
+	#*Camera zooms in on Tuh-U*
+	await get_tree().create_timer(1).timeout
+	
+	speech_bubble.show_bubble()
+	await speech_bubble.say_line("My name is [b]Tuh-U[/b], I know these parts well.")
+	speech_bubble.hide_bubble() 
+	
+	await get_tree().create_timer(1).timeout
+	#*Camera zooms out to previous position*
+	
+	speech_bubble.show_bubble()
+	await speech_bubble.say_line("Can you describe your home? Maybe I can point you in the right direction.")
+	speech_bubble.hide_bubble()
+	
+	#*The Droid explains where it last dozed off, Tuh-U exclamation mark bubble*
+	await get_tree().create_timer(1).timeout
+	
+	speech_bubble.show_bubble()
+	# ufo.play_happy()
+	await speech_bubble.say_line("Ah! I know this place.")
+	await speech_bubble.say_line("Wow, though.. You’ve come quite a long way. ")
+	speech_bubble.hide_bubble()
+	
+	await get_tree().create_timer(1).timeout
+	#*Worry bubble for The Droid*
+	
+	speech_bubble.show_bubble()
+	# ufo.play_look_right()
+	await speech_bubble.say_line("To get back, you’d need to cross the cliffside.")
+	await speech_bubble.say_line(" But the cliffside itself is beyond this jungle and a cavern system.")
+	# ufo.play_sad()
+	await speech_bubble.say_line("It’s no easy path, the road is full of all sorts of [color=#8df59a]wild creatures[/color].")
+	await speech_bubble.say_line("For someone so young like yourself… It can be a dangerous journey.")
+	speech_bubble.hide_bubble()
+	
+	await get_tree().create_timer(1).timeout
+	#*The Droid shows Tuh-U its book about creatures*
+	
+	speech_bubble.show_bubble()
+	# ufo.play_happy()
+	await speech_bubble.say_line("Oh, wow! A [color=#8df59a]creature book[/color]!")
+	await speech_bubble.say_line("I didn’t think you were this talented! No offense.")
+	await speech_bubble.say_line("You must be an expert at [color=#ffb347]taming creatures[/color] then?")
+	speech_bubble.hide_bubble()
+	
+	#*Worry bubble for The Droid as it frowns*
+	await get_tree().create_timer(1).timeout
+	
+	speech_bubble.show_bubble()
+	# ufo.play_sad()
+	await speech_bubble.say_line("..Or not?")
+	speech_bubble.hide_bubble()
+	
+	# Pause for a few seconds
+	await get_tree().create_timer(2).timeout
+	
+	speech_bubble.show_bubble()
+	# ufo.play_happy()
+	await speech_bubble.say_line("Not to worry though, I can teach you the basics.")
+	speech_bubble.hide_bubble()
+	
+	#*The Droid is surprised, exclamation mark bubble*
+	await get_tree().create_timer(1).timeout
+	
+	speech_bubble.show_bubble()
+	await speech_bubble.say_line("The journey ahead would still be difficult, but I see great ambition in you!")
+	await speech_bubble.say_line("With a little help, I’m sure you can make it back home!")
+	speech_bubble.hide_bubble()
+	
+	# ufo.flip()
+	await get_tree().create_timer(1).timeout
+	
+	speech_bubble.show_bubble()
+	# ufo.play_normal()
+	await speech_bubble.say_line("..Let’s see now… ")
+	speech_bubble.hide_bubble()
+	
+	#*Tuh-U flies to the right, camera follows*
+	#*Tuh-U releases a beam and spawns in a Dummy*
+	await get_tree().create_timer(1).timeout
+	camera.reset_camera()
+	#*Camera returns to combat scene standard*
+	
+	speech_bubble.show_bubble()
+	await speech_bubble.say_line("This should work!")
+	speech_bubble.hide_bubble()
+	
+	# ufo.flip()
+	await get_tree().create_timer(1).timeout
+	
+	speech_bubble.show_bubble()
+	# ufo.play_happy()
+	await speech_bubble.say_line("Are you ready? Let’s begin!")
+	speech_bubble.hide_bubble()
+
 
 func spawn_dummy_enemy():
 	print("spawn dummy here")
@@ -118,3 +283,8 @@ func minigame_interruption():
 
 func outro_scene():
 	print("droid walks to the right of the scene")
+
+# HELPERS
+
+func bb(key: String, text: String) -> String:
+	return "[color=%s]%s[/color]" % [TUTORIAL_COLORS[key], text]

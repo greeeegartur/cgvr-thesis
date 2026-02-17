@@ -772,6 +772,8 @@ func start_target_selection():
 	if alive.is_empty():
 		return
 	
+	tutorial_text.show_hint(TutorialText.HintType.PLAYER_SELECT)
+	
 	# Targeting always starts at index 0 out of alive enemies
 	target_index = 0
 	selected_enemy = alive[target_index]
@@ -841,6 +843,8 @@ func _cancel_target_selection():
 		v.hide_target_arrow()
 	selected_enemy = null
 	target_index = 0
+	
+	tutorial_text.show_hint(TutorialText.HintType.PLAYER_TURN)
 	
 	_update_enemy_turn_order_display()
 	player_turn_ui.cancel_enemy_selection()

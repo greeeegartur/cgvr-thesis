@@ -23,22 +23,6 @@ shadow_size = 1
 [sub_resource type="Animation" id="Animation_gr0x8"]
 length = 0.001
 
-[sub_resource type="Animation" id="Animation_y28dn"]
-resource_name = "press"
-loop_mode = 1
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("ZIcon:frame")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.5),
-"transitions": PackedFloat32Array(1, 1),
-"update": 1,
-"values": [0, 1]
-}
-
 [sub_resource type="Animation" id="Animation_pqvjo"]
 resource_name = "idle"
 loop_mode = 1
@@ -79,6 +63,22 @@ tracks/2/keys = {
 "values": [0, 1]
 }
 
+[sub_resource type="Animation" id="Animation_y28dn"]
+resource_name = "press"
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("ZIcon:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [0, 1]
+}
+
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_xf13d"]
 _data = {
 &"RESET": SubResource("Animation_gr0x8"),
@@ -106,9 +106,9 @@ layout_mode = 1
 anchors_preset = -1
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 19.0
+offset_left = 17.333328
 offset_top = -46.333336
-offset_right = -16.000946
+offset_right = -17.667618
 offset_bottom = -128.83333
 scale = Vector2(0.6, 0.6)
 pivot_offset = Vector2(150, 150)
@@ -179,3 +179,22 @@ root_node = NodePath("../BattlePanel/HBoxContainer")
 libraries = {
 &"": SubResource("AnimationLibrary_xf13d")
 }
+
+[node name="SelectHint" type="Node2D" parent="Control"]
+visible = false
+position = Vector2(0.3333333, 0)
+scale = Vector2(0.6, 0.6)
+
+[node name="Label" type="Label" parent="Control/SelectHint"]
+custom_minimum_size = Vector2(180, 35)
+offset_left = 131.11108
+offset_top = 1.1111104
+offset_right = 369.4444
+offset_bottom = 36.11111
+theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("2_gr0x8")
+text = "Select a target creature"
+vertical_alignment = 1
+autowrap_mode = 2
+metadata/_edit_use_anchors_ = true
