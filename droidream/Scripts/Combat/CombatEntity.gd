@@ -19,6 +19,11 @@ var visual_scene : PackedScene
 var type : CombatTypes.EntityType # can be "Sky", "Earth" and "Water"
 var minigame_id := ""
 
+# Specific enemy variables
+var spawned := false
+var can_spawn := true
+
+
 # Loads enemy info for entity via enemy_id string
 # enemy_id string must be present on an enemy resource in the Data folder
 func load_from_enemy_id(enemy_id: String) -> void:
@@ -34,6 +39,9 @@ func load_from_enemy_id(enemy_id: String) -> void:
 	minigame_id = data.minigame_id
 	attack_patterns = data.attack_patterns
 	visual_scene = data.visual_scene
+	spawned = false
+	can_spawn = true
+
 
 # Loads player data from PlayerData object
 func load_from_player() -> void:

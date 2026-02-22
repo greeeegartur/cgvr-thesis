@@ -301,7 +301,7 @@ beetle_entity = ExtResource("2_be64l")
 DamageNumberScene = ExtResource("3_dp0jl")
 
 [node name="VisualRoot" type="Node2D" parent="."]
-position = Vector2(315, 185)
+position = Vector2(315, 193)
 
 [node name="Lanes" type="Node2D" parent="VisualRoot"]
 position = Vector2(0, -1.5258789e-05)

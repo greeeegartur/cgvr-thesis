@@ -34,6 +34,13 @@ func play_attack(animation_name: String):
 	attack_started.emit()
 	anim.play(animation_name)
 
+# Enemy support animation (attack method but not moving to attack position)
+func play_support(animation_name: String):
+	attack_started.emit()
+	anim.play(animation_name)
+	await anim.animation_finished
+	attack_finished.emit()
+
 # Plays from CombatManager to decide defeat animation
 func play_defeat(subdued: bool):
 	is_defeated = true

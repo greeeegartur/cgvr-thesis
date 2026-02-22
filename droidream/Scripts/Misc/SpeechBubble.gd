@@ -127,10 +127,9 @@ func hide_bubble():
 	dialogue_finished.emit()
 
 
-func say_line(bbcode_text: String, speed := 0.02) -> void:
-	label.text = ""
-	label.append_text(bbcode_text)
+func say_line(bbcode_text: String, speed := 0.03) -> void:
 	label.visible_characters = 0
+	await set_text_and_fit(bbcode_text)
 
 	is_typing = true
 	skip_requested = false
@@ -169,6 +168,32 @@ func wait_for_confirm():
 		await get_tree().process_frame
 		if Input.is_action_just_pressed("ui_accept"):
 			break
+
+# Text fitting methods
+func set_text_and_fit(text: String):
+	label.text = text
+	label.add_theme_font_size_override("normal_font_size", 14)
+	
+	await get_tree().process_frame
+	
+	await _adjust_font_to_fit()
+
+func _adjust_font_to_fit():
+	var max_size = 14
+	var min_size = 11
+	var current_size = max_size
+	
+	while current_size >= min_size:
+		label.add_theme_font_size_override("normal_font_size", current_size)
+		await get_tree().process_frame
+		
+		if not _is_overflowing():
+			return
+		
+		current_size -= 1
+
+func _is_overflowing():
+	return label.get_content_height() > label.get_size().y
 
 func hide_tail():
 	tail.visible = false

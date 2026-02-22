@@ -1,9 +1,10 @@
-[gd_scene load_steps=8 format=3 uid="uid://cdsa8xop7dyes"]
+[gd_scene load_steps=9 format=3 uid="uid://cdsa8xop7dyes"]
 
 [ext_resource type="Texture2D" uid="uid://bivrnmnwmywuy" path="res://Graphics/Placeholders/Combat/text_bubble.png" id="1_0sqvo"]
 [ext_resource type="Script" uid="uid://bswvjjrb8t4h3" path="res://Scripts/Misc/SpeechBubble.gd" id="1_dmiig"]
 [ext_resource type="Texture2D" uid="uid://dtdcl7k1o1gdh" path="res://Graphics/Placeholders/Combat/text_bubble_tail.png" id="2_dk656"]
 [ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="2_s2jcq"]
+[ext_resource type="FontFile" uid="uid://c272uxrl8068e" path="res://Graphics/Fonts/PixelOperator-Bold.ttf" id="4_q0ggd"]
 
 [sub_resource type="Animation" id="Animation_s2jcq"]
 length = 0.001
@@ -90,9 +91,12 @@ offset_right = 44.28569
 offset_bottom = 37.142853
 theme_override_colors/default_color = Color(0, 0, 0, 1)
 theme_override_fonts/normal_font = ExtResource("2_s2jcq")
+theme_override_fonts/bold_font = ExtResource("4_q0ggd")
 theme_override_font_sizes/normal_font_size = 14
-theme_override_font_sizes/bold_font_size = 14
+theme_override_font_sizes/bold_font_size = 15
+bbcode_enabled = true
 text = "mama mia"
+scroll_active = false
 
 [node name="Tail" type="Node2D" parent="BubbleRoot"]
 scale = Vector2(0.6, 0.6)

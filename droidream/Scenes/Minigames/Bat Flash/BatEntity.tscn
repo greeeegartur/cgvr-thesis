@@ -1,0 +1,42 @@
+[gd_scene load_steps=6 format=3 uid="uid://joxdoxep5l61"]
+
+[ext_resource type="Script" uid="uid://dbn0ekvqnx22x" path="res://Scripts/Minigames/BatEntity.gd" id="1_bqvsg"]
+[ext_resource type="Texture2D" uid="uid://bgsq7p4dycifd" path="res://Graphics/Placeholders/Minigames/Bat Flash/batSeen.png" id="2_ab8jg"]
+[ext_resource type="Texture2D" uid="uid://6spw051sn4fb" path="res://Graphics/Placeholders/Minigames/Bat Flash/bat1.png" id="2_tnjnt"]
+[ext_resource type="Texture2D" uid="uid://drlquwpqjffsc" path="res://Graphics/Placeholders/Minigames/Beetle Rush/health.png" id="3_ab8jg"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_0uaqk"]
+radius = 17.0
+height = 60.0
+
+[node name="BatEntity" type="Area2D"]
+script = ExtResource("1_bqvsg")
+flash_texture = ExtResource("2_ab8jg")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(-2, -1)
+shape = SubResource("CapsuleShape2D_0uaqk")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_tnjnt")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+visible = false
+offset_left = -20.999998
+offset_top = -45.999996
+offset_right = 35.0
+offset_bottom = -29.999996
+scale = Vector2(0.7, 0.7)
+alignment = 1
+
+[node name="1" type="TextureRect" parent="HBoxContainer"]
+layout_mode = 2
+texture = ExtResource("3_ab8jg")
+
+[node name="2" type="TextureRect" parent="HBoxContainer"]
+layout_mode = 2
+texture = ExtResource("3_ab8jg")
+
+[node name="3" type="TextureRect" parent="HBoxContainer"]
+layout_mode = 2
+texture = ExtResource("3_ab8jg")

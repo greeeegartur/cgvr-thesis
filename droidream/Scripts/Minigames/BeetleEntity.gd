@@ -9,8 +9,8 @@ class_name BeetleEntity
 
 # Physics variables for beetle
 var lane: int
-var speed := 100.0
-var scale_speed := 0.2
+var speed := 120.0
+var scale_speed := 0.25
 var flicked := false
 
 # Position variables

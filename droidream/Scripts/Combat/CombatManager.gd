@@ -127,6 +127,42 @@ func _setup_entities(enemy_ids):
 		await visual.ready
 		visual.setup_axis(entity.axis_max, entity.trust_max)
 
+# Enemy spawning method for enemies that appear mid-combat (essentially reused logic from setup_entities, but has to be in the context of a separate method)
+func _spawn_enemy(enemy_id: String, slot_index: int):
+	# Making defeated enemies invisible if they exist
+	for e in enemies:
+		if e.is_killed() or e.is_tamed():
+			enemy_visuals[e].visible = false
+
+	# Data
+	var entity := CombatEntity.new()
+	entity.load_from_enemy_id(enemy_id)
+	entity.spawned = true
+	entity.can_spawn = false # TO-DO: test if balanced
+	add_child(entity)
+	enemies.append(entity)
+
+	# Visual
+	var visual := entity.visual_scene.instantiate()
+	get_parent().get_node("World").add_child.call_deferred(visual)
+	visual.global_position = enemy_positions[slot_index].global_position
+	visual.home_position = visual.global_position
+	visual.attack_offset = EnemyDatabase.get_attack_offset(enemy_id)
+	visual.move_speed = EnemyDatabase.get_move_speed(enemy_id)
+	enemy_visuals[entity] = visual
+	
+	await visual.ready
+	visual.setup_axis(entity.axis_max, entity.trust_max)
+
+	# Separate entry animation
+	visual.position.y += -240
+	var tween := create_tween()
+	tween.tween_property(visual, "position", visual.home_position, 0.8)
+	tween.set_trans(Tween.TRANS_BACK)
+	tween.set_ease(Tween.EASE_OUT)
+	await tween.finished
+
+
 func _setup_ui():
 	ui.setup(self)
 	
@@ -539,6 +575,11 @@ func _enemy_attack_single(enemy: CombatEntity):
 	visual.z_index = 3
 	var pattern = enemy.attack_patterns.pick_random() # Picks random attack pattern assigned to the enemy
 	
+	# Support patterns
+	if pattern.is_support:
+		await _handle_support_pattern(enemy, pattern)
+		return
+	
 	# Setting attack position for enemy (relative to player)
 	visual.attack_position = _get_enemy_attack_position(visual)
 	
@@ -546,6 +587,27 @@ func _enemy_attack_single(enemy: CombatEntity):
 	camera.follow(visual, -60)
 	tutorial_text.show_hint(TutorialText.HintType.BLOCK)
 	await _play_enemy_attack_pattern(enemy, visual, pattern)
+
+# Handles support patterns respectively for each enemy, TO-DO: edit for separate enemies so anyone can pass check
+func _handle_support_pattern(enemy: CombatEntity, pattern: EnemyAttackPattern):
+	# First play animation
+	var visual = enemy_visuals[enemy]
+	await visual.play_support(pattern.animation_name)
+	
+	if not enemy.can_spawn:
+		return
+	
+	# Does nothing if spawn chance does not happen
+	if randf() > pattern.spawn_chance:
+		return
+	
+	var free_index := _get_free_enemy_slot()
+	# If no free position found for enemy to spawn
+	if free_index == -1:
+		return
+	
+	# Spawns enemy with available slot
+	await _spawn_enemy(pattern.spawn_enemy_id, free_index)
 
 
 # Plays the given enemy attack pattern during the enemy turn
@@ -908,9 +970,12 @@ func _generate_rewards():
 	var total_currency := 0
 	
 	for enemy in enemies:
+		var effective_hp = enemy.max_hp
+		if enemy.spawned:
+			effective_hp *= 0.5
 		
 		# For currency (and XP generation in future)
-		var half_hp = round(enemy.max_hp / 2.0)
+		var half_hp = round(effective_hp * 0.5)
 		var min_currency: int
 		var max_currency: int
 		
@@ -928,9 +993,23 @@ func _generate_rewards():
 		total_currency += gained_currency
 	
 	PlayerData.currency += total_currency
-	print(PlayerData.currency)
+	print("Currency right now: ", PlayerData.currency)
 	
 	return {"currency": total_currency}
+
+# Searches for available enemy slots and returns the respective slot where an enemy can potentially spawn
+func _get_free_enemy_slot() -> int:
+	for i in enemy_positions.size():
+		var alive_in_slot := false
+		for e in enemies:
+			if enemy_visuals.has(e):
+				var visual = enemy_visuals[e]
+				if visual.global_position == enemy_positions[i].global_position:
+					if not e.is_killed() and not e.is_tamed():
+						alive_in_slot = true
+		if not alive_in_slot:
+			return i
+	return -1
 
 
 # ANIMATION METHODS

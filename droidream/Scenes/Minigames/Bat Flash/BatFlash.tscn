@@ -1,0 +1,146 @@
+[gd_scene load_steps=16 format=3 uid="uid://cadom7tm2bqpu"]
+
+[ext_resource type="Script" uid="uid://b43ko7pwkabm2" path="res://Scripts/Minigames/BatFlash.gd" id="1_8pk08"]
+[ext_resource type="PackedScene" uid="uid://joxdoxep5l61" path="res://Scenes/Minigames/Bat Flash/BatEntity.tscn" id="2_4vwvk"]
+[ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="2_avfxd"]
+[ext_resource type="Texture2D" uid="uid://ckry58yuwpnuo" path="res://Graphics/Placeholders/Minigames/Bat Flash/BG2.png" id="3_b5buc"]
+[ext_resource type="Texture2D" uid="uid://bgpgt71dwpla4" path="res://Graphics/Placeholders/Minigames/Bat Flash/BG.png" id="3_qksyg"]
+[ext_resource type="Texture2D" uid="uid://d27utespl1iqn" path="res://Graphics/Placeholders/Minigames/Bat Flash/flashlightShape.png" id="4_b5buc"]
+[ext_resource type="Texture2D" uid="uid://6spw051sn4fb" path="res://Graphics/Placeholders/Minigames/Bat Flash/bat1.png" id="4_na8lq"]
+[ext_resource type="Texture2D" uid="uid://bksy11ggmldbb" path="res://Graphics/Placeholders/Minigames/Bat Flash/bat2.png" id="5_4vwvk"]
+[ext_resource type="Texture2D" uid="uid://bq1vqpld04ay4" path="res://Graphics/Placeholders/Minigames/Bat Flash/overlay.png" id="7_liy6e"]
+[ext_resource type="Shader" uid="uid://bhfgry4jukyo5" path="res://Scenes/Minigames/Bat Flash/flash.gdshader" id="10_0uxlo"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_0uxlo"]
+texture = ExtResource("7_liy6e")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_28rkt"]
+bg_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_448i1"]
+bg_color = Color(0.32930958, 0.6232507, 0.32154667, 1)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_qksyg"]
+radius = 55.081757
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_1hnun"]
+shader = ExtResource("10_0uxlo")
+shader_parameter/light_pos = Vector2(0.5, 0.45)
+shader_parameter/radius = 0.25
+shader_parameter/softness = 0.2
+shader_parameter/darkness = 0.94
+
+[node name="BatFlash" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_8pk08")
+BatScene = ExtResource("2_4vwvk")
+background_textures = Array[Texture2D]([ExtResource("3_qksyg"), ExtResource("3_b5buc")])
+bat_variants = Array[Texture2D]([ExtResource("4_na8lq"), ExtResource("5_4vwvk")])
+
+[node name="VisualRoot" type="Node2D" parent="."]
+position = Vector2(315, 185)
+
+[node name="UI" type="Node2D" parent="VisualRoot"]
+
+[node name="Background" type="PanelContainer" parent="VisualRoot/UI"]
+z_index = -1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -51.0
+offset_top = -37.0
+offset_right = 49.0
+offset_bottom = 63.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(2.75, 2.75)
+pivot_offset = Vector2(50, 50)
+theme_override_styles/panel = SubResource("StyleBoxTexture_0uxlo")
+metadata/_edit_use_anchors_ = true
+
+[node name="ProgressBar" type="ProgressBar" parent="VisualRoot/UI"]
+offset_left = -125.999985
+offset_top = -157.00002
+offset_right = 74.00003
+offset_bottom = -130.00002
+scale = Vector2(1.25, 1.25)
+theme_override_fonts/font = ExtResource("2_avfxd")
+theme_override_font_sizes/font_size = 24
+theme_override_styles/background = SubResource("StyleBoxFlat_28rkt")
+theme_override_styles/fill = SubResource("StyleBoxFlat_448i1")
+show_percentage = false
+metadata/_edit_use_anchors_ = true
+
+[node name="Timer" type="Label" parent="VisualRoot/UI/ProgressBar"]
+layout_mode = 0
+offset_left = 81.60001
+offset_top = 0.79999995
+offset_right = 121.60001
+offset_bottom = 25.8
+theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
+theme_override_constants/outline_size = 5
+theme_override_fonts/font = ExtResource("2_avfxd")
+theme_override_font_sizes/font_size = 24
+text = ".."
+metadata/_edit_use_anchors_ = true
+
+[node name="PlayArea" type="Control" parent="VisualRoot"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -134.0
+offset_top = -119.0
+offset_right = 132.0
+offset_bottom = 147.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CaveBackground" type="TextureRect" parent="VisualRoot/PlayArea"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.44402984
+anchor_right = 0.5
+anchor_bottom = 0.44402984
+offset_left = -133.0
+offset_top = -118.0
+offset_right = 1266.9999
+offset_bottom = 1281.9999
+scale = Vector2(0.19, 0.19)
+texture = ExtResource("3_qksyg")
+metadata/_edit_use_anchors_ = true
+
+[node name="Bats" type="Node2D" parent="VisualRoot/PlayArea"]
+position = Vector2(134, 120)
+
+[node name="Flashlight" type="Node2D" parent="VisualRoot/PlayArea"]
+position = Vector2(134, 120)
+
+[node name="PointLight2D" type="PointLight2D" parent="VisualRoot/PlayArea/Flashlight"]
+color = Color(1, 1, 1, 0.7882353)
+energy = 1.2
+shadow_color = Color(1, 1, 1, 1)
+texture = ExtResource("4_b5buc")
+texture_scale = 2.42
+
+[node name="FlashArea" type="Area2D" parent="VisualRoot/PlayArea/Flashlight"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="VisualRoot/PlayArea/Flashlight/FlashArea"]
+shape = SubResource("CircleShape2D_qksyg")
+
+[node name="DarknessOverlay" type="ColorRect" parent="VisualRoot/PlayArea"]
+material = SubResource("ShaderMaterial_1hnun")
+layout_mode = 0
+offset_top = -1.0
+offset_right = 266.0
+offset_bottom = 265.0
+mouse_filter = 2
+color = Color(0.05629155, 0.05629161, 0.056291573, 1)

@@ -22,3 +22,8 @@ class_name EnemyAttackPattern
 # damage_multiplier - damage multiplier for the attack(s)
 # block_window - any interval between "time", shows when the player can block the hit
 @export var hits: Array[Dictionary] = []
+
+# For support enemies and their specific moves
+@export var is_support := false
+@export var spawn_enemy_id := ""
+@export var spawn_chance := 0.3

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="EnemyInfo" load_steps=6 format=3 uid="uid://lnot3vlsmfkk"]
+
+[ext_resource type="Script" uid="uid://by18pvdsekurc" path="res://Scripts/Data/EnemyAttackPattern.gd" id="1_h7bvq"]
+[ext_resource type="Script" uid="uid://c8hmcdrkefq7i" path="res://Scripts/Data/EnemyInfo.gd" id="2_fh84n"]
+[ext_resource type="Resource" uid="uid://k2faw8unds61" path="res://Scripts/Data/Attack_Patterns/bat_sweep.tres" id="2_gst1q"]
+[ext_resource type="Resource" uid="uid://xqngxf0m7bmw" path="res://Scripts/Data/Attack_Patterns/bat_spawn.tres" id="3_7lihr"]
+[ext_resource type="PackedScene" uid="uid://be0hjdwqjyhpi" path="res://Scenes/Entities/Bat/Bat.tscn" id="4_7lihr"]
+
+[resource]
+script = ExtResource("2_fh84n")
+enemy_id = "enemy_bat"
+name = "Small Bat"
+max_hp = 4.0
+attack = 1
+trust_max = 1
+minigame_id = "bat_flash"
+attack_patterns = Array[ExtResource("1_h7bvq")]([ExtResource("2_gst1q"), ExtResource("3_7lihr")])
+visual_scene = ExtResource("4_7lihr")
+metadata/_custom_type_script = "uid://c8hmcdrkefq7i"

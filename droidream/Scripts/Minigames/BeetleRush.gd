@@ -16,8 +16,6 @@ class_name BeetleRush
 # Node variables
 @onready var beetles_node := $VisualRoot/Beetles
 @onready var hand := $VisualRoot/PlayerHand
-@onready var progress_bar := $VisualRoot/UI/ProgressBar
-@onready var timer_label := $VisualRoot/UI/ProgressBar/Timer
 @onready var hand_anim := $VisualRoot/PlayerHand/AnimationPlayer
 @onready var health_container := $VisualRoot/UI/HealthContainer
 
@@ -55,8 +53,8 @@ var collision_enabled := false
 var beetles_paused := false
 
 func _ready():
-	# Setting duration of 6 seconds
-	set_duration(6.0)
+	# Setting duration of 5 seconds
+	set_duration(5.0)
 	
 	# Progress bar setup
 	progress_bar.max_value = max_duration
@@ -228,12 +226,6 @@ func spawn_beetle(lane: int):
 	
 	beetle.global_position = lane_data[lane]["spawn"]
 	beetle.set_target(lane_data[lane]["target"])
-
-# Updates timer UI for _process method
-func update_timer_ui():
-	var remaining : float = max_duration - elapsed
-	progress_bar.value = remaining
-	timer_label.text = "%.1fs" % max(remaining, 0.0)
 
 # Updates health UI element
 func update_health():

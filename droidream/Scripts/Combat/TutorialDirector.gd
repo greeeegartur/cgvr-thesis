@@ -142,13 +142,14 @@ func play_tutorial():
 
 func intro_scene():
 	_start_ufo_idle()
+	await camera.follow(player_visual)
+	await get_tree().create_timer(1.0).timeout
 	
 	speech_bubble.show_bubble()
 	await speech_bubble.say_line("Hey! Are you alright?")
 	await speech_bubble.say_line("Come on, wake up!")
 	speech_bubble.hide_bubble()
 	
-	await camera.follow(player_visual)
 	await fade_from_black()
 	speech_bubble.show_tail()
 	
@@ -205,7 +206,7 @@ func intro_scene():
 	speech_bubble.show_bubble()
 	# ufo.play_look_right()
 	await speech_bubble.say_line("To get back, you’d need to cross the cliffside.")
-	await speech_bubble.say_line(" But the cliffside itself is beyond this jungle and a cavern system.")
+	await speech_bubble.say_line("But the cliffside itself is beyond this jungle and a cavern system..")
 	# ufo.play_sad()
 	await speech_bubble.say_line("It’s no easy path, the road is full of all sorts of [color=#8df59a]wild creatures[/color].")
 	await speech_bubble.say_line("For someone so young like yourself… It can be a dangerous journey.")

@@ -24,7 +24,8 @@ var ENEMIES : Dictionary
 # List of all enemy minigames
 var MINIGAME_SCENES = {
 	"base": preload("res://Scenes/Minigames/BaseMinigame.tscn"), # Default, only for testing
-	"beetle_rush": preload("res://Scenes/Minigames/Beetle Rush/BeetleRush.tscn")
+	"beetle_rush": preload("res://Scenes/Minigames/Beetle Rush/BeetleRush.tscn"),
+	"bat_flash": preload("res://Scenes/Minigames/Bat Flash/BatFlash.tscn")
 }
 
 # List of all enemy specific attributes that don't fit into their resources
@@ -32,6 +33,10 @@ const DATA = {
 	"enemy_beetle": {
 		"attack_offset": Vector2(90, 0),
 		"move_speed": 260.0,
+	},
+	"enemy_bat": {
+		"attack_offset": Vector2(95, 0),
+		"move_speed": 280.0,
 	}
 }
 

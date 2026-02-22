@@ -21,10 +21,10 @@ var damage_cooldown := false
 
 # Visual node
 @onready var visual_root := $VisualRoot
+@onready var progress_bar := $VisualRoot/UI/ProgressBar
+@onready var timer_label := $VisualRoot/UI/ProgressBar/Timer
 
 func _ready():
-	if self is Control:
-		size = get_viewport_rect().size
 	visible = true
 	_force_process_always(self)
 	set_process(false)
@@ -115,6 +115,12 @@ func _force_process_always(node: Node) -> void:
 	
 	for child in node.get_children():
 		_force_process_always(child)
+
+# Updates timer UI for _process method
+func update_timer_ui():
+	var remaining : float = max_duration - elapsed
+	progress_bar.value = remaining
+	timer_label.text = "%.1fs" % max(remaining, 0.0)
 
 # freeze_frame from CombatManager to go around combat scene limitations during minigame pause
 func hit_stop(time := 0.06, scale := 0.6):

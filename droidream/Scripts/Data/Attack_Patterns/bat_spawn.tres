@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="EnemyAttackPattern" load_steps=2 format=3 uid="uid://xqngxf0m7bmw"]
+
+[ext_resource type="Script" uid="uid://by18pvdsekurc" path="res://Scripts/Data/EnemyAttackPattern.gd" id="1_vw3mm"]
+
+[resource]
+script = ExtResource("1_vw3mm")
+pattern_id = "bat_spawn"
+animation_name = "bat_spawn"
+total_duration = 1.5
+hits = Array[Dictionary]([{
+"block_window": Vector2(0, 1.5),
+"damage_multiplier": 1.0,
+"time": 1.5
+}])
+is_support = true
+spawn_enemy_id = "enemy_bat"
+spawn_chance = 0.8
+metadata/_custom_type_script = "uid://by18pvdsekurc"
