@@ -53,3 +53,9 @@ func consume_guess(t: CombatTypes.EntityType) -> void:
 
 func add_guesses(t: CombatTypes.EntityType, amount: int) -> void:
 	guesses[t] = guesses.get(t, 0) + amount
+
+func _get_total_chips():
+	var sum := 0
+	for g in guesses.values():
+		sum += g
+	return sum

@@ -8,17 +8,19 @@ class_name VFXCombatManager
 # Exported node variables
 @export var DamageNumberScene: PackedScene
 @export var ExplosionFXScene: PackedScene
+@export var HitFeedbackScene: PackedScene
 @export var camera: Camera2D
 
 # Layer node variables
 @onready var damage_layer := $"../DamageNumbers"
 @onready var particle_layer := $"../Particles"
 @onready var vignette := $"../Vignette"
+@onready var feedback_layer := $"../FeedbackText"
 
 # Colors
 @export var normal_flash_color = Color(0.904, 0.135, 0.214, 1.0)
-@export var crit_flash_color = Color(1.0, 0.949, 0.2, 1.0)
-@export var subdue_flash_color = Color(0.602, 0.181, 0.64, 1.0)
+@export var crit_flash_color = Color("#eff238")
+@export var subdue_flash_color = Color("9a2ea3ff")
 @export var block_flash_color = Color(0.0, 0.825, 0.0, 1.0)
 var COLORS : Dictionary
 
@@ -99,3 +101,27 @@ func get_vfx_color_from_string(color: String):
 		return subdue_flash_color
 	elif color == "block":
 		return block_flash_color
+
+func spawn_feedback(target_visual: Node2D, text: String):
+	if not HitFeedbackScene:
+		return
+	
+	var feedback := HitFeedbackScene.instantiate()
+	feedback_layer.add_child(feedback)
+	feedback.position = target_visual.position + Vector2(randf_range(-18, 18), randf_range(-8, 8))
+	feedback.play(text)
+
+func play_crit_feedback(target_visual):
+	var texts = [
+		"[color=#9a2ea3ff][wave freq=14]Awesome![/wave][/color]",
+		"[color=#3d9feb][shake rate=18]Great![/shake][/color]",
+	    "[color=#eff238][wave freq=14]Nice![/wave][/color]"
+	]
+	spawn_feedback(target_visual, texts.pick_random())
+
+func play_block_feedback(target_visual):
+	var texts = [
+		"[color=#17e84f][wave freq=14]Blocked![/wave][/color]",
+	    "[color=#06d63e][shake rate=18]Negated![/shake][/color]"
+	]
+	spawn_feedback(target_visual, texts.pick_random())

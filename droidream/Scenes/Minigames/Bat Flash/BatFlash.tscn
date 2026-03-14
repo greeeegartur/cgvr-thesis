@@ -1,15 +1,18 @@
-[gd_scene load_steps=16 format=3 uid="uid://cadom7tm2bqpu"]
+[gd_scene load_steps=28 format=3 uid="uid://cadom7tm2bqpu"]
 
 [ext_resource type="Script" uid="uid://b43ko7pwkabm2" path="res://Scripts/Minigames/BatFlash.gd" id="1_8pk08"]
 [ext_resource type="PackedScene" uid="uid://joxdoxep5l61" path="res://Scenes/Minigames/Bat Flash/BatEntity.tscn" id="2_4vwvk"]
 [ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="2_avfxd"]
 [ext_resource type="Texture2D" uid="uid://ckry58yuwpnuo" path="res://Graphics/Placeholders/Minigames/Bat Flash/BG2.png" id="3_b5buc"]
+[ext_resource type="PackedScene" uid="uid://bjh0w31eegrg2" path="res://Scenes/VFX/DamageNumber.tscn" id="3_b55n2"]
 [ext_resource type="Texture2D" uid="uid://bgpgt71dwpla4" path="res://Graphics/Placeholders/Minigames/Bat Flash/BG.png" id="3_qksyg"]
 [ext_resource type="Texture2D" uid="uid://d27utespl1iqn" path="res://Graphics/Placeholders/Minigames/Bat Flash/flashlightShape.png" id="4_b5buc"]
 [ext_resource type="Texture2D" uid="uid://6spw051sn4fb" path="res://Graphics/Placeholders/Minigames/Bat Flash/bat1.png" id="4_na8lq"]
 [ext_resource type="Texture2D" uid="uid://bksy11ggmldbb" path="res://Graphics/Placeholders/Minigames/Bat Flash/bat2.png" id="5_4vwvk"]
 [ext_resource type="Texture2D" uid="uid://bq1vqpld04ay4" path="res://Graphics/Placeholders/Minigames/Bat Flash/overlay.png" id="7_liy6e"]
+[ext_resource type="Texture2D" uid="uid://g1cpi65b1lxo" path="res://Graphics/Placeholders/Combat/WASD.png" id="9_wng6b"]
 [ext_resource type="Shader" uid="uid://bhfgry4jukyo5" path="res://Scenes/Minigames/Bat Flash/flash.gdshader" id="10_0uxlo"]
+[ext_resource type="Texture2D" uid="uid://b0axro84k6yfj" path="res://Graphics/Placeholders/Combat/Z.png" id="10_b55n2"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_0uxlo"]
 texture = ExtResource("7_liy6e")
@@ -19,6 +22,118 @@ bg_color = Color(0, 0, 0, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_448i1"]
 bg_color = Color(0.32930958, 0.6232507, 0.32154667, 1)
+
+[sub_resource type="Animation" id="Animation_7dn3n"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Hint:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_bpygb"]
+resource_name = "pop"
+length = 0.8
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Hint:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.4, 0.8),
+"transitions": PackedFloat32Array(0.30778608, 0.26794332, 0.2679434),
+"update": 0,
+"values": [Vector2(0.9, 0.9), Vector2(1, 1), Vector2(0.9, 0.9)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_8ne7f"]
+_data = {
+&"RESET": SubResource("Animation_7dn3n"),
+&"pop": SubResource("Animation_bpygb")
+}
+
+[sub_resource type="Animation" id="Animation_w632w"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="Animation" id="Animation_4tkg2"]
+resource_name = "press"
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [0, 1]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_pcn5q"]
+_data = {
+&"RESET": SubResource("Animation_w632w"),
+&"press": SubResource("Animation_4tkg2")
+}
+
+[sub_resource type="Animation" id="Animation_8ne7f"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="Animation" id="Animation_0s31j"]
+resource_name = "press"
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [1, 0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_5bvr3"]
+_data = {
+&"RESET": SubResource("Animation_8ne7f"),
+&"press": SubResource("Animation_0s31j")
+}
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_qksyg"]
 radius = 55.081757
@@ -39,6 +154,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_8pk08")
 BatScene = ExtResource("2_4vwvk")
+DamageNumberScene = ExtResource("3_b55n2")
 background_textures = Array[Texture2D]([ExtResource("3_qksyg"), ExtResource("3_b5buc")])
 bat_variants = Array[Texture2D]([ExtResource("4_na8lq"), ExtResource("5_4vwvk")])
 
@@ -90,6 +206,61 @@ theme_override_fonts/font = ExtResource("2_avfxd")
 theme_override_font_sizes/font_size = 24
 text = ".."
 metadata/_edit_use_anchors_ = true
+
+[node name="Hint" type="Label" parent="VisualRoot/UI"]
+z_index = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -132.0
+offset_top = -119.0
+offset_right = 131.0
+offset_bottom = -94.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(131.5, 12.5)
+size_flags_horizontal = 4
+theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("2_avfxd")
+theme_override_font_sizes/font_size = 20
+text = "Flash bats with            and      !"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint"]
+root_node = NodePath("../..")
+libraries = {
+&"": SubResource("AnimationLibrary_8ne7f")
+}
+autoplay = "pop"
+
+[node name="Arrows" type="Sprite2D" parent="VisualRoot/UI/Hint"]
+position = Vector2(159.50002, 8)
+scale = Vector2(1.3, 1.3)
+texture = ExtResource("9_wng6b")
+vframes = 2
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Arrows"]
+libraries = {
+&"": SubResource("AnimationLibrary_pcn5q")
+}
+autoplay = "press"
+
+[node name="Z" type="Sprite2D" parent="VisualRoot/UI/Hint"]
+position = Vector2(232.5, 12)
+scale = Vector2(1.8, 1.8)
+texture = ExtResource("10_b55n2")
+vframes = 2
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Z"]
+libraries = {
+&"": SubResource("AnimationLibrary_5bvr3")
+}
+autoplay = "press"
 
 [node name="PlayArea" type="Control" parent="VisualRoot"]
 layout_mode = 3

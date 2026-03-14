@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://b0as27ombq3yp"]
+[gd_scene load_steps=23 format=3 uid="uid://b0as27ombq3yp"]
 
 [ext_resource type="Script" uid="uid://b3u2bq3dgrvtu" path="res://Scripts/Combat/CombatManager.gd" id="1_2mqg5"]
 [ext_resource type="Script" uid="uid://dcdpqt4rgapox" path="res://Scripts/Combat/CombatUI.gd" id="1_memue"]
@@ -21,6 +21,7 @@
 [ext_resource type="PackedScene" uid="uid://b8tix1tnrjrpr" path="res://Scenes/VFX/TutorialText.tscn" id="13_7d6hk"]
 [ext_resource type="PackedScene" uid="uid://dcr1tuso7nppj" path="res://Scenes/VFX/RewardsScreen.tscn" id="14_et1op"]
 [ext_resource type="PackedScene" uid="uid://dc0p2hfu0gp6r" path="res://Scenes/VFX/DeathScreen.tscn" id="15_kwghb"]
+[ext_resource type="PackedScene" uid="uid://mnb3nvh3ofas" path="res://Scenes/VFX/HitFeedbackText.tscn" id="22_b7ydo"]
 
 [node name="CombatScene" type="Node2D"]
 
@@ -140,10 +141,13 @@ color = Color(1, 1, 1, 0)
 script = ExtResource("4_t6l0c")
 DamageNumberScene = ExtResource("3_7d6hk")
 ExplosionFXScene = ExtResource("5_7t358")
+HitFeedbackScene = ExtResource("22_b7ydo")
 camera = NodePath("../../Camera2D")
 
 [node name="DamageNumbers" type="Node2D" parent="VFX"]
 
 [node name="Particles" type="Node2D" parent="VFX"]
+
+[node name="FeedbackText" type="Node2D" parent="VFX"]
 
 [connection signal="toggled" from="UI/CombatUI/TurnOrder" to="CombatManager" method="_on_turn_order_toggled"]

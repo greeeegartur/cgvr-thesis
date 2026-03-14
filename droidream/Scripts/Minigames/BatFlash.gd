@@ -10,6 +10,7 @@ extends BaseMinigame
 class_name BatFlash
 
 @export var BatScene: PackedScene
+@export var DamageNumberScene: PackedScene
 
 @onready var bats_node := $VisualRoot/PlayArea/Bats
 @onready var flashlight := $VisualRoot/PlayArea/Flashlight
@@ -31,11 +32,15 @@ var base_light_radius := 0.25
 var bats_remaining := 0
 var timer_active := true
 
+const DAMAGE := 0.5
+
 
 func _ready():
 	# Setup with bat spawning
 	set_duration(5.0)
 	background.texture = background_textures.pick_random()
+	darkness.material.set_shader_parameter("radius", base_light_radius)
+	set_process_unhandled_input(true)
 	spawn_bats()
 	
 	# Progress bar setup
@@ -119,10 +124,10 @@ func play_flash_effect():
 # Bat scale depending on count
 func get_bat_scale(count: int) -> float:
 	match count:
-		2: return 0.8
-		3: return 0.65
-		4: return 0.45
-		5: return 0.3
+		2: return 0.85
+		3: return 0.75
+		4: return 0.55
+		5: return 0.4
 	return 1.0 # Won't reach this
 
 func spawn_bats():
@@ -162,9 +167,21 @@ func _on_bat_died(bat):
 	if bats_remaining <= 0:
 		win_sequence()
 
+# Spawns combat scene's damage number near the player hand
+func spawn_damage_number(damage: float):
+	if not DamageNumberScene:
+		return
+	
+	var dmg_scene = DamageNumberScene.instantiate()
+	dmg_scene.global_position = flash_area.global_position
+	add_child(dmg_scene)
+	dmg_scene.z_index = 5 # Above flashlight
+	dmg_scene.play(damage, false)
+
 # Minigame end logic
 func win_sequence():
 	timer_active = false
+	set_process_unhandled_input(false)
 	# Covers the entire screen with flash
 	var tween = create_tween()
 	tween.tween_property(darkness.material, "shader_parameter/radius", 3.0, 0.6)
@@ -173,4 +190,9 @@ func win_sequence():
 	end(true)
 
 func on_timeout():
+	# Damaging player and ending minigame
+	damage_taken.emit(DAMAGE, flash_area.global_position)
+	spawn_damage_number(DAMAGE)
+	hit_stop(0.1)
+	shake_node(1)
 	end(false)

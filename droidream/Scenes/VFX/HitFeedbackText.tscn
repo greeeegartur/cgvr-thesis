@@ -1,0 +1,28 @@
+[gd_scene load_steps=4 format=3 uid="uid://mnb3nvh3ofas"]
+
+[ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="1_g0ria"]
+[ext_resource type="Script" uid="uid://cl3h1vgm4t5bn" path="res://Scripts/Combat/HitFeedbackText.gd" id="1_h2m2u"]
+[ext_resource type="FontFile" uid="uid://c272uxrl8068e" path="res://Graphics/Fonts/PixelOperator-Bold.ttf" id="2_h2m2u"]
+
+[node name="HitFeedbackText" type="Node2D"]
+process_mode = 3
+script = ExtResource("1_h2m2u")
+
+[node name="RichTextLabel" type="RichTextLabel" parent="."]
+offset_left = -41.42859
+offset_top = -39.0
+offset_right = 135.0
+offset_bottom = 38.142853
+pivot_offset = Vector2(88.215, 38.571)
+theme_override_colors/default_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_fonts/normal_font = ExtResource("1_g0ria")
+theme_override_fonts/bold_font = ExtResource("2_h2m2u")
+theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/bold_font_size = 26
+bbcode_enabled = true
+text = "mama mia"
+scroll_active = false
+autowrap_mode = 0
+horizontal_alignment = 1

@@ -15,6 +15,8 @@ var input_enabled = true
 
 # Node variables
 @onready var anim := $Visual/Sprite2D/AnimationPlayer
+@onready var text_anim := $Visual/RichTextLabel/TextAnimationPlayer
+@onready var text := $Visual/RichTextLabel
 @onready var block_visual := $PlayerBlockVisual
 @onready var hud := $PlayerHUD
 
@@ -27,10 +29,6 @@ var attack_position : Vector2 # The position where the player's pattern will con
 @onready var hp_bar := $PlayerHUD/HPBar
 @onready var hp_fill := $PlayerHUD/HPBar/Fill
 @onready var hp_label := $PlayerHUD/HPBar/Label
-
-# Damage FX variables
-@onready var fx_root: Node2D = $DamageFX
-
 
 var hp_fill_max_width = 10.0
 var def_fill_max_width = 10.0
@@ -99,6 +97,11 @@ func _unhandled_input(event):
 	if event.is_action_pressed("ui_accept"):
 		action_pressed.emit()
 		# action_pressed emit here
+
+func play_restore_chip():
+	text.visible = true
+	text_anim.play("restored")
+	
 
 # PlayerBlockVisual methods to call
 func play_block_success():

@@ -1,11 +1,25 @@
-[gd_scene load_steps=2 format=3 uid="uid://bjh0w31eegrg2"]
+[gd_scene load_steps=4 format=3 uid="uid://bjh0w31eegrg2"]
 
 [ext_resource type="Script" uid="uid://rauwjcygwbxv" path="res://Scripts/Combat/DamageNumber.gd" id="1_qrwiq"]
+[ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="2_8jqik"]
+[ext_resource type="FontFile" uid="uid://c272uxrl8068e" path="res://Graphics/Fonts/PixelOperator-Bold.ttf" id="3_62v5y"]
 
 [node name="DamageNumber" type="Node2D"]
 script = ExtResource("1_qrwiq")
 
-[node name="Label" type="Label" parent="."]
-offset_right = 40.0
-offset_bottom = 23.0
-text = ".."
+[node name="Label" type="RichTextLabel" parent="."]
+offset_left = 0.57141113
+offset_right = 103.0
+offset_bottom = 51.0
+pivot_offset = Vector2(88.215, 38.571)
+theme_override_colors/default_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_fonts/normal_font = ExtResource("2_8jqik")
+theme_override_fonts/bold_font = ExtResource("3_62v5y")
+theme_override_font_sizes/normal_font_size = 16
+theme_override_font_sizes/bold_font_size = 26
+bbcode_enabled = true
+text = "."
+scroll_active = false
+autowrap_mode = 0

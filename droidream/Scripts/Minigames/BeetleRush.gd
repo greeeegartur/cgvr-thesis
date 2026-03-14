@@ -178,7 +178,6 @@ func deal_damage():
 	
 	damage_cooldown = true
 	hits_taken += 1
-	# TO-DO: edit the DAMAGE amount when defense is considered in future
 	damage_taken.emit(DAMAGE, hand.global_position)
 	spawn_damage_number(DAMAGE)
 	hit_stop(0.1)

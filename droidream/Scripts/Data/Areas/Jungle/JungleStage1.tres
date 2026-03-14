@@ -9,5 +9,5 @@ enemy_count_weights = {
 2: 0.1,
 3: 0.0
 }
-allowed_enemies = Array[String](["enemy_bat"])
+allowed_enemies = Array[String](["enemy_beetle"])
 metadata/_custom_type_script = "uid://cq42yd5k6nmne"

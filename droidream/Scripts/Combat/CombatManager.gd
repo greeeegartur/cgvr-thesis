@@ -103,7 +103,6 @@ func _setup_entities(enemy_ids):
 		await player_visual.ready
 		player_visual.update_hp(player.hp, player.max_hp)
 	# Resyncing from possible previous combats
-	player.load_from_player()
 	player_visual.update_hp(player.hp, player.max_hp)
 	
 	# ENEMIES SETUP
@@ -128,20 +127,24 @@ func _setup_entities(enemy_ids):
 		visual.setup_axis(entity.axis_max, entity.trust_max)
 
 # Enemy spawning method for enemies that appear mid-combat (essentially reused logic from setup_entities, but has to be in the context of a separate method)
-func _spawn_enemy(enemy_id: String, slot_index: int):
+func _spawn_enemy(enemy_id: String, slot_index: int, spawner: CombatEntity):
 	# Making defeated enemies invisible if they exist
 	for e in enemies:
 		if e.is_killed() or e.is_tamed():
-			enemy_visuals[e].visible = false
-
+			#var tween := create_tween()
+			#tween.tween_property(e, "modulate:a", 0.0, 1.0)
+			#await tween.finished
+			enemy_visuals[e].visible = false # Turning invisible if creatures are tamed (if they are then they remain in battle)
+	spawner.can_spawn = false
+	
 	# Data
 	var entity := CombatEntity.new()
 	entity.load_from_enemy_id(enemy_id)
 	entity.spawned = true
-	entity.can_spawn = false # TO-DO: test if balanced
+	entity.can_spawn = false # Spawned enemy cannot spawn more enemies
 	add_child(entity)
 	enemies.append(entity)
-
+	
 	# Visual
 	var visual := entity.visual_scene.instantiate()
 	get_parent().get_node("World").add_child.call_deferred(visual)
@@ -149,12 +152,13 @@ func _spawn_enemy(enemy_id: String, slot_index: int):
 	visual.home_position = visual.global_position
 	visual.attack_offset = EnemyDatabase.get_attack_offset(enemy_id)
 	visual.move_speed = EnemyDatabase.get_move_speed(enemy_id)
+	visual.z_index = 1
 	enemy_visuals[entity] = visual
 	
 	await visual.ready
 	visual.setup_axis(entity.axis_max, entity.trust_max)
-
-	# Separate entry animation
+	
+	# Separate entry animation (this specific one is for bats)
 	visual.position.y += -240
 	var tween := create_tween()
 	tween.tween_property(visual, "position", visual.home_position, 0.8)
@@ -431,6 +435,7 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		# VFX effects 
 		camera.pop_zoom()
 		vfx.play_vignette(vfx.get_vfx_color_from_string("crit"), 0.4)
+		vfx.play_crit_feedback(enemy_visual)
 		# Freezing frame and shaking camera for good hit feel
 		camera.shake(10.0, 0.15)
 		freeze_frame(0.14)
@@ -459,6 +464,9 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical) # Damage number, particles
 		camera.shake(7.0, 0.1)
 		
+		# Restores chip if matches conditions inside method
+		_try_restore_chip(guess_type, critical)
+		
 		print("Enemy gets %.2f tame progress, now axis line is %.2f and %.2f away from tame." % [value_shift, enemy.axis_value, enemy.max_hp - value_shift])
 		
 		# Checks if enemy's axis value is at max, if it is, starts minigame
@@ -470,7 +478,7 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		# Off guard is calculated for an exponential multiplier that increases axis movement the more "off guard" an enemy is
 		# So 1) guessing correct once and 2) then guessing wrong will increase damage more than just 1) guessing wrong
 		var off_guard = max(0.0, enemy.axis_ratio())
-		var kill_multiplier := 0.5 + pow(off_guard, 2.0) * 2.0
+		var kill_multiplier := 0.5 + pow(off_guard, 2.5) * 2.0
 		
 		# Damage calculation
 		var value_shift = round_quarter(base * kill_multiplier) # Kill multiplier will just be 0.5 if off_guard is 0
@@ -483,6 +491,9 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		enemy_visual.shake(critical)
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
 		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical)
+		
+		# Restores chip if matches conditions inside method
+		_try_restore_chip(guess_type, critical)
 		
 		# Checking if enemy has been defeated
 		_resolve_enemy_state(enemy)
@@ -562,9 +573,9 @@ func on_minigame_complete(enemy: CombatEntity, success: bool):
 			if _check_victory():  # 2. Minigame win: enemy tamed
 				_end_combat(true) # If last enemy
 	else:
-		# Restore enemy's defense by a random amount from 20-35%
+		# Restore enemy's defense by a random amount from 20-35%, rounds it somewhat though
 		var restore_ratio := randf_range(0.2, 0.35)
-		enemy.axis_value = enemy.axis_max * restore_ratio
+		enemy.axis_value = round(enemy.axis_max * restore_ratio)
 		enemy_visual.update_axis(enemy.axis_value)
 		print("Minigame failed. Enemy axis restored to %.1f" % enemy.axis_value)
 
@@ -607,7 +618,7 @@ func _handle_support_pattern(enemy: CombatEntity, pattern: EnemyAttackPattern):
 		return
 	
 	# Spawns enemy with available slot
-	await _spawn_enemy(pattern.spawn_enemy_id, free_index)
+	await _spawn_enemy(pattern.spawn_enemy_id, free_index, enemy)
 
 
 # Plays the given enemy attack pattern during the enemy turn
@@ -699,6 +710,7 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 		camera.shake(8.0, 0.15)
 		freeze_frame(0.11)
 		vfx.play_vignette(vfx.get_vfx_color_from_string("block"), 0.2)
+		vfx.play_block_feedback(player_visual)
 		print("Successful block!")
 	else:
 		player_visual.play_block_fail()
@@ -767,6 +779,21 @@ func _start_block_cooldown():
 	# After cooldown resets previous changes
 	block_on_cooldown = false
 	player_visual.set_block_cooldown(false)
+
+# Chip restoring function for the player to gain back chips with crits; also acts as a softlock prevention method
+func _try_restore_chip(used_type: CombatTypes.EntityType, critical: bool):
+	var total_chips = PlayerData._get_total_chips()
+	# 1. Player uses last chip, so that chip is always restored regardless of crit
+	print("here")
+	if total_chips == 0:
+		_restore_chip(used_type)
+		player_visual.play_restore_chip()
+		print("restored")
+		return
+	# 2. Random crit chance
+	if randf() <= 0.10:
+		_restore_chip(used_type)
+		player_visual.play_restore_chip()
 
 # HELPER FUNCTIONS
 # These functions help ACTION functions with calculations and more
@@ -916,8 +943,10 @@ func _resolve_enemy_state(enemy: CombatEntity):
 	var visual = enemy_visuals[enemy]
 
 	if enemy.is_killed():
+		visual.z_index = 1
 		await visual.play_defeat(false)
 	elif enemy.is_tamed():
+		visual.z_index = 1
 		await visual.play_defeat(true)
 
 # Sets camera follow state for the turn with the turn variable
@@ -1010,6 +1039,19 @@ func _get_free_enemy_slot() -> int:
 		if not alive_in_slot:
 			return i
 	return -1
+
+# Restores the players chip when 1) landing a critical hit with 10% chance or 2) last chip used
+func _restore_chip(type: CombatTypes.EntityType):
+	match type:
+		CombatTypes.EntityType.SKY:
+			PlayerData.add_guesses(CombatTypes.EntityType.SKY, 1)
+		CombatTypes.EntityType.EARTH:
+			PlayerData.add_guesses(CombatTypes.EntityType.EARTH, 1)
+		CombatTypes.EntityType.WATER:
+			PlayerData.add_guesses(CombatTypes.EntityType.WATER, 1)
+
+	print("Chip restored for:", type, "!")
+	player_turn_ui.update_guess_display()
 
 
 # ANIMATION METHODS
