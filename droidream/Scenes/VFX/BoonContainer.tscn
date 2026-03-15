@@ -16,6 +16,7 @@ modulate_color = Color(0.87545645, 0.8754565, 0.87545645, 1)
 [node name="BoonContainer" type="Panel"]
 offset_right = 242.0
 offset_bottom = 80.0
+pivot_offset = Vector2(121, 40)
 theme_override_styles/panel = SubResource("StyleBoxTexture_4fqy3")
 script = ExtResource("2_k55v4")
 

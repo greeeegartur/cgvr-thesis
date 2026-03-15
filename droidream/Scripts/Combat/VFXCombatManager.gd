@@ -18,6 +18,7 @@ class_name VFXCombatManager
 @onready var speedlines := $"../../Camera2D/Speedlines"
 @onready var feedback_layer := $"../FeedbackText"
 
+
 # Colors
 @export var normal_flash_color = Color(0.904, 0.135, 0.214, 1.0)
 @export var crit_flash_color = Color("#eff238")

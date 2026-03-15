@@ -7,6 +7,8 @@
 script = ExtResource("1_luwtb")
 id = "sky_chip"
 display_name = "Sky Chip"
+description = "Gain +1 use of [color=#f7ff3c]Sky[/color] in encounters!"
+type = 2
 icon = ExtResource("1_5wqwn")
 max_stack = 3
 metadata/_custom_type_script = "uid://b56nw6bpevr7t"

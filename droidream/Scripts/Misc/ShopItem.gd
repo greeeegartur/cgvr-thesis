@@ -8,20 +8,18 @@ var item_data: ItemData
 var quantity := 1
 var pop_tween: Tween
 
-@onready var icon : Sprite2D = $Icon
-@onready var arrow := $Arrow
-@onready var name_label := $NameLabel
-@onready var count_label := $CountLabel
-@onready var anim := $AnimationPlayer
+@onready var icon : Sprite2D = $Visual/Icon
+@onready var root := $Visual
+@onready var arrow := $Visual/Arrow
+@onready var count_label := $Visual/CountLabel
+@onready var anim := $Visual/AnimationPlayer
 
 func setup(data: ItemData):
 	item_data = data
 	
 	icon.texture = data.icon
-	name_label.text = data.display_name
 	count_label.text = ""
 	
-	name_label.visible = false
 	arrow.visible = false
 	scale = Vector2.ONE
 
@@ -29,27 +27,25 @@ func set_selected(value: bool):
 	arrow.visible = value
 	
 	if value:
-		name_label.visible = true
 		count_label.text = "x%d" % quantity
 		_animate_select()
 	else:
 		count_label.text = ""
-		name_label.visible = false
 		scale = Vector2.ONE
 
 func _animate_select():
 	anim.play("idle")
 	var tween := create_tween()
-	tween.tween_property(self, "scale", Vector2(1.1,1.1), 0.12)
-	tween.tween_property(self, "scale", Vector2.ONE, 0.12)
+	tween.tween_property(root, "scale", Vector2(1.1,1.1), 0.12)
+	tween.tween_property(root, "scale", Vector2.ONE, 0.12)
 
 
 func start_pop():
 	stop_pop()
 	pop_tween = create_tween()
 	pop_tween.set_loops()
-	pop_tween.tween_property(self, "scale", Vector2(1.1,1.1), 0.6)
-	pop_tween.tween_property(self, "scale", Vector2.ONE, 0.6)
+	pop_tween.tween_property(root, "scale", Vector2(1.1,1.1), 0.6)
+	pop_tween.tween_property(root, "scale", Vector2.ONE, 0.6)
 	pop_tween.set_trans(Tween.TRANS_LINEAR)
 
 func stop_pop():
@@ -63,3 +59,11 @@ func shake():
 	var tween = create_tween()
 	tween.tween_property(self, "position:x", orig_pos.x + 10, 0.05).set_trans(Tween.TRANS_SINE)
 	tween.tween_property(self, "position:x", orig_pos.x, 0.05)
+
+func confirm_purchase():
+	stop_pop()
+	var tween := create_tween()
+	tween.tween_property(self, "scale", Vector2(1.2,1.2), 0.08)
+	tween.tween_property(self, "scale", Vector2.ONE, 0.08)
+	tween.parallel().tween_property(self, "modulate", Color(1,1,1,2), 0.05)
+	tween.tween_property(self, "modulate", Color.WHITE, 0.1)

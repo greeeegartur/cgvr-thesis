@@ -7,6 +7,8 @@
 script = ExtResource("1_uroh8")
 id = "earth_chip"
 display_name = "Earth Chip"
+description = "Gain +1 use of [color=#8b5a2b]Earth[/color] in encounters!"
+type = 2
 icon = ExtResource("1_4dl6l")
 max_stack = 3
 metadata/_custom_type_script = "uid://b56nw6bpevr7t"

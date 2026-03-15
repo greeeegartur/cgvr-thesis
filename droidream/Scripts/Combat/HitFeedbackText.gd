@@ -8,29 +8,6 @@ var float_height := 50
 const lifetime := 0.6
 
 func play(bbcode_text: String):
-	#label.text = bbcode_text
-	#label.modulate.a = 0
-	#scale = Vector2(0.7, 0.7)
-#
-	#var tween = create_tween()
-	#tween.parallel().tween_property(label, "modulate:a", 1.0, 0.08)
-	#tween.parallel().tween_property(
-		#self,
-		#"position:y",
-		#position.y - float_height,
-		#lifetime
-	#).set_trans(Tween.TRANS_SINE)
-	#tween.parallel().tween_property(
-		#self,
-		#"scale",
-		#Vector2.ONE * 1.2,
-		#lifetime
-	#).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	#tween.tween_property(label, "modulate:a", 0.0, 0.25)
-#
-	#await tween.finished
-	#queue_free()
-	#
 	label.text = bbcode_text
 	rotation_degrees = randf_range(-4, 4)
 	label.modulate.a = 0.0

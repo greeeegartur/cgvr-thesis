@@ -23,9 +23,20 @@ var ufo_idle_tween: Tween
 @onready var items_container := $StopUI/ItemsContainer
 @onready var next_button := $StopUI/NextArrow
 @onready var stop_text := $StopUI/StopText
+@onready var popup := $StopUI/ShopItemContainer
 @onready var item_scene = preload("res://Scenes/ShopItem.tscn")
+@onready var HitFeedbackScene = preload("res://Scenes/VFX/HitFeedbackText.tscn")
 
+var popup_tween: Tween
+var popup_scale_tween: Tween
 # TO-DO: karma based prices
+
+func _ready():
+	var base_y = popup.position.y + 2
+	var t = create_tween()
+	t.set_loops()
+	t.tween_property(popup, "position:y", base_y + 3, 1.2)
+	t.tween_property(popup, "position:y", base_y, 1.2)
 
 func _unhandled_input(event):
 	if state != State.ACTIVE:
@@ -48,15 +59,37 @@ func _update_selection_visuals():
 		var item = items_container.get_child(i)
 		var selected = (i == selection_index)
 		item.set_selected(selected)
-		
 		if selected:
-			item.start_pop() 
+			item.start_pop()
+			_move_popup_to(item)
 		else:
 			item.stop_pop()
 	
 	# Next button logic
 	var is_next := selection_index == items_container.get_child_count()
+	if is_next:
+		_hide_popup()
+	else:
+		_show_popup()
 	_set_next_button_selected(is_next)
+
+func _move_popup_to(item: ShopItem):
+	popup.visible = true
+	popup.setup(item.item_data, item.quantity)
+	var target_x = item.global_position.x -46
+	
+	if popup_tween:
+		popup_tween.kill()
+	popup_tween = create_tween()
+	popup_tween.set_trans(Tween.TRANS_CUBIC)
+	popup_tween.set_ease(Tween.EASE_OUT)
+	popup_tween.tween_property(
+		popup,
+		"global_position:x",
+		target_x + 5,
+		0.18
+	)
+	popup_tween.tween_property(popup, "global_position:x", target_x, 0.08)
 
 func _activate_selection():
 	if selection_index < items_container.get_child_count():
@@ -75,6 +108,9 @@ func _attempt_purchase(shop_item: ShopItem):
 	
 	# Purchase accepted
 	PlayerData.currency -= data.cost
+	shop_item.confirm_purchase()
+	_play_purchase_feedback(shop_item)
+	_spawn_purchase_feedback(shop_item)
 	
 	# Item's attributes inherited by player
 	match data.id:
@@ -85,15 +121,14 @@ func _attempt_purchase(shop_item: ShopItem):
 		"water_chip":
 			PlayerData.add_guesses(CombatTypes.EntityType.WATER, 1)
 	
-	if data.repeatable:
-		shop_item.quantity += 1
-	else:
-		shop_item.quantity -= 1
-		_update_selection_visuals()
+	shop_item.quantity -= 1
+	_update_selection_visuals()
 
 func enter_stop():
 	state = State.ENTERING
 	ui.visible = true
+	popup.scale = Vector2.ZERO
+	popup.visible = true
 	
 	await _animate_ufo_entry()
 	await _spawn_items()
@@ -164,6 +199,44 @@ func _animate_ufo_exit():
 	tween.tween_property(ufo, "position:y", -20, 0.8)
 	tween.set_trans(Tween.TRANS_BACK)
 	tween.set_ease(Tween.EASE_IN)
+	await tween.finished
+
+func _play_purchase_feedback(shop_item: ShopItem):
+	var tween := create_tween()
+	# Popup slamming
+	tween.tween_property(
+		popup,
+		"scale",
+		Vector2(0.85, 1.25),
+		0.08
+	)
+
+	# Flash
+	tween.parallel().tween_property(popup, "modulate", Color(1,1,1,2), 0.05)
+	tween.tween_property(popup, "modulate", Color.WHITE, 0.1)
+	
+	# Bouncing
+	tween.tween_property(
+		popup,
+		"scale",
+		Vector2.ONE,
+		0.18
+	).set_trans(Tween.TRANS_BACK)
+
+	# Item pop confirmation
+	tween.parallel().tween_property(
+		shop_item,
+		"scale",
+		Vector2(1.35,1.35),
+		0.12
+	)
+	tween.tween_property(
+		shop_item,
+		"scale",
+		Vector2.ONE,
+		0.12
+	)
+
 	await tween.finished
 
 func _spawn_items():
@@ -258,3 +331,38 @@ func _roll_shop_items():
 			chosen.append(item)
 	
 	return chosen
+
+func _hide_popup():
+	if popup_scale_tween:
+		popup_scale_tween.kill()
+	popup_scale_tween = create_tween()
+	popup_scale_tween.tween_property(
+		popup,
+		"scale",
+		Vector2.ZERO,
+		0.15
+	)
+
+func _show_popup():
+	if popup_scale_tween:
+		popup_scale_tween.kill()
+	popup_scale_tween = create_tween()
+	popup_scale_tween.tween_property(
+		popup,
+		"scale",
+		Vector2.ONE,
+		0.15
+	)
+
+func _spawn_purchase_feedback(shop_item: ShopItem):
+	var texts = [
+		"[color=#17e84f][wave freq=12]Bought![/wave][/color]",
+		"[color=#eff238][wave freq=12]Acquired![/wave][/color]",
+		"[color=#3d9feb][shake rate=14]Got it![/shake][/color]"
+	]
+	var feedback := HitFeedbackScene.instantiate()
+	ui.add_child(feedback)
+	
+	feedback.rotation_degrees = randf_range(-3,3)
+	feedback.global_position = shop_item.global_position + Vector2(0,-20)
+	feedback.play(texts.pick_random())

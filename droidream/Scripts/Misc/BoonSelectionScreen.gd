@@ -19,19 +19,14 @@ var pulse_tweens := []
 
 var boons: Array
 var selected := 0
-var colors = {
-	"upgrade": Color("#eff238"),
-	"item": Color("00d200ff")
-}
 
-var input_locked := false
+var input_locked := true
 
 func _ready():
 	gear_tweens.resize(3)
 	pulse_tweens.resize(3)
 
 func show_boons(rolled_boons):
-	input_locked = false
 	visible = true
 	boons = rolled_boons
 	selected = 0
@@ -74,6 +69,7 @@ func show_boons(rolled_boons):
 			0.25
 		).set_trans(Tween.TRANS_BACK)
 	
+	input_locked = false
 	_update_selection()
 
 func _unhandled_input(event):
@@ -111,8 +107,8 @@ func _update_selection():
 			# Container scale pulsing
 			var pulse := create_tween()
 			pulse.set_loops()
-			pulse.tween_property(container,"scale",Vector2(1.1,1.1),0.5)
-			pulse.tween_property(container,"scale",Vector2.ONE,0.5)
+			pulse.tween_property(container,"scale",Vector2(1.1,1.1),0.4)
+			pulse.tween_property(container,"scale",Vector2.ONE,0.4)
 			pulse_tweens[i] = pulse
 		else:
 			gear.modulate = Color(0.7,0.7,0.7)
@@ -146,20 +142,74 @@ func _play_selection_animation(index):
 	for i in range(3):
 		_kill_gear_tween(i)
 		_kill_pulse_tween(i)
-		if i != index:
-			containers[i].hide()
-			gears[i].hide()
 	var chosen_container = containers[index]
 	var chosen_gear = gears[index]
-	
+	# Hiding other containers slightly
+	for i in range(3):
+		if i != index:
+			var fade := create_tween()
+			fade.tween_property(containers[i], "modulate:a", 0.0, 0.15)
+			fade.parallel().tween_property(gears[i], "modulate:a", 0.0, 0.15)
+
+	# Confirmation animation
 	var tween := create_tween()
-	tween.tween_property(chosen_container,"modulate:a",0.0,0.2)
-	tween.tween_property(chosen_container,"modulate:a",1.0,0.2)
-	tween.set_loops(2)
+	tween.set_trans(Tween.TRANS_BACK)
+	tween.set_ease(Tween.EASE_OUT)
+
+	# Scaling
+	tween.tween_property(
+		chosen_container,
+		"scale",
+		Vector2(1.2, 1.2),
+		0.22
+	)
+	# Gear spinning
+	tween.parallel().tween_property(
+		chosen_gear,
+		"rotation",
+		chosen_gear.rotation + TAU * 1.5,
+		0.25
+	)
+	# Flashing
+	tween.parallel().tween_property(
+		chosen_container,
+		"modulate",
+		Color(2,2,2),
+		0.08
+	)
+	tween.tween_property(
+		chosen_container,
+		"modulate",
+		Color.WHITE,
+		0.1
+	)
+
+	# Stretch exit with scaling
+	tween.tween_property(
+		chosen_container,
+		"scale",
+		Vector2(0.0, 1.2),
+		0.35
+	)
+	tween.parallel().tween_property(
+		chosen_container,
+		"modulate:a",
+		0.0,
+		0.35
+	)
+	tween.parallel().tween_property(
+		chosen_gear,
+		"scale",
+		Vector2(0.0, 1.2),
+		0.35
+	)
+	tween.parallel().tween_property(
+		chosen_gear,
+		"modulate:a",
+		0.0,
+		0.35
+	)
 	await tween.finished
-	
-	chosen_container.hide()
-	chosen_gear.hide()
 
 # Slower spin (default)
 func _start_gear_spin():

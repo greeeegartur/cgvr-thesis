@@ -141,7 +141,6 @@ texture = ExtResource("1_to5ne")
 vframes = 2
 
 [node name="ControlsHint" type="Node2D" parent="Control"]
-visible = false
 position = Vector2(-5, 136.00002)
 scale = Vector2(0.3, 0.3)
 

@@ -1,3 +1,59 @@
-[gd_scene format=3 uid="uid://bsrbbjhdvlwcr"]
+[gd_scene load_steps=6 format=3 uid="uid://bsrbbjhdvlwcr"]
 
-[node name="ShopItemContainer" type="Node2D"]
+[ext_resource type="Texture2D" uid="uid://dyfrj4h0ptkn5" path="res://Graphics/Placeholders/Combat/shopContainer.png" id="1_1ws2h"]
+[ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="2_1ws2h"]
+[ext_resource type="Script" uid="uid://krlpub7as0dk" path="res://Scripts/Misc/ShopItemContainer.gd" id="2_vg8xk"]
+[ext_resource type="Texture2D" uid="uid://urxx3qi5l8d0" path="res://Graphics/Placeholders/Combat/bolt.png" id="3_vg8xk"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_vg8xk"]
+texture = ExtResource("1_1ws2h")
+
+[node name="ShopItemContainer" type="Panel"]
+self_modulate = Color(0.63521314, 0.9938325, 0.99999994, 1)
+offset_right = 91.97059
+offset_bottom = 59.0
+theme_override_styles/panel = SubResource("StyleBoxTexture_vg8xk")
+script = ExtResource("2_vg8xk")
+
+[node name="Name" type="RichTextLabel" parent="."]
+layout_mode = 0
+offset_left = 17.0
+offset_top = 20.0
+offset_right = 87.0
+offset_bottom = 31.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/normal_font = ExtResource("2_1ws2h")
+theme_override_font_sizes/normal_font_size = 10
+bbcode_enabled = true
+text = "Name"
+
+[node name="Description" type="RichTextLabel" parent="."]
+layout_mode = 0
+offset_left = 5.0
+offset_top = 31.0
+offset_right = 87.0
+offset_bottom = 55.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_fonts/normal_font = ExtResource("2_1ws2h")
+theme_override_font_sizes/normal_font_size = 7
+bbcode_enabled = true
+text = "[color=blue]{Type}[/color] {description}"
+scroll_active = false
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(10.000001, 24.999996)
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("3_vg8xk")
+
+[node name="Cost" type="Label" parent="Sprite2D"]
+offset_left = -4.285716
+offset_top = 1.4285774
+offset_right = 4.2857113
+offset_bottom = 11.428577
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("2_1ws2h")
+theme_override_font_sizes/font_size = 8
+text = "x2"

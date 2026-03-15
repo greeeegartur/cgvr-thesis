@@ -1,6 +1,7 @@
-[gd_scene load_steps=4 format=3 uid="uid://dnjjp23rtsa8t"]
+[gd_scene load_steps=5 format=3 uid="uid://dnjjp23rtsa8t"]
 
 [ext_resource type="PackedScene" uid="uid://xdci2nsbs7fv" path="res://Scenes/Entities/UFO_Tuh-U/TuhU.tscn" id="1_hij4j"]
+[ext_resource type="PackedScene" uid="uid://bsrbbjhdvlwcr" path="res://Scenes/VFX/ShopItemContainer.tscn" id="2_paqs8"]
 [ext_resource type="Texture2D" uid="uid://c6gn5w834m7lf" path="res://Graphics/Placeholders/Combat/next_arrow.png" id="2_phf0x"]
 [ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="3_paqs8"]
 
@@ -15,6 +16,15 @@ offset_bottom = 40.0
 position = Vector2(463, -20)
 
 [node name="ItemsContainer" type="Node2D" parent="."]
+
+[node name="ShopItemContainer" parent="." instance=ExtResource("2_paqs8")]
+visible = false
+layout_mode = 0
+offset_left = 350.0
+offset_top = 290.0
+offset_right = 441.97058
+offset_bottom = 349.0
+pivot_offset = Vector2(46, 29.5)
 
 [node name="NextArrow" type="Sprite2D" parent="."]
 visible = false

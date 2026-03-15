@@ -1,62 +1,54 @@
-[gd_scene load_steps=6 format=3 uid="uid://dcr1tuso7nppj"]
+[gd_scene load_steps=8 format=3 uid="uid://dcr1tuso7nppj"]
 
-[ext_resource type="Texture2D" uid="uid://cd10x65pf82c4" path="res://Graphics/Placeholders/Combat/defaultMenuStyleBox.png" id="1_18rw2"]
 [ext_resource type="Script" uid="uid://dvrd35xtykyl4" path="res://Scripts/Combat/RewardsScreen.gd" id="1_lsnnu"]
+[ext_resource type="Texture2D" uid="uid://bqurt4rt84ulp" path="res://Graphics/Placeholders/Combat/rewardsScreen.png" id="2_k2wyv"]
 [ext_resource type="Texture2D" uid="uid://fk7vshnojgc" path="res://Graphics/Placeholders/Combat/gearcog.png" id="2_lsnnu"]
+[ext_resource type="PackedScene" uid="uid://cyq7gg52jyuy3" path="res://Scenes/VFX/RewardRow.tscn" id="2_ygveb"]
+[ext_resource type="Texture2D" uid="uid://urxx3qi5l8d0" path="res://Graphics/Placeholders/Combat/bolt.png" id="3_hyuft"]
 [ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="3_k2wyv"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ygveb"]
-texture = ExtResource("1_18rw2")
+texture = ExtResource("2_k2wyv")
 
 [node name="RewardsScreen" type="Control"]
 visible = false
 layout_mode = 3
 anchors_preset = 0
+scale = Vector2(1e-05, 1e-05)
 script = ExtResource("1_lsnnu")
+reward_row_scene = ExtResource("2_ygveb")
+bolt_icon = ExtResource("3_hyuft")
 
 [node name="Panel" type="Panel" parent="."]
-visible = false
 layout_mode = 0
 offset_right = 300.0
 offset_bottom = 300.0
-scale = Vector2(1e-05, 1e-05)
 pivot_offset = Vector2(150, 150)
 theme_override_styles/panel = SubResource("StyleBoxTexture_ygveb")
 metadata/_edit_use_anchors_ = true
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
+[node name="RewardsContainer" type="VBoxContainer" parent="Panel"]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-
-[node name="RewardsLabel" type="Label" parent="Panel"]
-layout_mode = 0
-offset_left = 25.0
-offset_top = 78.0
-offset_right = 275.0
-offset_bottom = 232.0
-theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
-theme_override_constants/outline_size = 8
-theme_override_fonts/font = ExtResource("3_k2wyv")
-theme_override_font_sizes/font_size = 24
-text = "* ...
-* ..."
+offset_left = 35.0
+offset_top = 62.0
+offset_right = 264.0
+offset_bottom = 267.0
 
 [node name="VictoryText" type="RichTextLabel" parent="Panel"]
 layout_mode = 0
 offset_left = 81.0
-offset_top = 17.0
+offset_top = 4.0
 offset_right = 223.0
-offset_bottom = 68.0
+offset_bottom = 55.0
 theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
 theme_override_constants/outline_size = 12
 theme_override_fonts/normal_font = ExtResource("3_k2wyv")
 theme_override_font_sizes/normal_font_size = 42
 bbcode_enabled = true
-text = "[wave amp=50.0 freq=5.0 connected=1]Victory![/wave]"
+text = "[wave amp=50.0 freq=5.0 connected=1][color=#eff238]Victory![/color][/wave]"
 
 [node name="GearSprite" type="Sprite2D" parent="Panel"]
 z_index = -1
-position = Vector2(149, 149)
-scale = Vector2(3.8315785, 3.83158)
+position = Vector2(150, 151)
+scale = Vector2(3.5473683, 3.5473695)
 texture = ExtResource("2_lsnnu")

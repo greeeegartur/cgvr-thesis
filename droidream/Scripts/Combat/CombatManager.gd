@@ -1012,7 +1012,8 @@ func _generate_rewards():
 		# Rewards based on how the enemy was defeated
 		if enemy.is_killed():
 			max_currency = half_hp
-			min_currency = max(0, max_currency - 2)
+			min_currency = max(0, max_currency + 2)
+			# TO-DO: add karma
 		elif enemy.is_tamed():
 			min_currency = half_hp
 			max_currency = min_currency + 2
