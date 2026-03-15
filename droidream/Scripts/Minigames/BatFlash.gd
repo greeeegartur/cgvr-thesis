@@ -34,10 +34,10 @@ var timer_active := true
 
 const DAMAGE := 0.5
 
-
 func _ready():
 	# Setup with bat spawning
-	set_duration(5.0)
+	set_duration(6.0)
+	max_duration = 6.0
 	background.texture = background_textures.pick_random()
 	darkness.material.set_shader_parameter("radius", base_light_radius)
 	set_process_unhandled_input(true)
@@ -49,14 +49,11 @@ func _ready():
 	timer_label.text = "%.1fs" % max_duration
 
 	# Starting minigame – FOR TESTING INSIDE SCENE, DO NOT TURN ON FOR COMBATMANAGER
-	#await get_tree().process_frame
+	await get_tree().process_frame
 	#play()
 
 func _process(delta):
 	super._process(delta) # For elapsing variable and minigame end condition
-	
-	if not running:
-		return
 	
 	handle_movement(delta)
 	if timer_active:
@@ -163,7 +160,6 @@ func _on_bat_died(bat):
 	base_light_radius += 0.02
 	darkness.material.set_shader_parameter("radius", base_light_radius)
 
-	print(bats_remaining)
 	if bats_remaining <= 0:
 		win_sequence()
 
@@ -181,6 +177,7 @@ func spawn_damage_number(damage: float):
 # Minigame end logic
 func win_sequence():
 	timer_active = false
+	set_duration(90.0) # Just in case to not timeout
 	set_process_unhandled_input(false)
 	# Covers the entire screen with flash
 	var tween = create_tween()

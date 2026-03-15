@@ -30,11 +30,11 @@ var MINIGAME_SCENES = {
 
 # List of all enemy specific attributes that don't fit into their resources
 const DATA = {
-	"enemy_beetle": {
+	"beetle": {
 		"attack_offset": Vector2(90, 0),
 		"move_speed": 260.0,
 	},
-	"enemy_bat": {
+	"bat": {
 		"attack_offset": Vector2(95, 0),
 		"move_speed": 280.0,
 	}

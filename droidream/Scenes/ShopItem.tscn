@@ -40,7 +40,7 @@ _data = {
 }
 
 [node name="ShopItem" type="Node2D"]
-scale = Vector2(1.75, 1.75)
+scale = Vector2(2.15, 2.15)
 script = ExtResource("1_nbx48")
 
 [node name="Icon" type="Sprite2D" parent="."]

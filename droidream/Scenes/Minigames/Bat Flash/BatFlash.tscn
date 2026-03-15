@@ -18,7 +18,7 @@
 texture = ExtResource("7_liy6e")
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_28rkt"]
-bg_color = Color(0, 0, 0, 1)
+bg_color = Color(0.12225223, 0.12225223, 0.12225223, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_448i1"]
 bg_color = Color(0.32930958, 0.6232507, 0.32154667, 1)

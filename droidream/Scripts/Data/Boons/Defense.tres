@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BoonData" load_steps=3 format=3 uid="uid://ckylyy0420lxy"]
+
+[ext_resource type="Script" uid="uid://yjimuc2myefo" path="res://Scripts/Data/BoonData.gd" id="1_bq32k"]
+[ext_resource type="Texture2D" uid="uid://bnjyobfiwe7xk" path="res://Graphics/Placeholders/Boons/defense.png" id="1_wjjb3"]
+
+[resource]
+script = ExtResource("1_bq32k")
+id = "defense"
+name = "Defense"
+description = "Increase your defense by +0.25!"
+type = "Upgrade"
+icon = ExtResource("1_wjjb3")
+metadata/_custom_type_script = "uid://yjimuc2myefo"

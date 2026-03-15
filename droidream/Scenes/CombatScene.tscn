@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3 uid="uid://b0as27ombq3yp"]
+[gd_scene load_steps=28 format=3 uid="uid://b0as27ombq3yp"]
 
 [ext_resource type="Script" uid="uid://b3u2bq3dgrvtu" path="res://Scripts/Combat/CombatManager.gd" id="1_2mqg5"]
 [ext_resource type="Script" uid="uid://dcdpqt4rgapox" path="res://Scripts/Combat/CombatUI.gd" id="1_memue"]
@@ -14,14 +14,54 @@
 [ext_resource type="Texture2D" uid="uid://cij8c6ssb2cuk" path="res://Graphics/Placeholders/Combat/Enemy.png" id="4_memue"]
 [ext_resource type="Script" uid="uid://b8ia03d3h01bu" path="res://Scripts/Combat/VFXCombatManager.gd" id="4_t6l0c"]
 [ext_resource type="PackedScene" uid="uid://c7am76emgaqdv" path="res://Scenes/VFX/ExplosionFX.tscn" id="5_7t358"]
-[ext_resource type="Script" uid="uid://bg2qtlv48grin" path="res://Scripts/Combat/EnemySpawner.gd" id="5_dv3n3"]
 [ext_resource type="PackedScene" uid="uid://dnjjp23rtsa8t" path="res://Scenes/StopUI.tscn" id="6_vp3lu"]
 [ext_resource type="Script" uid="uid://dqcuun735xvqm" path="res://Scripts/Combat/CameraController.gd" id="7_b8x4h"]
+[ext_resource type="Script" uid="uid://bpfi0g26gd1me" path="res://Scripts/Data/BoonManager.gd" id="8_121m8"]
 [ext_resource type="PackedScene" uid="uid://6f0q2xbuuu16" path="res://Scenes/VFX/PlayerTurnUI.tscn" id="9_7t358"]
 [ext_resource type="PackedScene" uid="uid://b8tix1tnrjrpr" path="res://Scenes/VFX/TutorialText.tscn" id="13_7d6hk"]
 [ext_resource type="PackedScene" uid="uid://dcr1tuso7nppj" path="res://Scenes/VFX/RewardsScreen.tscn" id="14_et1op"]
 [ext_resource type="PackedScene" uid="uid://dc0p2hfu0gp6r" path="res://Scenes/VFX/DeathScreen.tscn" id="15_kwghb"]
+[ext_resource type="PackedScene" uid="uid://cwntedolisxe8" path="res://Scenes/VFX/BoonSelectionScreen.tscn" id="17_ad845"]
 [ext_resource type="PackedScene" uid="uid://mnb3nvh3ofas" path="res://Scenes/VFX/HitFeedbackText.tscn" id="22_b7ydo"]
+[ext_resource type="Texture2D" uid="uid://dhg3luy17q64k" path="res://Graphics/Placeholders/Combat/speedlines.png" id="23_ad845"]
+
+[sub_resource type="Animation" id="Animation_121m8"]
+resource_name = "play"
+length = 0.41
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [0, 1]
+}
+
+[sub_resource type="Animation" id="Animation_mtk7o"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_6ulev"]
+_data = {
+&"RESET": SubResource("Animation_mtk7o"),
+&"play": SubResource("Animation_121m8")
+}
 
 [node name="CombatScene" type="Node2D"]
 
@@ -32,6 +72,9 @@ script = ExtResource("2_7t358")
 script = ExtResource("1_t6l0c")
 areas = Array[ExtResource("3_akpyy")]([ExtResource("4_et1op")])
 
+[node name="BoonManager" type="Node" parent="."]
+script = ExtResource("8_121m8")
+
 [node name="StopManager" type="Node" parent="."]
 script = ExtResource("4_dv3n3")
 
@@ -39,9 +82,6 @@ script = ExtResource("4_dv3n3")
 
 [node name="CombatManager" type="Node" parent="."]
 script = ExtResource("1_2mqg5")
-
-[node name="EnemySpawner" type="Node" parent="."]
-script = ExtResource("5_dv3n3")
 
 [node name="World" type="Node2D" parent="."]
 
@@ -85,6 +125,19 @@ position_smoothing_enabled = true
 position_smoothing_speed = 8.5
 script = ExtResource("7_b8x4h")
 
+[node name="Speedlines" type="Sprite2D" parent="Camera2D"]
+modulate = Color(1, 1, 1, 0)
+z_index = 5
+texture = ExtResource("23_ad845")
+vframes = 2
+
+[node name="Player" type="AnimationPlayer" parent="Camera2D/Speedlines"]
+libraries = {
+&"": SubResource("AnimationLibrary_6ulev")
+}
+autoplay = "play"
+speed_scale = 1.5
+
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="TutorialText" parent="UI" instance=ExtResource("13_7d6hk")]
@@ -99,6 +152,9 @@ offset_top = 45.000015
 offset_right = 330.0
 offset_bottom = 45.000015
 scale = Vector2(0.9, 0.9)
+
+[node name="BoonSelectionScreen" parent="UI" instance=ExtResource("17_ad845")]
+visible = false
 
 [node name="CombatUI" type="Node" parent="UI"]
 script = ExtResource("1_memue")
@@ -124,12 +180,13 @@ layer = 9
 follow_viewport_enabled = true
 
 [node name="Vignette" type="ColorRect" parent="VFX"]
-visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -319.0
+offset_top = -84.0
 offset_right = 395.0
+offset_bottom = 53.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 4

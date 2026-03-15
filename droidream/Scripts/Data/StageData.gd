@@ -11,5 +11,31 @@ class_name StageData
 	3: 0.0
 }
 
-# All allowed enemies in the stage
-@export var allowed_enemies: Array[String]
+# Defaults, meant to be changed
+@export var creature_weights := {
+	1: {
+		"bat": 0.2,
+		"beetle": 0.8
+	},
+
+	2: {
+		"bat": 0.4,
+		"beetle": 0.6
+	},
+
+	3: {
+		"bat": 0.7,
+		"beetle": 0.3
+	}
+}
+
+func generate():
+	var count = Utils.weighted_pick(enemy_count_weights)
+	var result := []
+	
+	var weights = creature_weights[count]
+	for i in count:
+		var enemy_id = Utils.weighted_pick(weights)
+		result.append(enemy_id)
+	
+	return result

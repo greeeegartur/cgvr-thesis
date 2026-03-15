@@ -15,13 +15,14 @@ class_name VFXCombatManager
 @onready var damage_layer := $"../DamageNumbers"
 @onready var particle_layer := $"../Particles"
 @onready var vignette := $"../Vignette"
+@onready var speedlines := $"../../Camera2D/Speedlines"
 @onready var feedback_layer := $"../FeedbackText"
 
 # Colors
 @export var normal_flash_color = Color(0.904, 0.135, 0.214, 1.0)
 @export var crit_flash_color = Color("#eff238")
 @export var subdue_flash_color = Color("9a2ea3ff")
-@export var block_flash_color = Color(0.0, 0.825, 0.0, 1.0)
+@export var block_flash_color = Color("00d200ff")
 var COLORS : Dictionary
 
 func _ready():
@@ -80,6 +81,11 @@ func emit_explosion(target_visual: Node2D, color: Color, is_subdue := false):
 	await get_tree().create_timer(fx.lifetime).timeout
 	fx.queue_free()
 
+func play_overlay_effects(color_name: String, alpha := 0.5):
+	play_vignette(get_vfx_color_from_string(color_name), alpha)
+	if (color_name == "crit"): 
+		play_speedlines(get_vfx_color_from_string(color_name), 0.8) # Only plays when player crits
+
 # Vignette player (reusable for all sorts of hits), TO-DO: replace with actual vignette, not ColorRect
 func play_vignette(color: Color, max_alpha := 0.5, in_time := 0.05, out_time := 0.15):
 	vignette.color = color
@@ -90,6 +96,17 @@ func play_vignette(color: Color, max_alpha := 0.5, in_time := 0.05, out_time := 
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	tween.tween_property(vignette, "modulate:a", max_alpha, in_time)
 	tween.tween_property(vignette, "modulate:a", 0.0, out_time)
+
+# Plays speedlines similar to vignette
+func play_speedlines(color: Color, max_alpha := 0.5, in_time := 0.05, out_time := 0.25):
+	speedlines.modulate = color
+	speedlines.visible = true
+	speedlines.modulate.a = 0.0
+
+	var tween := create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tween.tween_property(speedlines, "modulate:a", max_alpha, in_time)
+	tween.tween_property(speedlines, "modulate:a", 0.0, out_time)
 
 # Very arbitrary method for CombatManager to get VFX colors for vignette player, TO-DO: change this if more colors
 func get_vfx_color_from_string(color: String): 

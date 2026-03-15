@@ -8,7 +8,7 @@
 
 [resource]
 script = ExtResource("2_fh84n")
-enemy_id = "enemy_bat"
+enemy_id = "bat"
 name = "Small Bat"
 max_hp = 4.0
 attack = 1

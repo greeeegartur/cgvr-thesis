@@ -1,0 +1,72 @@
+[gd_scene load_steps=6 format=3 uid="uid://bowbqgebtaqvd"]
+
+[ext_resource type="Texture2D" uid="uid://cd10x65pf82c4" path="res://Graphics/Placeholders/Combat/defaultMenuStyleBox.png" id="1_apxql"]
+[ext_resource type="Script" uid="uid://bvxx6bexsixqm" path="res://Scripts/Misc/BoonContainer.gd" id="2_k55v4"]
+[ext_resource type="Texture2D" uid="uid://cqn2eaqv86x1l" path="res://Graphics/Placeholders/Boons/HP.png" id="3_bmsxo"]
+[ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="4_vnpec"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_4fqy3"]
+texture = ExtResource("1_apxql")
+texture_margin_left = 45.0
+texture_margin_top = 45.0
+texture_margin_right = 45.0
+texture_margin_bottom = 45.0
+modulate_color = Color(0.87545645, 0.8754565, 0.87545645, 1)
+
+[node name="BoonContainer" type="Panel"]
+offset_right = 242.0
+offset_bottom = 80.0
+theme_override_styles/panel = SubResource("StyleBoxTexture_4fqy3")
+script = ExtResource("2_k55v4")
+
+[node name="Icon" type="Sprite2D" parent="."]
+position = Vector2(36, 40.999996)
+scale = Vector2(3.5, 3.5)
+texture = ExtResource("3_bmsxo")
+
+[node name="Name" type="RichTextLabel" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.838843
+anchor_top = 1.7
+anchor_right = 0.838843
+anchor_bottom = 1.7
+offset_left = -130.0
+offset_top = -130.0
+offset_right = 133.0
+offset_bottom = -105.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(131.5, 12.5)
+size_flags_horizontal = 4
+theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/normal_font = ExtResource("4_vnpec")
+bbcode_enabled = true
+text = "Health / [color=#eff238]Upgrade[/color]"
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="Description" type="RichTextLabel" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.30200002
+anchor_top = 0.35000005
+anchor_right = 0.96300006
+anchor_bottom = 0.8740001
+offset_left = -0.08400726
+offset_right = -0.046020508
+offset_bottom = 3.0799942
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(131.5, 12.5)
+size_flags_horizontal = 4
+theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/normal_font = ExtResource("4_vnpec")
+theme_override_font_sizes/normal_font_size = 12
+bbcode_enabled = true
+text = "blablablablablablalbalbalblablalbblablalblablalbalbalblalbbabasbab"
+fit_content = true
+scroll_active = false
+metadata/_edit_use_anchors_ = true

@@ -13,6 +13,6 @@ hits = Array[Dictionary]([{
 "time": 1.5
 }])
 is_support = true
-spawn_enemy_id = "enemy_bat"
+spawn_enemy_id = "bat"
 spawn_chance = 0.8
 metadata/_custom_type_script = "uid://by18pvdsekurc"

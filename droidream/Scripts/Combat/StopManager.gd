@@ -176,7 +176,14 @@ func _spawn_items():
 		item_instance.position = Vector2(410 + (i * 53), 283)
 		items_container.add_child(item_instance)
 		
-		item_instance.setup(rolled_items[i])
+		var data = rolled_items[i]
+		item_instance.setup(data)
+
+		# Generate stack size depending on given item (necessary for chips and maybe other items)
+		if data.max_stack > 1:
+			item_instance.quantity = randi_range(1, data.max_stack)
+		else:
+			item_instance.quantity = 1
 		
 		item_instance.scale = Vector2.ZERO
 		var tween := create_tween()

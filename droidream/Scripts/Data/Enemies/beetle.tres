@@ -7,7 +7,7 @@
 
 [resource]
 script = ExtResource("2_osir5")
-enemy_id = "enemy_beetle"
+enemy_id = "beetle"
 name = "Giant Beetle"
 type = 1
 max_hp = 6.0

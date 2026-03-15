@@ -10,7 +10,8 @@ var items := {}
 func _ready():
 	_register_base_items()
 
-# All jungle items unlocked in stops by default
+# TO-DO: simplify this
+# All items in stops by default
 func _register_base_items():
 	_register(preload("res://Scripts/Data/Items/EarthChip.tres"))
 	_register(preload("res://Scripts/Data/Items/SkyChip.tres"))

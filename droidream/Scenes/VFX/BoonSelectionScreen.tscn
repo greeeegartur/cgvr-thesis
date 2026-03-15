@@ -1,0 +1,52 @@
+[gd_scene load_steps=4 format=3 uid="uid://cwntedolisxe8"]
+
+[ext_resource type="Script" uid="uid://csjriyph3cnxw" path="res://Scripts/Misc/BoonSelectionScreen.gd" id="1_7xy2g"]
+[ext_resource type="Texture2D" uid="uid://fk7vshnojgc" path="res://Graphics/Placeholders/Combat/gearcog.png" id="2_0sjvs"]
+[ext_resource type="PackedScene" uid="uid://bowbqgebtaqvd" path="res://Scenes/VFX/BoonContainer.tscn" id="3_7xy2g"]
+
+[node name="BoonSelectionScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_7xy2g")
+
+[node name="Gear1" type="Sprite2D" parent="."]
+z_index = -1
+position = Vector2(371, 62)
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("2_0sjvs")
+
+[node name="Gear2" type="Sprite2D" parent="."]
+z_index = -1
+position = Vector2(371, 178.99997)
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("2_0sjvs")
+
+[node name="Gear3" type="Sprite2D" parent="."]
+z_index = -1
+position = Vector2(371, 296)
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("2_0sjvs")
+
+[node name="BoonContainer1" parent="." instance=ExtResource("3_7xy2g")]
+visible = false
+layout_mode = 0
+offset_left = 371.0
+offset_top = 22.0
+offset_right = 613.0
+offset_bottom = 102.0
+
+[node name="BoonContainer2" parent="." instance=ExtResource("3_7xy2g")]
+visible = false
+layout_mode = 0
+offset_left = 371.0
+offset_top = 139.0
+offset_right = 613.0
+offset_bottom = 219.0
+
+[node name="BoonContainer3" parent="." instance=ExtResource("3_7xy2g")]
+visible = false
+layout_mode = 0
+offset_left = 371.0
+offset_top = 256.0
+offset_right = 613.0
+offset_bottom = 336.0

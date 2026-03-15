@@ -77,7 +77,7 @@ func shake(intensity := 6.0, time := 0.15):
 	)
 
 # For critical hits
-func pop_zoom(amount := 0.17, duration := 0.17):
+func pop_zoom(amount := 0.18, duration := 0.17):
 	var tween := create_tween()
 	tween.tween_property(self, "zoom", zoom * (1.0 + amount), duration * 0.4)
 	tween.tween_property(self, "zoom", zoom, duration * 0.6)

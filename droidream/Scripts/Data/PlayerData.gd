@@ -24,6 +24,8 @@ var experience := 0
 # For later...
 var karma := 0
 
+signal stats_changed
+
 func _ready():
 	reset_run()
 
@@ -40,7 +42,6 @@ func reset_run():
 	experience = 0
 	karma = 0
 
-
 # Helper methods for use in CombatManager
 func has_guess(t: CombatTypes.EntityType) -> bool:
 	return guesses.get(t, 0) > 0
@@ -53,6 +54,19 @@ func consume_guess(t: CombatTypes.EntityType) -> void:
 
 func add_guesses(t: CombatTypes.EntityType, amount: int) -> void:
 	guesses[t] = guesses.get(t, 0) + amount
+
+func add_power(amount):
+	attack += amount
+	stats_changed.emit()
+
+func add_defense(amount):
+	defense += amount
+	stats_changed.emit()
+
+func add_hp(amount):
+	max_hp += amount
+	hp += amount
+	stats_changed.emit()
 
 func _get_total_chips():
 	var sum := 0

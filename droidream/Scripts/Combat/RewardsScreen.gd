@@ -47,7 +47,7 @@ func _update_rewards_text(rewards: Dictionary) -> void:
 	# For now
 	reward_label.text = "Bolts: +%d" % rewards.currency
 
-# Gear spin logic from EnemyAxisBar
+# Gear spin logic from PlayerTurnUI
 func _start_gear_spin():
 	_stop_gear_spin()
 	gear_spin_tween = create_tween()

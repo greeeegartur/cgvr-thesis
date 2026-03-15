@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://6f0q2xbuuu16"]
+[gd_scene load_steps=16 format=3 uid="uid://6f0q2xbuuu16"]
 
 [ext_resource type="Script" uid="uid://d3goy7jibvf76" path="res://Scripts/Combat/PlayerTurnUI.gd" id="1_0fa56"]
 [ext_resource type="Texture2D" uid="uid://fk7vshnojgc" path="res://Graphics/Placeholders/Combat/gearcog.png" id="2_gsd0c"]
@@ -8,7 +8,10 @@
 [ext_resource type="Texture2D" uid="uid://dn6qn615b2785" path="res://Graphics/Placeholders/Combat/itemsIcon.png" id="5_7cvk2"]
 [ext_resource type="Texture2D" uid="uid://de10vur2pgcdg" path="res://Graphics/Placeholders/Combat/tameStyleBox.png" id="7_7cvk2"]
 [ext_resource type="Texture2D" uid="uid://bsnpasyc82o1" path="res://Graphics/Placeholders/Combat/abilitiesStyleBox.png" id="8_ffjt8"]
+[ext_resource type="Texture2D" uid="uid://cejyw1xju2nb2" path="res://Graphics/Placeholders/Combat/sky_chip.png" id="8_nbpvq"]
 [ext_resource type="Texture2D" uid="uid://b37q8ukr1rn2k" path="res://Graphics/Placeholders/Combat/itemsStyleBox.png" id="9_7f765"]
+[ext_resource type="Texture2D" uid="uid://iktyp5h7govn" path="res://Graphics/Placeholders/Combat/earth_chip.png" id="9_n7a3j"]
+[ext_resource type="Texture2D" uid="uid://nuoesnjwkg24" path="res://Graphics/Placeholders/Combat/water_chip.png" id="10_x3ufh"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_a1yl2"]
 texture = ExtResource("7_7cvk2")
@@ -114,45 +117,52 @@ offset_bottom = 80.0
 metadata/_edit_use_anchors_ = true
 
 [node name="SkyOption" type="Node2D" parent="AttackTypeMenu/Panel/VBox"]
+position = Vector2(0, -2)
 
 [node name="Label" type="Label" parent="AttackTypeMenu/Panel/VBox/SkyOption"]
-offset_left = 12.0
-offset_top = 12.0
-offset_right = 73.0
-offset_bottom = 35.0
+offset_left = 11.0
+offset_top = 13.0
+offset_right = 72.0
+offset_bottom = 36.0
 pivot_offset = Vector2(30.5, 11.5)
 theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("4_7cvk2")
 text = "Sky"
 vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
 
 [node name="EarthOption" type="Node2D" parent="AttackTypeMenu/Panel/VBox"]
+position = Vector2(0, -2)
 
 [node name="Label" type="Label" parent="AttackTypeMenu/Panel/VBox/EarthOption"]
-offset_left = 12.0
-offset_top = 30.0
-offset_right = 73.0
-offset_bottom = 53.0
+offset_left = 11.0
+offset_top = 31.0
+offset_right = 72.0
+offset_bottom = 54.0
 pivot_offset = Vector2(30.5, 11.5)
 theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("4_7cvk2")
 text = "Earth"
 vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
 
 [node name="WaterOption" type="Node2D" parent="AttackTypeMenu/Panel/VBox"]
+position = Vector2(0, -2)
 
 [node name="Label" type="Label" parent="AttackTypeMenu/Panel/VBox/WaterOption"]
-offset_left = 12.0
-offset_top = 48.0
-offset_right = 73.0
-offset_bottom = 71.0
+offset_left = 11.0
+offset_top = 49.0
+offset_right = 72.0
+offset_bottom = 72.0
 pivot_offset = Vector2(30.5, 11.5)
 theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("4_7cvk2")
 text = "Water"
 vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
 
 [node name="Counts" type="Node2D" parent="AttackTypeMenu/Panel"]
+position = Vector2(0, -2)
 
 [node name="SkyCount" type="Label" parent="AttackTypeMenu/Panel/Counts"]
 offset_left = 76.0
@@ -167,6 +177,11 @@ text = "x"
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
+[node name="SkyChip" type="Sprite2D" parent="AttackTypeMenu/Panel/Counts/SkyCount"]
+position = Vector2(-8, 7)
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("8_nbpvq")
+
 [node name="EarthCount" type="Label" parent="AttackTypeMenu/Panel/Counts"]
 offset_left = 76.0
 offset_top = 36.0
@@ -180,6 +195,11 @@ text = "x"
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
+[node name="EarthChip" type="Sprite2D" parent="AttackTypeMenu/Panel/Counts/EarthCount"]
+position = Vector2(-8, 7)
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("9_n7a3j")
+
 [node name="WaterCount" type="Label" parent="AttackTypeMenu/Panel/Counts"]
 offset_left = 76.0
 offset_top = 54.0
@@ -192,6 +212,11 @@ theme_override_font_sizes/font_size = 12
 text = "x"
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
+
+[node name="WaterChip" type="Sprite2D" parent="AttackTypeMenu/Panel/Counts/WaterCount"]
+position = Vector2(-8, 7)
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("10_x3ufh")
 
 [node name="AbilitiesMenu" type="Node" parent="."]
 

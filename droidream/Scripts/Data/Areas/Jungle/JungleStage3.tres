@@ -6,8 +6,21 @@
 script = ExtResource("1_u7m4j")
 enemy_count_weights = {
 1: 0.0,
-2: 0.3,
-3: 0.7
+2: 0.2,
+3: 0.8
 }
-allowed_enemies = Array[String](["enemy_beetle"])
+creature_weights = {
+1: {
+"bat": 0.0,
+"beetle": 0.0
+},
+2: {
+"bat": 0.6,
+"beetle": 0.4
+},
+3: {
+"bat": 0.9,
+"beetle": 0.1
+}
+}
 metadata/_custom_type_script = "uid://cq42yd5k6nmne"

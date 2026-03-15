@@ -8,12 +8,13 @@ class_name StageFlowController
 @onready var area_manager := $"../AreaManager"
 @onready var combat_manager := $"../CombatManager"
 @onready var stop_manager := $"../StopManager"
-@onready var enemy_spawner := $"../EnemySpawner"
 @onready var player_visual := $"../World/PlayerVisual"
 @onready var camera := $"../Camera2D"
 @onready var rewards_screen := $"../UI/RewardsScreen"
 @onready var death_screen := $"../UI/DeathScreen"
 @onready var tutorial_text := $"../UI/TutorialText"
+@onready var boon_screen := $"../UI/BoonSelectionScreen"
+@onready var boon_manager := $"../BoonManager"
 
 # TO-DO: make backgrounds scenes
 @onready var background := $"../World/Background"
@@ -34,7 +35,7 @@ func start_stage():
 	combat_manager._resume_combat()
 	
 	var stage = area_manager.get_current_stage()
-	var enemies = enemy_spawner.generate(stage) # Specifically enemy_ids
+	var enemies = stage.generate() # Specifically enemy_ids
 	print()
 	print("Entering stage: ", area_manager.stage_index)
 	print(enemies)
@@ -72,9 +73,10 @@ func _on_retry():
 	area_manager.reset_to_first_area()
 	PlayerData.reset_run()
 	
-	# Player visual resets
+	# Player visual + UI resets
 	player_visual.anim.play("player_idle")
 	player_visual.update_hp(PlayerData.max_hp, PlayerData.max_hp)
+	combat_manager._setup_ui()
 	
 	# Combat reset
 	start_stage()
@@ -93,8 +95,16 @@ func _play_victory_sequence(rewards: Dictionary):
 	# Confirmation
 	await rewards_screen.confirmed # 5. Waits until rewards are confirmed
 	await rewards_screen.hide_rewards() # 6. Hides victory screen menu
-	await camera.reset_camera() # 7. Resets camera
-	await _enter_stop() # 8. Stop entering logic
+	await _show_boons() # 7. Boon selection
+	player_visual.update_hp(PlayerData.hp, PlayerData.max_hp) # UI updates
+	
+	await camera.reset_camera() # 8. Resets camera
+	await _enter_stop() # 9. Stop entering logic
+
+func _show_boons():
+	var boons = boon_manager.roll_boons()
+	boon_screen.show_boons(boons)
+	await boon_screen.boon_selected
 
 func _enter_stop():
 	await stop_manager.enter_stop()

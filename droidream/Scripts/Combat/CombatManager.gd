@@ -95,6 +95,7 @@ func _setup_entities(enemy_ids):
 		# Visual
 		player_visual = get_parent().get_node("World/PlayerVisual")
 		player_visual.action_pressed.connect(_on_player_action_pressed)
+		PlayerData.stats_changed.connect(_sync_player_stats)
 		add_child(player)
 		player_visual.position = Vector2(96, 277)
 		player_visual.set_home_position()
@@ -102,8 +103,7 @@ func _setup_entities(enemy_ids):
 		# UI
 		await player_visual.ready
 		player_visual.update_hp(player.hp, player.max_hp)
-	# Resyncing from possible previous combats
-	player_visual.update_hp(player.hp, player.max_hp)
+	_sync_player_stats() # From possible previous instances
 	
 	# ENEMIES SETUP
 	for i in enemy_ids.size():
@@ -334,7 +334,7 @@ func _end_combat(victory: bool):
 		# Player lost
 		print("Player defeated! Game over.")
 		
-		tutorial_text.visible = false
+		tutorial_text.hide_text()
 		_pause_combat()
 		_reset_combat_state()
 		player_died.emit()
@@ -434,7 +434,7 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		base *= 1.5
 		# VFX effects 
 		camera.pop_zoom()
-		vfx.play_vignette(vfx.get_vfx_color_from_string("crit"), 0.4)
+		vfx.play_overlay_effects("crit", 0.4)
 		vfx.play_crit_feedback(enemy_visual)
 		# Freezing frame and shaking camera for good hit feel
 		camera.shake(10.0, 0.15)
@@ -554,7 +554,7 @@ func _start_minigame(enemy: CombatEntity):
 func _on_minigame_damage_taken(amount: float, pos: Vector2):
 	player.hp -= amount
 	player_visual.update_hp(player.hp, player.max_hp)
-	vfx.play_vignette(vfx.get_vfx_color_from_string("normal"))
+	vfx.play_overlay_effects("normal")
 
 # Decides minigame outcome on minigame end
 func on_minigame_complete(enemy: CombatEntity, success: bool):
@@ -701,24 +701,25 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	
 	var base_damage = enemy.attack_power
 	var hit_mult = hit.damage_multiplier
-	# TO-DO Check if "- player.defense" is fair, maybe multiplier based negation is better
-	var damage = max(0.0, base_damage * hit_mult - player.defense)
+	var damage = max(0.0, base_damage * hit_mult)
 	
 	if blocked:
 		damage *= 0.5
 		player_visual.play_block_success()
 		camera.shake(8.0, 0.15)
 		freeze_frame(0.11)
-		vfx.play_vignette(vfx.get_vfx_color_from_string("block"), 0.2)
+		vfx.play_overlay_effects("block", 0.2)
 		vfx.play_block_feedback(player_visual)
 		print("Successful block!")
 	else:
 		player_visual.play_block_fail()
+		vfx.play_overlay_effects("normal")
 		camera.shake(5.0, 0.12)
 		freeze_frame(0.08)
 		print("Failed block")
 
 	print("Player HP is: ", player.hp)
+	damage -= player.defense
 	print("Damage is: ", damage)
 
 	player.hp -= damage
@@ -1052,6 +1053,11 @@ func _restore_chip(type: CombatTypes.EntityType):
 
 	print("Chip restored for:", type, "!")
 	player_turn_ui.update_guess_display()
+
+# Resyncing player stats from possible previous combats
+func _sync_player_stats():
+	player.load_from_player()
+	player_visual.update_hp(player.hp, player.max_hp)
 
 
 # ANIMATION METHODS

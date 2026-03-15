@@ -1,11 +1,15 @@
-[gd_scene load_steps=6 format=3 uid="uid://c7am76emgaqdv"]
+[gd_scene load_steps=7 format=3 uid="uid://c7am76emgaqdv"]
 
 [sub_resource type="Gradient" id="Gradient_g1aog"]
-offsets = PackedFloat32Array(0.50874406, 1)
-colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
+offsets = PackedFloat32Array(0, 0.5467626, 1)
+colors = PackedColorArray(1, 1, 1, 1, 0.7750634, 0.77506346, 0.77506316, 1, 1, 1, 1, 0)
 
 [sub_resource type="GradientTexture1D" id="GradientTexture1D_ywnqf"]
 gradient = SubResource("Gradient_g1aog")
+use_hdr = true
+
+[sub_resource type="CurveTexture" id="CurveTexture_g1aog"]
+width = 796
 
 [sub_resource type="Curve" id="Curve_2ea7x"]
 _data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
@@ -28,6 +32,7 @@ scale_min = 3.0
 scale_max = 5.0
 scale_curve = SubResource("CurveTexture_8d2pe")
 color_ramp = SubResource("GradientTexture1D_ywnqf")
+emission_curve = SubResource("CurveTexture_g1aog")
 
 [node name="GPUParticles2D2" type="GPUParticles2D"]
 z_index = 3

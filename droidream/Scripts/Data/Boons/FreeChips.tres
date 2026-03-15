@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BoonData" load_steps=3 format=3 uid="uid://c50tcpgyu6uc2"]
+
+[ext_resource type="Script" uid="uid://yjimuc2myefo" path="res://Scripts/Data/BoonData.gd" id="1_jq4k1"]
+[ext_resource type="Texture2D" uid="uid://dy575q821w01c" path="res://Graphics/Placeholders/Boons/chips.png" id="1_n574k"]
+
+[resource]
+script = ExtResource("1_jq4k1")
+id = "chips"
+name = "Chips"
+description = "Gain +1 of every chip!"
+type = "Item"
+icon = ExtResource("1_n574k")
+metadata/_custom_type_script = "uid://yjimuc2myefo"
