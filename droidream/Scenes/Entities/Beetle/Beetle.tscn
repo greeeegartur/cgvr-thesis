@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://buy3a8wt3qe8f"]
+[gd_scene load_steps=15 format=3 uid="uid://buy3a8wt3qe8f"]
 
 [ext_resource type="Texture2D" uid="uid://dqqukw2jmv5vm" path="res://Scenes/Entities/Beetle/beetle.png" id="1_8bngv"]
 [ext_resource type="Script" uid="uid://cx4ejov60luxh" path="res://Scripts/Combat/EnemyVisual.gd" id="1_edmr7"]
@@ -112,6 +112,18 @@ tracks/1/keys = {
 "update": 0,
 "values": [Vector2(0, 0), Vector2(33, 0), Vector2(33, 0), Vector2(-53, 0), Vector2(-53.5, 0), Vector2(0, 0)]
 }
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Visual/Sprite2D:frame")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.19958426, 0.29958427, 0.40295467, 0.50295466, 0.6003754, 0.70037544, 0.76666665, 1.2640337, 1.3, 1.333807, 1.3697733, 1.4106119, 1.4465781, 1.4803852, 1.5163515, 1.5548315, 1.5907978, 1.6246048, 1.6605711, 1.7003279, 1.7362942, 1.7728056, 1.8666667, 2.033749, 2.1333334, 2.2331612, 2.3327456, 2.4403179, 2.5399022, 2.63973, 2.7393143, 2.8333335, 2.9666667),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+}
 
 [sub_resource type="Animation" id="Animation_hei77"]
 resource_name = "death"
@@ -169,11 +181,29 @@ tracks/1/keys = {
 "values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
 }
 
+[sub_resource type="Animation" id="Animation_flvfi"]
+resource_name = "beetle_idle"
+length = 0.8
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Visual/Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.4),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [0, 1]
+}
+
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_5wbek"]
 _data = {
 &"RESET": SubResource("Animation_5xyne"),
 &"beetle_tackle": SubResource("Animation_edmr7"),
 &"death": SubResource("Animation_hei77"),
+&"idle": SubResource("Animation_flvfi"),
 &"subdue": SubResource("Animation_0uxmy")
 }
 
@@ -193,6 +223,7 @@ z_index = 1
 [node name="Sprite2D" type="Sprite2D" parent="Visual"]
 scale = Vector2(1.5, 1.5)
 texture = ExtResource("1_8bngv")
+vframes = 2
 
 [node name="TargetArrow" type="Node2D" parent="."]
 visible = false
@@ -211,6 +242,7 @@ libraries = {
 libraries = {
 &"": SubResource("AnimationLibrary_5wbek")
 }
+autoplay = "idle"
 
 [node name="TurnOrder" type="Label" parent="."]
 visible = false

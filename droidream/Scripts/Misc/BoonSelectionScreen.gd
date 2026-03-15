@@ -57,7 +57,7 @@ func show_boons(rolled_boons):
 	
 	# Containers
 	for i in range(3):
-		await get_tree().create_timer(0.2).timeout
+		await get_tree().create_timer(0.3).timeout
 		containers[i].set_boon(boons[i])
 		containers[i].scale = Vector2.ZERO
 		containers[i].visible = true
@@ -210,6 +210,7 @@ func _play_selection_animation(index):
 		0.35
 	)
 	await tween.finished
+	visible = false
 
 # Slower spin (default)
 func _start_gear_spin():

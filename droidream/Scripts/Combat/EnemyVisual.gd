@@ -20,6 +20,8 @@ signal attack_finished
 # Shake variables
 @export var shake_strength = 3.0
 @export var crit_shake_strength = 6.0
+var attack_animation_name: String
+var support_animation_name: String
 
 # Position variables + defeated check
 var home_position : Vector2 # The enemy's original position
@@ -30,12 +32,14 @@ var is_defeated := false # Checks if visual can play any other animations
 
 # Enemy moves to position, attacks, returns back to original position
 func play_attack(animation_name: String):
+	attack_animation_name = animation_name
 	await _move_to_attack_position(attack_position)
 	attack_started.emit()
 	anim.play(animation_name)
 
 # Enemy support animation (attack method but not moving to attack position)
 func play_support(animation_name: String):
+	support_animation_name = animation_name
 	attack_started.emit()
 	anim.play(animation_name)
 	await anim.animation_finished
@@ -66,6 +70,8 @@ func on_anim_finished(name: String):
 		return
 	if name == "RESET":
 		return
+	if name == attack_animation_name or name == support_animation_name:
+		anim.play("idle")
 	await _move_to_home_position()
 	attack_finished.emit()
 

@@ -131,10 +131,17 @@ func _spawn_enemy(enemy_id: String, slot_index: int, spawner: CombatEntity):
 	# Making defeated enemies invisible if they exist
 	for e in enemies:
 		if e.is_killed() or e.is_tamed():
-			#var tween := create_tween()
-			#tween.tween_property(e, "modulate:a", 0.0, 1.0)
-			#await tween.finished
-			enemy_visuals[e].visible = false # Turning invisible if creatures are tamed (if they are then they remain in battle)
+			# Turning invisible if creatures are tamed (if they are then they remain in battle)
+			var v = enemy_visuals[e]
+			var fade_tween := create_tween()
+			fade_tween.tween_property(
+				v,
+				"modulate:a",
+				0.0,
+				0.35
+			)
+			await fade_tween.finished
+			v.visible = false
 	spawner.can_spawn = false
 	
 	# Data
@@ -144,6 +151,14 @@ func _spawn_enemy(enemy_id: String, slot_index: int, spawner: CombatEntity):
 	entity.can_spawn = false # Spawned enemy cannot spawn more enemies
 	add_child(entity)
 	enemies.append(entity)
+	
+	# New enemy gets applied correct visual index (if a creature occupied it before, it will get its index)
+	var new_index := enemies.size() - 1
+	if slot_index < enemies.size():
+		var displaced = enemies[slot_index]
+		
+		enemies[slot_index] = entity
+		enemies[new_index] = displaced
 	
 	# Visual
 	var visual := entity.visual_scene.instantiate()
@@ -159,6 +174,7 @@ func _spawn_enemy(enemy_id: String, slot_index: int, spawner: CombatEntity):
 	visual.setup_axis(entity.axis_max, entity.trust_max)
 	
 	# Separate entry animation (this specific one is for bats)
+	await get_tree().create_timer(0.15).timeout
 	visual.position.y += -240
 	var tween := create_tween()
 	tween.tween_property(visual, "position", visual.home_position, 0.8)

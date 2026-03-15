@@ -95,6 +95,7 @@ func _play_victory_sequence(rewards: Dictionary):
 	# Confirmation
 	await rewards_screen.confirmed # 5. Waits until rewards are confirmed
 	await rewards_screen.hide_rewards() # 6. Hides victory screen menu
+	await get_tree().create_timer(0.15).timeout
 	await _show_boons() # 7. Boon selection
 	player_visual.update_hp(PlayerData.hp, PlayerData.max_hp) # UI updates
 	

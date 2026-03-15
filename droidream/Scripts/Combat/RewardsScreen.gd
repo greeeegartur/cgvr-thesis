@@ -77,24 +77,26 @@ func _play_rewards(rewards: Dictionary):
 # Hides rewards menu after input has been made
 func hide_rewards():
 	_stop_gear_spin()
+	
 	var tween := create_tween()
 	tween.tween_property(
 		panel,
 		"scale",
-		Vector2(1.0,0.65),
-		0.12
+		Vector2(0.75, 1.0),
+		0.25
 	)
-	tween.tween_property(
+	tween.parallel().tween_property(
 		panel,
 		"scale",
-		Vector2.ZERO,
-		0.35
-	)
-	
-	await get_tree().create_timer(0.05).timeout
+		Vector2(0.0, 0.65),
+		0.3
+	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 	await tween.finished
+	
 	panel.visible = false
 	visible = false
+	for c in rewards_container.get_children():
+		c.queue_free()
 
 # Gear spin logic from PlayerTurnUI
 func _start_gear_spin():
