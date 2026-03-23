@@ -19,6 +19,8 @@ var input_enabled = true
 @onready var text := $Visual/RichTextLabel
 @onready var block_visual := $PlayerBlockVisual
 @onready var hud := $PlayerHUD
+@onready var target_arrow := $TargetArrow
+@onready var target_arrow_anim := $TargetArrow/AnimationPlayer
 
 # Position variables
 var home_position : Vector2 # The player's original position
@@ -160,3 +162,11 @@ func show_hp():
 	var tween = create_tween()
 	tween.tween_property(hp_bar, "modulate:a", 1.0, 1)
 	await tween.finished
+
+func show_target_arrow():
+	target_arrow.visible = true
+	target_arrow_anim.play("idle")
+
+func hide_target_arrow():
+	target_arrow.visible = false
+	target_arrow_anim.play("RESET")

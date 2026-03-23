@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://p01dfso5vlo3"]
 
-[ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ItemData.gd" id="1_iieo5"]
+[ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_iieo5"]
 [ext_resource type="Texture2D" uid="uid://nuoesnjwkg24" path="res://Graphics/Placeholders/Combat/water_chip.png" id="1_yoyre"]
 
 [resource]

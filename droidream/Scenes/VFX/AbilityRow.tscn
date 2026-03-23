@@ -1,0 +1,44 @@
+[gd_scene load_steps=4 format=3 uid="uid://tlxfueucaun"]
+
+[ext_resource type="Script" uid="uid://mhlgtgxpgonn" path="res://Scripts/Misc/AbilityRow.gd" id="1_uem6x"]
+[ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="2_hu6kg"]
+[ext_resource type="Texture2D" uid="uid://unc0jsq2owev" path="res://Graphics/Placeholders/Combat/axis_select.png" id="3_kbqje"]
+
+[node name="AbilityRow" type="HBoxContainer"]
+script = ExtResource("1_uem6x")
+
+[node name="Name" type="Label" parent="."]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("2_hu6kg")
+theme_override_font_sizes/font_size = 17
+text = "Bolts"
+vertical_alignment = 2
+
+[node name="CooldownContainer" type="Node2D" parent="."]
+position = Vector2(-2, 4)
+
+[node name="Container" type="HBoxContainer" parent="CooldownContainer"]
+offset_left = 47.0
+offset_right = 70.0
+offset_bottom = 18.0
+
+[node name="Icon" type="TextureRect" parent="CooldownContainer/Container"]
+layout_mode = 2
+texture = ExtResource("3_kbqje")
+stretch_mode = 4
+metadata/_edit_use_anchors_ = true
+
+[node name="Icon2" type="TextureRect" parent="CooldownContainer/Container"]
+layout_mode = 2
+texture = ExtResource("3_kbqje")
+stretch_mode = 4
+metadata/_edit_use_anchors_ = true
+
+[node name="Icon3" type="TextureRect" parent="CooldownContainer/Container"]
+layout_mode = 2
+texture = ExtResource("3_kbqje")
+stretch_mode = 4
+metadata/_edit_use_anchors_ = true

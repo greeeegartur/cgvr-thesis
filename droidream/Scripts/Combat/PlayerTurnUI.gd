@@ -15,8 +15,11 @@ extends CanvasLayer
 @onready var earth_count = $AttackTypeMenu/Panel/Counts/EarthCount
 @onready var water_count = $AttackTypeMenu/Panel/Counts/WaterCount
 
+@export var AbilityRowScene : PackedScene
+
 # Signals to use with CombatManager
 signal attack_type_selected(type)
+signal ability_selected(ability)
 signal cycle_enemy(dir)
 signal confirm_enemy
 signal cancel_enemy
@@ -36,7 +39,7 @@ enum State {
 var state := State.NONE
 
 # All base options during player turn and starting index
-var gear_options := ["attack", "items", "abilities"]
+var gear_options := ["attack", "abilities", "items"]
 var gear_index := 0 # Default index
 var option_slots := [ # Intended option positions in scene
 	Vector2(-3.077, -76.513), # Top
@@ -117,8 +120,27 @@ func _handle_attack_type_input(event):
 
 # TO-DO: Abilities inputs
 func _handle_abilities_input(event):
-	if event.is_action_pressed("ui_cancel"):
-		_cancel_select(gear_options[gear_index])
+	var abilities = PlayerData.get_active_abilities()
+	
+	if event.is_action_pressed("ui_up"):
+		abilities_index = wrapi(abilities_index - 1, 0, abilities.size())
+		_update_abilities_visuals()
+	elif event.is_action_pressed("ui_down"):
+		abilities_index = wrapi(abilities_index + 1, 0, abilities.size())
+		_update_abilities_visuals()
+	elif event.is_action_pressed("ui_accept"):
+		if abilities.is_empty():
+			return
+		
+		var ability = abilities[abilities_index]
+		
+		# Does not allow it to be used if the ability does not have a cooldown of 0
+		if ability.cooldown > 0:
+			shake_panel()
+			return
+		emit_signal("ability_selected", ability)
+	elif event.is_action_pressed("ui_cancel"):
+		_cancel_select("abilities")
 
 # TO-DO: Items inputs
 func _handle_items_input(event):
@@ -365,6 +387,7 @@ func _show_menu():
 	elif selected_option == "abilities":
 		state = State.ABILITIES_SELECT
 		abilities_index = 0
+		_refresh_abilities_ui()
 	elif selected_option == "items":
 		state = State.ITEMS_SELECT
 		items_index = 0
@@ -417,6 +440,31 @@ func _update_attack_type_visuals():
 			0.12
 		)
 
+func _refresh_abilities_ui():
+	var abilities = PlayerData.get_active_abilities()
+	
+	# Clearing old UI
+	for child in abilities_panel.get_node("ScrollContainer/VBox").get_children():
+		child.queue_free()
+	
+	# Rebuilding list with ability rows
+	for ability in abilities:
+		var row = AbilityRowScene.instantiate()
+		abilities_panel.get_node("ScrollContainer/VBox").add_child(row)
+		row.setup(ability)
+	_update_abilities_visuals()
+
+func _update_abilities_visuals():
+	var list = abilities_panel.get_node("ScrollContainer/VBox")
+	var count = list.get_child_count()
+	
+	for i in count:
+		var row = list.get_child(i)
+		var selected = i == abilities_index
+		
+		row.modulate = Color.WHITE if selected else Color(0.6, 0.6, 0.6)
+		row.scale = Vector2.ONE * (1.1 if selected else 1.0)
+
 func update_guess_display():
 	var g = PlayerData.guesses
 	sky_count.text = "x%d" % g[CombatTypes.EntityType.SKY]
@@ -450,6 +498,16 @@ func _confirm_attack_type():
 	
 	state = State.ENEMY_SELECT
 	emit_signal("attack_type_selected", chosen_type)
+
+# Confirms ability selection
+func _confirm_ability():
+	var ability = PlayerData.abilities[abilities_index]
+	
+	if ability.cooldown > 0:
+		shake_panel()
+		return
+	
+	emit_signal("ability_selected", ability)
 
 # For locking player inputs in the combat scene
 func lock_input():

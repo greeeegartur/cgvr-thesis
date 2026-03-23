@@ -322,11 +322,16 @@ func _stop_next_pop():
 # Randomly picks 3 items to display in the shop from current unlocked items
 func _roll_shop_items():
 	var pool = ItemDb.get_unlocked_items()
-	var chosen: Array[ItemData] = []
+	var chosen: Array[ShopEntry] = []
 	
 	while chosen.size() < 3 and pool.size() > 0:
 		var item = pool.pick_random()
 		
+		# Prevents duplicates for abilities/passives to show up
+		if item.type in [ShopEntry.ItemType.ABILITY, ShopEntry.ItemType.PASSIVE]:
+			if PlayerData.has_ability(item.id):
+				continue
+				
 		if not chosen.any(func(i): return i.id == item.id):
 			chosen.append(item)
 	

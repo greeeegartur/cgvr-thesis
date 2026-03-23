@@ -26,7 +26,11 @@ func _ready():
 		PlayerData.add_guesses(CombatTypes.EntityType.EARTH, 1)
 		PlayerData.add_guesses(CombatTypes.EntityType.WATER, 1)
 	
-	available_boons = [hp, power, defense, chips]
+	var repair = preload("res://Scripts/Data/Boons/RepairBoon.tres")
+	repair.effect = func():
+		PlayerData.add_ability(repair)
+	
+	available_boons = [hp, power, defense, chips, repair]
 
 # Rolls random boons
 func roll_boons() -> Array[BoonData]:

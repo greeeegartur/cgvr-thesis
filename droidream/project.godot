@@ -22,6 +22,7 @@ EnemyDatabase="*res://Scripts/Data/EnemyDatabase.gd"
 CombatTypes="*res://Scripts/Data/CombatTypes.gd"
 PlayerData="*res://Scripts/Data/PlayerData.gd"
 ItemDb="*res://Scripts/Data/ItemDB.gd"
+AbilityDb="*res://Scripts/Data/AbilityDB.gd"
 
 [display]
 

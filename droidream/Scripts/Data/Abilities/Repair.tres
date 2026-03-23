@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="AbilityData" load_steps=2 format=3 uid="uid://b8a5vhavlytf5"]
+
+[ext_resource type="Script" uid="uid://dn8yfspxtqdrv" path="res://Scripts/Data/AbilityData.gd" id="1_pyw86"]
+
+[resource]
+script = ExtResource("1_pyw86")
+id = "repair"
+display_name = "Repair"
+cooldown_max = 2
+target_type = 1
+metadata/_custom_type_script = "uid://dn8yfspxtqdrv"

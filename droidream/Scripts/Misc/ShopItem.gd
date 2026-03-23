@@ -4,7 +4,7 @@ extends Node2D
 
 class_name ShopItem
 
-var item_data: ItemData
+var item_data: ShopEntry
 var quantity := 1
 var pop_tween: Tween
 
@@ -14,7 +14,7 @@ var pop_tween: Tween
 @onready var count_label := $Visual/CountLabel
 @onready var anim := $Visual/AnimationPlayer
 
-func setup(data: ItemData):
+func setup(data: ShopEntry):
 	item_data = data
 	
 	icon.texture = data.icon

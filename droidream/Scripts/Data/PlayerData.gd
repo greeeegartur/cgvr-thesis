@@ -11,6 +11,8 @@ const BASE_GUESSES := {
 	CombatTypes.EntityType.EARTH: 3,
 	CombatTypes.EntityType.WATER: 3
 }
+const MAX_ITEM_TYPES := 6
+const MAX_ABILITY_SLOTS := 6
 
 # Actual adjustable player variables (can change for the player)
 var max_hp : float
@@ -18,9 +20,12 @@ var hp : float
 var attack : float
 var defense : float
 @export var guesses := { } # Amount of guesses for each type
-
 var currency := 0
-var experience := 0
+
+# Inventory variables
+var items: Array[InventoryItem] = []
+var abilities: Array[InventoryAbility] = []
+
 # For later...
 var karma := 0
 
@@ -39,7 +44,6 @@ func reset_run():
 	
 	# Reset progression
 	currency = 0
-	experience = 0
 	karma = 0
 
 # Helper methods for use in CombatManager
@@ -73,3 +77,66 @@ func _get_total_chips():
 	for g in guesses.values():
 		sum += g
 	return sum
+
+# Inventory methods
+func add_item(item_data: ItemData, amount := 1) -> bool:
+	# Trying item stacking first (if already inside inventory)
+	for item in items:
+		if item.data == item_data:
+			if item.amount < item_data.max_stack:
+				item.amount = min(item.amount + amount, item_data.max_stack)
+				return true
+			return false
+	
+	# If the player gains a new item
+	if items.size() >= MAX_ITEM_TYPES: # Checks if the player's inventory is full
+		return false
+	var new_item := InventoryItem.new()
+	new_item.data = item_data
+	new_item.amount = min(amount, item_data.max_stack)
+	items.append(new_item)
+	return true
+
+func add_ability(ability_data: AbilityData) -> bool:
+	# Prevents duplicates – the player can only have 1 of each ability
+	for a in abilities:
+		if a.data == ability_data:
+			return false
+	
+	if abilities.size() >= MAX_ABILITY_SLOTS:
+		return false
+	var ability := InventoryAbility.new()
+	ability.data = ability_data
+	ability.cooldown = 0
+	abilities.append(ability)
+	return true
+
+# Item/ability use methods
+func use_item(index: int, combat_manager):
+	var item = items[index]
+	if item.data.use_effect:
+		item.data.use_effect.call(combat_manager)
+	
+	item.amount -= 1
+	if item.amount <= 0:
+		items.remove_at(index)
+
+func use_ability(index: int, combat_manager):
+	var ability = abilities[index]
+	if ability.cooldown > 0: # Does not allow ability to be used if it has a cooldown active
+		return
+	if ability.data.use_effect:
+		ability.data.use_effect.call(combat_manager)
+	ability.cooldown = ability.data.cooldown_max
+
+func has_ability(id: String) -> bool:
+	for ability in abilities:
+		if ability.data.id == id:
+			return true
+	return false
+
+func get_active_abilities():
+	return abilities.filter(func(a): return a.is_active())
+
+func get_passives():
+	return abilities.filter(func(a): return a.is_passive())

@@ -64,6 +64,7 @@ var player_visual : PlayerVisual
 # Minigame and combat-specific variables
 var in_minigame = false # Default
 var combat_paused := false
+var ability_being_used : InventoryAbility
 
 # COMBAT SETUP FUNCTIONS
 # These are functions that run before combat begins, i.e entity data and loading the first turn
@@ -189,6 +190,7 @@ func _setup_ui():
 	# PLAYER
 	# Player turn signals
 	player_turn_ui.attack_type_selected.connect(_on_attack_selected)
+	player_turn_ui.ability_selected.connect(_on_ability_selected)
 	player_turn_ui.cycle_enemy.connect(cycle_target)
 	player_turn_ui.confirm_enemy.connect(_confirm_target_selection)
 	player_turn_ui.cancel_enemy.connect(_cancel_target_selection)
@@ -258,6 +260,7 @@ func _start_combat(enemy_ids):
 
 # Starts the actual combat
 func _start_turn_loop():
+	print(PlayerData.abilities[0].data.display_name)
 	_player_turn()
 
 # TURN FUNCTIONS
@@ -313,6 +316,7 @@ func _enemy_turn():
 	await _execute_enemy_turns(order)
 	# 3) If player survived, player turn
 	enemy_turn_active = false
+	_tick_ability_cooldowns() # TO-DO: check if this is best place for it
 	_player_turn()
 	
 	# TO-DO Enemy AI to identify possible moves
@@ -812,6 +816,55 @@ func _try_restore_chip(used_type: CombatTypes.EntityType, critical: bool):
 		_restore_chip(used_type)
 		player_visual.play_restore_chip()
 
+# ABILITY & ITEM-SPECIFIC FUNCTIONS
+# These functions are inherently ACTION functions, but categorised because of their niche uses
+
+# Executes the repair ability sequence
+# Here the player must collect metal objects to repair itself
+func _ability_repair_sequence(ability: InventoryAbility):
+	if ability.data.display_name != "Repair":
+		return
+	
+	var collected := 0
+	var max_collect := 4
+	var duration := 4.0
+	var timer := 0.0
+	
+	# 1. Focuses camera on player
+	camera.follow(player_visual)
+	await get_tree().create_timer(0.5).timeout
+	var zoom_tween := create_tween()
+	zoom_tween.tween_property(camera, "zoom", Vector2(1.4, 1.4), 4.0)
+	
+	#tutorial_text.show_text("Press arrows towards yourself!")
+	
+	# 2. Healing game starts
+	while timer < duration:
+		await get_tree().process_frame
+		timer += get_process_delta_time()
+		
+		# TO-DO: Objects start spawning
+		if randf() < 0.05:
+			var dir = ["up","down","left","right"].pick_random()
+			
+			# Player input check
+			if Input.is_action_just_pressed("ui_" + dir):
+				collected += 1
+				vfx.play_block_feedback(player_visual)
+	
+	tutorial_text.hide_text()
+	
+	# 3. After game has finished, healing calculations are done
+	collected = min(collected, max_collect)
+	var heal_ratio = collected * 0.1
+	var heal_amount = player.max_hp * heal_ratio
+	player.hp = min(player.hp + heal_amount, player.max_hp)
+	player_visual.update_hp(player.hp, player.max_hp)
+	
+	# 4. Small pause before reseting camera after tween.
+	await get_tree().create_timer(0.5).timeout
+	camera.reset_camera()
+
 # HELPER FUNCTIONS
 # These functions help ACTION functions with calculations and more
 
@@ -885,6 +938,12 @@ func start_target_selection():
 	selected_enemy = alive[target_index]
 	_set_selected_enemy(alive[target_index])
 
+# Starts targeting the player during player turn
+func start_self_targeting():
+	is_targeting = true
+	player_visual.show_target_arrow()
+	tutorial_text.show_hint(TutorialText.HintType.PLAYER_SELECT)
+
 # Cycling method for UI enemy selection
 func cycle_target(dir: int):
 	# Only alive enemies can be targeted, double checking just in case
@@ -916,14 +975,31 @@ func _confirm_target_selection():
 	if not is_targeting:
 		return
 	is_targeting = false
+	
+	# ENEMY TARGETING
 	if selected_enemy:
 		enemy_visuals[selected_enemy].hide_target_arrow()
+		_execute_ability(selected_enemy)
+	
+	# SELF TARGETING
+	elif ability_being_used and ability_being_used.data.target_type == AbilityData.TargetType.SELF:
+		player_visual.hide_target_arrow()
+		_execute_ability(player)
+	
 	_clear_enemy_turn_order_visuals()
 	
 	# Hiding player UI and locking input from it
 	player_turn_ui.hide_player_turn_ui()
 	player_turn_ui.lock_input()
 	player_attack(selected_attack_type) # Starting player attack
+
+# Executes the ability when target has been selected
+func _execute_ability(target):
+	var ability = ability_being_used
+	_use_ability(ability)
+	await ability.data.execute.call(self, target)
+	ability_being_used = null
+	_enemy_turn()
 
 # Selects an attack type and sets it during enemy selection
 func _on_attack_selected(attack_type: CombatTypes.EntityType):
@@ -937,6 +1013,15 @@ func _on_attack_selected(attack_type: CombatTypes.EntityType):
 	
 	# Starts enemy targeting
 	start_target_selection()
+
+# Selects an ability and sets it to be used in the player turn
+func _on_ability_selected(ability: InventoryAbility):
+	player_turn_ui.hide_player_turn_ui()
+	player_turn_ui.lock_input()
+	
+	# Ability's cooldown is set after use and enemy turn starts
+	_start_ability_logic(ability)
+	_enemy_turn()
 
 # Moves back from target selection to previous state (handled by PlayerTurnUI)
 func _cancel_target_selection():
@@ -1076,6 +1161,40 @@ func _sync_player_stats():
 	player.load_from_player()
 	player_visual.update_hp(player.hp, player.max_hp)
 
+# Progresses all player ability cooldowns
+func _tick_ability_cooldowns():
+	for ability in PlayerData.abilities:
+		if ability.just_used:
+			ability.just_used = false
+			continue
+		
+		if ability.cooldown > 0:
+			ability.cooldown -= 1
+
+# Uses the player's passive abilities in specific places
+# Always triggers passives at correct places in combat, but only actually uses them if the player has that passive
+func _trigger_passives(event: String, context):
+	for ability in PlayerData.abilities:
+		if ability.is_passive():
+			ability.data.trigger.call(event, context, self)
+
+# Sets the player's ability by given AbilityData (makes it used)
+func _use_ability(ability):
+	ability.cooldown = ability.data.cooldown_max
+	ability.just_used = true
+
+# Once an ability has been selected, its specific targeting logic will be used
+func _start_ability_logic(ability: InventoryAbility):
+	if turn != "player":
+		return
+	
+	ability_being_used = ability
+	
+	match ability.data.target_type:
+		AbilityData.TargetType.ENEMY:
+			start_target_selection()
+		AbilityData.TargetType.SELF:
+			start_self_targeting()
 
 # ANIMATION METHODS
 # Smooth tween BG animation for minigame enter/exiting 

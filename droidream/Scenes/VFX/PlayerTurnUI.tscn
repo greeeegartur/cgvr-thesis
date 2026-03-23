@@ -1,7 +1,8 @@
-[gd_scene load_steps=16 format=3 uid="uid://6f0q2xbuuu16"]
+[gd_scene load_steps=17 format=3 uid="uid://6f0q2xbuuu16"]
 
 [ext_resource type="Script" uid="uid://d3goy7jibvf76" path="res://Scripts/Combat/PlayerTurnUI.gd" id="1_0fa56"]
 [ext_resource type="Texture2D" uid="uid://fk7vshnojgc" path="res://Graphics/Placeholders/Combat/gearcog.png" id="2_gsd0c"]
+[ext_resource type="PackedScene" uid="uid://tlxfueucaun" path="res://Scenes/VFX/AbilityRow.tscn" id="2_n7a3j"]
 [ext_resource type="Texture2D" uid="uid://c5aqisj0pbku6" path="res://Graphics/Placeholders/Combat/tameIcon.png" id="3_j6txv"]
 [ext_resource type="Texture2D" uid="uid://dwxh5x6vwpat8" path="res://Graphics/Placeholders/Combat/abilitiesIcon.png" id="4_1nchb"]
 [ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="4_7cvk2"]
@@ -23,8 +24,8 @@ texture = ExtResource("8_ffjt8")
 texture = ExtResource("9_7f765")
 
 [node name="PlayerTurnUi" type="CanvasLayer"]
-visible = false
 script = ExtResource("1_0fa56")
+AbilityRowScene = ExtResource("2_n7a3j")
 
 [node name="GearMenu" type="Node2D" parent="."]
 position = Vector2(171.00002, 247.00002)
@@ -231,23 +232,15 @@ offset_right = 178.8
 offset_bottom = 18.800003
 theme_override_styles/panel = SubResource("StyleBoxTexture_irvsa")
 
-[node name="VBox" type="VBoxContainer" parent="AbilitiesMenu/Panel"]
+[node name="ScrollContainer" type="ScrollContainer" parent="AbilitiesMenu/Panel"]
 layout_mode = 0
-offset_right = 100.0
-offset_bottom = 80.0
+offset_left = 9.0
+offset_top = 11.0
+offset_right = 91.0
+offset_bottom = 69.0
 
-[node name="Contents" type="Node2D" parent="AbilitiesMenu/Panel/VBox"]
-
-[node name="Label" type="Label" parent="AbilitiesMenu/Panel/VBox/Contents"]
-offset_left = 12.0
-offset_top = 12.0
-offset_right = 73.0
-offset_bottom = 35.0
-pivot_offset = Vector2(30.5, 11.5)
-theme_override_constants/outline_size = 4
-theme_override_fonts/font = ExtResource("4_7cvk2")
-text = "To-do"
-vertical_alignment = 1
+[node name="VBox" type="VBoxContainer" parent="AbilitiesMenu/Panel/ScrollContainer"]
+layout_mode = 2
 
 [node name="ItemsMenu" type="Node" parent="."]
 
