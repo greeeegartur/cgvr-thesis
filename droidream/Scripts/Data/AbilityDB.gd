@@ -1,5 +1,4 @@
 extends Node
-class_name AbilityDB
 
 var abilities := {}
 
@@ -8,8 +7,8 @@ func _ready():
 
 func _register(ability: Resource):
 	if ability.id == "repair":
-		ability.execute = func(combat, target):
-			await combat._ability_repair_sequence(target)
+		ability.execute = func(combat, ability, target):
+			await combat._ability_repair_sequence(ability)
 	
 	abilities[ability.id] = ability
 	PlayerData.add_ability(ability)

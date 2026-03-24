@@ -5,13 +5,19 @@ extends Node2D
 @onready var label : RichTextLabel = $Label
 
 # Plays a tween animation and decides label properties based on given hit type
-func play(value: float, is_critical: bool):
+func play(value: float, is_critical: bool, is_heal := false):
 	var text := str(value)
 	if is_critical:
 		text = "[wave freq=10]" + text + "![/wave]"
 
 	label.text = text
-	label.modulate = Color.YELLOW if is_critical else Color.RED
+	if is_critical:
+		label.modulate = Color.YELLOW
+	elif is_heal:
+		label.modulate = Color.GREEN
+	else: 
+		label.modulate = Color.RED
+	
 	scale = Vector2(1.3, 0.7)
 	rotation_degrees = randf_range(-6, 6)
 
@@ -38,6 +44,8 @@ func play(value: float, is_critical: bool):
 	# Shake effect
 	if is_critical:
 		_shake(0.18, 4.0)
+	elif is_heal:
+		_shake(0.16, 3.0)
 	else:
 		_shake(0.12, 2.0)
 	

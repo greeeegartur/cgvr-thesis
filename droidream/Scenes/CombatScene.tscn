@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3 uid="uid://b0as27ombq3yp"]
+[gd_scene load_steps=29 format=3 uid="uid://b0as27ombq3yp"]
 
 [ext_resource type="Script" uid="uid://b3u2bq3dgrvtu" path="res://Scripts/Combat/CombatManager.gd" id="1_2mqg5"]
 [ext_resource type="Script" uid="uid://dcdpqt4rgapox" path="res://Scripts/Combat/CombatUI.gd" id="1_memue"]
@@ -24,6 +24,7 @@
 [ext_resource type="PackedScene" uid="uid://cwntedolisxe8" path="res://Scenes/VFX/BoonSelectionScreen.tscn" id="17_ad845"]
 [ext_resource type="PackedScene" uid="uid://mnb3nvh3ofas" path="res://Scenes/VFX/HitFeedbackText.tscn" id="22_b7ydo"]
 [ext_resource type="Texture2D" uid="uid://dhg3luy17q64k" path="res://Graphics/Placeholders/Combat/speedlines.png" id="23_ad845"]
+[ext_resource type="PackedScene" uid="uid://rab42iernju0" path="res://Scenes/VFX/RepairObject.tscn" id="25_mtk7o"]
 
 [sub_resource type="Animation" id="Animation_mtk7o"]
 length = 0.001
@@ -199,6 +200,7 @@ script = ExtResource("4_t6l0c")
 DamageNumberScene = ExtResource("3_7d6hk")
 ExplosionFXScene = ExtResource("5_7t358")
 HitFeedbackScene = ExtResource("22_b7ydo")
+RepairObjectScene = ExtResource("25_mtk7o")
 camera = NodePath("../../Camera2D")
 
 [node name="DamageNumbers" type="Node2D" parent="VFX"]

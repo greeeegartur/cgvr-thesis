@@ -28,7 +28,7 @@ func _ready():
 	
 	var repair = preload("res://Scripts/Data/Boons/RepairBoon.tres")
 	repair.effect = func():
-		PlayerData.add_ability(repair)
+		PlayerData.add_ability(AbilityDb.get_ability("repair"))
 	
 	available_boons = [hp, power, defense, chips, repair]
 

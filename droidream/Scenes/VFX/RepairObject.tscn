@@ -1,0 +1,11 @@
+[gd_scene load_steps=5 format=3 uid="uid://rab42iernju0"]
+
+[ext_resource type="Script" uid="uid://btmulos74tdmp" path="res://Scripts/Misc/RepairObject.gd" id="1_4jpy5"]
+[ext_resource type="Texture2D" uid="uid://d1c71okwqhgfe" path="res://Graphics/Placeholders/Combat/part1.png" id="1_7larw"]
+[ext_resource type="Texture2D" uid="uid://cgm5tddjd5m5m" path="res://Graphics/Placeholders/Combat/part2.png" id="3_4yavy"]
+[ext_resource type="Texture2D" uid="uid://urxx3qi5l8d0" path="res://Graphics/Placeholders/Combat/bolt.png" id="4_6t1hv"]
+
+[node name="RepairObject" type="Sprite2D"]
+texture = ExtResource("1_7larw")
+script = ExtResource("1_4jpy5")
+objects = Array[Texture2D]([ExtResource("1_7larw"), ExtResource("3_4yavy"), ExtResource("4_6t1hv")])

@@ -1,7 +1,5 @@
 extends Node
 
-class_name ItemDB
-
 # New items in new areas
 var unlocked_item_ids: Array[String] = []
 

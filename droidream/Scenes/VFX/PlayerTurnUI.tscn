@@ -24,6 +24,7 @@ texture = ExtResource("8_ffjt8")
 texture = ExtResource("9_7f765")
 
 [node name="PlayerTurnUi" type="CanvasLayer"]
+visible = false
 script = ExtResource("1_0fa56")
 AbilityRowScene = ExtResource("2_n7a3j")
 
@@ -233,13 +234,17 @@ offset_bottom = 18.800003
 theme_override_styles/panel = SubResource("StyleBoxTexture_irvsa")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="AbilitiesMenu/Panel"]
-layout_mode = 0
-offset_left = 9.0
-offset_top = 11.0
+clip_contents = false
+layout_mode = 1
+offset_left = 12.0
+offset_top = 14.0
 offset_right = 91.0
 offset_bottom = 69.0
+horizontal_scroll_mode = 3
+vertical_scroll_mode = 3
 
 [node name="VBox" type="VBoxContainer" parent="AbilitiesMenu/Panel/ScrollContainer"]
+custom_minimum_size = Vector2(79, 55)
 layout_mode = 2
 
 [node name="ItemsMenu" type="Node" parent="."]

@@ -171,7 +171,8 @@ func _hide_menu(selected_option: String):
 	
 	var tween := create_tween()
 	tween.tween_property(panel, "scale", Vector2.ZERO, 0.15)
-	tween.tween_property(panel, "modulate:a", 0.0, 0.15)
+	tween.parallel().tween_property(panel, "modulate:a", 0.0, 0.12)
+	
 	await tween.finished
 	panel.visible = false
 
@@ -447,11 +448,13 @@ func _refresh_abilities_ui():
 	for child in abilities_panel.get_node("ScrollContainer/VBox").get_children():
 		child.queue_free()
 	
-	# Rebuilding list with ability rows
+	# Rebuilding UI with (new) ability rows
 	for ability in abilities:
 		var row = AbilityRowScene.instantiate()
 		abilities_panel.get_node("ScrollContainer/VBox").add_child(row)
 		row.setup(ability)
+	
+	await get_tree().process_frame
 	_update_abilities_visuals()
 
 func _update_abilities_visuals():
@@ -462,8 +465,33 @@ func _update_abilities_visuals():
 		var row = list.get_child(i)
 		var selected = i == abilities_index
 		
-		row.modulate = Color.WHITE if selected else Color(0.6, 0.6, 0.6)
-		row.scale = Vector2.ONE * (1.1 if selected else 1.0)
+		var tween := create_tween()
+		
+		tween.tween_property(
+			row,
+			"scale",
+			Vector2.ONE * (1.0 if selected else 0.8),
+			0.12
+		)
+		
+		tween.parallel().tween_property(
+			row,
+			"modulate",
+			Color.WHITE if selected else Color(0.6, 0.6, 0.6),
+			0.1
+		)
+		
+		tween.parallel().tween_property(
+			row,
+			"position:y",
+			-4 if selected else 0,
+			0.12
+		)
+	
+	var scroll = abilities_panel.get_node("ScrollContainer")
+	if abilities_index < list.get_child_count():
+		var row = list.get_child(abilities_index)
+		scroll.ensure_control_visible(row)
 
 func update_guess_display():
 	var g = PlayerData.guesses
@@ -542,3 +570,6 @@ func _correct_panel(selected_option: String):
 # Checking if tame type option can be used
 func _is_option_available(t: CombatTypes.EntityType) -> bool:
 	return PlayerData.has_guess(t)
+
+func _start_targeting():
+	state = State.ENEMY_SELECT

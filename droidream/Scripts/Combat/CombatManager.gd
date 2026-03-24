@@ -829,41 +829,54 @@ func _ability_repair_sequence(ability: InventoryAbility):
 	var max_collect := 4
 	var duration := 4.0
 	var timer := 0.0
+	var delay := 0.2
+	var active_objects: Array = []
 	
-	# 1. Focuses camera on player
-	camera.follow(player_visual)
-	await get_tree().create_timer(0.5).timeout
-	var zoom_tween := create_tween()
-	zoom_tween.tween_property(camera, "zoom", Vector2(1.4, 1.4), 4.0)
+	# Camera focus
+	await get_tree().create_timer(0.2).timeout
+	camera.ability_focus_on_player(player_visual, Vector2(1.4, 1.4), 4.0)
 	
-	#tutorial_text.show_text("Press arrows towards yourself!")
+	tutorial_text.show_hint(TutorialText.HintType.REPAIR)
 	
-	# 2. Healing game starts
 	while timer < duration:
 		await get_tree().process_frame
 		timer += get_process_delta_time()
 		
-		# TO-DO: Objects start spawning
-		if randf() < 0.05:
-			var dir = ["up","down","left","right"].pick_random()
+		# Spawn objects
+		if active_objects.is_empty():
+			await get_tree().create_timer(0.1 * min(collected, max_collect)).timeout
+			var dir = Utils.DIR_MAP.keys().pick_random()
+			var obj = vfx._spawn_repair_object(player_visual, dir)
+			active_objects.append({ "node": obj, "dir": dir })
+		
+		# Input check
+		for data in active_objects:
+			var expected_input = Utils.OPPOSITE_INPUT[data.dir]
 			
-			# Player input check
-			if Input.is_action_just_pressed("ui_" + dir):
+			if Input.is_action_just_pressed(expected_input):
 				collected += 1
-				vfx.play_block_feedback(player_visual)
+				vfx.play_overlay_effects("block")
+				vfx.play_speedlines("block")
+				await vfx._absorb_object(player_visual, data.node)
+				active_objects.erase(data)
+				break
 	
 	tutorial_text.hide_text()
+	for data in active_objects:
+		if is_instance_valid(data.node):
+			data.node.queue_free()
 	
-	# 3. After game has finished, healing calculations are done
+	# Healing logic after game
 	collected = min(collected, max_collect)
 	var heal_ratio = collected * 0.1
 	var heal_amount = player.max_hp * heal_ratio
+	
 	player.hp = min(player.hp + heal_amount, player.max_hp)
 	player_visual.update_hp(player.hp, player.max_hp)
+	vfx.spawn_damage_number(player_visual, heal_amount, false, true)
 	
-	# 4. Small pause before reseting camera after tween.
-	await get_tree().create_timer(0.5).timeout
-	camera.reset_camera()
+	await camera.reset_camera()
+	await get_tree().create_timer(0.4).timeout
 
 # HELPER FUNCTIONS
 # These functions help ACTION functions with calculations and more
@@ -976,28 +989,33 @@ func _confirm_target_selection():
 		return
 	is_targeting = false
 	
+	# Hiding UI and locking input from it
+	_clear_enemy_turn_order_visuals()
+	player_turn_ui.hide_player_turn_ui()
+	player_turn_ui.lock_input()
+	
 	# ENEMY TARGETING
 	if selected_enemy:
 		enemy_visuals[selected_enemy].hide_target_arrow()
-		_execute_ability(selected_enemy)
+		
+		# If the selection was made with an ability against an enemy
+		if ability_being_used:
+			_execute_ability(selected_enemy)
+			return
 	
 	# SELF TARGETING
 	elif ability_being_used and ability_being_used.data.target_type == AbilityData.TargetType.SELF:
 		player_visual.hide_target_arrow()
 		_execute_ability(player)
+		return
 	
-	_clear_enemy_turn_order_visuals()
-	
-	# Hiding player UI and locking input from it
-	player_turn_ui.hide_player_turn_ui()
-	player_turn_ui.lock_input()
-	player_attack(selected_attack_type) # Starting player attack
+	player_attack(selected_attack_type) # Starting player attack (if previous chceks didn't pass, then this is an attack)
 
 # Executes the ability when target has been selected
 func _execute_ability(target):
 	var ability = ability_being_used
-	_use_ability(ability)
-	await ability.data.execute.call(self, target)
+	_use_ability(ability) # Sets cooldown variables
+	await ability.data.execute.call(self, ability, target) # Calls the ability's function inside CombatManager
 	ability_being_used = null
 	_enemy_turn()
 
@@ -1016,12 +1034,15 @@ func _on_attack_selected(attack_type: CombatTypes.EntityType):
 
 # Selects an ability and sets it to be used in the player turn
 func _on_ability_selected(ability: InventoryAbility):
-	player_turn_ui.hide_player_turn_ui()
-	player_turn_ui.lock_input()
+	if turn != "player":
+		return
+	ability_being_used = ability
+	await player_turn_ui._hide_menu("abilities")
 	
+	# Setting selection state (does not matter whether enemy or player target)
+	player_turn_ui._start_targeting()
 	# Ability's cooldown is set after use and enemy turn starts
 	_start_ability_logic(ability)
-	_enemy_turn()
 
 # Moves back from target selection to previous state (handled by PlayerTurnUI)
 func _cancel_target_selection():
@@ -1039,6 +1060,7 @@ func _cancel_target_selection():
 	
 	_update_enemy_turn_order_display()
 	player_turn_ui.cancel_enemy_selection()
+	player_visual.hide_target_arrow() # If player was selected, just in case
 
 # Decides if an enemy has been defeated by minigame or not
 func _resolve_enemy_state(enemy: CombatEntity):

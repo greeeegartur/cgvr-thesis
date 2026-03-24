@@ -25,7 +25,8 @@ enum HintType {
 	PLAYER_SELECT,
 	SHOP,
 	CRIT,
-	BLOCK
+	BLOCK,
+	REPAIR
 }
 var current_state
 
@@ -45,7 +46,7 @@ func show_hint(type: HintType):
 			controls_hint_node.visible = false
 			select_hint_node.visible = true
 			x_icon.visible = false
-			show_text("Select a target creature!", select_hint_label, select_hint_node)
+			show_text("Select a target entity!", select_hint_label, select_hint_node)
 
 		HintType.SHOP:
 			current_state = HintType.SHOP
@@ -60,6 +61,7 @@ func show_hint(type: HintType):
 			panel.visible = true
 			select_hint_node.visible = false
 			controls_hint_node.visible = false
+			z_icon.visible = true
 			z_icon.position = Vector2(69, 10)
 			show_text("Press      right before hitting to crit!", label, panel)
 
@@ -68,9 +70,17 @@ func show_hint(type: HintType):
 			panel.visible = true
 			select_hint_node.visible = false
 			controls_hint_node.visible = false
+			z_icon.visible = true
 			z_icon.position = Vector2(62.3, 10)
 			show_text("Press      before a hit to block!", label, panel)
 
+		HintType.REPAIR:
+			current_state = HintType.REPAIR
+			panel.visible = true
+			select_hint_node.visible = false
+			controls_hint_node.visible = false
+			z_icon.visible = false
+			show_text("Press towards yourself to absorb parts!", label, panel)
 
 # Methods for turns
 func show_text(text: String, settable_label: Label, node):

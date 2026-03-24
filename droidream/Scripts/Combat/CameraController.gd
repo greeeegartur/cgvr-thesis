@@ -11,6 +11,10 @@ class_name CombatCamera
 @export var follow_speed := 3.0
 @export var x_offset := 60.0
 
+# Temporary zoom system
+var base_zoom: Vector2
+var zoom_tween: Tween
+
 # Camera's position variables
 var default_position: Vector2
 var follow_target: Node2D = null
@@ -18,6 +22,8 @@ var override = false
 
 func _ready():
 	default_position = global_position
+	zoom = zoom_normal
+	base_zoom = zoom_normal
 	zoom = zoom_normal
 
 func _process(delta):
@@ -96,13 +102,24 @@ func reset_camera():
 	follow_target = null
 	override = true
 	
-	var tween = create_tween()
-	tween.tween_property(self, "global_position", default_position, 0.6)
-	tween.parallel().tween_property(self, "zoom", zoom_normal, 0.6)
-	tween.parallel().tween_property(self, "offset", Vector2(0, 0), 0.6)
-	tween.set_trans(Tween.TRANS_LINEAR)
-	tween.set_ease(Tween.EASE_IN)
+	if zoom_tween:
+		zoom_tween.kill()
 	
-	tween.finished.connect(func():
-		override = false
-	)
+	var tween = create_tween()
+	tween.tween_property(self, "global_position", default_position, 0.5)
+	tween.parallel().tween_property(self, "zoom", zoom_normal, 0.5)
+	tween.parallel().tween_property(self, "offset", Vector2.ZERO, 0.5)
+	
+	await tween.finished
+	override = false
+
+func ability_focus_on_player(target: Node2D, zoom_amount: Vector2, duration := 0.4):
+	follow_target = target
+	override = false
+	
+	if zoom_tween:
+		zoom_tween.kill()
+	
+	base_zoom = zoom 
+	zoom_tween = create_tween()
+	zoom_tween.tween_property(self, "zoom", zoom_amount, duration)

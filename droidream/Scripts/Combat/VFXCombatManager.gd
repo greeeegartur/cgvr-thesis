@@ -9,6 +9,7 @@ class_name VFXCombatManager
 @export var DamageNumberScene: PackedScene
 @export var ExplosionFXScene: PackedScene
 @export var HitFeedbackScene: PackedScene
+@export var RepairObjectScene: PackedScene
 @export var camera: Camera2D
 
 # Layer node variables
@@ -42,7 +43,7 @@ func play_subdue(target_visual: Node2D, is_subdue:= true):
 	emit_explosion(target_visual, subdue_flash_color, is_subdue)
 
 # Spawns a damage number near an entity visual that took damage
-func spawn_damage_number(target_visual: Node2D, damage: float, is_critical: bool):
+func spawn_damage_number(target_visual: Node2D, damage: float, is_critical: bool, is_heal := false):
 	if not DamageNumberScene:
 		print("No DamageNumber scene set in VFXCombatManager")
 		return
@@ -53,7 +54,7 @@ func spawn_damage_number(target_visual: Node2D, damage: float, is_critical: bool
 	# Rendering damage number in screen space
 	num.position = target_visual.position
 
-	num.play(damage, is_critical)
+	num.play(damage, is_critical, is_heal)
 
 # Explosion VFX for hits and subduing
 func emit_explosion(target_visual: Node2D, color: Color, is_subdue := false):
@@ -143,3 +144,33 @@ func play_block_feedback(target_visual):
 	    "[color=#06d63e][shake rate=18]Negated![/shake][/color]"
 	]
 	spawn_feedback(target_visual, texts.pick_random())
+
+# Used in the repair ability game
+func _spawn_repair_object(target, dir: String) -> Node2D:
+	var obj = RepairObjectScene.instantiate() # TO-DO replace with scene
+	var offset = Utils.DIR_MAP[dir] * 30
+	obj.global_position = target.global_position + offset
+	obj.scale = Vector2.ZERO
+	get_parent().add_child(obj)
+	
+	# Object spawn tween
+	var tween = create_tween()
+	tween.tween_property(obj, "scale", Vector2.ONE, 0.2)\
+		.set_trans(Tween.TRANS_BACK)
+	
+	return obj
+
+# Used in the repair ability game
+func _absorb_object(target, obj: Node2D):
+	var tween = create_tween()
+	tween.tween_property(
+		obj,
+		"global_position",
+		target.global_position,
+		0.25
+	).set_trans(Tween.TRANS_CUBIC)
+	
+	tween.parallel().tween_property(obj, "scale", Vector2.ZERO, 0.25)
+	
+	await tween.finished
+	obj.queue_free()
