@@ -69,6 +69,9 @@ var menu_indices := {
 	MENU_ABILITIES: 0,
 	MENU_ITEMS: 0
 }
+var target_return_menu := ""
+var refund_guess_on_target_cancel := false
+var pending_tame_type_for_ability := false
 
 # Animation options
 var gear_spin_tween: Tween
@@ -80,6 +83,13 @@ func _ready():
 func start_player_turn():
 	state = State.OPTION_SELECT
 	gear_index = 0
+	
+	selecting_tame_for_ability = false
+	pending_tame_type_for_ability = false
+	target_return_menu = ""
+	refund_guess_on_target_cancel = false
+	
+	menu_indices[MENU_ATTACK] = 0
 	_show_gear_menu()
 
 # Applies next state based on current state input by player
@@ -165,7 +175,6 @@ func _handle_items_input(event):
 		_cancel_to_gear(MENU_ITEMS)
 
 func _cancel_to_gear(menu_name: String):
-	menu_indices[menu_name] = 0
 	_close_menu(menu_name)
 	_stop_gear_spin()
 	state = State.OPTION_SELECT
@@ -173,17 +182,26 @@ func _cancel_to_gear(menu_name: String):
 
 # Backing out of enemy selection to attack select state (pressing X)
 func cancel_enemy_selection():
-	state = previous_state
-	if previous_state == State.ABILITIES_SELECT:
+	state = State.LOCKED
+	
+	if refund_guess_on_target_cancel:
+		PlayerData.add_guesses(last_selected_attack_type, 1) # Returns consumed guess
+		
+	if pending_tame_type_for_ability:
+		state = State.ABILITIES_SELECT
 		await _open_menu(MENU_ABILITIES, false)
 		return
-	
-	if previous_state == State.ATTACK_TYPE_SELECT:
-		PlayerData.add_guesses(last_selected_attack_type, 1) # Returns consumed guess
-		await _open_menu(MENU_ATTACK, false)
-		return
-	
-	await _open_menu(gear_options[gear_index], false)
+		
+	match target_return_menu:
+		MENU_ATTACK:
+			await _open_menu(MENU_ATTACK, false)
+		MENU_ABILITIES:
+			await _open_menu(MENU_ABILITIES, false)
+		MENU_ITEMS:
+			await _open_menu(MENU_ITEMS, false)
+		_:
+			state = State.OPTION_SELECT
+			_restore_gear_menu()
 
 # HELPERS
 # MENU NAVIGATION & PANEL METHODS
@@ -322,7 +340,9 @@ func _show_gear_menu():
 	gear_menu.scale = Vector2.ZERO
 	gear_menu.modulate = Color.WHITE
 	gear_sprite.rotation = 0.0
-
+	
+	_reset_gear_layout()
+	
 	create_tween().tween_property(
 		gear_menu,
 		"scale",
@@ -569,12 +589,17 @@ func _confirm_attack_type():
 	await _close_menu(MENU_ATTACK)
 	PlayerData.consume_guess(chosen_type)
 	last_selected_attack_type = chosen_type
+	target_return_menu = MENU_ATTACK
+	refund_guess_on_target_cancel = true 
+	pending_tame_type_for_ability = false
 	
 	state = State.ENEMY_SELECT
 	emit_signal("attack_type_selected", chosen_type)
 
 func _cancel_ability_tame_select():
 	selecting_tame_for_ability = false
+	pending_tame_type_for_ability = false
+	refund_guess_on_target_cancel = true
 	menu_indices[MENU_ATTACK] = 0
 	emit_signal("cancel_ability_tame_select")
 
@@ -600,6 +625,7 @@ func shake_panel(strength: float = 1):
 	)
 	tween.tween_property(panel, "position", original_pos, 0.2)
 
+# HELPERS
 # Finds the correct panel depending on the selected option
 func _correct_panel(selected_option: String):
 	var panel : Panel
@@ -611,19 +637,38 @@ func _correct_panel(selected_option: String):
 		panel = items_panel
 	return panel
 
-func _start_targeting():
+func _start_targeting(from_menu := "", refund_guess := false):
 	previous_state = state
+	target_return_menu = from_menu
+	refund_guess_on_target_cancel = refund_guess
 	state = State.ENEMY_SELECT
 
-func _start_self_targeting():
+func _start_self_targeting(from_menu := ""):
 	previous_state = state
+	target_return_menu = from_menu
+	refund_guess_on_target_cancel = false
 	state = State.SELF_SELECT
 
 func start_ability_tame_select():
 	selecting_tame_for_ability = true
+	pending_tame_type_for_ability = true
 	menu_indices[MENU_ATTACK] = 0
 	await _close_menu(MENU_ABILITIES)
 	await _open_menu(MENU_ATTACK, true)
 
 func stop_ability_tame_select():
 	selecting_tame_for_ability = false
+
+func _reset_gear_layout():
+	for i in gear_options_root.get_child_count():
+		var option = _get_gear_option_node(i)
+		var slot_index := wrapi(i - gear_index, 0, option_slots.size())
+		var selected := i == gear_index
+		
+		option.position = option_slots[slot_index] + (Vector2(0, -5) if selected else Vector2.ZERO)
+		option.scale = Vector2.ONE * (1.3 if selected else 0.85)
+		option.modulate = Color.WHITE if selected else Color(0.5, 0.5, 0.5)
+		
+		var label = option.get_node("Label")
+		label.visible = selected
+		label.modulate.a = 1.0 if selected else 0.0

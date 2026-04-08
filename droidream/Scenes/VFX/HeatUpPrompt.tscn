@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://basbat4t52pcm"]
+
+[ext_resource type="Script" uid="uid://debnttfqn7ht8" path="res://Scripts/Misc/HeatUpPrompt.gd" id="1_52q22"]
+
+[node name="HeatUpPrompt" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_52q22")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]

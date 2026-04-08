@@ -84,6 +84,25 @@ func emit_explosion(target_visual: Node2D, color: Color, is_subdue := false):
 	await get_tree().create_timer(fx.lifetime).timeout
 	fx.queue_free()
 
+func emit_explosion_from_vector(vector: Vector2, color: String):
+	if not ExplosionFXScene:
+		print("No Explosion scene set in VFXCombatManager")
+		return
+	
+	# Adding explosion to scene
+	var fx := ExplosionFXScene.instantiate()
+	particle_layer.add_child(fx)
+	
+	# Base values
+	fx.position = vector
+	fx.modulate = get_vfx_color_from_string(color) # Crit, hit or subdue
+	fx.process_mode = Node.PROCESS_MODE_ALWAYS
+	fx.scale = Vector2(1.5, 1.5)
+	fx.emitting = true
+	await get_tree().create_timer(fx.lifetime).timeout
+	fx.queue_free()
+	
+
 func play_overlay_effects(color_name: String, alpha := 0.5):
 	play_vignette(get_vfx_color_from_string(color_name), alpha)
 	if (color_name == "crit"): 

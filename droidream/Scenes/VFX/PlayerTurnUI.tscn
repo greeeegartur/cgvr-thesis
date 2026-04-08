@@ -236,17 +236,17 @@ theme_override_styles/panel = SubResource("StyleBoxTexture_irvsa")
 [node name="ScrollContainer" type="ScrollContainer" parent="AbilitiesMenu/Panel"]
 clip_contents = false
 layout_mode = 1
-offset_left = 12.0
-offset_top = 14.0
-offset_right = 91.0
-offset_bottom = 69.0
+offset_left = 16.0
+offset_top = 4.0
+offset_right = 95.0
+offset_bottom = 76.0
 horizontal_scroll_mode = 3
 vertical_scroll_mode = 3
 
 [node name="VBox" type="VBoxContainer" parent="AbilitiesMenu/Panel/ScrollContainer"]
 custom_minimum_size = Vector2(79, 55)
 layout_mode = 2
-theme_override_constants/separation = -12
+theme_override_constants/separation = -14
 
 [node name="ItemsMenu" type="Node" parent="."]
 

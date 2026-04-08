@@ -48,7 +48,6 @@ func _on_combat_finished(victory: bool, rewards):
 		return
 	
 	await _play_victory_sequence(rewards)
-	
 
 # Separating flow in case of future additions
 func _on_player_died():

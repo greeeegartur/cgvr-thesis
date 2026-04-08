@@ -19,6 +19,8 @@ class_name TutorialText
 @onready var select_hint_node := $Control/SelectHint
 @onready var select_hint_label := $Control/SelectHint/Label
 
+var hint_types_in_battle_panel = [HintType.CRIT, HintType.BLOCK, HintType.REPAIR, HintType.MULTITAME, HintType.HEATUP]
+
 # Different states for it to react accordingly
 enum HintType {
 	PLAYER_TURN,
@@ -27,7 +29,8 @@ enum HintType {
 	CRIT,
 	BLOCK,
 	REPAIR,
-	MULTITAME
+	MULTITAME,
+	HEATUP
 }
 var current_state
 
@@ -91,6 +94,14 @@ func show_hint(type: HintType):
 			z_icon.visible = true
 			z_icon.position = Vector2(57.9, 10)
 			show_text("Press     when the shapes are aligned!", label, panel)
+		
+		HintType.HEATUP:
+			current_state = HintType.MULTITAME
+			panel.visible = true
+			select_hint_node.visible = false
+			controls_hint_node.visible = false
+			z_icon.visible = false
+			show_text("Press keys to power up!", label, panel)
 
 # Methods for turns
 func show_text(text: String, settable_label: Label, node):
@@ -110,7 +121,7 @@ func show_text(text: String, settable_label: Label, node):
 
 func hide_text():
 	var node
-	if current_state == HintType.CRIT or current_state == HintType.BLOCK or current_state == HintType.REPAIR or current_state == HintType.MULTITAME:
+	if current_state in hint_types_in_battle_panel:
 		node = panel
 	elif current_state == HintType.PLAYER_TURN or current_state == HintType.SHOP:
 		node = controls_hint_node

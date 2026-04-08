@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AbilityData" load_steps=3 format=3 uid="uid://dltvx1i4yort8"]
+
+[ext_resource type="Texture2D" uid="uid://b6hm3y0vd8iof" path="res://Graphics/Placeholders/Boons/heat-up.png" id="1_3t5vg"]
+[ext_resource type="Script" uid="uid://dn8yfspxtqdrv" path="res://Scripts/Data/AbilityData.gd" id="1_gcvfb"]
+
+[resource]
+script = ExtResource("1_gcvfb")
+id = "heatup"
+display_name = "Heat Up"
+icon = ExtResource("1_3t5vg")
+cooldown_max = 3
+target_type = 1
+metadata/_custom_type_script = "uid://dn8yfspxtqdrv"

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BoonData" load_steps=3 format=3 uid="uid://bayl16igdqehy"]
+
+[ext_resource type="Texture2D" uid="uid://b6hm3y0vd8iof" path="res://Graphics/Placeholders/Boons/heat-up.png" id="1_i6i7o"]
+[ext_resource type="Script" uid="uid://yjimuc2myefo" path="res://Scripts/Data/BoonData.gd" id="2_x636o"]
+
+[resource]
+script = ExtResource("2_x636o")
+id = "heatup"
+name = "Heat Up"
+description = "After use, gain up to +3 power, but lose -0.5 defense for 2 turns."
+type = "Ability"
+icon = ExtResource("1_i6i7o")
+metadata/_custom_type_script = "uid://yjimuc2myefo"

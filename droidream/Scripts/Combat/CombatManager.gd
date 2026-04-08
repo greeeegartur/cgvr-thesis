@@ -74,6 +74,15 @@ var combat_has_ended := false
 var ability_being_used : InventoryAbility
 var selected_ability_tame_type: CombatTypes.EntityType
 var ability_tame_select_active := false
+var minigame_queue_ongoing := false
+
+# Ability specific variables
+# Heat Up effects
+var heat_up_pending_power_bonus := 0
+var heat_up_active := false
+var heat_up_power_bonus := 0
+var heat_up_turns_remaining := 0
+const HEAT_UP_DEFENSE_PENALTY := 0.5
 
 # COMBAT SETUP FUNCTIONS
 # These are functions that run before combat begins, i.e entity data and loading the first turn
@@ -219,6 +228,10 @@ func _reset_combat_state():
 	selected_enemy = null
 	attack_timer_running = false
 	last_attack_press_time = 0.0
+	heat_up_pending_power_bonus = 0
+	heat_up_active = false
+	heat_up_power_bonus = 0
+	heat_up_turns_remaining = 0
 	
 	# Freeing old enemy visuals and entities
 	for visual in enemy_visuals.values():
@@ -297,6 +310,7 @@ func _player_turn():
 	selected_enemy = null
 	locked_enemy_turn_order = _get_enemy_turn_order()
 	_update_enemy_turn_order_display()
+	_update_turn_start_effects()
 	
 	# Player turn base defaults, signal emit and guess display update
 	await camera.stop_follow() # Reseting from previous enemy turn (or defaulting it)
@@ -612,7 +626,10 @@ func _start_minigame(enemy: CombatEntity):
 	in_minigame = false
 	combat_paused = false
 	
-	on_minigame_complete(enemy, success)
+	await on_minigame_complete(enemy, success)
+	if combat_has_ended:
+		return
+	
 	await _resolve_enemy_state(enemy)
 	_world_gray_out(false)
 	await player_visual.return_to_home()
@@ -648,6 +665,8 @@ func on_minigame_complete(enemy: CombatEntity, success: bool):
 		enemy.axis_value = round(enemy.axis_max * restore_ratio)
 		enemy_visual.update_axis(enemy.axis_value)
 		print("Minigame failed. Enemy axis restored to %.1f" % enemy.axis_value)
+		if not minigame_queue_ongoing and not combat_has_ended:
+			_enemy_turn()
 
 # Performs a single enemy's attack pattern based on existing logic
 func _enemy_attack_single(enemy: CombatEntity):
@@ -943,6 +962,35 @@ func _ability_multi_tame_sequence(ability: InventoryAbility, target: CombatEntit
 	
 	await _resolve_multi_tame_hit(target, multiplier)
 
+func _ability_heat_up_sequence(ability: InventoryAbility):
+	var minigame_scene = preload("res://Scenes/VFX/HeatUpMinigame.tscn")
+	var minigame = minigame_scene.instantiate()
+	minigame_layer.add_child(minigame)
+	
+	camera.follow(player_visual)
+	await get_tree().create_timer(0.2).timeout
+	tutorial_text.show_hint(TutorialText.HintType.HEATUP)
+	camera.ability_focus_on_player(player_visual, Vector2(1.3, 1.3), 5.0)
+
+	minigame.prompt_hit.connect(
+		func(pos: Vector2):
+			vfx.emit_explosion_from_vector(pos, "block"),
+		CONNECT_ONE_SHOT | CONNECT_DEFERRED
+	)
+
+	minigame.play()
+	var power_bonus: int = await minigame.finished
+	tutorial_text.hide_text()
+	
+	if is_instance_valid(minigame):
+		minigame.queue_free()
+	
+	heat_up_pending_power_bonus = power_bonus
+	vfx.spawn_damage_number(player_visual, power_bonus, true) # Power VFX
+	vfx.spawn_damage_number(player_visual, HEAT_UP_DEFENSE_PENALTY, false, true) # Defense VFX
+	await camera.reset_camera()
+	await get_tree().create_timer(0.2).timeout
+
 # Processes the hit from the Multi-tame ability after the action sequence has been processed
 func _resolve_multi_tame_hit(target: CombatEntity, multiplier: float):
 	var affected = _get_multi_tame_targets(target) # All adjacent targets (including the target itself)
@@ -1187,6 +1235,8 @@ func _cancel_target_selection():
 	
 	_update_enemy_turn_order_display()
 	tutorial_text.show_hint(TutorialText.HintType.PLAYER_TURN)
+	if ability_being_used and selected_ability_tame_type != CombatTypes.EntityType.NONE:
+		PlayerData.add_guesses(selected_ability_tame_type, 1)
 	
 	# Cancels out and resets accordingly 
 	ability_being_used = null
@@ -1316,6 +1366,15 @@ func _sync_player_stats():
 	player.load_from_player()
 	player_visual.update_hp(player.hp, player.max_hp)
 
+func _sync_turn_ability_effects():
+	if heat_up_active:
+		player.attack_power += heat_up_power_bonus
+		player.defense = player.defense - HEAT_UP_DEFENSE_PENALTY
+	elif not heat_up_active:
+		vfx.spawn_feedback(player_visual, "Cooled down!")
+		player.attack_power -= heat_up_power_bonus
+		player.defense = player.defense + HEAT_UP_DEFENSE_PENALTY
+
 # Progresses all player ability cooldowns
 func _tick_ability_cooldowns():
 	for ability in PlayerData.abilities:
@@ -1380,6 +1439,7 @@ func _get_multi_tame_targets(main_target: CombatEntity) -> Array[CombatEntity]:
 
 # Consecutive minigame logic for abilities like Multi-tame
 func _resolve_pending_minigames():
+	minigame_queue_ongoing = true
 	var ready: Array[CombatEntity] = []
 	for enemy in locked_enemy_turn_order:
 		if enemy.is_minigame_ready() and not enemy.is_tamed() and not enemy.is_killed():
@@ -1392,8 +1452,32 @@ func _resolve_pending_minigames():
 			continue
 		await _start_minigame(enemy)
 		
-		if _check_victory():
-			return
+		if combat_has_ended or _check_victory():
+			break
+	minigame_queue_ongoing = false
+
+func _update_turn_start_effects():
+	# Apply pending Heat Up on the next player turn
+	if heat_up_pending_power_bonus > 0:
+		heat_up_active = true
+		heat_up_power_bonus = heat_up_pending_power_bonus
+		heat_up_pending_power_bonus = 0
+		heat_up_turns_remaining = 2
+		_sync_turn_ability_effects()
+		print("Heat Up active! +%d power, -%.1f defense for %d turns"
+			% [heat_up_power_bonus, HEAT_UP_DEFENSE_PENALTY, heat_up_turns_remaining])
+		return
+
+	if heat_up_active:
+		if heat_up_turns_remaining > 1:
+			heat_up_turns_remaining -= 1
+			print("Heat Up continues. %d turn left." % heat_up_turns_remaining)
+		else:
+			print("Heat Up ended.")
+			heat_up_active = false
+			heat_up_power_bonus = 0
+			heat_up_turns_remaining = 0
+			_sync_turn_ability_effects()
 
 # ANIMATION METHODS
 # Smooth tween BG animation for minigame enter/exiting 
