@@ -6,8 +6,8 @@ class_name ShopItemPopup
 @onready var item_name = $Name
 
 var colors = {
-	ShopEntry.ItemType.ABILITY: Color("#9a2ea3"),
-	ShopEntry.ItemType.PASSIVE: Color("#3d9feb"),
+	ShopEntry.ItemType.ABILITY: Color("#eff238"),
+	ShopEntry.ItemType.PASSIVE: Color("9a2ea3ff"),
 	ShopEntry.ItemType.ITEM: Color("#00d200")
 }
 

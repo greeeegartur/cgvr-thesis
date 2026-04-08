@@ -33,6 +33,12 @@ var enemies: Array[CombatEntity] = [] # Initially empty, TO-DO: make this load a
 var turn = "player" # Player always starts first, this variable is a failsafe check condition in case turn logic goes wrong
 var selected_enemy : CombatEntity
 var target_index = 0
+var target_mode := TargetMode.NONE
+enum TargetMode {
+	NONE,
+	ENEMY,
+	SELF
+}
 
 # Signals for UI script to react + turn variables
 signal player_turn_started 
@@ -64,7 +70,10 @@ var player_visual : PlayerVisual
 # Minigame and combat-specific variables
 var in_minigame = false # Default
 var combat_paused := false
+var combat_has_ended := false
 var ability_being_used : InventoryAbility
+var selected_ability_tame_type: CombatTypes.EntityType
+var ability_tame_select_active := false
 
 # COMBAT SETUP FUNCTIONS
 # These are functions that run before combat begins, i.e entity data and loading the first turn
@@ -191,6 +200,8 @@ func _setup_ui():
 	# Player turn signals
 	player_turn_ui.attack_type_selected.connect(_on_attack_selected)
 	player_turn_ui.ability_selected.connect(_on_ability_selected)
+	player_turn_ui.ability_tame_type_selected.connect(_on_ability_tame_type_selected)
+	player_turn_ui.cancel_ability_tame_select.connect(_on_cancel_ability_tame_select)
 	player_turn_ui.cycle_enemy.connect(cycle_target)
 	player_turn_ui.confirm_enemy.connect(_confirm_target_selection)
 	player_turn_ui.cancel_enemy.connect(_cancel_target_selection)
@@ -254,13 +265,20 @@ func _resume_combat():
 
 # Called from StageFlowController with stage specific area ids to setup entities and start turns
 func _start_combat(enemy_ids):
+	# CORE BUILDING
+	combat_has_ended = false
 	await _setup_entities(enemy_ids)
 	await animate_enemy_entry()
+	
+	# PLAYER UI BUILDING
+	player_turn_ui._build_abilities_ui()
+	_reset_ability_cooldowns()
+	
+	# COMBAT STARTS
 	_start_turn_loop()
 
-# Starts the actual combat
+# Starts the actual combat, keeping as method in case of future additions
 func _start_turn_loop():
-	print(PlayerData.abilities[0].data.display_name)
 	_player_turn()
 
 # TURN FUNCTIONS
@@ -269,7 +287,7 @@ func _start_turn_loop():
 # Handles the player's turn
 func _player_turn():
 	# State check controlled by StageFlowController
-	if combat_paused:
+	if combat_paused or combat_has_ended:
 		return
 	turn = "player"
 	tutorial_text.show_hint(TutorialText.HintType.PLAYER_TURN)
@@ -297,7 +315,7 @@ func _player_turn():
 # Handles the enemies turn
 func _enemy_turn():
 	# State check controlled by StageFlowController
-	if combat_paused:
+	if combat_paused or combat_has_ended:
 		return
 	# Turn order visuals settings
 	_clear_enemy_turn_order_visuals()
@@ -335,6 +353,10 @@ func _execute_enemy_turns(order: Array):
 		await _enemy_attack_single(enemy)
 
 func _end_combat(victory: bool):
+	if combat_has_ended:
+		return
+	combat_has_ended = true
+	
 	# Freeze turn logic (not necessary anymore but keeping just in case)
 	turn = ""
 	player_turn_ui.hide_player_turn_ui()
@@ -346,6 +368,7 @@ func _end_combat(victory: bool):
 		tutorial_text.hide_text()
 		var rewards = _generate_rewards()
 		_reset_combat_state()
+		await get_tree().create_timer(0.1).timeout
 		combat_end.emit(victory, rewards)
 		# TO-DO Give rewards, XP based on if enemy is defeated/subdued
 		# Defeated = more currency, less items + karma (makes enemies harder, will look into how)
@@ -416,7 +439,7 @@ func player_attack(attack_type: CombatTypes.EntityType):
 			await player_visual._move_to_home_position()
 			# Check if enemy defeated
 			if _check_victory():
-				_end_combat(true) # 1. Classic RPG win: enemy defeated
+				_end_combat(true)
 			else:
 				# Else switch turn to enemy
 				_enemy_turn(),
@@ -519,6 +542,42 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		_resolve_enemy_state(enemy)
 		print("Enemy takes %.2f damage, now is %.2f and %.2f left for kill." % [value_shift, enemy.axis_value, enemy.max_hp - value_shift])
 
+# Previous method reworked to use a given multiplier parameter (compact and for use with abilities/items)
+func _apply_axis_shift_with_multiplier(enemy: CombatEntity, guess_type: CombatTypes.EntityType, multiplier: float):
+	var enemy_visual = enemy_visuals[enemy]
+	var base = player.attack_power * multiplier
+	var correct = _is_correct_guess(guess_type, enemy.type)
+	
+	if correct:
+		var resistance := 1.0
+		if enemy.axis_value < 0:
+			resistance = lerp(1.5, 2.5, abs(enemy.axis_ratio()))
+		
+		var value_shift = round_quarter(base / resistance)
+		var before = enemy.axis_value
+		enemy.axis_value += value_shift
+		enemy.axis_value = round_quarter(min(enemy.axis_value, enemy.axis_max))
+		var actual_shift = enemy.axis_value - before
+		
+		enemy_visual.update_axis(enemy.axis_value, actual_shift)
+		enemy_visual.shake(multiplier >= 1.5)
+		#vfx.play_damage_vfx(enemy_visual, abs(actual_shift), multiplier >= 1.5)
+		#vfx.play_crit_feedback(enemy_visual)
+		
+	else:
+		var off_guard = max(0.0, enemy.axis_ratio())
+		var kill_multiplier := 0.5 + pow(off_guard, 2.5) * 2.0
+		var value_shift = round_quarter(base * kill_multiplier)
+		var before = enemy.axis_value
+		enemy.axis_value -= value_shift
+		enemy.axis_value = round_quarter(max(enemy.axis_value, -enemy.axis_max))
+		var actual_shift = enemy.axis_value - before
+		
+		enemy_visual.update_axis(enemy.axis_value, actual_shift)
+		enemy_visual.shake(multiplier >= 1.5)
+		#vfx.play_damage_vfx(enemy_visual, abs(actual_shift), multiplier >= 1.5)
+		_resolve_enemy_state(enemy)
+
 # Logic for starting enemy's minigame in combat
 func _start_minigame(enemy: CombatEntity):
 	if not EnemyDatabase.MINIGAME_SCENES.has(enemy.minigame_id):
@@ -527,7 +586,6 @@ func _start_minigame(enemy: CombatEntity):
 	
 	# Enemy visual with necessary minigame data
 	var enemy_visual = enemy_visuals[enemy]
-	
 	in_minigame = true
 	
 	# Taming visuals
@@ -548,27 +606,19 @@ func _start_minigame(enemy: CombatEntity):
 	# Minigame's damage signal
 	minigame.damage_taken.connect(_on_minigame_damage_taken)
 	
-	minigame.completed.connect(
-		func(success):
-			get_tree().paused = false # Process mode state already set in BaseMinigame.gd, but just in case
-			get_parent().process_mode = Node.PROCESS_MODE_INHERIT
-			in_minigame = false
-			on_minigame_complete(enemy, success)
-			# Check for enemy defeat
-			_resolve_enemy_state(enemy)
-			
-			# Visual reset
-			_world_gray_out(false) # Back to normal focus
-			await player_visual.return_to_home()
-			
-			# Enemy turn
-			_enemy_turn(),
-		CONNECT_ONE_SHOT
-	)
+	minigame.play()
+	var success = await minigame.completed
 	
-	# Pausing all combat (turn) logic
-	in_minigame = true
-	await minigame.play()
+	in_minigame = false
+	combat_paused = false
+	
+	on_minigame_complete(enemy, success)
+	await _resolve_enemy_state(enemy)
+	_world_gray_out(false)
+	await player_visual.return_to_home()
+	
+	#if is_instance_valid(minigame):
+		#minigame.queue_free()
 
 # Connects BaseMinigame signal to give player damage based on minigame
 func _on_minigame_damage_taken(amount: float, pos: Vector2):
@@ -589,9 +639,9 @@ func on_minigame_complete(enemy: CombatEntity, success: bool):
 		enemy_visual.update_axis_trust() 
 		print("Minigame success! Trust: %d / %d" % [enemy.trust, enemy.trust_max])
 		if enemy.is_tamed():
-			await player_visual._move_to_home_position()
-			if _check_victory():  # 2. Minigame win: enemy tamed
-				_end_combat(true) # If last enemy
+			await player_visual.return_to_home()
+			if _check_victory():
+				_end_combat(true)
 	else:
 		# Restore enemy's defense by a random amount from 20-35%, rounds it somewhat though
 		var restore_ratio := randf_range(0.2, 0.35)
@@ -805,11 +855,9 @@ func _start_block_cooldown():
 func _try_restore_chip(used_type: CombatTypes.EntityType, critical: bool):
 	var total_chips = PlayerData._get_total_chips()
 	# 1. Player uses last chip, so that chip is always restored regardless of crit
-	print("here")
 	if total_chips == 0:
 		_restore_chip(used_type)
 		player_visual.play_restore_chip()
-		print("restored")
 		return
 	# 2. Random crit chance
 	if randf() <= 0.10:
@@ -826,28 +874,32 @@ func _ability_repair_sequence(ability: InventoryAbility):
 		return
 	
 	var collected := 0
-	var max_collect := 4
-	var duration := 4.0
+	var max_collect := 5
+	var duration := 3.5
 	var timer := 0.0
-	var delay := 0.2
+	var spawn_cooldown := 0.0
 	var active_objects: Array = []
 	
 	# Camera focus
+	camera.follow(player_visual)
 	await get_tree().create_timer(0.2).timeout
-	camera.ability_focus_on_player(player_visual, Vector2(1.4, 1.4), 4.0)
+	camera.ability_focus_on_player(player_visual, Vector2(1.4, 1.4), 3.5)
 	
 	tutorial_text.show_hint(TutorialText.HintType.REPAIR)
 	
+	# Repair game logic
 	while timer < duration:
 		await get_tree().process_frame
-		timer += get_process_delta_time()
+		var delta = get_process_delta_time()
+		timer += delta
+		spawn_cooldown -= delta
 		
 		# Spawn objects
-		if active_objects.is_empty():
-			await get_tree().create_timer(0.1 * min(collected, max_collect)).timeout
+		if active_objects.is_empty() && spawn_cooldown <= 0.0:
 			var dir = Utils.DIR_MAP.keys().pick_random()
 			var obj = vfx._spawn_repair_object(player_visual, dir)
 			active_objects.append({ "node": obj, "dir": dir })
+			spawn_cooldown = 0.2 * min(collected + 1, max_collect)
 		
 		# Input check
 		for data in active_objects:
@@ -856,7 +908,7 @@ func _ability_repair_sequence(ability: InventoryAbility):
 			if Input.is_action_just_pressed(expected_input):
 				collected += 1
 				vfx.play_overlay_effects("block")
-				vfx.play_speedlines("block")
+				vfx.play_speedlines(vfx.get_vfx_color_from_string("block"))
 				await vfx._absorb_object(player_visual, data.node)
 				active_objects.erase(data)
 				break
@@ -877,6 +929,41 @@ func _ability_repair_sequence(ability: InventoryAbility):
 	
 	await camera.reset_camera()
 	await get_tree().create_timer(0.4).timeout
+
+func _ability_multi_tame_sequence(ability: InventoryAbility, target: CombatEntity):
+	var multiplier := 1.0
+	var minigame_scene = preload("res://Scenes/VFX/MultiTameScene.tscn")
+	var minigame = minigame_scene.instantiate()
+	minigame_layer.add_child(minigame)
+	
+	tutorial_text.show_hint(TutorialText.HintType.MULTITAME)
+	minigame.play()
+	multiplier = await minigame.finished
+	minigame.queue_free()
+	
+	await _resolve_multi_tame_hit(target, multiplier)
+
+# Processes the hit from the Multi-tame ability after the action sequence has been processed
+func _resolve_multi_tame_hit(target: CombatEntity, multiplier: float):
+	var affected = _get_multi_tame_targets(target) # All adjacent targets (including the target itself)
+	if affected.is_empty():
+		return
+	
+	tutorial_text.hide_text()
+	var target_visual = enemy_visuals[target]
+	var ball = await vfx.play_multi_tame_ball(player_visual, target_visual) # Ball hits the target
+	for enemy in affected:
+		if enemy_visuals.has(enemy): # Check just in case visuals are inactive or not
+			var visual = enemy_visuals[enemy]
+			visual.hop(2)
+			vfx.play_damage_vfx(visual, player.attack_power * multiplier, multiplier >= 1.5)
+			vfx.play_multihit_feedback(visual)
+	
+	await vfx.bounce_and_fade_ball(ball, target_visual.global_position) # After ball disappears, axis shifts are applied
+	
+	for enemy in affected:
+		_apply_axis_shift_with_multiplier(enemy, selected_ability_tame_type, multiplier)
+	await _resolve_pending_minigames()
 
 # HELPER FUNCTIONS
 # These functions help ACTION functions with calculations and more
@@ -938,6 +1025,7 @@ func _get_player_attack_position(enemy_visual: EnemyVisual) -> Vector2:
 # Starts attack target selection during player turn
 func start_target_selection():
 	is_targeting = true
+	target_mode = TargetMode.ENEMY
 	_clear_enemy_turn_order_visuals()
 	# Only alive enemies can be targeted
 	var alive := _get_alive_enemies()
@@ -954,6 +1042,7 @@ func start_target_selection():
 # Starts targeting the player during player turn
 func start_self_targeting():
 	is_targeting = true
+	target_mode = TargetMode.SELF
 	player_visual.show_target_arrow()
 	tutorial_text.show_hint(TutorialText.HintType.PLAYER_SELECT)
 
@@ -987,36 +1076,50 @@ func _set_selected_enemy(enemy: CombatEntity):
 func _confirm_target_selection():
 	if not is_targeting:
 		return
-	is_targeting = false
+	is_targeting = false # Reseting for next turn
 	
 	# Hiding UI and locking input from it
 	_clear_enemy_turn_order_visuals()
 	player_turn_ui.hide_player_turn_ui()
 	player_turn_ui.lock_input()
 	
-	# ENEMY TARGETING
-	if selected_enemy:
-		enemy_visuals[selected_enemy].hide_target_arrow()
+		# Matches targeting state for UI
+	match target_mode:
+		TargetMode.ENEMY: # Player is targeting creature(s)
+			if selected_enemy:
+				enemy_visuals[selected_enemy].hide_target_arrow()
+				if ability_being_used:
+					_execute_ability(selected_enemy)
+					return
+				
+				player_attack(selected_attack_type)
+				return
 		
-		# If the selection was made with an ability against an enemy
-		if ability_being_used:
-			_execute_ability(selected_enemy)
-			return
+		TargetMode.SELF: # Player is targeting itself
+			player_visual.hide_target_arrow()
+			if ability_being_used:
+				_execute_ability(player)
+				return
 	
-	# SELF TARGETING
-	elif ability_being_used and ability_being_used.data.target_type == AbilityData.TargetType.SELF:
-		player_visual.hide_target_arrow()
-		_execute_ability(player)
-		return
-	
-	player_attack(selected_attack_type) # Starting player attack (if previous chceks didn't pass, then this is an attack)
+	target_mode = TargetMode.NONE
 
 # Executes the ability when target has been selected
 func _execute_ability(target):
 	var ability = ability_being_used
 	_use_ability(ability) # Sets cooldown variables
+	await player_visual.play_ability_start()
 	await ability.data.execute.call(self, ability, target) # Calls the ability's function inside CombatManager
+	await player_visual.play_ability_end()
 	ability_being_used = null
+	
+	if combat_has_ended:
+		return
+	
+	if _check_victory():
+		_end_combat(true)
+		print("i'm called from execute_ability")
+		return
+	
 	_enemy_turn()
 
 # Selects an attack type and sets it during enemy selection
@@ -1037,30 +1140,60 @@ func _on_ability_selected(ability: InventoryAbility):
 	if turn != "player":
 		return
 	ability_being_used = ability
-	await player_turn_ui._hide_menu("abilities")
 	
-	# Setting selection state (does not matter whether enemy or player target)
+	match ability.data.use_mode:
+		AbilityData.UseMode.STANDARD:
+			player_turn_ui._hide_menu("abilities")
+			_start_ability_logic(ability) # Ability's cooldown is set after use and enemy turn starts
+		
+		AbilityData.UseMode.TAME_STYLE:
+			ability_tame_select_active = true
+			player_turn_ui.selecting_tame_for_ability = true
+			player_turn_ui.start_ability_tame_select()
+
+func _on_ability_tame_type_selected(tame_type: CombatTypes.EntityType):
+	if not ability_being_used:
+		return
+	
+	selected_ability_tame_type = tame_type
+	PlayerData.consume_guess(tame_type)
+	player_turn_ui.stop_ability_tame_select()
+	player_turn_ui._hide_menu("attack")
+	
 	player_turn_ui._start_targeting()
-	# Ability's cooldown is set after use and enemy turn starts
-	_start_ability_logic(ability)
+	start_target_selection()
+
+func _on_cancel_ability_tame_select():
+	ability_being_used = null
+	selected_ability_tame_type = CombatTypes.EntityType.NONE
+	ability_tame_select_active = false
+	target_mode = TargetMode.NONE
+	is_targeting = false
 
 # Moves back from target selection to previous state (handled by PlayerTurnUI)
 func _cancel_target_selection():
 	if not is_targeting:
 		return
+	
 	is_targeting = false
+	target_mode = TargetMode.NONE
+	selected_enemy = null
+	target_index = 0
 	
 	# Hides all enemy arrows and defaults selected enemy and index
 	for v in enemy_visuals.values():
 		v.hide_target_arrow()
-	selected_enemy = null
-	target_index = 0
-	
-	tutorial_text.show_hint(TutorialText.HintType.PLAYER_TURN)
+	player_visual.hide_target_arrow()
 	
 	_update_enemy_turn_order_display()
+	tutorial_text.show_hint(TutorialText.HintType.PLAYER_TURN)
+	
+	# Cancels out and resets accordingly 
+	ability_being_used = null
+	selected_ability_tame_type = CombatTypes.EntityType.NONE
+	ability_tame_select_active = false
+	player_turn_ui.selecting_tame_for_ability = false
 	player_turn_ui.cancel_enemy_selection()
-	player_visual.hide_target_arrow() # If player was selected, just in case
 
 # Decides if an enemy has been defeated by minigame or not
 func _resolve_enemy_state(enemy: CombatEntity):
@@ -1214,9 +1347,53 @@ func _start_ability_logic(ability: InventoryAbility):
 	
 	match ability.data.target_type:
 		AbilityData.TargetType.ENEMY:
+			player_turn_ui._start_targeting()
 			start_target_selection()
 		AbilityData.TargetType.SELF:
+			player_turn_ui._start_self_targeting()
 			start_self_targeting()
+
+# Resets all of the player's cooldowns at the start of combat
+func _reset_ability_cooldowns():
+	for ability in PlayerData.abilities:
+		ability.cooldown = 0
+		ability.just_used = false
+
+# Gets and returns targets for Multi-tame (including adjacent ones)
+func _get_multi_tame_targets(main_target: CombatEntity) -> Array[CombatEntity]:
+	var result: Array[CombatEntity] = []
+	var idx := enemies.find(main_target)
+	if idx == -1:
+		return result
+	
+	for i in range(idx - 1, idx + 2):
+		if i < 0 or i >= enemies.size():
+			continue
+	
+		var e = enemies[i]
+		if e.is_killed() or e.is_tamed():
+			continue
+		
+		result.append(e)
+	
+	return result
+
+# Consecutive minigame logic for abilities like Multi-tame
+func _resolve_pending_minigames():
+	var ready: Array[CombatEntity] = []
+	for enemy in locked_enemy_turn_order:
+		if enemy.is_minigame_ready() and not enemy.is_tamed() and not enemy.is_killed():
+			ready.append(enemy)
+	
+	for enemy in ready:
+		if enemy.is_killed() or enemy.is_tamed():
+			continue
+		if not enemy.is_minigame_ready():
+			continue
+		await _start_minigame(enemy)
+		
+		if _check_victory():
+			return
 
 # ANIMATION METHODS
 # Smooth tween BG animation for minigame enter/exiting 

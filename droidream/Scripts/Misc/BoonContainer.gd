@@ -5,10 +5,10 @@ extends Control
 @onready var desc_label = $Description
 
 var colors = {
-	"Upgrade": Color("#eff238"),
+	"Upgrade": Color("3d9feb"),
 	"Item": Color("00d200ff"),
-	"Passive": Color("3d9feb"),
-	"Ability": Color("9a2ea3ff")
+	"Passive": Color("9a2ea3ff"),
+	"Ability": Color("#eff238")
 }
 
 func set_boon(data: BoonData):

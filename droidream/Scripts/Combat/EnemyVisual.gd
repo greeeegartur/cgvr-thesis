@@ -122,6 +122,14 @@ func shake(is_critical: bool):
 	)
 	tween.tween_property(visual, "position", original_pos, 0.1)
 
+# Hopping animation
+func hop(times := 1):
+	var orig := position
+	var tween := create_tween()
+	for i in range(times):
+		tween.tween_property(self, "position:y", orig.y - 18, 0.16)
+		tween.tween_property(self, "position:y", orig.y, 0.2)
+
 # Target arrow UI elements
 func show_target_arrow():
 	if target_arrow.visible:

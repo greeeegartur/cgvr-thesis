@@ -6,7 +6,8 @@ extends Node
 enum EntityType {
 	SKY,
 	EARTH,
-	WATER
+	WATER,
+	NONE
 }
 
 static func guess_type_to_string(t: EntityType) -> String:

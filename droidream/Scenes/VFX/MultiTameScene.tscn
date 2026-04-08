@@ -1,0 +1,23 @@
+[gd_scene load_steps=3 format=3 uid="uid://c0oxglte2rld1"]
+
+[ext_resource type="Script" uid="uid://bgefuu7bu4k2a" path="res://Scripts/Misc/MultiTameScene.gd" id="1_lo2ia"]
+[ext_resource type="PackedScene" uid="uid://brdo14s4sh66v" path="res://Scenes/VFX/MultiTamePrompt.tscn" id="2_8j5i2"]
+
+[node name="MultiTameScene" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -640.0
+offset_bottom = -360.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_lo2ia")
+PromptScene = ExtResource("2_8j5i2")
+
+[node name="PromptArea" type="Control" parent="."]
+anchors_preset = 0
+offset_left = 20.0
+offset_top = 53.0
+offset_right = 350.0
+offset_bottom = 341.0

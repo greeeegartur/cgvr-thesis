@@ -90,8 +90,16 @@ func pop_zoom(amount := 0.18, duration := 0.17):
 
 # Zoom in for victory screen
 func victory_focus_on_player(target: Node2D) -> void:
+	override = true
+	follow_target = null
+	
+	if zoom_tween:
+		zoom_tween.kill()
+		zoom_tween = null
+	
+	var player_pos = target.global_position - Vector2(-60, 90)
 	var tween := create_tween()
-	tween.tween_property(self, "global_position", target, 0.8)
+	tween.tween_property(self, "global_position", player_pos, 0.8)
 	tween.parallel().tween_property(self, "zoom", Vector2(2.2, 2.2), 0.6)
 	tween.parallel().tween_property(self, "offset", Vector2(10, 65), 0.6)
 	tween.set_trans(Tween.TRANS_QUAD)
@@ -104,6 +112,7 @@ func reset_camera():
 	
 	if zoom_tween:
 		zoom_tween.kill()
+		zoom_tween = null
 	
 	var tween = create_tween()
 	tween.tween_property(self, "global_position", default_position, 0.5)

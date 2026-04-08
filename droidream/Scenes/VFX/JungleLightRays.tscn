@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://o32da1ay3vbk"]
+
+[ext_resource type="Script" uid="uid://cleevxbj01sja" path="res://Scripts/Misc/JungleLightRays.gd" id="1_cnnq1"]
+[ext_resource type="Texture2D" uid="uid://b1xxpgruqeswn" path="res://Graphics/Placeholders/Boons/lightray_beam.png" id="2_uqefp"]
+
+[node name="JungleLightRays" type="Node2D"]
+script = ExtResource("1_cnnq1")
+
+[node name="Ray1" type="Sprite2D" parent="."]
+modulate = Color(1, 1, 1, 0.019607844)
+rotation = 0.17453292
+texture = ExtResource("2_uqefp")
+
+[node name="Ray2" type="Sprite2D" parent="."]
+modulate = Color(1, 1, 1, 0.019607844)
+rotation = 0.17453292
+texture = ExtResource("2_uqefp")

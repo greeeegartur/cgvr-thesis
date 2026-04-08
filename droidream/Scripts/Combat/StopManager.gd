@@ -321,19 +321,28 @@ func _stop_next_pop():
 
 # Randomly picks 3 items to display in the shop from current unlocked items
 func _roll_shop_items():
-	var pool = ItemDb.get_unlocked_items()
+	var pool = ItemDb.get_unlocked_items().duplicate()
 	var chosen: Array[ShopEntry] = []
 	
 	while chosen.size() < 3 and pool.size() > 0:
 		var item = pool.pick_random()
+		pool.erase(item)
 		
-		# Prevents duplicates for abilities/passives to show up
-		if item.type in [ShopEntry.ItemType.ABILITY, ShopEntry.ItemType.PASSIVE]:
-			if PlayerData.has_ability(item.id):
+		# Duplicate check for abilities
+		if item.type == ShopEntry.ItemType.ABILITY and item.ability_data:
+			if PlayerData.has_ability(item.ability_data.id):
 				continue
-				
-		if not chosen.any(func(i): return i.id == item.id):
-			chosen.append(item)
+		
+		# And same for passives
+		if item.type == ShopEntry.ItemType.PASSIVE and item.passive_data:
+			if PlayerData.has_passive(item.passive_data.id):
+				continue
+		
+		# Does not allow the same item to be in the shop twice, i.e "Repair" ability and "Repair" ability
+		if chosen.any(func(i): return i.id == item.id):
+			continue
+		
+		chosen.append(item)
 	
 	return chosen
 

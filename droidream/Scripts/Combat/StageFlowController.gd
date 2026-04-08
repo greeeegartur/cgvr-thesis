@@ -26,7 +26,6 @@ func _ready():
 	combat_manager.player_died.connect(_on_player_died)
 	death_screen.retry_selected.connect(_on_retry)
 	death_screen.back_selected.connect(_on_back_to_title)
-
 	
 	# Starts the current stage from AreaManager
 	start_stage()
@@ -97,7 +96,7 @@ func _play_victory_sequence(rewards: Dictionary):
 	await rewards_screen.hide_rewards() # 6. Hides victory screen menu
 	await get_tree().create_timer(0.15).timeout
 	await _show_boons() # 7. Boon selection
-	player_visual.update_hp(PlayerData.hp, PlayerData.max_hp) # UI updates
+	player_visual.update_hp(PlayerData.hp, PlayerData.max_hp) # UI updates, TO-DO: update according to new UI
 	
 	await camera.reset_camera() # 8. Resets camera
 	await _enter_stop() # 9. Stop entering logic

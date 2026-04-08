@@ -1,0 +1,16 @@
+[gd_scene load_steps=5 format=3 uid="uid://brdo14s4sh66v"]
+
+[ext_resource type="Script" uid="uid://27enhgj5qyc8" path="res://Scenes/VFX/MultiTamePrompt.gd" id="1_6gjhr"]
+[ext_resource type="Texture2D" uid="uid://db6urcc51fvyw" path="res://Graphics/Placeholders/Minigames/MultiTameShapes/multitame_circle.png" id="3_13p25"]
+[ext_resource type="Texture2D" uid="uid://fxow84apyhti" path="res://Graphics/Placeholders/Minigames/MultiTameShapes/multitame_square.png" id="4_ixdmn"]
+[ext_resource type="Texture2D" uid="uid://c48ors7fnrsr4" path="res://Graphics/Placeholders/Minigames/MultiTameShapes/multitame_triangle.png" id="5_l0n7h"]
+
+[node name="MultiTamePrompt" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_6gjhr")
+shape_textures = Array[Texture2D]([ExtResource("3_13p25"), ExtResource("4_ixdmn"), ExtResource("5_l0n7h")])
+
+[node name="Shape" type="Sprite2D" parent="."]
+
+[node name="Ghost" type="Sprite2D" parent="."]

@@ -15,6 +15,7 @@ func _register_base_items():
 	_register(preload("res://Scripts/Data/ShopItems/SkyChip.tres"))
 	_register(preload("res://Scripts/Data/ShopItems/WaterChip.tres"))
 	_register(preload("res://Scripts/Data/ShopItems/RepairEntry.tres"))
+	_register(preload("res://Scripts/Data/ShopItems/MultiTameEntry.tres"))
 
 func _register(item: ShopEntry):
 	items[item.id] = item

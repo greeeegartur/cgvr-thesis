@@ -30,10 +30,22 @@ func _ready():
 	repair.effect = func():
 		PlayerData.add_ability(AbilityDb.get_ability("repair"))
 	
-	available_boons = [hp, power, defense, chips, repair]
+	var multi_tame = preload("res://Scripts/Data/Boons/MultiTameBoon.tres")
+	multi_tame.effect = func():
+		PlayerData.add_ability(AbilityDb.get_ability("multitame"))
+	
+	available_boons = [hp, power, defense, chips, repair, multi_tame]
 
 # Rolls random boons
 func roll_boons() -> Array[BoonData]:
-	var pool := available_boons.duplicate()
+	var pool: Array[BoonData] = []
+	for boon in available_boons:
+		# Skips boons if the player already has them
+		if boon.id != "":
+			if PlayerData.has_ability(boon.id):
+				continue
+		
+		pool.append(boon)
+	
 	pool.shuffle()
-	return pool.slice(0,3)
+	return pool.slice(0, 3)

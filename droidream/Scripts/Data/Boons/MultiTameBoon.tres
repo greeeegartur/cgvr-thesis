@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BoonData" load_steps=3 format=3 uid="uid://bok4xe45kesjp"]
+
+[ext_resource type="Texture2D" uid="uid://vsmeqr4wqc6v" path="res://Graphics/Placeholders/Boons/multi-tame.png" id="1_ihh8d"]
+[ext_resource type="Script" uid="uid://yjimuc2myefo" path="res://Scripts/Data/BoonData.gd" id="2_xumwd"]
+
+[resource]
+script = ExtResource("2_xumwd")
+id = "multitame"
+name = "Multi-Tame"
+description = "Become able to target multiple creatures at once with a single chip! Works on all surrounding creatures of the selected target."
+type = "Ability"
+icon = ExtResource("1_ihh8d")
+metadata/_custom_type_script = "uid://yjimuc2myefo"

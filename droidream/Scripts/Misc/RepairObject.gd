@@ -5,3 +5,4 @@ class_name RepairObject
 
 func _ready():
 	texture = objects.pick_random()
+	scale = Vector2(1.5, 1.5)

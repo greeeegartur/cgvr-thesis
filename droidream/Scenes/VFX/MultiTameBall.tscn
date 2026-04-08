@@ -1,0 +1,55 @@
+[gd_scene load_steps=6 format=3 uid="uid://bsjp4kq22yg6i"]
+
+[ext_resource type="Script" uid="uid://d0p1aclkiaj5l" path="res://Scripts/Misc/MultiTameBall.gd" id="1_007qo"]
+[ext_resource type="Texture2D" uid="uid://cls787s7jycho" path="res://Graphics/Placeholders/Combat/multitameball.png" id="1_t6o85"]
+
+[sub_resource type="Animation" id="Animation_uibo0"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="Animation" id="Animation_007qo"]
+resource_name = "ready"
+length = 0.4
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [0, 1]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_ks4at"]
+_data = {
+&"RESET": SubResource("Animation_uibo0"),
+&"ready": SubResource("Animation_007qo")
+}
+
+[node name="MultiTameBall" type="Node2D"]
+script = ExtResource("1_007qo")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("1_t6o85")
+vframes = 2
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_ks4at")
+}
+autoplay = "ready"

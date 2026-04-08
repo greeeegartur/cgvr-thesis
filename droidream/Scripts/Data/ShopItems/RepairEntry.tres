@@ -1,15 +1,15 @@
 [gd_resource type="Resource" script_class="ShopEntry" load_steps=4 format=3 uid="uid://r7o8s7np026y"]
 
 [ext_resource type="Resource" uid="uid://b8a5vhavlytf5" path="res://Scripts/Data/Abilities/Repair.tres" id="1_ej280"]
-[ext_resource type="Texture2D" uid="uid://dbq5hhvh8vhdr" path="res://icon.svg" id="1_mpejw"]
 [ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_wvbfh"]
+[ext_resource type="Texture2D" uid="uid://bpeoadvx60k02" path="res://Graphics/Placeholders/Boons/repair.png" id="2_ej280"]
 
 [resource]
 script = ExtResource("1_wvbfh")
 id = "repair_entry"
 display_name = "Repair"
-description = "repair"
-icon = ExtResource("1_mpejw")
+description = "Gain the option to heal yourself for up to 50% of your max health!"
+icon = ExtResource("2_ej280")
 cost = 5
 max_stack = 1
 ability_data = ExtResource("1_ej280")

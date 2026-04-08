@@ -10,6 +10,7 @@ class_name VFXCombatManager
 @export var ExplosionFXScene: PackedScene
 @export var HitFeedbackScene: PackedScene
 @export var RepairObjectScene: PackedScene
+@export var MultiTameBallScene: PackedScene
 @export var camera: Camera2D
 
 # Layer node variables
@@ -33,7 +34,7 @@ func _ready():
 	vignette.modulate = crit_flash_color
 
 # VFX method package for hits (both normal and critical)
-func play_damage_vfx(target_visual: Node2D, damage: float, is_critical: bool, is_block: bool = false):
+func play_damage_vfx(target_visual: Node2D, damage: float, is_critical: bool, is_block = false):
 	var color = crit_flash_color if is_critical else normal_flash_color
 	color = block_flash_color if is_block else color
 	spawn_damage_number(target_visual, damage, is_critical)
@@ -145,6 +146,14 @@ func play_block_feedback(target_visual):
 	]
 	spawn_feedback(target_visual, texts.pick_random())
 
+func play_multihit_feedback(target_visual):
+	var texts = [
+	"[color=#eff238][wave freq=14]Hit![/wave][/color]",
+	"[color=#06d63e][shake rate=18]Wow![/shake][/color]",
+	"[color=#3d9feb][shake rate=18]Yeah![/shake][/color]"
+	]
+	spawn_feedback(target_visual, texts.pick_random())
+
 # Used in the repair ability game
 func _spawn_repair_object(target, dir: String) -> Node2D:
 	var obj = RepairObjectScene.instantiate() # TO-DO replace with scene
@@ -174,3 +183,14 @@ func _absorb_object(target, obj: Node2D):
 	
 	await tween.finished
 	obj.queue_free()
+
+# Used in the multi-tame ability game
+func play_multi_tame_ball(player_visual: Node2D, target_visual: Node2D):
+	var ball = MultiTameBallScene.instantiate()
+	feedback_layer.add_child(ball)
+	ball.global_position = player_visual.global_position + Vector2(28, -8)
+	await ball.fly_to(target_visual.global_position + Vector2(-8, -8))
+	return ball
+
+func bounce_and_fade_ball(ball, target_pos: Vector2):
+	await ball.bounce_and_fade(target_pos + Vector2(-8, -8))

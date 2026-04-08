@@ -26,7 +26,8 @@ enum HintType {
 	SHOP,
 	CRIT,
 	BLOCK,
-	REPAIR
+	REPAIR,
+	MULTITAME
 }
 var current_state
 
@@ -81,6 +82,15 @@ func show_hint(type: HintType):
 			controls_hint_node.visible = false
 			z_icon.visible = false
 			show_text("Press towards yourself to absorb parts!", label, panel)
+		
+		HintType.MULTITAME:
+			current_state = HintType.MULTITAME
+			panel.visible = true
+			select_hint_node.visible = false
+			controls_hint_node.visible = false
+			z_icon.visible = true
+			z_icon.position = Vector2(57.9, 10)
+			show_text("Press     when the shapes are aligned!", label, panel)
 
 # Methods for turns
 func show_text(text: String, settable_label: Label, node):
@@ -100,7 +110,7 @@ func show_text(text: String, settable_label: Label, node):
 
 func hide_text():
 	var node
-	if current_state == HintType.CRIT or current_state == HintType.BLOCK:
+	if current_state == HintType.CRIT or current_state == HintType.BLOCK or current_state == HintType.REPAIR or current_state == HintType.MULTITAME:
 		node = panel
 	elif current_state == HintType.PLAYER_TURN or current_state == HintType.SHOP:
 		node = controls_hint_node

@@ -9,6 +9,10 @@ signal attack_started
 signal attack_hit
 signal attack_finished
 signal action_pressed
+signal ability_entered
+signal ability_finished
+
+var in_ability_animation := false
 
 # _unhandled_input method check variable
 var input_enabled = true
@@ -107,10 +111,14 @@ func play_restore_chip():
 
 # PlayerBlockVisual methods to call
 func play_block_success():
+	if in_ability_animation:
+		return
 	anim.play("player_block")
 	block_visual.play_success()
 
 func play_block_fail():
+	if in_ability_animation:
+		return
 	anim.play("player_hurt")
 	block_visual.play_fail()
 	
@@ -119,10 +127,24 @@ func play_defeat():
 	anim.play("player_defeat")
 
 func play_subdue():
-	anim.play("player_subdue")
+	anim.play("player_dream")
 	# Waits for the animation to finish
-	while anim.current_animation == "player_subdue":
+	while anim.current_animation == "player_dream":
 		await anim.animation_finished
+
+func play_ability_start():
+	in_ability_animation = true
+	anim.play("player_ability_start")
+	await ability_entered
+
+func play_ability_end():
+	if not in_ability_animation:
+		return
+	
+	anim.play("player_ability_end")
+	await ability_finished
+	in_ability_animation = false
+	anim.play("player_idle")
 
 # Logic for animations after they have ended
 func _on_anim_finished(anim_name):
@@ -135,6 +157,11 @@ func _handle_animation_finished(anim_name):
 		attack_finished.emit()
 	elif anim_name == "player_block" or anim_name == "player_hurt":
 		anim.play("player_idle")
+	elif anim_name == "player_ability_start":
+		anim.play("player_ability_loop")
+		ability_entered.emit()
+	elif anim_name == "player_ability_end":
+		ability_finished.emit()
 	elif anim_name == "player_walk" or anim_name == "player_defeat":
 		# player_walk is handled by tween logic, player_defeat stays on last frame
 		pass

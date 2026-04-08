@@ -1,13 +1,13 @@
 [gd_resource type="Resource" script_class="BoonData" load_steps=3 format=3 uid="uid://c6yx2o7gilch2"]
 
-[ext_resource type="Texture2D" uid="uid://dbq5hhvh8vhdr" path="res://icon.svg" id="1_6cu1r"]
+[ext_resource type="Texture2D" uid="uid://bpeoadvx60k02" path="res://Graphics/Placeholders/Boons/repair.png" id="1_6cu1r"]
 [ext_resource type="Script" uid="uid://yjimuc2myefo" path="res://Scripts/Data/BoonData.gd" id="1_qmy2n"]
 
 [resource]
 script = ExtResource("1_qmy2n")
 id = "repair"
 name = "Repair"
-description = "Gain the option to repair up to 40% of your taken damage during encounters!"
+description = "Gain the option to heal yourself for up to 50% of your max health!"
 type = "Ability"
 icon = ExtResource("1_6cu1r")
 metadata/_custom_type_script = "uid://yjimuc2myefo"

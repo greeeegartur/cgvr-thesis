@@ -135,6 +135,11 @@ func has_ability(id: String) -> bool:
 			return true
 	return false
 
+func has_ability_from_entry(entry: ShopEntry) -> bool:
+	if entry.type == ShopEntry.ItemType.ABILITY and entry.ability_data:
+		return has_ability(entry.ability_data.id)
+	return false
+
 func get_active_abilities():
 	return abilities.filter(func(a): return a.is_active())
 

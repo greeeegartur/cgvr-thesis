@@ -1,0 +1,134 @@
+[gd_scene load_steps=14 format=3 uid="uid://c8emryl3wnon2"]
+
+[ext_resource type="Script" uid="uid://cw73ra5puwgw1" path="res://Scripts/Combat/CombatBackground.gd" id="1_118ub"]
+[ext_resource type="Texture2D" uid="uid://dfpxxyang1yhs" path="res://Graphics/Placeholders/Combat/Background frames/BG11.png" id="1_giowh"]
+[ext_resource type="Texture2D" uid="uid://v7jgmlubu1ix" path="res://Graphics/Placeholders/Combat/Background frames/BG10.png" id="2_118ub"]
+[ext_resource type="Texture2D" uid="uid://bveec6qllwsuq" path="res://Graphics/Placeholders/Combat/Background frames/BG9.png" id="3_dmumh"]
+[ext_resource type="Texture2D" uid="uid://b5t76m2xf04eb" path="res://Graphics/Placeholders/Combat/Background frames/BG8.png" id="4_h5d1v"]
+[ext_resource type="Texture2D" uid="uid://cv68mhvs7j5mx" path="res://Graphics/Placeholders/Combat/Background frames/BG7.png" id="5_u1ho4"]
+[ext_resource type="Texture2D" uid="uid://rlnapq5ois1x" path="res://Graphics/Placeholders/Combat/Background frames/BG6.png" id="6_qrvdg"]
+[ext_resource type="Texture2D" uid="uid://ba6tjkk65e2ph" path="res://Graphics/Placeholders/Combat/Background frames/BG5.png" id="7_garvs"]
+[ext_resource type="PackedScene" uid="uid://o32da1ay3vbk" path="res://Scenes/VFX/JungleLightRays.tscn" id="8_dmumh"]
+[ext_resource type="Texture2D" uid="uid://c0myudcgn06d4" path="res://Graphics/Placeholders/Combat/Background frames/BG4.png" id="8_plqbn"]
+[ext_resource type="Texture2D" uid="uid://bsub16vcw3n2u" path="res://Graphics/Placeholders/Combat/Background frames/BG3.png" id="9_0dkug"]
+[ext_resource type="Texture2D" uid="uid://d2rt276rwt2iy" path="res://Graphics/Placeholders/Combat/Background frames/BG2.png" id="10_smm4j"]
+[ext_resource type="Texture2D" uid="uid://d4kmxwtc76jip" path="res://Graphics/Placeholders/Combat/Background frames/BG1.png" id="11_1eefx"]
+
+[node name="CombatBackground" type="ParallaxBackground"]
+script = ExtResource("1_118ub")
+
+[node name="Layer11_Sky" type="ParallaxLayer" parent="."]
+position = Vector2(317, 180)
+motion_offset = Vector2(0.02, 0)
+
+[node name="Sprite2D" type="Sprite2D" parent="Layer11_Sky"]
+texture = ExtResource("1_giowh")
+
+[node name="Layer10_Clouds" type="ParallaxLayer" parent="."]
+position = Vector2(317, 180)
+motion_offset = Vector2(0.05, 0.02)
+
+[node name="CloudsDrift" type="Node" parent="Layer10_Clouds"]
+
+[node name="CloudsA" type="Sprite2D" parent="Layer10_Clouds/CloudsDrift"]
+position = Vector2(317, 180)
+texture = ExtResource("2_118ub")
+
+[node name="CloudsB" type="Sprite2D" parent="Layer10_Clouds/CloudsDrift"]
+position = Vector2(317, 180)
+texture = ExtResource("2_118ub")
+
+[node name="Layer09_Mountains" type="ParallaxLayer" parent="."]
+position = Vector2(317, 180)
+motion_offset = Vector2(0.1, 0.03)
+
+[node name="Sprite2D" type="Sprite2D" parent="Layer09_Mountains"]
+texture = ExtResource("3_dmumh")
+
+[node name="Layer08_TreesFar" type="ParallaxLayer" parent="."]
+position = Vector2(317, 180)
+motion_offset = Vector2(0.18, 0.05)
+
+[node name="Sprite2D" type="Sprite2D" parent="Layer08_TreesFar"]
+texture = ExtResource("4_h5d1v")
+
+[node name="JungleLightRays" parent="Layer08_TreesFar" instance=ExtResource("8_dmumh")]
+position = Vector2(368.99994, 78.99999)
+scale = Vector2(0.7, 0.7)
+
+[node name="JungleLightRays2" parent="Layer08_TreesFar" instance=ExtResource("8_dmumh")]
+position = Vector2(-204, 89)
+rotation = -0.26179937
+scale = Vector2(0.49999994, 0.49999994)
+
+[node name="JungleLightRays3" parent="Layer08_TreesFar" instance=ExtResource("8_dmumh")]
+position = Vector2(5, 112)
+rotation = -0.37873644
+scale = Vector2(0.49999994, 0.49999994)
+
+[node name="JungleLightRays4" parent="Layer08_TreesFar" instance=ExtResource("8_dmumh")]
+position = Vector2(-41.00003, 145)
+scale = Vector2(0.7, 0.7)
+
+[node name="Layer07_TreesMid" type="ParallaxLayer" parent="."]
+position = Vector2(317, 180)
+
+[node name="Sprite2D" type="Sprite2D" parent="Layer07_TreesMid"]
+texture = ExtResource("5_u1ho4")
+
+[node name="Layer06_PlantsFar" type="ParallaxLayer" parent="."]
+position = Vector2(317, 180)
+
+[node name="Sprite2D" type="Sprite2D" parent="Layer06_PlantsFar"]
+texture = ExtResource("6_qrvdg")
+
+[node name="JungleLightRays" parent="Layer06_PlantsFar" instance=ExtResource("8_dmumh")]
+position = Vector2(154, 2)
+
+[node name="JungleLightRays3" parent="Layer06_PlantsFar" instance=ExtResource("8_dmumh")]
+position = Vector2(-75, 74.99999)
+rotation = -0.4660029
+scale = Vector2(1.1, 1.1)
+
+[node name="JungleLightRays4" parent="Layer06_PlantsFar" instance=ExtResource("8_dmumh")]
+position = Vector2(-35.000015, 224.99998)
+rotation = 0.25481808
+scale = Vector2(1.6, 1.6)
+
+[node name="Layer05_TreesClose" type="ParallaxLayer" parent="."]
+position = Vector2(317, 180)
+
+[node name="Sprite2D" type="Sprite2D" parent="Layer05_TreesClose"]
+texture = ExtResource("7_garvs")
+
+[node name="Layer04_PlantsClose" type="ParallaxLayer" parent="."]
+position = Vector2(317, 180)
+
+[node name="Sprite2D" type="Sprite2D" parent="Layer04_PlantsClose"]
+texture = ExtResource("8_plqbn")
+
+[node name="Layer03_Ground" type="ParallaxLayer" parent="."]
+position = Vector2(317, 180)
+
+[node name="Sprite2D" type="Sprite2D" parent="Layer03_Ground"]
+texture = ExtResource("9_0dkug")
+
+[node name="Layer02_BaseObjects" type="ParallaxLayer" parent="."]
+position = Vector2(317, 180)
+
+[node name="Sprite2D" type="Sprite2D" parent="Layer02_BaseObjects"]
+texture = ExtResource("10_smm4j")
+
+[node name="JungleLightRays2" parent="Layer02_BaseObjects" instance=ExtResource("8_dmumh")]
+position = Vector2(-317, 40.999996)
+scale = Vector2(1.4, 1.4)
+
+[node name="Layer01_Foreground" type="ParallaxLayer" parent="."]
+position = Vector2(317, 180)
+
+[node name="Sprite2D" type="Sprite2D" parent="Layer01_Foreground"]
+texture = ExtResource("11_1eefx")
+
+[node name="JungleLightRays2" parent="Layer01_Foreground" instance=ExtResource("8_dmumh")]
+position = Vector2(330.99994, 9.999998)
+scale = Vector2(1.4, 1.4)

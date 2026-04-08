@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AbilityData" load_steps=3 format=3 uid="uid://cg88nifiu0d83"]
+
+[ext_resource type="Texture2D" uid="uid://cejyw1xju2nb2" path="res://Graphics/Placeholders/Combat/sky_chip.png" id="1_712sj"]
+[ext_resource type="Script" uid="uid://dn8yfspxtqdrv" path="res://Scripts/Data/AbilityData.gd" id="1_qtc1b"]
+
+[resource]
+script = ExtResource("1_qtc1b")
+id = "multitame"
+display_name = "Multi-Tame"
+icon = ExtResource("1_712sj")
+cooldown_max = 2
+use_mode = 1
+metadata/_custom_type_script = "uid://dn8yfspxtqdrv"
