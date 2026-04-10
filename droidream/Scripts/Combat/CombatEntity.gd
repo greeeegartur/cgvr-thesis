@@ -4,6 +4,7 @@ class_name CombatEntity
 # This script is for handling entity data in combat, such as the player and enemy(s)
 
 # Initial values for loading enemies
+var id = ""
 var entity_name := ""
 var is_player := false # Possibly will use
 var max_hp := 0.0
@@ -18,6 +19,7 @@ var attack_patterns : Array[EnemyAttackPattern]
 var visual_scene : PackedScene
 var type : CombatTypes.EntityType # can be "Sky", "Earth" and "Water"
 var minigame_id := ""
+var karma := 0
 
 # Specific enemy variables
 var spawned := false
@@ -28,7 +30,8 @@ var can_spawn := true
 # enemy_id string must be present on an enemy resource in the Data folder
 func load_from_enemy_id(enemy_id: String) -> void:
 	var data = EnemyDatabase.get_enemy(enemy_id)
-
+	
+	id = enemy_id
 	entity_name = data.name
 	type = data.type
 	max_hp = data.max_hp
@@ -50,6 +53,7 @@ func load_from_player() -> void:
 	hp = PlayerData.hp
 	attack_power = PlayerData.attack
 	defense = PlayerData.defense
+	karma = PlayerData.karma
 
 # Methods for checking enemy defeat conditions and axis ratio
 func is_killed() -> bool:

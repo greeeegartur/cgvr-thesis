@@ -10,17 +10,17 @@ texture = ExtResource("1_1ws2h")
 
 [node name="ShopItemContainer" type="Panel"]
 self_modulate = Color(0.63521314, 0.9938325, 0.99999994, 1)
-offset_right = 91.97059
-offset_bottom = 59.0
+offset_right = 112.2353
+offset_bottom = 72.0
 theme_override_styles/panel = SubResource("StyleBoxTexture_vg8xk")
 script = ExtResource("2_vg8xk")
 
 [node name="Name" type="RichTextLabel" parent="."]
 layout_mode = 0
 offset_left = 17.0
-offset_top = 20.0
+offset_top = 22.999998
 offset_right = 87.0
-offset_bottom = 31.0
+offset_bottom = 34.0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 3
 theme_override_fonts/normal_font = ExtResource("2_1ws2h")
@@ -30,20 +30,21 @@ text = "Name"
 
 [node name="Description" type="RichTextLabel" parent="."]
 layout_mode = 0
-offset_left = 5.0
-offset_top = 31.0
-offset_right = 87.0
-offset_bottom = 55.0
+offset_left = 5.0000005
+offset_top = 34.0
+offset_right = 106.0
+offset_bottom = 66.0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
 theme_override_fonts/normal_font = ExtResource("2_1ws2h")
 theme_override_font_sizes/normal_font_size = 7
 bbcode_enabled = true
 text = "[color=blue]{Type}[/color] {description}"
+fit_content = true
 scroll_active = false
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(10.000001, 24.999996)
+position = Vector2(10.000001, 27.999996)
 scale = Vector2(0.7, 0.7)
 texture = ExtResource("3_vg8xk")
 

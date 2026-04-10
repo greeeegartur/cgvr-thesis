@@ -26,8 +26,11 @@ var currency := 0
 var items: Array[InventoryItem] = []
 var abilities: Array[InventoryAbility] = []
 
-# For later...
+# Ending trackers for creatures and the player
+var killed_creatures: Array[String] = []
+var tamed_creatures: Array[String] = []
 var karma := 0
+const KARMA_THRESHOLDS := [15, 25, 40, 50, 60, 75]
 
 signal stats_changed
 
@@ -45,6 +48,8 @@ func reset_run():
 	# Reset progression
 	currency = 0
 	karma = 0
+	killed_creatures.clear()
+	tamed_creatures.clear()
 
 # Helper methods for use in CombatManager
 func has_guess(t: CombatTypes.EntityType) -> bool:
@@ -149,3 +154,94 @@ func get_active_abilities():
 
 func get_passives():
 	return abilities.filter(func(a): return a.is_passive())
+
+# ENDING / KARMA SPECIFIC METHODS
+func record_killed_creature(enemy_id: String):
+	if enemy_id in tamed_creatures:
+		tamed_creatures.erase(enemy_id)
+	if enemy_id not in killed_creatures:
+		killed_creatures.append(enemy_id)
+
+func record_tamed_creature(enemy_id: String):
+	# Kills take priority, so won't be added if a creature has been killed previously
+	if enemy_id in killed_creatures:
+		return
+	if enemy_id not in tamed_creatures:
+		tamed_creatures.append(enemy_id)
+
+func get_karma_stage() -> int:
+	var stage := 0
+	for threshold in KARMA_THRESHOLDS:
+		if karma >= threshold:
+			stage += 1
+	return stage
+
+func get_enemy_crit_chance() -> float:
+	match get_karma_stage():
+		0:
+			return 0.0
+		1:
+			return 0.05
+		2:
+			return 0.10
+		3:
+			return 0.20
+		4:
+			return 0.30
+		5:
+			return 0.40
+		6:
+			return 0.50
+	return 0.0
+
+func get_shop_price_increase() -> int:
+	match get_karma_stage():
+		0, 1:
+			return 0
+		2:
+			return 2
+		3:
+			return 3
+		4:
+			return 5
+		5:
+			return 7
+		6:
+			return 10
+	return 0
+
+func get_karma_overlay_alpha() -> float:
+	match get_karma_stage():
+		0:
+			return 0.0
+		1:
+			return 0.05
+		2:
+			return 0.10
+		3:
+			return 0.16
+		4:
+			return 0.22
+		5:
+			return 0.26
+		6:
+			return 0.30
+	return 0.0
+
+func get_total_killed_count() -> int:
+	return killed_creatures.size()
+
+func get_total_tamed_count() -> int:
+	return tamed_creatures.size()
+
+func get_ending_type() -> String:
+	var killed := get_total_killed_count()
+	var tamed := get_total_tamed_count()
+	
+	if killed > 0 and tamed == 0:
+		return "genocide"
+	if tamed > 0 and killed == 0:
+		return "pacifist"
+	if killed > 0 and tamed > 0:
+		return "neutral"
+	return "?" # Should not happen

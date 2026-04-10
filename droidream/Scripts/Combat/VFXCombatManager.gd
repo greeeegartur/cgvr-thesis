@@ -19,6 +19,7 @@ class_name VFXCombatManager
 @onready var vignette := $"../Vignette"
 @onready var speedlines := $"../../Camera2D/Speedlines"
 @onready var feedback_layer := $"../FeedbackText"
+@onready var karma_overlay := $"../../World/KarmaOverlay"
 
 
 # Colors
@@ -223,3 +224,12 @@ func play_multi_tame_ball(player_visual: Node2D, target_visual: Node2D):
 
 func bounce_and_fade_ball(ball, target_pos: Vector2):
 	await ball.bounce_and_fade(target_pos + Vector2(-8, -8))
+
+# Karma overlay updates
+func _update_karma_overlay():
+	if karma_overlay == null:
+		return
+	
+	var target_alpha := PlayerData.get_karma_overlay_alpha()
+	var tween := create_tween()
+	tween.tween_property(karma_overlay, "modulate:a", target_alpha, 0.35)

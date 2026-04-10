@@ -75,7 +75,7 @@ func _update_selection_visuals():
 
 func _move_popup_to(item: ShopItem):
 	popup.visible = true
-	popup.setup(item.item_data, item.quantity)
+	popup.setup(item.item_data, item.quantity, _get_modified_price(item.item_data.cost))
 	var target_x = item.global_position.x -46
 	
 	if popup_tween:
@@ -100,14 +100,15 @@ func _activate_selection():
 
 func _attempt_purchase(shop_item: ShopItem):
 	var data := shop_item.item_data
+	var actual_cost := _get_modified_price(data.cost)
 	
 	# Does not allow purchase
-	if PlayerData.currency < data.cost or shop_item.quantity <= 0:
+	if PlayerData.currency < actual_cost or shop_item.quantity <= 0:
 		shop_item.shake()
 		return
 	
 	# Purchase accepted
-	PlayerData.currency -= data.cost
+	PlayerData.currency -= actual_cost
 	shop_item.confirm_purchase()
 	_play_purchase_feedback(shop_item)
 	_spawn_purchase_feedback(shop_item)
@@ -380,3 +381,6 @@ func _spawn_purchase_feedback(shop_item: ShopItem):
 	feedback.rotation_degrees = randf_range(-3,3)
 	feedback.global_position = shop_item.global_position + Vector2(0,-20)
 	feedback.play(texts.pick_random())
+
+func _get_modified_price(base_cost: int) -> int:
+	return base_cost + PlayerData.get_shop_price_increase()

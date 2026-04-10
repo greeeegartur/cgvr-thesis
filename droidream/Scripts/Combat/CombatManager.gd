@@ -312,6 +312,7 @@ func _start_combat(enemy_ids):
 	# CORE BUILDING
 	combat_has_ended = false
 	await _setup_entities(enemy_ids)
+	vfx._update_karma_overlay()
 	await animate_enemy_entry()
 	
 	# PLAYER UI BUILDING
@@ -324,8 +325,9 @@ func _start_combat(enemy_ids):
 # Starts the actual combat, keeping as method in case of future additions
 func _start_turn_loop():
 	# For checking if passives exist
-	for ability in PlayerData.abilities:
-		print(ability.data.id)
+	#for ability in PlayerData.abilities:
+		#print(ability.data.id)
+	print(PlayerData.karma)
 	_player_turn()
 
 # TURN FUNCTIONS
@@ -825,13 +827,21 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	var base_damage = enemy.attack_power
 	var hit_mult = hit.damage_multiplier
 	var damage = max(0.0, base_damage * hit_mult)
+	var enemy_crit = randf() <= PlayerData.get_enemy_crit_chance()
 	
 	# Reflexive sensors check
 	var has_reflexive_sensors = PlayerData.has_ability("reflexive_sensors")
 	var missed_attack = false
 	
+	if enemy_crit:
+		damage *= 1.5
+		camera.pop_zoom()
+		vfx.play_overlay_effects("crit", 0.35)
+		vfx.play_crit_feedback(player_visual)
+		print("Enemy CRITICAL HIT!")
+	
 	# Reflexive sensors miss chance first
-	if has_reflexive_sensors and randf() <= REFLEXIVE_SENSORS_MISS_CHANCE:
+	if has_reflexive_sensors and randf() <= REFLEXIVE_SENSORS_MISS_CHANCE and not enemy_crit:
 		missed_attack = true
 		damage = 0.0
 		vfx.spawn_feedback(player_visual, "[color=#8be9fd][wave freq=14]Miss![/wave][/color]")
@@ -843,7 +853,8 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 		player_visual.play_block_success()
 		camera.shake(8.0, 0.15)
 		freeze_frame(0.11)
-		vfx.play_overlay_effects("block", 0.2)
+		if not enemy_crit:
+			vfx.play_overlay_effects("block", 0.2)
 		vfx.play_block_feedback(player_visual)
 		print("Successful block!")
 		# If lands 30% chance with reflexive sensors, blocks damage even more (overall damage: damage * 0.5 * 0.5)
@@ -872,6 +883,8 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	# Visual effects
 	if not missed_attack:
 		vfx.play_damage_vfx(player_visual, damage, false, blocked)
+	if enemy_crit:
+		vfx.play_damage_vfx(player_visual, damage, true)
 	print("Player takes %.1f damage → HP %.1f" % [damage, player.hp])
 	
 	# Reseting block press time for next enemy attack patterns
@@ -1465,6 +1478,8 @@ func _generate_rewards():
 	
 	PlayerData.currency += total_currency
 	_apply_human_at_heart(killed_count)
+	_apply_karma_and_outcome_tracking()
+	vfx._update_karma_overlay()
 	print("Currency right now: ", PlayerData.currency)
 	
 	return {"currency": total_currency}
@@ -1509,9 +1524,6 @@ func _sync_player_stats():
 	
 	player.hp = clamp(player.hp, 0.0, player.max_hp)
 	PlayerData.hp = clamp(PlayerData.hp, 0.0, PlayerData.max_hp)
-	
-	print("actual HP: ", player.hp)
-	print("actual defense: ", player.defense)
 	player_visual.update_hp(player.hp, player.max_hp)
 
 # Progresses all player ability cooldowns
@@ -1711,6 +1723,22 @@ func _apply_human_at_heart(killed_count: int):
 	vfx.spawn_damage_number(player_visual, total_heal, false, true)
 	vfx.play_human_at_heart_feedback(player_visual, human_at_heart_trigger_counter)
 	human_at_heart_trigger_counter += 1
+
+# Tracks all player karma and outcomes for creatures for difficulty modifiers and ending
+func _apply_karma_and_outcome_tracking():
+	var gained_karma := 0
+	for enemy in enemies:
+		if enemy.is_killed():
+			gained_karma += int(enemy.max_hp * enemy.trust_max)
+			PlayerData.record_killed_creature(enemy.id)
+		elif enemy.is_tamed():
+			PlayerData.record_tamed_creature(enemy.id)
+	
+	PlayerData.karma += gained_karma
+	
+	if gained_karma > 0:
+		print("Karma gained: ", gained_karma)
+		print("Total karma: ", PlayerData.karma)
 
 # ANIMATION METHODS
 # Smooth tween BG animation for minigame enter/exiting 

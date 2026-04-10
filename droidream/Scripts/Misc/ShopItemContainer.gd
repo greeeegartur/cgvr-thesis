@@ -18,9 +18,11 @@ func _type_to_string(t: int) -> String:
 		ShopEntry.ItemType.ITEM: return "Item"
 	return "Unknown" # Should not happen
 
-func setup(data: ShopEntry, quantity: int):
+func setup(data: ShopEntry, quantity: int, modified_cost := 0):
 	item_name.text = data.display_name
 	cost.text = "x%d" % data.cost
+	if modified_cost > 0:
+		cost.text = "x%d" % modified_cost
 
 	# Type formatting
 	var type_name = _type_to_string(data.type)
