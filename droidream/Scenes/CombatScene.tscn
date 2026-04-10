@@ -117,15 +117,6 @@ position = Vector2(463, 283)
 z_index = 1
 position = Vector2(563, 283)
 
-[node name="KarmaOverlay" type="ColorRect" parent="World"]
-modulate = Color(1, 1, 1, 0)
-z_index = 8
-offset_left = -192.0
-offset_top = -41.0
-offset_right = 906.0
-offset_bottom = 378.0
-color = Color(0.49725664, 0, 0.08825985, 1)
-
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(320, 180)
 position_smoothing_enabled = true
@@ -215,5 +206,14 @@ camera = NodePath("../../Camera2D")
 [node name="Particles" type="Node2D" parent="VFX"]
 
 [node name="FeedbackText" type="Node2D" parent="VFX"]
+
+[node name="KarmaOverlay" type="ColorRect" parent="VFX"]
+modulate = Color(1, 1, 1, 0)
+offset_left = -192.0
+offset_top = -41.0
+offset_right = 906.0
+offset_bottom = 378.0
+mouse_filter = 2
+color = Color(0.49725664, 0, 0.08825985, 1)
 
 [connection signal="toggled" from="UI/CombatUI/TurnOrder" to="CombatManager" method="_on_turn_order_toggled"]

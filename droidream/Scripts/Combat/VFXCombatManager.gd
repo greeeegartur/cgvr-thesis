@@ -19,7 +19,7 @@ class_name VFXCombatManager
 @onready var vignette := $"../Vignette"
 @onready var speedlines := $"../../Camera2D/Speedlines"
 @onready var feedback_layer := $"../FeedbackText"
-@onready var karma_overlay := $"../../World/KarmaOverlay"
+@onready var karma_overlay := $"../KarmaOverlay"
 
 
 # Colors

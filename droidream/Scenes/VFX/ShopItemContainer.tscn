@@ -10,17 +10,17 @@ texture = ExtResource("1_1ws2h")
 
 [node name="ShopItemContainer" type="Panel"]
 self_modulate = Color(0.63521314, 0.9938325, 0.99999994, 1)
-offset_right = 112.2353
-offset_bottom = 72.0
+offset_right = 124.70589
+offset_bottom = 80.0
 theme_override_styles/panel = SubResource("StyleBoxTexture_vg8xk")
 script = ExtResource("2_vg8xk")
 
 [node name="Name" type="RichTextLabel" parent="."]
 layout_mode = 0
-offset_left = 17.0
-offset_top = 22.999998
-offset_right = 87.0
-offset_bottom = 34.0
+offset_left = 16.599998
+offset_top = 17.600002
+offset_right = 86.6
+offset_bottom = 28.600004
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 3
 theme_override_fonts/normal_font = ExtResource("2_1ws2h")
@@ -29,22 +29,29 @@ bbcode_enabled = true
 text = "Name"
 
 [node name="Description" type="RichTextLabel" parent="."]
-layout_mode = 0
-offset_left = 5.0000005
-offset_top = 34.0
-offset_right = 106.0
-offset_bottom = 66.0
+custom_minimum_size = Vector2(0, 45.4)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.037
+anchor_top = 0.027
+anchor_right = 0.95400006
+anchor_bottom = 0.37300003
+offset_left = -0.014118671
+offset_top = 26.440002
+offset_right = 0.030578613
+offset_bottom = 44.159996
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 2
+theme_override_constants/outline_size = 1
 theme_override_fonts/normal_font = ExtResource("2_1ws2h")
 theme_override_font_sizes/normal_font_size = 7
 bbcode_enabled = true
-text = "[color=blue]{Type}[/color] {description}"
+text = "UGASIHGSAHGIUASHGIUASHGIUASHGIUASHGIUASGHIAUSHGAIUSHGIUASHGIAUSHGIUASHGIUASHGIUAHSGIUASHGIUASHGIUASHGIUASHGIUAHSGIUAH"
 fit_content = true
 scroll_active = false
+justification_flags = 131
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(10.000001, 27.999996)
+position = Vector2(9.6, 22.6)
 scale = Vector2(0.7, 0.7)
 texture = ExtResource("3_vg8xk")
 

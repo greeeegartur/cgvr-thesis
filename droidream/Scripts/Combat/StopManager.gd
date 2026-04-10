@@ -76,7 +76,7 @@ func _update_selection_visuals():
 func _move_popup_to(item: ShopItem):
 	popup.visible = true
 	popup.setup(item.item_data, item.quantity, _get_modified_price(item.item_data.cost))
-	var target_x = item.global_position.x -46
+	var target_x = item.global_position.x -55
 	
 	if popup_tween:
 		popup_tween.kill()
@@ -220,7 +220,7 @@ func _play_purchase_feedback(shop_item: ShopItem):
 	tween.tween_property(
 		popup,
 		"scale",
-		Vector2.ONE,
+		Vector2.ONE * 1.2,
 		0.18
 	).set_trans(Tween.TRANS_BACK)
 
@@ -228,13 +228,13 @@ func _play_purchase_feedback(shop_item: ShopItem):
 	tween.parallel().tween_property(
 		shop_item,
 		"scale",
-		Vector2(1.35,1.35),
+		Vector2(1.55,1.55),
 		0.12
 	)
 	tween.tween_property(
 		shop_item,
 		"scale",
-		Vector2.ONE,
+		Vector2.ONE * 1.2,
 		0.12
 	)
 
@@ -365,7 +365,7 @@ func _show_popup():
 	popup_scale_tween.tween_property(
 		popup,
 		"scale",
-		Vector2.ONE,
+		Vector2.ONE * 1.2,
 		0.15
 	)
 

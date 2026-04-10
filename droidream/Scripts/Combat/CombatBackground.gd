@@ -43,5 +43,5 @@ func _update_clouds(delta):
 	if cloudsA.position.x <= 317 - tex_width:
 		cloudsA.position.x = cloudsB.position.x + tex_width
 	
-	if cloudsA.position.x <= 317 - tex_width:
+	if cloudsB.position.x <= 317 - tex_width:
 		cloudsB.position.x = cloudsA.position.x + tex_width

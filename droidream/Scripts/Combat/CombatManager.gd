@@ -209,8 +209,9 @@ func _spawn_enemy(enemy_id: String, slot_index: int, spawner: CombatEntity):
 	# Visual
 	var visual := entity.visual_scene.instantiate()
 	get_parent().get_node("World").add_child.call_deferred(visual)
-	visual.global_position = enemy_positions[slot_index].global_position
-	visual.home_position = visual.global_position
+	var target_pos = enemy_positions[slot_index].global_position
+	visual.global_position = target_pos + Vector2(0, -260)
+	visual.home_position = target_pos
 	visual.attack_offset = EnemyDatabase.get_attack_offset(enemy_id)
 	visual.move_speed = EnemyDatabase.get_move_speed(enemy_id)
 	visual.z_index = 1
@@ -221,9 +222,8 @@ func _spawn_enemy(enemy_id: String, slot_index: int, spawner: CombatEntity):
 	
 	# Separate entry animation (this specific one is for bats)
 	await get_tree().create_timer(0.15).timeout
-	visual.position.y += -240
 	var tween := create_tween()
-	tween.tween_property(visual, "position", visual.home_position, 0.8)
+	tween.tween_property(visual, "position", target_pos, 0.8)
 	tween.set_trans(Tween.TRANS_BACK)
 	tween.set_ease(Tween.EASE_OUT)
 	await tween.finished
@@ -327,7 +327,6 @@ func _start_turn_loop():
 	# For checking if passives exist
 	#for ability in PlayerData.abilities:
 		#print(ability.data.id)
-	print(PlayerData.karma)
 	_player_turn()
 
 # TURN FUNCTIONS
@@ -664,11 +663,16 @@ func _start_minigame(enemy: CombatEntity):
 	
 	await on_minigame_complete(enemy, success)
 	_world_gray_out(false)
+	if success and enemy.is_tamed():
+		await _resolve_enemy_state(enemy)
+		await player_visual.return_to_home()
+		
+		if _check_victory():
+			_end_combat(true)
+		_enemy_turn()
+	
 	if combat_has_ended:
 		return
-	
-	await _resolve_enemy_state(enemy)
-	await player_visual.return_to_home()
 	
 	#if is_instance_valid(minigame):
 		#minigame.queue_free()
@@ -690,10 +694,10 @@ func on_minigame_complete(enemy: CombatEntity, success: bool):
 		enemy_visual.update_axis(enemy.axis_value)
 		enemy_visual.update_axis_trust() 
 		print("Minigame success! Trust: %d / %d" % [enemy.trust, enemy.trust_max])
-		if enemy.is_tamed():
-			await player_visual.return_to_home()
-			if _check_victory():
-				_end_combat(true)
+		#if enemy.is_tamed():
+			#await player_visual.return_to_home()
+			#if _check_victory():
+				#_end_combat(true)
 			#_enemy_turn()
 	else:
 		# Restore enemy's defense by a random amount from 20-35%, rounds it somewhat though
