@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BoonData" load_steps=3 format=3 uid="uid://opd2wsnihvgf"]
+
+[ext_resource type="Texture2D" uid="uid://brguq5mysaast" path="res://Graphics/Placeholders/Boons/scratchyframe.png" id="1_m0qrn"]
+[ext_resource type="Script" uid="uid://yjimuc2myefo" path="res://Scripts/Data/BoonData.gd" id="1_nsc46"]
+
+[resource]
+script = ExtResource("1_nsc46")
+id = "scratchy_frame"
+name = "Scratchy Frame"
+description = "When a creature damages you, its intent will shift for that same amount of damage. This cannot kill or tame the creature."
+type = "Passive"
+icon = ExtResource("1_m0qrn")
+metadata/_custom_type_script = "uid://yjimuc2myefo"

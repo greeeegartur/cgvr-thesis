@@ -9,7 +9,11 @@ extends CanvasLayer
 @onready var attack_panel := $AttackTypeMenu/Panel
 @onready var attack_list := $AttackTypeMenu/Panel/VBox
 @onready var abilities_panel := $AbilitiesMenu/Panel
+@onready var abilities_list := $AbilitiesMenu/Panel/ScrollContainer/VBox
+@onready var abilities_scroll := $AbilitiesMenu/Panel/ScrollContainer
 @onready var items_panel := $ItemsMenu/Panel
+@onready var items_list := $ItemsMenu/Panel/ScrollContainer/VBox
+@onready var items_scroll := $ItemsMenu/Panel/ScrollContainer
 # Count labels for tame UI
 @onready var sky_count = $AttackTypeMenu/Panel/Counts/SkyCount
 @onready var earth_count = $AttackTypeMenu/Panel/Counts/EarthCount
@@ -228,10 +232,10 @@ func _open_menu(menu_name: String, reset_index := false):
 			state = State.ATTACK_TYPE_SELECT
 		MENU_ABILITIES:
 			state = State.ABILITIES_SELECT
-			await get_tree().process_frame
 			_refresh_abilities_ui()
 		MENU_ITEMS:
 			state = State.ITEMS_SELECT
+			# _refresh_items_ui()
 	
 	panel.visible = true
 	panel.scale = Vector2.ZERO
@@ -259,10 +263,8 @@ func _refresh_menu_visuals(menu_name: String):
 	match menu_name:
 		MENU_ATTACK:
 			_update_attack_type_visuals()
-		MENU_ABILITIES:
-			_update_abilities_visuals()
-		MENU_ITEMS:
-			pass
+		MENU_ABILITIES, MENU_ITEMS:
+			_update_list_visuals(menu_name)
 
 func _move_menu_index(menu_name: String, dir: int, count: int):
 	if count <= 0:
@@ -507,64 +509,30 @@ func _update_attack_type_visuals():
 		tween.parallel().tween_property(option, "position:y", -10 if selected else 0, 0.12) # Other options move slightly away from the selected ones
 
 func _build_abilities_ui():
-	var list = abilities_panel.get_node("ScrollContainer/VBox")
-	
-	for child in list.get_children():
-		child.queue_free()
-	
-	var abilities = PlayerData.get_active_abilities()
-	for ability in abilities:
-		var row = AbilityRowScene.instantiate()
-		list.add_child(row)
-		row.setup(ability)
-	
-	menu_indices[MENU_ABILITIES] = 0
-	await get_tree().process_frame
-	_update_abilities_visuals()
+	await _build_list_ui(
+		MENU_ABILITIES,
+		PlayerData.get_active_abilities(),
+		AbilityRowScene
+	)
 
 func _refresh_abilities_ui():
-	var list = abilities_panel.get_node("ScrollContainer/VBox")
-	var abilities = PlayerData.get_active_abilities()
-	
-	for i in range(min(list.get_child_count(), abilities.size())):
-		var row = list.get_child(i)
-		row.setup(abilities[i])
-	
-	if abilities.is_empty():
-		menu_indices[MENU_ABILITIES] = 0
-	else:
-		menu_indices[MENU_ABILITIES] = clamp(menu_indices[MENU_ABILITIES], 0, abilities.size() - 1)
-	await get_tree().process_frame
-	_update_abilities_visuals()
+	await _refresh_list_ui(
+		MENU_ABILITIES,
+		PlayerData.get_active_abilities()
+	)
 
 func _update_abilities_visuals():
-	var list = abilities_panel.get_node("ScrollContainer/VBox")
-	var selected_index = menu_indices[MENU_ABILITIES]
-	var count = list.get_child_count()
-	
-	for i in count:
-		var row = list.get_child(i)
-		var visual = row.get_node("VisualRoot")
-		var selected = i == selected_index
-		
-		var tween := create_tween()
-		tween.tween_property(
-			visual,
-			"scale",
-			Vector2.ONE * (1.0 if selected else 0.8),
-			0.12
-		)
-		tween.parallel().tween_property(
-			visual,
-			"modulate",
-			Color.WHITE if selected else Color(0.6, 0.6, 0.6),
-			0.1
-		)
-	
-	var scroll = abilities_panel.get_node("ScrollContainer")
-	if selected_index < count:
-		var row = list.get_child(selected_index)
-		scroll.ensure_control_visible(row)
+	_update_list_visuals(MENU_ABILITIES)
+
+func _build_items_ui():
+	# Replace with PlayerData.get_available_items() or whatever structure you use later
+	_build_list_ui(MENU_ITEMS, [], null)
+
+func _refresh_items_ui():
+	_refresh_list_ui(MENU_ITEMS, [])
+
+func _update_items_visuals():
+	_update_list_visuals(MENU_ITEMS)
 
 func update_guess_display():
 	var g = PlayerData.guesses
@@ -672,3 +640,123 @@ func _reset_gear_layout():
 		var label = option.get_node("Label")
 		label.visible = selected
 		label.modulate.a = 1.0 if selected else 0.0
+
+# UNIVERSAL HELPERS
+# For ability/item children scaling
+func _get_list_row_scale(child_count: int) -> float:
+	if child_count >= 6:
+		return 0.72
+	elif child_count >= 5:
+		return 0.80
+	elif child_count >= 4:
+		return 0.85
+	return 1.0
+
+func _get_menu_list(menu_name: String) -> VBoxContainer:
+	match menu_name:
+		MENU_ABILITIES:
+			return abilities_list
+		MENU_ITEMS:
+			return items_list
+	return null
+
+func _get_menu_scroll(menu_name: String) -> ScrollContainer:
+	match menu_name:
+		MENU_ABILITIES:
+			return abilities_scroll
+		MENU_ITEMS:
+			return items_scroll
+	return null
+
+func _get_menu_row_scene(menu_name: String) -> PackedScene:
+	match menu_name:
+		MENU_ABILITIES:
+			return AbilityRowScene
+		MENU_ITEMS:
+			return null
+	return null
+
+func _build_list_ui(menu_name: String, entries: Array, row_scene: PackedScene):
+	var list := _get_menu_list(menu_name)
+	if list == null:
+		return
+	
+	for child in list.get_children():
+		child.queue_free()
+	
+	var row_scale := _get_list_row_scale(entries.size())
+	for entry in entries:
+		var row = row_scene.instantiate()
+		list.add_child(row)
+		if row.has_method("setup"):
+			row.setup(entry, row_scale)
+	menu_indices[menu_name] = 0
+	
+	await get_tree().process_frame
+	_update_list_visuals(menu_name)
+
+func _refresh_list_ui(menu_name: String, entries: Array): # TO-DO: make this use ItemRow scene too
+	var list := _get_menu_list(menu_name)
+	if list == null:
+		return
+	
+	var row_scale := _get_list_row_scale(entries.size())
+	var child_count := list.get_child_count()
+	var entry_count := entries.size()
+	var shared_count = min(child_count, entry_count)
+	
+	for i in range(shared_count):
+		var row = list.get_child(i)
+		if row.has_method("setup"):
+			row.setup(entries[i], row_scale)
+	
+	if entry_count < child_count:
+		for i in range(child_count - 1, entry_count - 1, -1):
+			list.get_child(i).queue_free()
+	elif entry_count > child_count:
+		var row_scene := _get_menu_row_scene(menu_name)
+		if row_scene == null:
+			return
+
+		for i in range(child_count, entry_count):
+			var row = row_scene.instantiate()
+			list.add_child(row)
+			if row.has_method("setup"):
+				row.setup(entries[i], row_scale)
+	
+	if entries.is_empty():
+		menu_indices[menu_name] = 0
+	else:
+		menu_indices[menu_name] = clamp(menu_indices[menu_name], 0, entries.size() - 1)
+	
+	await get_tree().process_frame
+	_update_list_visuals(menu_name)
+
+func _update_list_visuals(menu_name: String):
+	var list := _get_menu_list(menu_name)
+	var scroll := _get_menu_scroll(menu_name)
+	if list == null:
+		return
+	
+	var selected_index = menu_indices[menu_name]
+	var count = list.get_child_count()
+	var base_scale := _get_list_row_scale(count)
+	
+	for i in count:
+		var row = list.get_child(i)
+		var visual = row.get_node("VisualRoot")
+		var selected = i == selected_index
+		var target_scale := base_scale * (1.0 if selected else 0.82)
+		
+		var tween := create_tween()
+		tween.tween_property(visual, "scale", Vector2.ONE * target_scale, 0.12)
+		tween.parallel().tween_property(
+			visual,
+			"modulate",
+			Color.WHITE if selected else Color(0.6, 0.6, 0.6),
+			0.1
+		)
+	
+	if scroll and selected_index < count:
+		var row = list.get_child(selected_index)
+		scroll.ensure_control_visible(row)

@@ -34,7 +34,35 @@ func _ready():
 	multi_tame.effect = func():
 		PlayerData.add_ability(AbilityDb.get_ability("multitame"))
 	
-	available_boons = [hp, power, defense, chips, repair, multi_tame]
+	var heat_up = preload("res://Scripts/Data/Boons/HeatUpBoon.tres")
+	heat_up.effect = func():
+		PlayerData.add_ability(AbilityDb.get_ability("heatup"))
+	
+	var harden = preload("res://Scripts/Data/Boons/HardenBoon.tres")
+	harden.effect = func():
+		PlayerData.add_ability(AbilityDb.get_ability("harden"))
+	
+	var scratchy_frame = preload("res://Scripts/Data/Boons/ScratchyFrameBoon.tres")
+	scratchy_frame.effect = func():
+		PlayerData.add_ability(AbilityDb.get_ability("scratchy_frame"))
+	
+	var microbots = preload("res://Scripts/Data/Boons/MicrobotsBoon.tres")
+	microbots.effect = func():
+		PlayerData.add_ability(AbilityDb.get_ability("microbots"))
+	
+	var recalibration = preload("res://Scripts/Data/Boons/RecalibrationBoon.tres")
+	recalibration.effect = func():
+		PlayerData.add_ability(AbilityDb.get_ability("recalibration"))
+	
+	var reflexive_sensors = preload("res://Scripts/Data/Boons/ReflexiveSensorsBoon.tres")
+	reflexive_sensors.effect = func():
+		PlayerData.add_ability(AbilityDb.get_ability("reflexive_sensors"))
+	
+	var human_at_heart = preload("res://Scripts/Data/Boons/HumanAtHeartBoon.tres")
+	human_at_heart.effect = func():
+		PlayerData.add_ability(AbilityDb.get_ability("human_at_heart"))
+	
+	available_boons = [hp, power, defense, chips, repair, multi_tame, heat_up, harden, scratchy_frame, microbots, recalibration, reflexive_sensors, human_at_heart]
 
 # Rolls random boons
 func roll_boons() -> Array[BoonData]:

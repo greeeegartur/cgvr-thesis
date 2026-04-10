@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BoonData" load_steps=3 format=3 uid="uid://corh8udaf6vy4"]
+
+[ext_resource type="Script" uid="uid://yjimuc2myefo" path="res://Scripts/Data/BoonData.gd" id="1_2f1rk"]
+[ext_resource type="Texture2D" uid="uid://dorqklqvc8fje" path="res://Graphics/Placeholders/Boons/enamor.png" id="1_eq7af"]
+
+[resource]
+script = ExtResource("1_2f1rk")
+id = "enamor"
+name = "Enamor"
+description = "Have a 75% chance to charm tamed creatures into giving you 2x more rewards after encounters!"
+type = "Passive"
+icon = ExtResource("1_eq7af")
+metadata/_custom_type_script = "uid://yjimuc2myefo"

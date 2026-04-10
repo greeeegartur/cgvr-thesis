@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ShopEntry" load_steps=4 format=3 uid="uid://b0con4sy1xqmw"]
+
+[ext_resource type="Texture2D" uid="uid://dorqklqvc8fje" path="res://Graphics/Placeholders/Boons/enamor.png" id="1_8t3kw"]
+[ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_g7gqp"]
+[ext_resource type="Resource" uid="uid://bj0onq43ypvt1" path="res://Scripts/Data/Abilities/Enamor.tres" id="2_4a6jf"]
+
+[resource]
+script = ExtResource("1_g7gqp")
+id = "enamor"
+display_name = "Enamor"
+description = "Have a 75% chance to charm tamed creatures into giving you 2x more rewards after encounters!"
+type = 1
+icon = ExtResource("1_8t3kw")
+cost = 5
+max_stack = 1
+passive_data = ExtResource("2_4a6jf")
+metadata/_custom_type_script = "uid://b56nw6bpevr7t"

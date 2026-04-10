@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="PassiveData" load_steps=2 format=3 uid="uid://b3vhugr43v8lx"]
+
+[ext_resource type="Script" uid="uid://dqqq30gwb44lh" path="res://Scripts/Data/PassiveData.gd" id="1_lt3va"]
+
+[resource]
+script = ExtResource("1_lt3va")
+id = "human_at_heart"
+display_name = "Human At Heart"
+description = "At the end of the encounter, heal 10% of max health and permanently gain +0.25 power for each enemy killed."
+metadata/_custom_type_script = "uid://dqqq30gwb44lh"

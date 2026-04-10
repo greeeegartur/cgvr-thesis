@@ -4,11 +4,14 @@ extends HBoxContainer
 @onready var name_label = $VisualRoot/Name
 @onready var cd_container = $VisualRoot/Container
 
-func setup(ability):
+var base_scale := 1.0
+
+func setup(ability, compact_scale := 1.0):
 	custom_minimum_size = Vector2(0, 32)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	
-	visual_root.scale = Vector2.ONE
+	base_scale = compact_scale
+	visual_root.scale = Vector2.ONE * base_scale
 	visual_root.modulate = Color.WHITE
 	visual_root.rotation = 0.0
 	visual_root.pivot_offset = Vector2.ZERO
@@ -20,6 +23,11 @@ func setup(ability):
 		slot.visible = i < max_cd
 		slot.modulate = Color(0.3, 0.3, 0.3) if i < ability.cooldown else Color.WHITE
 	
+	call_deferred("_refresh_visual_pivot")
+
+func set_visual_scale(scale_value: float):
+	base_scale = scale_value
+	visual_root.scale = Vector2.ONE * base_scale
 	call_deferred("_refresh_visual_pivot")
 
 func _refresh_visual_pivot():

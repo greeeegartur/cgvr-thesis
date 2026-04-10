@@ -34,8 +34,8 @@ func play_prompt():
 	finished = false
 	
 	var tween := create_tween()
-	tween.tween_property(self, "modulate:a", 1.0, 0.05)
-	tween.parallel().tween_property(self, "scale", Vector2.ONE * 4.1, 0.08)
+	tween.tween_property(self, "modulate:a", 1.0, 0.06)
+	tween.parallel().tween_property(self, "scale", Vector2.ONE * 4.2, 0.1)
 	tween.tween_property(self, "scale", Vector2.ONE * 4, 0.08)
 	
 	var timer := 0.0
@@ -53,7 +53,7 @@ func _on_success():
 	finished = true
 	
 	var tween := create_tween()
-	tween.tween_property(self, "scale", Vector2.ONE * 4.3, 0.08)
+	tween.tween_property(self, "scale", Vector2.ONE * 4.3, 0.06)
 	tween.parallel().tween_property(self, "modulate:a", 0.0, 0.1)
 	await tween.finished
 	

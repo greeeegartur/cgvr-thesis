@@ -10,9 +10,9 @@
 [ext_resource type="Texture2D" uid="uid://ba6tjkk65e2ph" path="res://Graphics/Placeholders/Combat/Background frames/BG5.png" id="7_garvs"]
 [ext_resource type="PackedScene" uid="uid://o32da1ay3vbk" path="res://Scenes/VFX/JungleLightRays.tscn" id="8_dmumh"]
 [ext_resource type="Texture2D" uid="uid://c0myudcgn06d4" path="res://Graphics/Placeholders/Combat/Background frames/BG4.png" id="8_plqbn"]
-[ext_resource type="Texture2D" uid="uid://bsub16vcw3n2u" path="res://Graphics/Placeholders/Combat/Background frames/BG3.png" id="9_0dkug"]
-[ext_resource type="Texture2D" uid="uid://d2rt276rwt2iy" path="res://Graphics/Placeholders/Combat/Background frames/BG2.png" id="10_smm4j"]
 [ext_resource type="Texture2D" uid="uid://d4kmxwtc76jip" path="res://Graphics/Placeholders/Combat/Background frames/BG1.png" id="11_1eefx"]
+[ext_resource type="Texture2D" uid="uid://cbr6p8idqt76g" path="res://Graphics/Placeholders/Combat/Background frames/BG3_extended.png" id="11_dmumh"]
+[ext_resource type="Texture2D" uid="uid://t2raa8lgdct7" path="res://Graphics/Placeholders/Combat/Background frames/BG2_extended.png" id="12_h5d1v"]
 
 [node name="CombatBackground" type="ParallaxBackground"]
 script = ExtResource("1_118ub")
@@ -57,13 +57,13 @@ position = Vector2(368.99994, 78.99999)
 scale = Vector2(0.7, 0.7)
 
 [node name="JungleLightRays2" parent="Layer08_TreesFar" instance=ExtResource("8_dmumh")]
-position = Vector2(-204, 89)
-rotation = -0.26179937
+position = Vector2(-239, 90)
+rotation = -0.013962634
 scale = Vector2(0.49999994, 0.49999994)
 
 [node name="JungleLightRays3" parent="Layer08_TreesFar" instance=ExtResource("8_dmumh")]
-position = Vector2(5, 112)
-rotation = -0.37873644
+position = Vector2(63, 122)
+rotation = 0.116937056
 scale = Vector2(0.49999994, 0.49999994)
 
 [node name="JungleLightRays4" parent="Layer08_TreesFar" instance=ExtResource("8_dmumh")]
@@ -86,8 +86,8 @@ texture = ExtResource("6_qrvdg")
 position = Vector2(154, 2)
 
 [node name="JungleLightRays3" parent="Layer06_PlantsFar" instance=ExtResource("8_dmumh")]
-position = Vector2(-75, 74.99999)
-rotation = -0.4660029
+position = Vector2(-188.99998, 75)
+rotation = 0.029670598
 scale = Vector2(1.1, 1.1)
 
 [node name="JungleLightRays4" parent="Layer06_PlantsFar" instance=ExtResource("8_dmumh")]
@@ -111,13 +111,15 @@ texture = ExtResource("8_plqbn")
 position = Vector2(317, 180)
 
 [node name="Sprite2D" type="Sprite2D" parent="Layer03_Ground"]
-texture = ExtResource("9_0dkug")
+position = Vector2(40, 0)
+texture = ExtResource("11_dmumh")
 
 [node name="Layer02_BaseObjects" type="ParallaxLayer" parent="."]
 position = Vector2(317, 180)
 
 [node name="Sprite2D" type="Sprite2D" parent="Layer02_BaseObjects"]
-texture = ExtResource("10_smm4j")
+position = Vector2(40, 0)
+texture = ExtResource("12_h5d1v")
 
 [node name="JungleLightRays2" parent="Layer02_BaseObjects" instance=ExtResource("8_dmumh")]
 position = Vector2(-317, 40.999996)

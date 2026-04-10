@@ -335,7 +335,7 @@ func _roll_shop_items():
 		
 		# And same for passives
 		if item.type == ShopEntry.ItemType.PASSIVE and item.passive_data:
-			if PlayerData.has_passive(item.passive_data.id):
+			if PlayerData.has_ability(item.passive_data.id):
 				continue
 		
 		# Does not allow the same item to be in the shop twice, i.e "Repair" ability and "Repair" ability

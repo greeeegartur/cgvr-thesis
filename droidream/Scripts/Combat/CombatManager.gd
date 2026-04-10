@@ -63,6 +63,10 @@ var current_block_window = Vector2.ZERO
 var block_on_cooldown = false
 const BLOCK_COOLDOWN = 0.7
 
+# Crit multipliers (for Recalibration effect)
+const BASE_CRIT_MULTIPLIER := 1.5
+const RECALIBRATION_CRIT_MULTIPLIER := 1.75
+
 # Entity visual scenes to load for animations and UI
 var enemy_visuals: Dictionary = {} # Loads from CombatEntity and gives a dict of EnemyVisuals for enemies
 var player_visual : PlayerVisual
@@ -76,13 +80,36 @@ var selected_ability_tame_type: CombatTypes.EntityType
 var ability_tame_select_active := false
 var minigame_queue_ongoing := false
 
-# Ability specific variables
+# Ability/passive specific variables
 # Heat Up effects
 var heat_up_pending_power_bonus := 0
 var heat_up_active := false
 var heat_up_power_bonus := 0
 var heat_up_turns_remaining := 0
 const HEAT_UP_DEFENSE_PENALTY := 0.5
+
+# Harden effects
+var harden_active := false
+var harden_defense_bonus := 0.0
+var harden_turns_remaining := 0
+
+# Microbots effects
+var microbots_turn_counter := -1
+const MICROBOTS_HEAL_RATIO := 0.10
+const MICROBOTS_CHIP_RESTORE_CHANCE := 0.20
+
+# Reflexive Sensors effects
+const REFLEXIVE_SENSORS_MISS_CHANCE := 0.075
+const REFLEXIVE_SENSORS_BLOCK_BOOST_CHANCE := 0.30
+const REFLEXIVE_SENSORS_BLOCK_MULTIPLIER := 0.5
+
+# Enamor constant
+const ENAMOR_DOUBLE_REWARD_CHANCE := 0.75
+
+# Human At Heart constants
+const HUMAN_AT_HEART_HEAL_RATIO := 0.10
+const HUMAN_AT_HEART_POWER_GAIN := 0.25
+var human_at_heart_trigger_counter := 0
 
 # COMBAT SETUP FUNCTIONS
 # These are functions that run before combat begins, i.e entity data and loading the first turn
@@ -232,6 +259,10 @@ func _reset_combat_state():
 	heat_up_active = false
 	heat_up_power_bonus = 0
 	heat_up_turns_remaining = 0
+	harden_active = false
+	harden_defense_bonus = 0.0
+	harden_turns_remaining = 0
+	microbots_turn_counter = -1
 	
 	# Freeing old enemy visuals and entities
 	for visual in enemy_visuals.values():
@@ -292,6 +323,9 @@ func _start_combat(enemy_ids):
 
 # Starts the actual combat, keeping as method in case of future additions
 func _start_turn_loop():
+	# For checking if passives exist
+	for ability in PlayerData.abilities:
+		print(ability.data.id)
 	_player_turn()
 
 # TURN FUNCTIONS
@@ -311,6 +345,7 @@ func _player_turn():
 	locked_enemy_turn_order = _get_enemy_turn_order()
 	_update_enemy_turn_order_display()
 	_update_turn_start_effects()
+	_trigger_passives("player_turn_started", null)
 	
 	# Player turn base defaults, signal emit and guess display update
 	await camera.stop_follow() # Reseting from previous enemy turn (or defaulting it)
@@ -488,7 +523,7 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 	)
 	
 	if critical:
-		base *= 1.5
+		base *= _get_crit_multiplier() # Either 1.5 or 1.75
 		# VFX effects 
 		camera.pop_zoom()
 		vfx.play_overlay_effects("crit", 0.4)
@@ -622,16 +657,15 @@ func _start_minigame(enemy: CombatEntity):
 	
 	minigame.play()
 	var success = await minigame.completed
-	
 	in_minigame = false
 	combat_paused = false
 	
 	await on_minigame_complete(enemy, success)
+	_world_gray_out(false)
 	if combat_has_ended:
 		return
 	
 	await _resolve_enemy_state(enemy)
-	_world_gray_out(false)
 	await player_visual.return_to_home()
 	
 	#if is_instance_valid(minigame):
@@ -639,8 +673,7 @@ func _start_minigame(enemy: CombatEntity):
 
 # Connects BaseMinigame signal to give player damage based on minigame
 func _on_minigame_damage_taken(amount: float, pos: Vector2):
-	player.hp -= amount
-	player_visual.update_hp(player.hp, player.max_hp)
+	_change_player_hp(-amount)
 	vfx.play_overlay_effects("normal")
 
 # Decides minigame outcome on minigame end
@@ -659,6 +692,7 @@ func on_minigame_complete(enemy: CombatEntity, success: bool):
 			await player_visual.return_to_home()
 			if _check_victory():
 				_end_combat(true)
+			#_enemy_turn()
 	else:
 		# Restore enemy's defense by a random amount from 20-35%, rounds it somewhat though
 		var restore_ratio := randf_range(0.2, 0.35)
@@ -792,7 +826,19 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	var hit_mult = hit.damage_multiplier
 	var damage = max(0.0, base_damage * hit_mult)
 	
-	if blocked:
+	# Reflexive sensors check
+	var has_reflexive_sensors = PlayerData.has_ability("reflexive_sensors")
+	var missed_attack = false
+	
+	# Reflexive sensors miss chance first
+	if has_reflexive_sensors and randf() <= REFLEXIVE_SENSORS_MISS_CHANCE:
+		missed_attack = true
+		damage = 0.0
+		vfx.spawn_feedback(player_visual, "[color=#8be9fd][wave freq=14]Miss![/wave][/color]")
+		print("Enemy creature missed the attack!")
+	
+	# Normal block logic
+	elif blocked:
 		damage *= 0.5
 		player_visual.play_block_success()
 		camera.shake(8.0, 0.15)
@@ -800,6 +846,12 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 		vfx.play_overlay_effects("block", 0.2)
 		vfx.play_block_feedback(player_visual)
 		print("Successful block!")
+		# If lands 30% chance with reflexive sensors, blocks damage even more (overall damage: damage * 0.5 * 0.5)
+		if has_reflexive_sensors and randf() <= REFLEXIVE_SENSORS_BLOCK_BOOST_CHANCE:
+			damage *= REFLEXIVE_SENSORS_BLOCK_MULTIPLIER
+			print("Player blocked damage even more!")
+	
+	# No block happened
 	else:
 		player_visual.play_block_fail()
 		vfx.play_overlay_effects("normal")
@@ -808,14 +860,18 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 		print("Failed block")
 
 	print("Player HP is: ", player.hp)
-	damage -= player.defense
+	damage = max(0.0, damage - player.defense)
 	print("Damage is: ", damage)
+	_change_player_hp(-damage)
 
-	player.hp -= damage
+	_trigger_passives("player_damaged_by_enemy", {
+		"enemy": enemy,
+		"damage": damage
+	})
 	
 	# Visual effects
-	player_visual.update_hp(player.hp, player.max_hp)
-	vfx.play_damage_vfx(player_visual, damage, false, blocked)
+	if not missed_attack:
+		vfx.play_damage_vfx(player_visual, damage, false, blocked)
 	print("Player takes %.1f damage → HP %.1f" % [damage, player.hp])
 	
 	# Reseting block press time for next enemy attack patterns
@@ -883,7 +939,7 @@ func _try_restore_chip(used_type: CombatTypes.EntityType, critical: bool):
 		_restore_chip(used_type)
 		player_visual.play_restore_chip()
 
-# ABILITY & ITEM-SPECIFIC FUNCTIONS
+# ABILITY, PASSIVE & ITEM-SPECIFIC FUNCTIONS
 # These functions are inherently ACTION functions, but categorised because of their niche uses
 
 # Executes the repair ability sequence
@@ -942,13 +998,14 @@ func _ability_repair_sequence(ability: InventoryAbility):
 	var heal_ratio = collected * 0.1
 	var heal_amount = player.max_hp * heal_ratio
 	
-	player.hp = min(player.hp + heal_amount, player.max_hp)
-	player_visual.update_hp(player.hp, player.max_hp)
+	_change_player_hp(heal_amount)
 	vfx.spawn_damage_number(player_visual, heal_amount, false, true)
 	
 	await camera.reset_camera()
 	await get_tree().create_timer(0.4).timeout
 
+# Executes the multi-tame ability sequence
+# Here the player must match shapes with their ghosts – the more matched makes the player deal more shift damage
 func _ability_multi_tame_sequence(ability: InventoryAbility, target: CombatEntity):
 	var multiplier := 1.0
 	var minigame_scene = preload("res://Scenes/VFX/MultiTameScene.tscn")
@@ -962,6 +1019,8 @@ func _ability_multi_tame_sequence(ability: InventoryAbility, target: CombatEntit
 	
 	await _resolve_multi_tame_hit(target, multiplier)
 
+# Executes the heat up ability sequence
+# Here the player must press the correct keys that appear on screen at random locations; the more pressed, the more power buff the player gets
 func _ability_heat_up_sequence(ability: InventoryAbility):
 	var minigame_scene = preload("res://Scenes/VFX/HeatUpMinigame.tscn")
 	var minigame = minigame_scene.instantiate()
@@ -986,10 +1045,36 @@ func _ability_heat_up_sequence(ability: InventoryAbility):
 		minigame.queue_free()
 	
 	heat_up_pending_power_bonus = power_bonus
+	vfx.spawn_feedback(player_visual, "[color=#e72237ff][wave freq=14]Heated up![/wave][/color]")
 	vfx.spawn_damage_number(player_visual, power_bonus, true) # Power VFX
 	vfx.spawn_damage_number(player_visual, HEAT_UP_DEFENSE_PENALTY, false, true) # Defense VFX
 	await camera.reset_camera()
 	await get_tree().create_timer(0.2).timeout
+
+# Executes the harden ability sequence
+# Here the player must press keys in a specific order; the more stages finished, the more defense boost gained
+func _ability_harden_sequence(ability: InventoryAbility):
+	var minigame_scene = preload("res://Scenes/VFX/HardenMinigame.tscn")
+	var minigame = minigame_scene.instantiate()
+	minigame_layer.add_child(minigame)
+	tutorial_text.show_hint(TutorialText.HintType.HARDEN)
+	
+	minigame.play()
+	var defense_bonus: float = await minigame.finished
+	tutorial_text.hide_text()
+	
+	if is_instance_valid(minigame):
+		minigame.queue_free()
+	
+	# Activates immediately after use
+	harden_active = true
+	harden_defense_bonus = defense_bonus
+	harden_turns_remaining = 1
+	_sync_player_stats()
+	
+	vfx.spawn_feedback(player_visual, "[color=#3d9feb][wave freq=14]Harden applied![/wave][/color]")
+	vfx.spawn_damage_number(player_visual, defense_bonus, false, true)
+	
 
 # Processes the hit from the Multi-tame ability after the action sequence has been processed
 func _resolve_multi_tame_hit(target: CombatEntity, multiplier: float):
@@ -1012,6 +1097,47 @@ func _resolve_multi_tame_hit(target: CombatEntity, multiplier: float):
 	for enemy in affected:
 		_apply_axis_shift_with_multiplier(enemy, selected_ability_tame_type, multiplier)
 	await _resolve_pending_minigames()
+
+# Scratchy frame passive ability: damages the creature for the same amount of damage they dealt to the player (on one side of the axis)
+func _passive_scratchy_frame(event: String, context):
+	var enemy: CombatEntity = context.get("enemy")
+	var damage: float = context.get("damage", 0.0)
+	
+	if enemy == null:
+		return
+	if damage <= 0.0:
+		return
+	if enemy.is_killed() or enemy.is_tamed():
+		return
+	if is_zero_approx(enemy.axis_value):
+		return
+	
+	var reflect_amount = _get_scratchy_frame_reflect_amount(enemy, damage)
+	if reflect_amount <= 0.0:
+		return
+	
+	_apply_scratchy_frame_reflect(enemy, reflect_amount)
+
+# Microbots passive ability: every two turns heals the player for 10% max hp + rolls a 20% chance to restore a random chip
+func _passive_microbots():
+	microbots_turn_counter += 1
+	if microbots_turn_counter >= 2:
+		microbots_turn_counter = 0
+	
+		var heal_amount = max(1.0, player.max_hp * MICROBOTS_HEAL_RATIO)
+		_change_player_hp(heal_amount)
+		vfx.spawn_damage_number(player_visual, heal_amount, false, true)
+		print("Microbots healed player damage by ", heal_amount, ", player now at ", player.hp)
+		
+		if randf() <= MICROBOTS_CHIP_RESTORE_CHANCE:
+			var available_types = [
+				CombatTypes.EntityType.SKY,
+				CombatTypes.EntityType.EARTH,
+				CombatTypes.EntityType.WATER
+			]
+			var restored_type = available_types.pick_random()
+			_restore_chip(restored_type)
+			vfx.spawn_feedback(player_visual, "+1 %s chip!" % CombatTypes.guess_type_to_string(restored_type))
 
 # HELPER FUNCTIONS
 # These functions help ACTION functions with calculations and more
@@ -1165,7 +1291,6 @@ func _execute_ability(target):
 	
 	if _check_victory():
 		_end_combat(true)
-		print("i'm called from execute_ability")
 		return
 	
 	_enemy_turn()
@@ -1303,7 +1428,9 @@ func round_quarter(value: float) -> float:
 	return round(value * 4.0) / 4.0
 
 func _generate_rewards():
-	var total_currency := 0
+	var total_currency = 0
+	var killed_count := 0
+	var has_enamor = PlayerData.has_ability("enamor")
 	
 	for enemy in enemies:
 		var effective_hp = enemy.max_hp
@@ -1317,6 +1444,7 @@ func _generate_rewards():
 		
 		# Rewards based on how the enemy was defeated
 		if enemy.is_killed():
+			killed_count += 1
 			max_currency = half_hp
 			min_currency = max(0, max_currency + 2)
 			# TO-DO: add karma
@@ -1327,9 +1455,16 @@ func _generate_rewards():
 			continue # Should not be possible to reach this point
 		
 		var gained_currency := randi_range(min_currency, max_currency)
+		var enamor_chance = enemy.is_tamed() and has_enamor and randf() <= ENAMOR_DOUBLE_REWARD_CHANCE
+		
+		# Enamor chance to double a tamed creature's rewards
+		if enamor_chance:
+			gained_currency *= 2
+		
 		total_currency += gained_currency
 	
 	PlayerData.currency += total_currency
+	_apply_human_at_heart(killed_count)
 	print("Currency right now: ", PlayerData.currency)
 	
 	return {"currency": total_currency}
@@ -1358,22 +1493,26 @@ func _restore_chip(type: CombatTypes.EntityType):
 		CombatTypes.EntityType.WATER:
 			PlayerData.add_guesses(CombatTypes.EntityType.WATER, 1)
 
-	print("Chip restored for:", type, "!")
+	print("Chip restored for: ", type, "!")
 	player_turn_ui.update_guess_display()
 
 # Resyncing player stats from possible previous combats
 func _sync_player_stats():
 	player.load_from_player()
-	player_visual.update_hp(player.hp, player.max_hp)
-
-func _sync_turn_ability_effects():
+	
 	if heat_up_active:
 		player.attack_power += heat_up_power_bonus
-		player.defense = player.defense - HEAT_UP_DEFENSE_PENALTY
-	elif not heat_up_active:
-		vfx.spawn_feedback(player_visual, "Cooled down!")
-		player.attack_power -= heat_up_power_bonus
-		player.defense = player.defense + HEAT_UP_DEFENSE_PENALTY
+		player.defense -= HEAT_UP_DEFENSE_PENALTY
+	
+	if harden_active:
+		player.defense += harden_defense_bonus
+	
+	player.hp = clamp(player.hp, 0.0, player.max_hp)
+	PlayerData.hp = clamp(PlayerData.hp, 0.0, PlayerData.max_hp)
+	
+	print("actual HP: ", player.hp)
+	print("actual defense: ", player.defense)
+	player_visual.update_hp(player.hp, player.max_hp)
 
 # Progresses all player ability cooldowns
 func _tick_ability_cooldowns():
@@ -1389,8 +1528,21 @@ func _tick_ability_cooldowns():
 # Always triggers passives at correct places in combat, but only actually uses them if the player has that passive
 func _trigger_passives(event: String, context):
 	for ability in PlayerData.abilities:
-		if ability.is_passive():
-			ability.data.trigger.call(event, context, self)
+		if not ability.is_passive():
+			continue
+		
+		var passive: PassiveData = ability.data
+		_handle_passive_trigger(passive, event, context)
+
+# Calls the respective passive ability's function based on event and context
+func _handle_passive_trigger(passive: PassiveData, event: String, context):
+	match passive.id:
+		"scratchy_frame":
+			if event == "player_damaged_by_enemy":
+				_passive_scratchy_frame(event, context)
+		"microbots":
+			if event == "player_turn_started":
+				_passive_microbots()
 
 # Sets the player's ability by given AbilityData (makes it used)
 func _use_ability(ability):
@@ -1457,27 +1609,108 @@ func _resolve_pending_minigames():
 	minigame_queue_ongoing = false
 
 func _update_turn_start_effects():
-	# Apply pending Heat Up on the next player turn
+	# Heat Up start: activates on the next player turn
 	if heat_up_pending_power_bonus > 0:
 		heat_up_active = true
 		heat_up_power_bonus = heat_up_pending_power_bonus
 		heat_up_pending_power_bonus = 0
 		heat_up_turns_remaining = 2
-		_sync_turn_ability_effects()
+		_sync_player_stats()
 		print("Heat Up active! +%d power, -%.1f defense for %d turns"
 			% [heat_up_power_bonus, HEAT_UP_DEFENSE_PENALTY, heat_up_turns_remaining])
-		return
-
-	if heat_up_active:
+	
+	# Heat Up when active: starts decreasing until inactive
+	elif heat_up_active:
 		if heat_up_turns_remaining > 1:
 			heat_up_turns_remaining -= 1
 			print("Heat Up continues. %d turn left." % heat_up_turns_remaining)
 		else:
 			print("Heat Up ended.")
+			vfx.spawn_feedback(player_visual, "[color=#3d9feb][wave freq=14]Cooled down[/wave][/color]")
 			heat_up_active = false
 			heat_up_power_bonus = 0
 			heat_up_turns_remaining = 0
-			_sync_turn_ability_effects()
+			_sync_player_stats()
+	
+	# Harden: already active on use, so here is just the tick/removal
+	if harden_active:
+		if harden_turns_remaining > 0:
+			harden_turns_remaining -= 1
+		if harden_turns_remaining <= 0:
+			print("Harden ended.")
+			harden_active = false
+			harden_defense_bonus = 0.0
+			harden_turns_remaining = 0
+			vfx.spawn_feedback(player_visual, "[color=#e72237ff][wave freq=14]Harden ended[/wave][/color]")
+			_sync_player_stats()
+
+# Player HP changing methods for better interaction with PlayerData
+func _set_player_hp(value: float):
+	player.hp = clamp(value, 0.0, player.max_hp)
+	PlayerData.hp = player.hp
+	player_visual.update_hp(player.hp, player.max_hp)
+
+func _change_player_hp(amount: float):
+	_set_player_hp(player.hp + amount)
+
+# The amount of damage reflected back at the enemy with Scratchy Frame passive ability
+func _get_scratchy_frame_reflect_amount(enemy: CombatEntity, incoming_damage: float) -> float:
+	var margin := 0.25
+	if enemy.axis_value > 0.0: # When enemy is on the tame side
+		var max_allowed := (enemy.axis_max - margin) - enemy.axis_value
+		return max(0.0, min(incoming_damage, max_allowed))
+	
+	elif enemy.axis_value < 0.0: # When enemy is on the kill side
+		var max_allowed := enemy.axis_value - (-enemy.axis_max + margin)
+		return max(0.0, min(incoming_damage, max_allowed))
+	
+	return 0.0
+
+# Applies Scratchy Frame's damage to the enemy
+func _apply_scratchy_frame_reflect(enemy: CombatEntity, amount: float):
+	var enemy_visual = enemy_visuals.get(enemy)
+	if enemy_visual == null:
+		return
+	
+	var before := enemy.axis_value
+	if enemy.axis_value > 0.0: # When on the tame side
+		enemy.axis_value += amount
+		enemy.axis_value = min(enemy.axis_value, enemy.axis_max - 0.25) # Prevents taming/killing with this ability
+	else: # When on the kill side
+		enemy.axis_value -= amount
+		enemy.axis_value = max(enemy.axis_value, -enemy.axis_max + 0.25)
+	
+	enemy.axis_value = round_quarter(enemy.axis_value) # Applies damage
+	var actual_shift = enemy.axis_value - before
+	if is_zero_approx(actual_shift): # Does not update past damage where there is 0.25 HP left to an intent
+		return
+	
+	enemy_visual.update_axis(enemy.axis_value, actual_shift)
+	enemy_visual.shake(false)
+	vfx.play_damage_vfx(enemy_visual, abs(actual_shift), false)
+
+# Checks if the player has the Recalibration passive or not, decides multiplier based on it (1.75 with, 1.5 without)
+func _get_crit_multiplier() -> float:
+	return RECALIBRATION_CRIT_MULTIPLIER if PlayerData.has_ability("recalibration") else BASE_CRIT_MULTIPLIER
+
+# Human At Heart passive ability effect method; counts enemies killed and heals the player + permanently increases power by 0.25
+func _apply_human_at_heart(killed_count: int):
+	if killed_count <= 0:
+		return
+	if not PlayerData.has_ability("human_at_heart"):
+		return
+	
+	var total_heal := PlayerData.max_hp * HUMAN_AT_HEART_HEAL_RATIO * killed_count
+	var total_power_gain := HUMAN_AT_HEART_POWER_GAIN * killed_count
+	PlayerData.attack += total_power_gain
+	PlayerData.hp = min(PlayerData.hp + total_heal, PlayerData.max_hp)
+	print("Human At Heart: Healed for: ", total_heal)
+	print("Human At Heart: Power increased by: ", total_power_gain)
+	
+	_sync_player_stats()
+	vfx.spawn_damage_number(player_visual, total_heal, false, true)
+	vfx.play_human_at_heart_feedback(player_visual, human_at_heart_trigger_counter)
+	human_at_heart_trigger_counter += 1
 
 # ANIMATION METHODS
 # Smooth tween BG animation for minigame enter/exiting 

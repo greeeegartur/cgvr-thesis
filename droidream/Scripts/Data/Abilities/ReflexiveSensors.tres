@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="PassiveData" load_steps=2 format=3 uid="uid://bsadn0fq85rud"]
+
+[ext_resource type="Script" uid="uid://dqqq30gwb44lh" path="res://Scripts/Data/PassiveData.gd" id="1_ekfts"]
+
+[resource]
+script = ExtResource("1_ekfts")
+id = "reflexive_sensors"
+display_name = "Reflexive Sensors"
+description = "Have a 30% chance to block damage even more and a 7.5% chance to avoid damage entirely."
+metadata/_custom_type_script = "uid://dqqq30gwb44lh"

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ShopEntry" load_steps=4 format=3 uid="uid://b7tvpl4e5vwlt"]
+
+[ext_resource type="Texture2D" uid="uid://cmxlsmd1xo2e5" path="res://Graphics/Placeholders/Boons/recalibration.png" id="1_2l56q"]
+[ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_gqkes"]
+[ext_resource type="Resource" uid="uid://df0k4i7aq8ncm" path="res://Scripts/Data/Abilities/Recalibration.tres" id="2_66w76"]
+
+[resource]
+script = ExtResource("1_gqkes")
+id = "recalibration"
+display_name = "Recalibration"
+description = "Permanently increases the critical hit multiplier from 1.5x to 1.75x the usual tame power."
+type = 1
+icon = ExtResource("1_2l56q")
+cost = 8
+max_stack = 1
+passive_data = ExtResource("2_66w76")
+metadata/_custom_type_script = "uid://b56nw6bpevr7t"

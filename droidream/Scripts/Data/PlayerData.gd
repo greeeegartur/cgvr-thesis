@@ -97,7 +97,11 @@ func add_item(item_data: ItemData, amount := 1) -> bool:
 	items.append(new_item)
 	return true
 
-func add_ability(ability_data: AbilityData) -> bool:
+func add_ability(ability_data: Resource) -> bool: # Ability or passive
+	if not (ability_data is AbilityData or ability_data is PassiveData):
+		push_error("Tried to add invalid ability resource.")
+		return false
+	
 	# Prevents duplicates – the player can only have 1 of each ability
 	for a in abilities:
 		if a.data == ability_data:

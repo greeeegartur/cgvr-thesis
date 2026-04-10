@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ShopEntry" load_steps=4 format=3 uid="uid://bbkw14p5jjh1l"]
+
+[ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_cm17s"]
+[ext_resource type="Texture2D" uid="uid://8whci0nik5ex" path="res://Graphics/Placeholders/Boons/reflexive_sensors.png" id="1_cucws"]
+[ext_resource type="Resource" uid="uid://bsadn0fq85rud" path="res://Scripts/Data/Abilities/ReflexiveSensors.tres" id="2_asx4v"]
+
+[resource]
+script = ExtResource("1_cm17s")
+id = "reflexive_sensors"
+display_name = "Reflexive Sensors"
+description = "Have a 30% chance to block damage even more and a 7.5% chance to avoid damage entirely."
+type = 1
+icon = ExtResource("1_cucws")
+cost = 6
+max_stack = 1
+passive_data = ExtResource("2_asx4v")
+metadata/_custom_type_script = "uid://b56nw6bpevr7t"

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BoonData" load_steps=3 format=3 uid="uid://ddo0lpj4nluoh"]
+
+[ext_resource type="Script" uid="uid://yjimuc2myefo" path="res://Scripts/Data/BoonData.gd" id="1_e2qvp"]
+[ext_resource type="Texture2D" uid="uid://d18u3qg0kjcpf" path="res://Graphics/Placeholders/Boons/human_at_heart.png" id="1_t32rt"]
+
+[resource]
+script = ExtResource("1_e2qvp")
+id = "human_at_heart"
+name = "Human At Heart"
+description = "At the end of the encounter, heal 10% of max health and permanently gain +0.25 power for each enemy killed."
+type = "Passive"
+icon = ExtResource("1_t32rt")
+metadata/_custom_type_script = "uid://yjimuc2myefo"

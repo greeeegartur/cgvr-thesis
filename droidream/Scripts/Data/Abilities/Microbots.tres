@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="PassiveData" load_steps=2 format=3 uid="uid://64xn8on4cc1m"]
+
+[ext_resource type="Script" uid="uid://dqqq30gwb44lh" path="res://Scripts/Data/PassiveData.gd" id="1_sbppl"]
+
+[resource]
+script = ExtResource("1_sbppl")
+id = "microbots"
+display_name = "Microbots"
+description = "Every two turns heal for 10% of your max health and have a 20% chance to restore a random chip."
+metadata/_custom_type_script = "uid://dqqq30gwb44lh"

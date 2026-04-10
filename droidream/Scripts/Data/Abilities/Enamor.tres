@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="PassiveData" load_steps=2 format=3 uid="uid://bj0onq43ypvt1"]
+
+[ext_resource type="Script" uid="uid://dqqq30gwb44lh" path="res://Scripts/Data/PassiveData.gd" id="1_0n11p"]
+
+[resource]
+script = ExtResource("1_0n11p")
+id = "enamor"
+display_name = "Enamor"
+description = "Have a 75% chance to charm tamed creatures into giving you 2x more rewards after encounters!"
+metadata/_custom_type_script = "uid://dqqq30gwb44lh"

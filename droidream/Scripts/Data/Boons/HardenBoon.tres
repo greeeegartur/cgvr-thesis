@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BoonData" load_steps=3 format=3 uid="uid://ceg7hcfk51prn"]
+
+[ext_resource type="Texture2D" uid="uid://3xupqgv4ca1m" path="res://Graphics/Placeholders/Boons/harden.png" id="1_5wvt6"]
+[ext_resource type="Script" uid="uid://yjimuc2myefo" path="res://Scripts/Data/BoonData.gd" id="1_j780e"]
+
+[resource]
+script = ExtResource("1_j780e")
+id = "harden"
+name = "Harden"
+description = "On use, gain up to +2 defense for a single turn!"
+type = "Ability"
+icon = ExtResource("1_5wvt6")
+metadata/_custom_type_script = "uid://yjimuc2myefo"

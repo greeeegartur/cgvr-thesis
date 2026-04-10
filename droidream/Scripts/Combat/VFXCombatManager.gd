@@ -22,7 +22,7 @@ class_name VFXCombatManager
 
 
 # Colors
-@export var normal_flash_color = Color(0.904, 0.135, 0.214, 1.0)
+@export var normal_flash_color = Color("e72237ff")
 @export var crit_flash_color = Color("#eff238")
 @export var subdue_flash_color = Color("9a2ea3ff")
 @export var block_flash_color = Color("00d200ff")
@@ -172,6 +172,16 @@ func play_multihit_feedback(target_visual):
 	"[color=#3d9feb][shake rate=18]Yeah![/shake][/color]"
 	]
 	spawn_feedback(target_visual, texts.pick_random())
+
+func play_human_at_heart_feedback(target_visual, amount_of_times_triggered):
+	var texts = {
+		0: "[color=#e72237ff][wave freq=14]Powered up![/wave][/color]",
+		1: "[color=#c70000][wave freq=14]More.. power[/wave][/color]",
+		2: "[color=#690101][wave freq=14]...[/wave][/color]",
+		3: "[color=#4d0000][wave freq=14]Enjoying yourself?[/wave][/color]",
+		4: "[color=#2e0000][wave freq=14]I am[/wave][/color]"
+	}
+	spawn_feedback(target_visual, texts.get(amount_of_times_triggered, texts[4]))
 
 # Used in the repair ability game
 func _spawn_repair_object(target, dir: String) -> Node2D:

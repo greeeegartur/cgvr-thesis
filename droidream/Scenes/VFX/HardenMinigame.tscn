@@ -1,0 +1,63 @@
+[gd_scene load_steps=6 format=3 uid="uid://gfsp5vsmowvd"]
+
+[ext_resource type="Script" uid="uid://sng00bqaunyg" path="res://Scripts/Misc/HardenMinigame.gd" id="1_ulf5d"]
+[ext_resource type="Texture2D" uid="uid://couehbmo88mqw" path="res://Graphics/Placeholders/Minigames/HardenKeys/up.png" id="2_ct5sp"]
+[ext_resource type="Texture2D" uid="uid://cyml8p6bkvys2" path="res://Graphics/Placeholders/Minigames/HardenKeys/down.png" id="3_givh8"]
+[ext_resource type="Texture2D" uid="uid://bk5y1gqks8b2k" path="res://Graphics/Placeholders/Minigames/HardenKeys/left.png" id="4_2y6bb"]
+[ext_resource type="Texture2D" uid="uid://bmel1kwgjbasb" path="res://Graphics/Placeholders/Minigames/HardenKeys/right.png" id="5_0tuji"]
+
+[node name="HardenMinigame" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_ulf5d")
+up_texture = ExtResource("2_ct5sp")
+down_texture = ExtResource("3_givh8")
+left_texture = ExtResource("4_2y6bb")
+right_texture = ExtResource("5_0tuji")
+
+[node name="PromptArea" type="Control" parent="."]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="SequenceRow" type="HBoxContainer" parent="."]
+layout_direction = 2
+layout_mode = 0
+offset_left = 235.0
+offset_top = 95.0
+offset_right = 419.0
+offset_bottom = 135.0
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="SequenceRow"]
+layout_mode = 2
+texture = ExtResource("2_ct5sp")
+expand_mode = 2
+
+[node name="TextureRect2" type="TextureRect" parent="SequenceRow"]
+layout_mode = 2
+texture = ExtResource("2_ct5sp")
+expand_mode = 2
+
+[node name="TextureRect3" type="TextureRect" parent="SequenceRow"]
+layout_mode = 2
+texture = ExtResource("2_ct5sp")
+expand_mode = 2
+
+[node name="TextureRect4" type="TextureRect" parent="SequenceRow"]
+layout_mode = 2
+texture = ExtResource("2_ct5sp")
+expand_mode = 2
+
+[node name="TextureRect5" type="TextureRect" parent="SequenceRow"]
+visible = false
+layout_mode = 2
+texture = ExtResource("2_ct5sp")
+expand_mode = 2
+
+[node name="TextureRect6" type="TextureRect" parent="SequenceRow"]
+visible = false
+layout_mode = 2
+texture = ExtResource("2_ct5sp")
+expand_mode = 2

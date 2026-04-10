@@ -237,9 +237,8 @@ theme_override_styles/panel = SubResource("StyleBoxTexture_irvsa")
 clip_contents = false
 layout_mode = 1
 offset_left = 16.0
-offset_top = 4.0
 offset_right = 95.0
-offset_bottom = 76.0
+offset_bottom = 80.0
 horizontal_scroll_mode = 3
 vertical_scroll_mode = 3
 
@@ -261,20 +260,16 @@ offset_right = 178.8
 offset_bottom = 18.800003
 theme_override_styles/panel = SubResource("StyleBoxTexture_nbpvq")
 
-[node name="VBox" type="VBoxContainer" parent="ItemsMenu/Panel"]
+[node name="ScrollContainer" type="ScrollContainer" parent="ItemsMenu/Panel"]
+clip_contents = false
 layout_mode = 0
-offset_right = 100.0
+offset_left = 16.0
+offset_right = 95.0
 offset_bottom = 80.0
+horizontal_scroll_mode = 3
+vertical_scroll_mode = 3
 
-[node name="Contents" type="Node2D" parent="ItemsMenu/Panel/VBox"]
-
-[node name="Label" type="Label" parent="ItemsMenu/Panel/VBox/Contents"]
-offset_left = 12.0
-offset_top = 12.0
-offset_right = 73.0
-offset_bottom = 35.0
-pivot_offset = Vector2(30.5, 11.5)
-theme_override_constants/outline_size = 4
-theme_override_fonts/font = ExtResource("4_7cvk2")
-text = "To-do"
-vertical_alignment = 1
+[node name="VBox" type="VBoxContainer" parent="ItemsMenu/Panel/ScrollContainer"]
+custom_minimum_size = Vector2(79, 55)
+layout_mode = 2
+theme_override_constants/separation = -14

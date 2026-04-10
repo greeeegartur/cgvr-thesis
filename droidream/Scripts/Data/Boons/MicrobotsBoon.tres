@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BoonData" load_steps=3 format=3 uid="uid://d0bxawl6jr8of"]
+
+[ext_resource type="Script" uid="uid://yjimuc2myefo" path="res://Scripts/Data/BoonData.gd" id="1_8nc1p"]
+[ext_resource type="Texture2D" uid="uid://bf48p5c6hsygy" path="res://Graphics/Placeholders/Boons/microbots.png" id="1_aac7m"]
+
+[resource]
+script = ExtResource("1_8nc1p")
+id = "microbots"
+name = "Microbots"
+description = "Every two turns heal for 10% of your max health and have a 20% chance to restore a random chip."
+type = "Passive"
+icon = ExtResource("1_aac7m")
+metadata/_custom_type_script = "uid://yjimuc2myefo"

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ShopEntry" load_steps=4 format=3 uid="uid://bo5ypo6bxxekl"]
+
+[ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_dhvmd"]
+[ext_resource type="Texture2D" uid="uid://bf48p5c6hsygy" path="res://Graphics/Placeholders/Boons/microbots.png" id="1_nkrqp"]
+[ext_resource type="Resource" uid="uid://64xn8on4cc1m" path="res://Scripts/Data/Abilities/Microbots.tres" id="2_xtal1"]
+
+[resource]
+script = ExtResource("1_dhvmd")
+id = "microbots"
+display_name = "Microbots"
+description = "Every two turns heal for 10% of your max health and have a 20% chance to restore a random chip."
+type = 1
+icon = ExtResource("1_nkrqp")
+cost = 8
+max_stack = 1
+passive_data = ExtResource("2_xtal1")
+metadata/_custom_type_script = "uid://b56nw6bpevr7t"

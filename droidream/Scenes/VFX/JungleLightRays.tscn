@@ -7,11 +7,11 @@
 script = ExtResource("1_cnnq1")
 
 [node name="Ray1" type="Sprite2D" parent="."]
-modulate = Color(1, 1, 1, 0.019607844)
+modulate = Color(1, 1, 1, 0.011764706)
 rotation = 0.17453292
 texture = ExtResource("2_uqefp")
 
 [node name="Ray2" type="Sprite2D" parent="."]
-modulate = Color(1, 1, 1, 0.019607844)
+modulate = Color(1, 1, 1, 0.011764706)
 rotation = 0.17453292
 texture = ExtResource("2_uqefp")

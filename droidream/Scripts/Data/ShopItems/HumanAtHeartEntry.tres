@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ShopEntry" load_steps=4 format=3 uid="uid://dvqgfy3cvcvuw"]
+
+[ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_0dyey"]
+[ext_resource type="Texture2D" uid="uid://d18u3qg0kjcpf" path="res://Graphics/Placeholders/Boons/human_at_heart.png" id="1_wktis"]
+[ext_resource type="Resource" uid="uid://b3vhugr43v8lx" path="res://Scripts/Data/Abilities/HumanAtHeart.tres" id="2_opc8a"]
+
+[resource]
+script = ExtResource("1_0dyey")
+id = "human_at_heart"
+display_name = "Human At Heart"
+description = "At the end of the encounter, heal 10% of max health and permanently gain +0.25 power for each enemy killed."
+type = 1
+icon = ExtResource("1_wktis")
+cost = 10
+max_stack = 1
+passive_data = ExtResource("2_opc8a")
+metadata/_custom_type_script = "uid://b56nw6bpevr7t"
