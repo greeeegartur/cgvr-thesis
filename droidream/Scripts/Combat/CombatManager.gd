@@ -76,11 +76,12 @@ var in_minigame = false # Default
 var combat_paused := false
 var combat_has_ended := false
 var ability_being_used : InventoryAbility
+var item_being_used: InventoryItem
 var selected_ability_tame_type: CombatTypes.EntityType
 var ability_tame_select_active := false
 var minigame_queue_ongoing := false
 
-# Ability/passive specific variables
+# Ability/passive/item specific variables
 # Heat Up effects
 var heat_up_pending_power_bonus := 0
 var heat_up_active := false
@@ -110,6 +111,21 @@ const ENAMOR_DOUBLE_REWARD_CHANCE := 0.75
 const HUMAN_AT_HEART_HEAL_RATIO := 0.10
 const HUMAN_AT_HEART_POWER_GAIN := 0.25
 var human_at_heart_trigger_counter := 0
+
+# Thick Jelly effects
+var thick_jelly_active := false
+var thick_jelly_turns_remaining := 0
+const THICK_JELLY_BLOCK_MULTIPLIER := 0.5
+
+# Soft Branch effects
+var soft_branch_active := false
+var soft_branch_power_bonus := 0.0
+var soft_branch_turns_remaining := 0
+const SOFT_BRANCH_POWER_BONUS := 1.0
+
+# Ball constants
+const BALL_INTENT_TAME := "tame"
+const BALL_INTENT_KILL := "kill"
 
 # COMBAT SETUP FUNCTIONS
 # These are functions that run before combat begins, i.e entity data and loading the first turn
@@ -236,6 +252,7 @@ func _setup_ui():
 	# Player turn signals
 	player_turn_ui.attack_type_selected.connect(_on_attack_selected)
 	player_turn_ui.ability_selected.connect(_on_ability_selected)
+	player_turn_ui.item_selected.connect(_on_item_selected)
 	player_turn_ui.ability_tame_type_selected.connect(_on_ability_tame_type_selected)
 	player_turn_ui.cancel_ability_tame_select.connect(_on_cancel_ability_tame_select)
 	player_turn_ui.cycle_enemy.connect(cycle_target)
@@ -263,6 +280,11 @@ func _reset_combat_state():
 	harden_defense_bonus = 0.0
 	harden_turns_remaining = 0
 	microbots_turn_counter = -1
+	thick_jelly_active = false
+	thick_jelly_turns_remaining = 0
+	soft_branch_active = false
+	soft_branch_power_bonus = 0.0
+	soft_branch_turns_remaining = 0
 	
 	# Freeing old enemy visuals and entities
 	for visual in enemy_visuals.values():
@@ -317,6 +339,7 @@ func _start_combat(enemy_ids):
 	
 	# PLAYER UI BUILDING
 	player_turn_ui._build_abilities_ui()
+	player_turn_ui._build_items_ui()
 	_reset_ability_cooldowns()
 	
 	# COMBAT STARTS
@@ -327,6 +350,10 @@ func _start_turn_loop():
 	# For checking if passives exist
 	#for ability in PlayerData.abilities:
 		#print(ability.data.id)
+	#PlayerData.add_item(CombatItemDb.get_item("memory_chip"), 6)
+	#PlayerData.add_item(CombatItemDb.get_item("beetlejuice"), 6)
+	#PlayerData.add_item(CombatItemDb.get_item("thick_jelly"), 6)
+	#PlayerData.add_item(CombatItemDb.get_item("soft_branch"), 6)
 	_player_turn()
 
 # TURN FUNCTIONS
@@ -479,7 +506,7 @@ func player_attack(attack_type: CombatTypes.EntityType):
 			tutorial_text.hide_text()
 			
 			# Calculates the hit damage
-			_apply_axis_shift(selected_enemy, attack_type),
+			await _apply_axis_shift(selected_enemy, attack_type),
 		CONNECT_ONE_SHOT
 	)
 	
@@ -565,7 +592,8 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		# Checks if enemy's axis value is at max, if it is, starts minigame
 		if enemy.is_minigame_ready():
 			print("Enemy trust level reached! Triggering minigame now.")
-			_start_minigame(enemy)
+			await _start_minigame(enemy)
+		_enemy_turn()
 	else:
 		# Moves towards kill side on the left based on how off guard the enemy is
 		# Off guard is calculated for an exponential multiplier that increases axis movement the more "off guard" an enemy is
@@ -669,7 +697,6 @@ func _start_minigame(enemy: CombatEntity):
 		
 		if _check_victory():
 			_end_combat(true)
-		_enemy_turn()
 	
 	if combat_has_ended:
 		return
@@ -705,8 +732,8 @@ func on_minigame_complete(enemy: CombatEntity, success: bool):
 		enemy.axis_value = round(enemy.axis_max * restore_ratio)
 		enemy_visual.update_axis(enemy.axis_value)
 		print("Minigame failed. Enemy axis restored to %.1f" % enemy.axis_value)
-		if not minigame_queue_ongoing and not combat_has_ended:
-			_enemy_turn()
+		#if not minigame_queue_ongoing and not combat_has_ended:
+			#_enemy_turn()
 
 # Performs a single enemy's attack pattern based on existing logic
 func _enemy_attack_single(enemy: CombatEntity):
@@ -865,6 +892,10 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 		if has_reflexive_sensors and randf() <= REFLEXIVE_SENSORS_BLOCK_BOOST_CHANCE:
 			damage *= REFLEXIVE_SENSORS_BLOCK_MULTIPLIER
 			print("Player blocked damage even more!")
+		
+		if thick_jelly_active:
+			damage *= THICK_JELLY_BLOCK_MULTIPLIER
+			print("Thick Jelly reduced blocked damage even more!")
 	
 	# No block happened
 	else:
@@ -1154,8 +1185,52 @@ func _passive_microbots():
 			]
 			var restored_type = available_types.pick_random()
 			_restore_chip(restored_type)
-			vfx.spawn_feedback(player_visual, "+1 %s chip!" % CombatTypes.guess_type_to_string(restored_type))
+			vfx.spawn_feedback(player_visual, "[color=#eff238][wave freq=14]%s restored![/wave][/color]" % CombatTypes.guess_type_to_string(restored_type))
 
+# Heals the player for a random amount between 20-50%
+func _item_beetle_juice_sequence(inventory_item: InventoryItem, target = null):
+	var heal_ratio := randf_range(0.20, 0.50)
+	var heal_amount := round_quarter(player.max_hp * heal_ratio)
+	_change_player_hp(heal_amount)
+	print("Healed for ", heal_amount)
+	vfx.spawn_damage_number(player_visual, heal_amount, false, true)
+
+# Restores 1 or 2 random chips for the player
+func _item_memory_chip_sequence(item: InventoryItem, target):
+	var restore_count := randi_range(1, 2)
+	var restored_type
+	var possible_types = [
+		CombatTypes.EntityType.SKY,
+		CombatTypes.EntityType.EARTH,
+		CombatTypes.EntityType.WATER
+	]
+	
+	possible_types.shuffle()
+	for i in range(min(restore_count, possible_types.size())):
+		restored_type = possible_types[i]
+		_restore_chip(restored_type)
+	
+	vfx.spawn_feedback(
+		player_visual,
+		"[color=#eff238][wave freq=14]%s restored![/wave][/color]" % CombatTypes.guess_type_to_string(restored_type)
+	)
+
+# Grants even more block power for the player for 3 turns
+func _item_thick_jelly_sequence(item: InventoryItem, target):
+	thick_jelly_active = true
+	thick_jelly_turns_remaining = 4 # Actually 3 turns because of how combat reads effects
+	vfx.spawn_feedback(player_visual, "[color=#8be9fd][wave freq=14]Jelly applied![/wave][/color]")
+
+# Gives the player +1 power for 2 turns
+func _item_soft_branch_sequence(item: InventoryItem, target):
+	soft_branch_active = true
+	soft_branch_power_bonus = SOFT_BRANCH_POWER_BONUS
+	soft_branch_turns_remaining = 3 # Because of how combat reads effects, actually 2
+	_sync_player_stats()
+	
+	vfx.spawn_feedback(player_visual, "[color=#eff238][wave freq=14]Power up![/wave][/color]")
+	vfx.spawn_damage_number(player_visual, soft_branch_power_bonus, true)
+	
 # HELPER FUNCTIONS
 # These functions help ACTION functions with calculations and more
 
@@ -1279,6 +1354,9 @@ func _confirm_target_selection():
 		TargetMode.ENEMY: # Player is targeting creature(s)
 			if selected_enemy:
 				enemy_visuals[selected_enemy].hide_target_arrow()
+				if item_being_used:
+					_execute_item(selected_enemy)
+					return
 				if ability_being_used:
 					_execute_ability(selected_enemy)
 					return
@@ -1288,6 +1366,9 @@ func _confirm_target_selection():
 		
 		TargetMode.SELF: # Player is targeting itself
 			player_visual.hide_target_arrow()
+			if item_being_used:
+				_execute_item(player)
+				return
 			if ability_being_used:
 				_execute_ability(player)
 				return
@@ -1302,6 +1383,29 @@ func _execute_ability(target):
 	await ability.data.execute.call(self, ability, target) # Calls the ability's function inside CombatManager
 	await player_visual.play_ability_end()
 	ability_being_used = null
+	
+	if combat_has_ended:
+		return
+	
+	if _check_victory():
+		_end_combat(true)
+		return
+	
+	_enemy_turn()
+
+func _execute_item(target):
+	tutorial_text.hide_text()
+	var item = item_being_used
+	if item == null:
+		return
+	
+	await player_visual.play_item_use()
+	await item.data.use_effect.call(self, item, target)
+	var item_index := PlayerData.items.find(item)
+	if item_index != -1:
+		PlayerData.use_item(item_index, self)
+	item_being_used = null
+	player_turn_ui._build_items_ui()
 	
 	if combat_has_ended:
 		return
@@ -1359,6 +1463,22 @@ func _on_cancel_ability_tame_select():
 	ability_tame_select_active = false
 	target_mode = TargetMode.NONE
 	is_targeting = false
+
+func _on_item_selected(item: InventoryItem):
+	if turn != "player":
+		return
+	
+	item_being_used = item
+	match item.data.target_type:
+		ItemData.TargetType.ENEMY:
+			player_turn_ui._hide_menu("items")
+			player_turn_ui._start_targeting("items")
+			start_target_selection()
+		
+		ItemData.TargetType.SELF:
+			player_turn_ui._hide_menu("items")
+			player_turn_ui._start_self_targeting("items")
+			start_self_targeting()
 
 # Moves back from target selection to previous state (handled by PlayerTurnUI)
 func _cancel_target_selection():
@@ -1464,7 +1584,6 @@ func _generate_rewards():
 			killed_count += 1
 			max_currency = half_hp
 			min_currency = max(0, max_currency + 2)
-			# TO-DO: add karma
 		elif enemy.is_tamed():
 			min_currency = half_hp
 			max_currency = min_currency + 2
@@ -1481,12 +1600,17 @@ func _generate_rewards():
 		total_currency += gained_currency
 	
 	PlayerData.currency += total_currency
+	var item_rewards := _roll_tamed_enemy_drops()
 	_apply_human_at_heart(killed_count)
 	_apply_karma_and_outcome_tracking()
 	vfx._update_karma_overlay()
 	print("Currency right now: ", PlayerData.currency)
+	print(item_rewards)
 	
-	return {"currency": total_currency}
+	return {
+		"currency": total_currency,
+		"items": item_rewards
+		}
 
 # Searches for available enemy slots and returns the respective slot where an enemy can potentially spawn
 func _get_free_enemy_slot() -> int:
@@ -1525,6 +1649,9 @@ func _sync_player_stats():
 	
 	if harden_active:
 		player.defense += harden_defense_bonus
+	
+	if soft_branch_active:
+		player.attack_power += soft_branch_power_bonus
 	
 	player.hp = clamp(player.hp, 0.0, player.max_hp)
 	PlayerData.hp = clamp(PlayerData.hp, 0.0, PlayerData.max_hp)
@@ -1620,9 +1747,19 @@ func _resolve_pending_minigames():
 			continue
 		await _start_minigame(enemy)
 		
-		if combat_has_ended or _check_victory():
-			break
+		if combat_has_ended:
+			minigame_queue_ongoing = false
+			return
+	
 	minigame_queue_ongoing = false
+	
+	if combat_has_ended:
+		return
+	
+	if _check_victory():
+		_end_combat(true)
+		return
+	_enemy_turn()
 
 func _update_turn_start_effects():
 	# Heat Up start: activates on the next player turn
@@ -1658,6 +1795,27 @@ func _update_turn_start_effects():
 			harden_defense_bonus = 0.0
 			harden_turns_remaining = 0
 			vfx.spawn_feedback(player_visual, "[color=#e72237ff][wave freq=14]Harden ended[/wave][/color]")
+			_sync_player_stats()
+	
+		# Thick Jelly: grants temporary stronger blocks
+	if thick_jelly_active:
+		if thick_jelly_turns_remaining > 0:
+			thick_jelly_turns_remaining -= 1
+		
+		if thick_jelly_turns_remaining <= 0:
+			thick_jelly_active = false
+			vfx.spawn_feedback(player_visual, "[color=#e72237ff][wave freq=14]Jelly used up[/wave][/color]")
+			_sync_player_stats()
+	
+	# Soft Branch: temporary +1 power for 2 turns
+	if soft_branch_active:
+		if soft_branch_turns_remaining > 0:
+			soft_branch_turns_remaining -= 1
+		
+		if soft_branch_turns_remaining <= 0:
+			soft_branch_active = false
+			soft_branch_power_bonus = 0.0
+			vfx.spawn_feedback(player_visual, "[color=#e72237ff][wave freq=14]Branch broke[/wave][/color]")
 			_sync_player_stats()
 
 # Player HP changing methods for better interaction with PlayerData
@@ -1728,7 +1886,7 @@ func _apply_human_at_heart(killed_count: int):
 	vfx.play_human_at_heart_feedback(player_visual, human_at_heart_trigger_counter)
 	human_at_heart_trigger_counter += 1
 
-# Tracks all player karma and outcomes for creatures for difficulty modifiers and ending
+# Tracks all player karma and outcomes for creatures for difficulty modifiers and game ending
 func _apply_karma_and_outcome_tracking():
 	var gained_karma := 0
 	for enemy in enemies:
@@ -1743,6 +1901,42 @@ func _apply_karma_and_outcome_tracking():
 	if gained_karma > 0:
 		print("Karma gained: ", gained_karma)
 		print("Total karma: ", PlayerData.karma)
+
+# Adds a reward item to the _generate_rewards return dictionary
+func _add_reward_item(result: Array, item_data: ItemData, amount := 1):
+	for entry in result:
+		if entry.id == item_data.id:
+			entry.amount += amount
+			return
+	
+	result.append({
+		"id": item_data.id,
+		"name": item_data.display_name,
+		"icon": item_data.icon,
+		"amount": amount
+	})
+
+# Rolls specific item drops for creatures with help from previous method
+func _roll_tamed_enemy_drops() -> Array:
+	var item_rewards: Array = []
+	for enemy in enemies:
+		if not enemy.is_tamed():
+			continue
+		
+		var drop_pool: Array = EnemyDatabase.get_drop_item_ids(enemy.id)
+		if drop_pool.is_empty():
+			continue
+		
+		var picked_id: String = drop_pool.pick_random()
+		var item_data: ItemData = CombatItemDb.get_item(picked_id)
+		if item_data == null:
+			continue
+		
+		var added := PlayerData.add_item(item_data, 1)
+		if added:
+			_add_reward_item(item_rewards, item_data, 1)
+	
+	return item_rewards
 
 # ANIMATION METHODS
 # Smooth tween BG animation for minigame enter/exiting 

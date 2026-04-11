@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://c3ygyuvym31am"]
+
+[ext_resource type="Script" uid="uid://heqkiwbydg3j" path="res://Scripts/Data/ItemData.gd" id="1_ihcb7"]
+[ext_resource type="Texture2D" uid="uid://dsdtww6ef7cib" path="res://Graphics/Placeholders/Items/soft branch.png" id="1_kabta"]
+
+[resource]
+script = ExtResource("1_ihcb7")
+id = "soft_branch"
+display_name = "Soft Branch"
+description = "A stick with a bundle of leaves! Grants +1 power for the next 2 turns on use."
+icon = ExtResource("1_kabta")
+max_stack = 3
+metadata/_custom_type_script = "uid://heqkiwbydg3j"

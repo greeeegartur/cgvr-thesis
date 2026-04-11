@@ -63,6 +63,13 @@ func _play_rewards(rewards: Dictionary):
 			"amount": rewards.currency
 		})
 	
+	for item_reward in rewards.get("items", []):
+		list.append({
+			"name": item_reward.name,
+			"icon": item_reward.icon,
+			"amount": item_reward.amount
+		})
+	
 	for reward in list:
 		var row = reward_row_scene.instantiate()
 		rewards_container.add_child(row)

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ShopEntry" load_steps=4 format=3 uid="uid://coxgmkwvcvshj"]
+
+[ext_resource type="Texture2D" uid="uid://dd8pfdyu0qni" path="res://Graphics/Placeholders/Items/beetlejuice.png" id="1_2d0t5"]
+[ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_kiesd"]
+[ext_resource type="Resource" uid="uid://dq3hj6xqbsyha" path="res://Scripts/Data/Items/BeetleJuice.tres" id="2_wpy48"]
+
+[resource]
+script = ExtResource("1_kiesd")
+id = "beetlejuice"
+display_name = "Beetle Juice"
+description = "Works well as grease! Restores 20-50% of your max health."
+type = 2
+icon = ExtResource("1_2d0t5")
+cost = 3
+max_stack = 3
+item_data = ExtResource("2_wpy48")
+metadata/_custom_type_script = "uid://b56nw6bpevr7t"

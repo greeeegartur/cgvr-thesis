@@ -88,14 +88,16 @@ func add_item(item_data: ItemData, amount := 1) -> bool:
 	# Trying item stacking first (if already inside inventory)
 	for item in items:
 		if item.data == item_data:
-			if item.amount < item_data.max_stack:
-				item.amount = min(item.amount + amount, item_data.max_stack)
-				return true
-			return false
+			if item.amount >= item_data.max_stack:
+				return false
+			
+			item.amount = min(item.amount + amount, item_data.max_stack)
+			return true
 	
 	# If the player gains a new item
 	if items.size() >= MAX_ITEM_TYPES: # Checks if the player's inventory is full
 		return false
+	
 	var new_item := InventoryItem.new()
 	new_item.data = item_data
 	new_item.amount = min(amount, item_data.max_stack)
@@ -123,8 +125,6 @@ func add_ability(ability_data: Resource) -> bool: # Ability or passive
 # Item/ability use methods
 func use_item(index: int, combat_manager):
 	var item = items[index]
-	if item.data.use_effect:
-		item.data.use_effect.call(combat_manager)
 	
 	item.amount -= 1
 	if item.amount <= 0:
@@ -154,6 +154,15 @@ func get_active_abilities():
 
 func get_passives():
 	return abilities.filter(func(a): return a.is_passive())
+
+func get_combat_items() -> Array[InventoryItem]:
+	return items
+
+func has_item(id: String) -> bool:
+	for item in items:
+		if item.data.id == id:
+			return true
+	return false
 
 # ENDING / KARMA SPECIFIC METHODS
 func record_killed_creature(enemy_id: String):

@@ -132,7 +132,7 @@ func hide_text():
 	var node
 	if current_state in hint_types_in_battle_panel:
 		node = panel
-	elif current_state == HintType.PLAYER_TURN or current_state == HintType.SHOP:
+	elif current_state == HintType.PLAYER_TURN or current_state == HintType.SHOP or current_state == HintType.PLAYER_SELECT:
 		node = controls_hint_node
 	var tween := create_tween()
 	tween.tween_property(node, "modulate:a", 0.0, 0.25)

@@ -29,10 +29,11 @@ metadata/_edit_use_anchors_ = true
 
 [node name="RewardsContainer" type="VBoxContainer" parent="Panel"]
 layout_mode = 0
-offset_left = 35.0
+offset_left = 42.0
 offset_top = 70.0
-offset_right = 264.0
+offset_right = 271.0
 offset_bottom = 267.0
+theme_override_constants/separation = 6
 
 [node name="VictoryText" type="RichTextLabel" parent="Panel"]
 layout_mode = 0

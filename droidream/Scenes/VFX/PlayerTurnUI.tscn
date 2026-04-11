@@ -1,9 +1,10 @@
-[gd_scene load_steps=17 format=3 uid="uid://6f0q2xbuuu16"]
+[gd_scene load_steps=19 format=3 uid="uid://6f0q2xbuuu16"]
 
 [ext_resource type="Script" uid="uid://d3goy7jibvf76" path="res://Scripts/Combat/PlayerTurnUI.gd" id="1_0fa56"]
 [ext_resource type="Texture2D" uid="uid://fk7vshnojgc" path="res://Graphics/Placeholders/Combat/gearcog.png" id="2_gsd0c"]
 [ext_resource type="PackedScene" uid="uid://tlxfueucaun" path="res://Scenes/VFX/AbilityRow.tscn" id="2_n7a3j"]
 [ext_resource type="Texture2D" uid="uid://c5aqisj0pbku6" path="res://Graphics/Placeholders/Combat/tameIcon.png" id="3_j6txv"]
+[ext_resource type="PackedScene" uid="uid://cl6e26b5c5qd6" path="res://Scenes/VFX/ItemRow.tscn" id="3_x3ufh"]
 [ext_resource type="Texture2D" uid="uid://dwxh5x6vwpat8" path="res://Graphics/Placeholders/Combat/abilitiesIcon.png" id="4_1nchb"]
 [ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="4_7cvk2"]
 [ext_resource type="Texture2D" uid="uid://dn6qn615b2785" path="res://Graphics/Placeholders/Combat/itemsIcon.png" id="5_7cvk2"]
@@ -13,6 +14,7 @@
 [ext_resource type="Texture2D" uid="uid://b37q8ukr1rn2k" path="res://Graphics/Placeholders/Combat/itemsStyleBox.png" id="9_7f765"]
 [ext_resource type="Texture2D" uid="uid://iktyp5h7govn" path="res://Graphics/Placeholders/Combat/earth_chip.png" id="9_n7a3j"]
 [ext_resource type="Texture2D" uid="uid://nuoesnjwkg24" path="res://Graphics/Placeholders/Combat/water_chip.png" id="10_x3ufh"]
+[ext_resource type="PackedScene" uid="uid://dpky3xhxxkv0a" path="res://Scenes/VFX/ItemInfoContainer.tscn" id="15_k6bu5"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_a1yl2"]
 texture = ExtResource("7_7cvk2")
@@ -27,6 +29,7 @@ texture = ExtResource("9_7f765")
 visible = false
 script = ExtResource("1_0fa56")
 AbilityRowScene = ExtResource("2_n7a3j")
+ItemRowScene = ExtResource("3_x3ufh")
 
 [node name="GearMenu" type="Node2D" parent="."]
 position = Vector2(171.00002, 247.00002)
@@ -262,7 +265,7 @@ theme_override_styles/panel = SubResource("StyleBoxTexture_nbpvq")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="ItemsMenu/Panel"]
 clip_contents = false
-layout_mode = 0
+layout_mode = 1
 offset_left = 16.0
 offset_right = 95.0
 offset_bottom = 80.0
@@ -272,4 +275,11 @@ vertical_scroll_mode = 3
 [node name="VBox" type="VBoxContainer" parent="ItemsMenu/Panel/ScrollContainer"]
 custom_minimum_size = Vector2(79, 55)
 layout_mode = 2
-theme_override_constants/separation = -14
+theme_override_constants/separation = -22
+
+[node name="ItemInfoContainer" parent="ItemsMenu" instance=ExtResource("15_k6bu5")]
+visible = false
+offset_left = 329.0
+offset_top = 135.0
+offset_right = 448.05884
+offset_bottom = 228.76001

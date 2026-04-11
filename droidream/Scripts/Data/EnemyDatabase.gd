@@ -33,10 +33,12 @@ const DATA = {
 	"beetle": {
 		"attack_offset": Vector2(90, 0),
 		"move_speed": 260.0,
+		"drop_item_ids": ["beetlejuice"]
 	},
 	"bat": {
 		"attack_offset": Vector2(95, 0),
 		"move_speed": 280.0,
+		"drop_item_ids": ["thick_jelly, soft_branch"]
 	}
 }
 
@@ -82,3 +84,6 @@ func get_attack_offset(enemy_id: String) -> Vector2:
 
 func get_move_speed(enemy_id: String) -> float:
 	return DATA[enemy_id].move_speed
+
+func get_drop_item_ids(enemy_id: String):
+	return DATA[enemy_id].drop_item_ids

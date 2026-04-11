@@ -23,6 +23,7 @@ CombatTypes="*res://Scripts/Data/CombatTypes.gd"
 PlayerData="*res://Scripts/Data/PlayerData.gd"
 ItemDb="*res://Scripts/Data/ItemDB.gd"
 AbilityDb="*res://Scripts/Data/AbilityDB.gd"
+CombatItemDb="*res://Scripts/Data/CombatItemDb.gd"
 
 [display]
 

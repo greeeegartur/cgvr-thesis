@@ -14,16 +14,19 @@ extends CanvasLayer
 @onready var items_panel := $ItemsMenu/Panel
 @onready var items_list := $ItemsMenu/Panel/ScrollContainer/VBox
 @onready var items_scroll := $ItemsMenu/Panel/ScrollContainer
+@onready var item_popup := $ItemsMenu/ItemInfoContainer
 # Count labels for tame UI
 @onready var sky_count = $AttackTypeMenu/Panel/Counts/SkyCount
 @onready var earth_count = $AttackTypeMenu/Panel/Counts/EarthCount
 @onready var water_count = $AttackTypeMenu/Panel/Counts/WaterCount
 
 @export var AbilityRowScene : PackedScene
+@export var ItemRowScene : PackedScene
 
 # Signals to use with CombatManager
 signal attack_type_selected(type)
 signal ability_selected(ability)
+signal item_selected(item)
 signal ability_tame_type_selected(type)
 signal cancel_ability_tame_select
 signal cycle_enemy(dir)
@@ -175,7 +178,23 @@ func _handle_abilities_input(event):
 
 # TO-DO: Items inputs
 func _handle_items_input(event):
-	if event.is_action_pressed("ui_cancel"):
+	var items = PlayerData.get_combat_items()
+	if items.is_empty():
+		if event.is_action_pressed("ui_cancel"):
+			_cancel_to_gear(MENU_ITEMS)
+		return
+	
+	if event.is_action_pressed("ui_up"):
+		_move_menu_index(MENU_ITEMS, -1, items.size())
+		_update_items_visuals()
+	elif event.is_action_pressed("ui_down"):
+		_move_menu_index(MENU_ITEMS, 1, items.size())
+		_update_items_visuals()
+	elif event.is_action_pressed("ui_accept"):
+		var idx = menu_indices[MENU_ITEMS]
+		item_popup.visible = false
+		emit_signal("item_selected", items[idx])
+	elif event.is_action_pressed("ui_cancel"):
 		_cancel_to_gear(MENU_ITEMS)
 
 func _cancel_to_gear(menu_name: String):
@@ -232,10 +251,10 @@ func _open_menu(menu_name: String, reset_index := false):
 			state = State.ATTACK_TYPE_SELECT
 		MENU_ABILITIES:
 			state = State.ABILITIES_SELECT
-			_refresh_abilities_ui()
+			await _refresh_abilities_ui()
 		MENU_ITEMS:
 			state = State.ITEMS_SELECT
-			# _refresh_items_ui()
+			await _refresh_items_ui()
 	
 	panel.visible = true
 	panel.scale = Vector2.ZERO
@@ -253,6 +272,9 @@ func _close_menu(menu_name: String):
 	if panel == null:
 		return
 	
+	if menu_name == MENU_ITEMS:
+		item_popup.visible = false
+	
 	var tween := create_tween()
 	tween.tween_property(panel, "scale", Vector2.ZERO, 0.15)
 	tween.parallel().tween_property(panel, "modulate:a", 0.0, 0.12)
@@ -263,8 +285,10 @@ func _refresh_menu_visuals(menu_name: String):
 	match menu_name:
 		MENU_ATTACK:
 			_update_attack_type_visuals()
-		MENU_ABILITIES, MENU_ITEMS:
-			_update_list_visuals(menu_name)
+		MENU_ABILITIES:
+			_update_abilities_visuals()
+		MENU_ITEMS:
+			_update_items_visuals()
 
 func _move_menu_index(menu_name: String, dir: int, count: int):
 	if count <= 0:
@@ -525,14 +549,41 @@ func _update_abilities_visuals():
 	_update_list_visuals(MENU_ABILITIES)
 
 func _build_items_ui():
-	# Replace with PlayerData.get_available_items() or whatever structure you use later
-	_build_list_ui(MENU_ITEMS, [], null)
+	await _build_list_ui(
+		MENU_ITEMS,
+		PlayerData.get_combat_items(),
+		ItemRowScene
+	)
 
 func _refresh_items_ui():
-	_refresh_list_ui(MENU_ITEMS, [])
+	await _refresh_list_ui(
+		MENU_ITEMS,
+		PlayerData.get_combat_items()
+	)
 
 func _update_items_visuals():
 	_update_list_visuals(MENU_ITEMS)
+	_update_item_info_popup()
+
+func _update_item_info_popup():
+	var items = PlayerData.get_combat_items()
+	if items.is_empty():
+		item_popup.visible = false
+		return
+	
+	var selected_index = menu_indices[MENU_ITEMS]
+	if selected_index < 0 or selected_index >= items.size():
+		item_popup.visible = false
+		return
+	
+	if selected_index >= items_list.get_child_count():
+		item_popup.visible = false
+		return
+	
+	var selected_item = items[selected_index]
+	var row = items_list.get_child(selected_index)
+	item_popup.setup_from_inventory_item(selected_item)
+	item_popup.move_to_row(row, Vector2(0, 134))
 
 func update_guess_display():
 	var g = PlayerData.guesses
@@ -643,14 +694,19 @@ func _reset_gear_layout():
 
 # UNIVERSAL HELPERS
 # For ability/item children scaling
-func _get_list_row_scale(child_count: int) -> float:
+func _get_list_row_scale(child_count: int, menu_name := "") -> float:
+	var base = 1.0
 	if child_count >= 6:
-		return 0.72
+		base = 0.72
 	elif child_count >= 5:
-		return 0.80
+		base = 0.80
 	elif child_count >= 4:
-		return 0.85
-	return 1.0
+		base = 0.85
+	
+	if menu_name == MENU_ITEMS:
+		base *= 0.95
+		
+	return base
 
 func _get_menu_list(menu_name: String) -> VBoxContainer:
 	match menu_name:
@@ -673,34 +729,37 @@ func _get_menu_row_scene(menu_name: String) -> PackedScene:
 		MENU_ABILITIES:
 			return AbilityRowScene
 		MENU_ITEMS:
-			return null
+			return ItemRowScene
 	return null
 
 func _build_list_ui(menu_name: String, entries: Array, row_scene: PackedScene):
 	var list := _get_menu_list(menu_name)
+	var scroll := _get_menu_scroll(menu_name)
 	if list == null:
 		return
 	
 	for child in list.get_children():
 		child.queue_free()
 	
-	var row_scale := _get_list_row_scale(entries.size())
+	var row_scale := _get_list_row_scale(entries.size(), menu_name)
 	for entry in entries:
 		var row = row_scene.instantiate()
 		list.add_child(row)
 		if row.has_method("setup"):
 			row.setup(entry, row_scale)
+			
 	menu_indices[menu_name] = 0
 	
 	await get_tree().process_frame
 	_update_list_visuals(menu_name)
 
-func _refresh_list_ui(menu_name: String, entries: Array): # TO-DO: make this use ItemRow scene too
+func _refresh_list_ui(menu_name: String, entries: Array):
 	var list := _get_menu_list(menu_name)
+	var scroll := _get_menu_scroll(menu_name)
 	if list == null:
 		return
 	
-	var row_scale := _get_list_row_scale(entries.size())
+	var row_scale := _get_list_row_scale(entries.size(), menu_name)
 	var child_count := list.get_child_count()
 	var entry_count := entries.size()
 	var shared_count = min(child_count, entry_count)
@@ -740,7 +799,7 @@ func _update_list_visuals(menu_name: String):
 	
 	var selected_index = menu_indices[menu_name]
 	var count = list.get_child_count()
-	var base_scale := _get_list_row_scale(count)
+	var base_scale := _get_list_row_scale(count, menu_name)
 	
 	for i in count:
 		var row = list.get_child(i)

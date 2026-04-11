@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://dq3hj6xqbsyha"]
+
+[ext_resource type="Texture2D" uid="uid://dd8pfdyu0qni" path="res://Graphics/Placeholders/Items/beetlejuice.png" id="1_8pq4p"]
+[ext_resource type="Script" uid="uid://heqkiwbydg3j" path="res://Scripts/Data/ItemData.gd" id="1_54lwa"]
+
+[resource]
+script = ExtResource("1_54lwa")
+id = "beetlejuice"
+display_name = "Beetle Juice"
+description = "Works well as grease! Restores 20-50% of your max health."
+icon = ExtResource("1_8pq4p")
+metadata/_custom_type_script = "uid://heqkiwbydg3j"

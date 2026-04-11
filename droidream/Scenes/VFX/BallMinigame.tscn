@@ -1,0 +1,29 @@
+[gd_scene load_steps=2 format=3 uid="uid://cksjlu3066fxr"]
+
+[ext_resource type="Script" uid="uid://df0m2x4oa23u5" path="res://Scripts/Misc/BallMinigame.gd" id="1_r0kjq"]
+
+[node name="BallMinigame" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_r0kjq")
+
+[node name="MeterBG" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 226.0
+offset_top = 48.0
+offset_right = 267.0
+offset_bottom = 299.0
+
+[node name="PinkFill" type="ColorRect" parent="MeterBG"]
+layout_mode = 0
+offset_top = 210.0
+offset_right = 40.0
+offset_bottom = 250.0
+color = Color(0.8784314, 0.3529412, 0.8901961, 1)
+
+[node name="RedFill" type="ColorRect" parent="MeterBG"]
+layout_mode = 0
+offset_top = 210.0
+offset_right = 41.0
+offset_bottom = 251.0
+color = Color(0.70603555, 0, 0.21231279, 1)

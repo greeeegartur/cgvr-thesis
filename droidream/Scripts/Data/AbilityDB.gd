@@ -39,8 +39,8 @@ func _register(ability: Resource):
 	# Abilities + passives
 	abilities[ability.id] = ability
 	# DEBUG:
-	#if ability.id == "human_at_heart":
-		#PlayerData.add_ability(ability)
+	if ability.id == "multitame":
+		PlayerData.add_ability(ability)
 
 func get_ability(id: String) -> Resource:
 	return abilities.get(id)

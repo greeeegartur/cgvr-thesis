@@ -15,6 +15,10 @@ func _register_base_items():
 	_register(preload("res://Scripts/Data/ShopItems/EarthChip.tres"))
 	_register(preload("res://Scripts/Data/ShopItems/SkyChip.tres"))
 	_register(preload("res://Scripts/Data/ShopItems/WaterChip.tres"))
+	_register(preload("res://Scripts/Data/ShopItems/BeetleJuiceEntry.tres"))
+	_register(preload("res://Scripts/Data/ShopItems/MemoryChipEntry.tres"))
+	_register(preload("res://Scripts/Data/ShopItems/SoftBranchEntry.tres"))
+	_register(preload("res://Scripts/Data/ShopItems/ThickJellyEntry.tres"))
 	# Abilities
 	_register(preload("res://Scripts/Data/ShopItems/RepairEntry.tres"))
 	_register(preload("res://Scripts/Data/ShopItems/MultiTameEntry.tres"))

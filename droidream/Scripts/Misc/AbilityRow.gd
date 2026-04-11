@@ -14,7 +14,6 @@ func setup(ability, compact_scale := 1.0):
 	visual_root.scale = Vector2.ONE * base_scale
 	visual_root.modulate = Color.WHITE
 	visual_root.rotation = 0.0
-	visual_root.pivot_offset = Vector2.ZERO
 	name_label.text = ability.data.display_name
 	
 	var max_cd = ability.data.cooldown_max
@@ -32,3 +31,4 @@ func set_visual_scale(scale_value: float):
 
 func _refresh_visual_pivot():
 	visual_root.pivot_offset = visual_root.size * 0.5
+	visual_root.position = Vector2.ZERO

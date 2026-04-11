@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ShopEntry" load_steps=4 format=3 uid="uid://b7cybettac7px"]
+
+[ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_5a83r"]
+[ext_resource type="Texture2D" uid="uid://cwrb4wclqbr73" path="res://Graphics/Placeholders/Items/memorychip.png" id="1_5gcoh"]
+[ext_resource type="Resource" uid="uid://cmts4mx4vv6we" path="res://Scripts/Data/Items/MemoryChip.tres" id="2_m6jld"]
+
+[resource]
+script = ExtResource("1_5a83r")
+id = "memory_chip"
+display_name = "Memory Chip"
+description = "A neatly shaped chip. Restores up to 2 random chips on use."
+type = 2
+icon = ExtResource("1_5gcoh")
+cost = 3
+max_stack = 3
+item_data = ExtResource("2_m6jld")
+metadata/_custom_type_script = "uid://b56nw6bpevr7t"

@@ -11,6 +11,7 @@ signal attack_finished
 signal action_pressed
 signal ability_entered
 signal ability_finished
+signal item_finished
 
 var in_ability_animation := false
 
@@ -146,6 +147,13 @@ func play_ability_end():
 	in_ability_animation = false
 	anim.play("player_idle")
 
+func play_item_use():
+	in_ability_animation = true
+	anim.play("player_item")
+	await item_finished
+	in_ability_animation = false
+	anim.play("player_idle")
+
 # Logic for animations after they have ended
 func _on_anim_finished(anim_name):
 	# Coroutine method
@@ -162,6 +170,8 @@ func _handle_animation_finished(anim_name):
 		ability_entered.emit()
 	elif anim_name == "player_ability_end":
 		ability_finished.emit()
+	elif anim_name == "player_item":
+		item_finished.emit()
 	elif anim_name == "player_walk" or anim_name == "player_defeat":
 		# player_walk is handled by tween logic, player_defeat stays on last frame
 		pass

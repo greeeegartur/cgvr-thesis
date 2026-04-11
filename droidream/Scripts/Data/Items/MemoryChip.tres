@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://cmts4mx4vv6we"]
+
+[ext_resource type="Texture2D" uid="uid://cwrb4wclqbr73" path="res://Graphics/Placeholders/Items/memorychip.png" id="1_5uq1j"]
+[ext_resource type="Script" uid="uid://heqkiwbydg3j" path="res://Scripts/Data/ItemData.gd" id="1_r6tkn"]
+
+[resource]
+script = ExtResource("1_r6tkn")
+id = "memory_chip"
+display_name = "Memory Chip"
+description = "A neatly shaped chip. Restores up to 2 random chips on use."
+icon = ExtResource("1_5uq1j")
+max_stack = 3
+metadata/_custom_type_script = "uid://heqkiwbydg3j"

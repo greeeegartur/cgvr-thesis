@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ShopEntry" load_steps=4 format=3 uid="uid://d2iauyvjg6gpt"]
+
+[ext_resource type="Texture2D" uid="uid://dn4q1hif8cd1f" path="res://Graphics/Placeholders/Items/thick jelly.png" id="1_tbjhf"]
+[ext_resource type="Resource" uid="uid://cbkw6op5uwibe" path="res://Scripts/Data/Items/ThickJelly.tres" id="2_l4e2e"]
+[ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="3_35d4n"]
+
+[resource]
+script = ExtResource("3_35d4n")
+id = "thick_jelly"
+display_name = "Thick Jelly"
+description = "Surprisingly hard texture? Could be applied to further block damage for the next 3 turns."
+type = 2
+icon = ExtResource("1_tbjhf")
+cost = 4
+max_stack = 2
+item_data = ExtResource("2_l4e2e")
+metadata/_custom_type_script = "uid://b56nw6bpevr7t"

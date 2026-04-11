@@ -1,10 +1,9 @@
 extends HBoxContainer
 class_name RewardRow
 
-@onready var icon := $Visual/Icon
-@onready var name_label := $Visual/Name
-@onready var amount_label := $Visual/Amount
-@onready var visual := $Visual
+@onready var icon := $Icon
+@onready var name_label := $Name
+@onready var amount_label := $Amount
 
 var target_amount := 0
 var skipped := false
@@ -19,8 +18,8 @@ func setup(texture:Texture2D, name:String, amount:int):
 	name_label.text = name
 	amount_label.text = "x0"
 	
-	visual.scale = Vector2(1.35,0.65)
-	visual.modulate.a = 0.0
+	scale = Vector2(1.35,0.65)
+	modulate.a = 0.0
 
 func play_count():
 	for i in range(target_amount + 1):
@@ -35,22 +34,22 @@ func play_count():
 	animating = false
 	
 	var tween = create_tween()
-	tween.tween_property(visual, "scale", Vector2.ONE * 1.55, 0.06)
-	tween.tween_property(visual, "scale", Vector2.ONE * 1.4, 0.1)
+	tween.tween_property(self, "scale", Vector2.ONE * 1.55, 0.06)
+	tween.tween_property(self, "scale", Vector2.ONE * 1.4, 0.1)
 
 func animate_in():
 	animating = true
 	
 	var tween := create_tween()
-	tween.parallel().tween_property(visual, "modulate:a", 1.0, 0.16)
+	tween.parallel().tween_property(self, "modulate:a", 1.0, 0.16)
 	tween.parallel().tween_property(
-		visual,
+		self,
 		"scale",
 		Vector2(0.75, 1.25),
 		0.22
 	)
 	tween.tween_property(
-		visual,
+		self,
 		"scale",
 		Vector2.ONE * 1.4,
 		0.25

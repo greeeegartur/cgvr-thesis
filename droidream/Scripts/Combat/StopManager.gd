@@ -32,7 +32,7 @@ var popup_scale_tween: Tween
 # TO-DO: karma based prices
 
 func _ready():
-	var base_y = popup.position.y + 2
+	var base_y = popup.position.y + 5
 	var t = create_tween()
 	t.set_loops()
 	t.tween_property(popup, "position:y", base_y + 3, 1.2)
@@ -113,7 +113,7 @@ func _attempt_purchase(shop_item: ShopItem):
 	_play_purchase_feedback(shop_item)
 	_spawn_purchase_feedback(shop_item)
 	
-	# Item's attributes inherited by player
+	# Non-usable item attributes inherited by player
 	match data.id:
 		"earth_chip":
 			PlayerData.add_guesses(CombatTypes.EntityType.EARTH, 1)
@@ -121,6 +121,32 @@ func _attempt_purchase(shop_item: ShopItem):
 			PlayerData.add_guesses(CombatTypes.EntityType.SKY, 1)
 		"water_chip":
 			PlayerData.add_guesses(CombatTypes.EntityType.WATER, 1)
+	
+	# Every other item attributes inherited by player
+	match data.type:
+		ShopEntry.ItemType.ITEM:
+			if data.item_data:
+				var added = PlayerData.add_item(data.item_data, 1)
+				if not added:
+					shop_item.shake()
+					PlayerData.currency += actual_cost
+					return
+		
+		ShopEntry.ItemType.ABILITY:
+			if data.ability_data:
+				var added = PlayerData.add_ability(data.ability_data)
+				if not added:
+					shop_item.shake()
+					PlayerData.currency += actual_cost
+					return
+		
+		ShopEntry.ItemType.PASSIVE:
+			if data.passive_data:
+				var added = PlayerData.add_ability(data.passive_data)
+				if not added:
+					shop_item.shake()
+					PlayerData.currency += actual_cost
+					return
 	
 	shop_item.quantity -= 1
 	_update_selection_visuals()

@@ -14,19 +14,14 @@ pivot_offset = Vector2(50, 9)
 size_flags_horizontal = 3
 script = ExtResource("1_7a1ei")
 
-[node name="Visual" type="Node2D" parent="."]
-
-[node name="Icon" type="TextureRect" parent="Visual"]
+[node name="Icon" type="TextureRect" parent="."]
 custom_minimum_size = Vector2(16, 16)
-offset_right = 16.0
-offset_bottom = 18.0
+layout_mode = 2
 texture = ExtResource("1_wxq25")
 stretch_mode = 4
 
-[node name="Name" type="Label" parent="Visual"]
-offset_left = 20.0
-offset_right = 54.0
-offset_bottom = 18.0
+[node name="Name" type="Label" parent="."]
+layout_mode = 2
 size_flags_horizontal = 4
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
@@ -35,19 +30,12 @@ theme_override_font_sizes/font_size = 17
 text = "Bolts"
 vertical_alignment = 2
 
-[node name="Spacer" type="Control" parent="Visual"]
+[node name="Spacer" type="Control" parent="."]
 custom_minimum_size = Vector2(5, 0)
-layout_mode = 3
-anchors_preset = 0
-offset_left = 58.0
-offset_right = 63.0
-offset_bottom = 18.0
+layout_mode = 2
 
-[node name="Amount" type="Label" parent="Visual"]
-offset_left = 67.0
-offset_top = 1.0
-offset_right = 79.0
-offset_bottom = 16.0
+[node name="Amount" type="Label" parent="."]
+layout_mode = 2
 size_flags_horizontal = 4
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
