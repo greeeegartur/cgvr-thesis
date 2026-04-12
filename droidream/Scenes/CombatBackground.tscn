@@ -57,17 +57,18 @@ position = Vector2(368.99994, 78.99999)
 scale = Vector2(0.7, 0.7)
 
 [node name="JungleLightRays2" parent="Layer08_TreesFar" instance=ExtResource("8_dmumh")]
-position = Vector2(-239, 90)
-rotation = -0.013962634
+position = Vector2(-264, 90)
+rotation = 0.3281219
 scale = Vector2(0.49999994, 0.49999994)
 
 [node name="JungleLightRays3" parent="Layer08_TreesFar" instance=ExtResource("8_dmumh")]
 position = Vector2(63, 122)
-rotation = 0.116937056
+rotation = 0.143117
 scale = Vector2(0.49999994, 0.49999994)
 
 [node name="JungleLightRays4" parent="Layer08_TreesFar" instance=ExtResource("8_dmumh")]
-position = Vector2(-41.00003, 145)
+position = Vector2(-68.00003, 144.99998)
+rotation = 0.2635447
 scale = Vector2(0.7, 0.7)
 
 [node name="Layer07_TreesMid" type="ParallaxLayer" parent="."]
@@ -84,10 +85,11 @@ texture = ExtResource("6_qrvdg")
 
 [node name="JungleLightRays" parent="Layer06_PlantsFar" instance=ExtResource("8_dmumh")]
 position = Vector2(154, 2)
+rotation = 0.15882497
 
 [node name="JungleLightRays3" parent="Layer06_PlantsFar" instance=ExtResource("8_dmumh")]
-position = Vector2(-188.99998, 75)
-rotation = 0.029670598
+position = Vector2(-223.99994, 75)
+rotation = 0.424115
 scale = Vector2(1.1, 1.1)
 
 [node name="JungleLightRays4" parent="Layer06_PlantsFar" instance=ExtResource("8_dmumh")]
@@ -122,7 +124,8 @@ position = Vector2(40, 0)
 texture = ExtResource("12_h5d1v")
 
 [node name="JungleLightRays2" parent="Layer02_BaseObjects" instance=ExtResource("8_dmumh")]
-position = Vector2(-317, 40.999996)
+position = Vector2(-291.99997, -9)
+rotation = 0.5794493
 scale = Vector2(1.4, 1.4)
 
 [node name="Layer01_Foreground" type="ParallaxLayer" parent="."]

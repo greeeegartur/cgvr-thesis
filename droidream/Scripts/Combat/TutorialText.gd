@@ -19,7 +19,7 @@ class_name TutorialText
 @onready var select_hint_node := $Control/SelectHint
 @onready var select_hint_label := $Control/SelectHint/Label
 
-var hint_types_in_battle_panel = [HintType.CRIT, HintType.BLOCK, HintType.REPAIR, HintType.MULTITAME, HintType.HEATUP, HintType.HARDEN]
+var hint_types_in_battle_panel = [HintType.CRIT, HintType.BLOCK, HintType.REPAIR, HintType.MULTITAME, HintType.HEATUP, HintType.HARDEN, HintType.BALL]
 
 # Different states for it to react accordingly
 enum HintType {
@@ -31,7 +31,8 @@ enum HintType {
 	REPAIR,
 	MULTITAME,
 	HEATUP,
-	HARDEN
+	HARDEN,
+	BALL
 }
 var current_state
 
@@ -111,6 +112,15 @@ func show_hint(type: HintType):
 			controls_hint_node.visible = false
 			z_icon.visible = false
 			show_text("Press keys in the correct order for greater defense!", label, panel)
+		
+		HintType.BALL:
+			current_state = HintType.BALL
+			panel.visible = true
+			select_hint_node.visible = false
+			controls_hint_node.visible = false
+			z_icon.visible = true
+			z_icon.position = Vector2(52.2, 10)
+			show_text("Press      when the meter is completely one color!", label, panel)
 
 # Methods for turns
 func show_text(text: String, settable_label: Label, node):

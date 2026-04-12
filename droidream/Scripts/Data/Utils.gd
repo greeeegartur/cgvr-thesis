@@ -31,3 +31,18 @@ func weighted_pick(weights: Dictionary):
 	
 	# Fallback (should never happen)
 	return weights.keys()[0]
+
+# Returns an array of all the wrong types
+func _get_wrong_guess_type(enemy_type: CombatTypes.EntityType) -> CombatTypes.EntityType:
+	var all_types = [
+		CombatTypes.EntityType.SKY,
+		CombatTypes.EntityType.EARTH,
+		CombatTypes.EntityType.WATER
+	]
+	
+	var wrong_types: Array[CombatTypes.EntityType] = []
+	for t in all_types:
+		if t != enemy_type:
+			wrong_types.append(t)
+	
+	return wrong_types.pick_random()

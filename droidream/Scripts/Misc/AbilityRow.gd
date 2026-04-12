@@ -31,4 +31,3 @@ func set_visual_scale(scale_value: float):
 
 func _refresh_visual_pivot():
 	visual_root.pivot_offset = visual_root.size * 0.5
-	visual_root.position = Vector2.ZERO

@@ -129,13 +129,13 @@ layout_mode = 2
 theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
 theme_override_constants/outline_size = 3
 theme_override_fonts/font = ExtResource("2_gr0x8")
-text = "Press keys to power up!"
+text = "Press      when the meter is completely one color!"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 
 [node name="ZIcon" type="Sprite2D" parent="Control/BattlePanel/HBoxContainer"]
-position = Vector2(57.885925, 10.1666565)
+position = Vector2(52.222218, 10.000001)
 scale = Vector2(1.2, 1.2)
 texture = ExtResource("1_to5ne")
 vframes = 2

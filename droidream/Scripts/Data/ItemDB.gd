@@ -11,7 +11,7 @@ func _ready():
 # TO-DO: simplify this
 # All items in stops by default
 func _register_base_items():
-	# Base
+	# Items
 	_register(preload("res://Scripts/Data/ShopItems/EarthChip.tres"))
 	_register(preload("res://Scripts/Data/ShopItems/SkyChip.tres"))
 	_register(preload("res://Scripts/Data/ShopItems/WaterChip.tres"))
@@ -19,6 +19,9 @@ func _register_base_items():
 	_register(preload("res://Scripts/Data/ShopItems/MemoryChipEntry.tres"))
 	_register(preload("res://Scripts/Data/ShopItems/SoftBranchEntry.tres"))
 	_register(preload("res://Scripts/Data/ShopItems/ThickJellyEntry.tres"))
+	_register(preload("res://Scripts/Data/ShopItems/BallEntry.tres"))
+	_register(preload("res://Scripts/Data/ShopItems/IceCubeEntry.tres"))
+	_register(preload("res://Scripts/Data/ShopItems/HypnoBoneEntry.tres"))
 	# Abilities
 	_register(preload("res://Scripts/Data/ShopItems/RepairEntry.tres"))
 	_register(preload("res://Scripts/Data/ShopItems/MultiTameEntry.tres"))

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ShopEntry" load_steps=4 format=3 uid="uid://j7gnfskjv330"]
+
+[ext_resource type="Texture2D" uid="uid://x7nehk80lrqd" path="res://Graphics/Placeholders/Items/icecube.png" id="1_1nhdd"]
+[ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_i4ywe"]
+[ext_resource type="Resource" uid="uid://ciug8ctvmcgys" path="res://Scripts/Data/Items/IceCube.tres" id="2_3boqf"]
+
+[resource]
+script = ExtResource("1_i4ywe")
+id = "ice_cube"
+display_name = "Ice Cube"
+description = "Prevents long-term overheating. Use to heal 10% of your max health for 3 turns."
+type = 2
+icon = ExtResource("1_1nhdd")
+cost = 3
+max_stack = 3
+item_data = ExtResource("2_3boqf")
+metadata/_custom_type_script = "uid://b56nw6bpevr7t"

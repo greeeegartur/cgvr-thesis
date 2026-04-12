@@ -246,6 +246,12 @@ func _open_menu(menu_name: String, reset_index := false):
 	if reset_index:
 		menu_indices[menu_name] = 0
 	
+	# Lets containers with children exist visually before refreshing list contents
+	panel.visible = true
+	panel.scale = Vector2.ZERO
+	panel.modulate.a = 0.0
+	await get_tree().process_frame
+	
 	match menu_name:
 		MENU_ATTACK:
 			state = State.ATTACK_TYPE_SELECT
@@ -734,13 +740,13 @@ func _get_menu_row_scene(menu_name: String) -> PackedScene:
 
 func _build_list_ui(menu_name: String, entries: Array, row_scene: PackedScene):
 	var list := _get_menu_list(menu_name)
-	var scroll := _get_menu_scroll(menu_name)
 	if list == null:
 		return
 	
 	for child in list.get_children():
 		child.queue_free()
 	
+	await get_tree().process_frame
 	var row_scale := _get_list_row_scale(entries.size(), menu_name)
 	for entry in entries:
 		var row = row_scene.instantiate()
@@ -750,12 +756,15 @@ func _build_list_ui(menu_name: String, entries: Array, row_scene: PackedScene):
 			
 	menu_indices[menu_name] = 0
 	
+	list.queue_sort()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
 	await get_tree().process_frame
 	_update_list_visuals(menu_name)
 
 func _refresh_list_ui(menu_name: String, entries: Array):
 	var list := _get_menu_list(menu_name)
-	var scroll := _get_menu_scroll(menu_name)
 	if list == null:
 		return
 	
@@ -788,6 +797,9 @@ func _refresh_list_ui(menu_name: String, entries: Array):
 	else:
 		menu_indices[menu_name] = clamp(menu_indices[menu_name], 0, entries.size() - 1)
 	
+	list.queue_sort()
+	await get_tree().process_frame
+	await get_tree().process_frame
 	await get_tree().process_frame
 	_update_list_visuals(menu_name)
 

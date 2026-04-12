@@ -7,6 +7,9 @@ func _ready():
 	_register(preload("res://Scripts/Data/Items/MemoryChip.tres"))
 	_register(preload("res://Scripts/Data/Items/ThickJelly.tres"))
 	_register(preload("res://Scripts/Data/Items/SoftBranch.tres"))
+	_register(preload("res://Scripts/Data/Items/Ball.tres"))
+	_register(preload("res://Scripts/Data/Items/IceCube.tres"))
+	_register(preload("res://Scripts/Data/Items/HypnoBone.tres"))
 
 func _register(item: ItemData):
 	match item.id:
@@ -25,6 +28,18 @@ func _register(item: ItemData):
 		"soft_branch":
 			item.use_effect = func(combat, inventory_item, target):
 				await combat._item_soft_branch_sequence(inventory_item, target)
+		
+		"ball":
+			item.use_effect = func(combat, inventory_item, target):
+				await combat._item_ball_sequence(inventory_item, target)
+		
+		"ice_cube":
+			item.use_effect = func(combat, inventory_item, target):
+				await combat._item_ice_cube_sequence(inventory_item, target)
+				
+		"hypno_bone":
+			item.use_effect = func(combat, inventory_item, target):
+				await combat._item_hypno_bone_sequence(inventory_item, target)
 	
 	items[item.id] = item
 

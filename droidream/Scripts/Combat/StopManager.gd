@@ -107,46 +107,64 @@ func _attempt_purchase(shop_item: ShopItem):
 		shop_item.shake()
 		return
 	
-	# Purchase accepted
-	PlayerData.currency -= actual_cost
-	shop_item.confirm_purchase()
-	_play_purchase_feedback(shop_item)
-	_spawn_purchase_feedback(shop_item)
+	var added := false
+	var fail_message := ""
 	
 	# Non-usable item attributes inherited by player
 	match data.id:
 		"earth_chip":
 			PlayerData.add_guesses(CombatTypes.EntityType.EARTH, 1)
+			added = true
 		"sky_chip":
 			PlayerData.add_guesses(CombatTypes.EntityType.SKY, 1)
+			added = true
 		"water_chip":
 			PlayerData.add_guesses(CombatTypes.EntityType.WATER, 1)
+			added = true
 	
 	# Every other item attributes inherited by player
 	match data.type:
 		ShopEntry.ItemType.ITEM:
 			if data.item_data:
-				var added = PlayerData.add_item(data.item_data, 1)
+				added = PlayerData.add_item(data.item_data, 1)
 				if not added:
-					shop_item.shake()
-					PlayerData.currency += actual_cost
-					return
+					if PlayerData.is_item_stack_full(data.item_data):
+						fail_message = "[color=#e72237ff][wave freq=12]Can't carry more![/wave][/color]"
+					elif PlayerData.has_max_item_types():
+						fail_message = "[color=#e72237ff][wave freq=12]Bag full![/wave][/color]"
 		
 		ShopEntry.ItemType.ABILITY:
 			if data.ability_data:
-				var added = PlayerData.add_ability(data.ability_data)
+				added = PlayerData.add_ability(data.ability_data)
 				if not added:
-					shop_item.shake()
-					PlayerData.currency += actual_cost
-					return
+					if PlayerData.has_ability(data.ability_data.id):
+						fail_message = "[color=#e72237ff][wave freq=12]Already owned![/wave][/color]" # Should not be possible but just in case
+					elif PlayerData.has_max_abilities():
+						fail_message = "[color=#e72237ff][wave freq=12]Can't learn more![/wave][/color]"
 		
 		ShopEntry.ItemType.PASSIVE:
 			if data.passive_data:
-				var added = PlayerData.add_ability(data.passive_data)
+				added = PlayerData.add_ability(data.passive_data)
 				if not added:
-					shop_item.shake()
-					PlayerData.currency += actual_cost
-					return
+					if PlayerData.has_ability(data.passive_data.id):
+						fail_message = "[color=#e72237ff][wave freq=12]Already owned![/wave][/color]" # Should not be possible but just in case
+					elif PlayerData.has_max_abilities():
+						fail_message = "[color=#e72237ff][wave freq=12]Can't learn more![/wave][/color]"
+	
+	if not added and data.type in [
+		ShopEntry.ItemType.ITEM,
+		ShopEntry.ItemType.ABILITY,
+		ShopEntry.ItemType.PASSIVE
+	]:
+		shop_item.shake()
+		_spawn_inventory_full_feedback(shop_item, fail_message)
+		return
+	
+	# Purchase accepted
+	PlayerData.currency -= actual_cost
+	shop_item.confirm_purchase()
+	_play_purchase_feedback(shop_item)
+	_spawn_purchase_feedback(shop_item)
 	
 	shop_item.quantity -= 1
 	_update_selection_visuals()
@@ -359,10 +377,20 @@ func _roll_shop_items():
 		if item.type == ShopEntry.ItemType.ABILITY and item.ability_data:
 			if PlayerData.has_ability(item.ability_data.id):
 				continue
+			if PlayerData.has_max_abilities():
+				continue
 		
 		# And same for passives
 		if item.type == ShopEntry.ItemType.PASSIVE and item.passive_data:
 			if PlayerData.has_ability(item.passive_data.id):
+				continue
+			if PlayerData.has_max_abilities():
+				continue
+		
+		# Also same check for items
+		if item.type == ShopEntry.ItemType.ITEM and item.item_data:
+			# Skip if player cannot add one
+			if not PlayerData.can_add_item(item.item_data, 1):
 				continue
 		
 		# Does not allow the same item to be in the shop twice, i.e "Repair" ability and "Repair" ability
@@ -410,3 +438,10 @@ func _spawn_purchase_feedback(shop_item: ShopItem):
 
 func _get_modified_price(base_cost: int) -> int:
 	return base_cost + PlayerData.get_shop_price_increase()
+
+func _spawn_inventory_full_feedback(shop_item: ShopItem, message: String):
+	var feedback := HitFeedbackScene.instantiate()
+	ui.add_child(feedback)
+	feedback.rotation_degrees = randf_range(-3, 3)
+	feedback.global_position = shop_item.global_position + Vector2(0, -20)
+	feedback.play(message)

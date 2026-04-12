@@ -5,8 +5,6 @@
 [ext_resource type="Texture2D" uid="uid://dd8pfdyu0qni" path="res://Graphics/Placeholders/Items/beetlejuice.png" id="2_tte4b"]
 
 [node name="ItemRow" type="HBoxContainer"]
-scale = Vector2(0.5, 0.5)
-pivot_offset = Vector2(21, 7.5)
 script = ExtResource("1_1masm")
 
 [node name="VisualRoot" type="HBoxContainer" parent="."]

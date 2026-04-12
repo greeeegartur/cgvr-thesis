@@ -9,5 +9,4 @@ id = "memory_chip"
 display_name = "Memory Chip"
 description = "A neatly shaped chip. Restores up to 2 random chips on use."
 icon = ExtResource("1_5uq1j")
-max_stack = 3
 metadata/_custom_type_script = "uid://heqkiwbydg3j"

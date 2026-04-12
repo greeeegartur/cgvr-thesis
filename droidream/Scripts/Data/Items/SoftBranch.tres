@@ -9,5 +9,4 @@ id = "soft_branch"
 display_name = "Soft Branch"
 description = "A stick with a bundle of leaves! Grants +1 power for the next 2 turns on use."
 icon = ExtResource("1_kabta")
-max_stack = 3
 metadata/_custom_type_script = "uid://heqkiwbydg3j"

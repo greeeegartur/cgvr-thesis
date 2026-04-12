@@ -215,15 +215,18 @@ func _absorb_object(target, obj: Node2D):
 	obj.queue_free()
 
 # Used in the multi-tame ability game
-func play_multi_tame_ball(player_visual: Node2D, target_visual: Node2D):
+func play_multi_tame_ball(player_visual: Node2D, target_visual: Node2D, texture := false):
 	var ball = MultiTameBallScene.instantiate()
 	feedback_layer.add_child(ball)
 	ball.global_position = player_visual.global_position + Vector2(28, -8)
+	if texture:
+		ball.set_to_ball_texture()
 	await ball.fly_to(target_visual.global_position + Vector2(-8, -8))
 	return ball
 
 func bounce_and_fade_ball(ball, target_pos: Vector2):
 	await ball.bounce_and_fade(target_pos + Vector2(-8, -8))
+	ball.reset_after_ball_texture()
 
 # Karma overlay updates
 func _update_karma_overlay():

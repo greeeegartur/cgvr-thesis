@@ -123,9 +123,10 @@ var soft_branch_power_bonus := 0.0
 var soft_branch_turns_remaining := 0
 const SOFT_BRANCH_POWER_BONUS := 1.0
 
-# Ball constants
-const BALL_INTENT_TAME := "tame"
-const BALL_INTENT_KILL := "kill"
+# Ice Cube effects
+var ice_cube_active := false
+var ice_cube_turns_remaining := 0
+const ICE_CUBE_HEAL_RATIO := 0.10
 
 # COMBAT SETUP FUNCTIONS
 # These are functions that run before combat begins, i.e entity data and loading the first turn
@@ -267,7 +268,7 @@ func _setup_ui():
 
 # Resets combat for new round
 func _reset_combat_state():
-	# Global variables reset
+	# Variables reset
 	turn = ""
 	selected_enemy = null
 	attack_timer_running = false
@@ -285,6 +286,8 @@ func _reset_combat_state():
 	soft_branch_active = false
 	soft_branch_power_bonus = 0.0
 	soft_branch_turns_remaining = 0
+	ice_cube_active = false
+	ice_cube_turns_remaining = 0
 	
 	# Freeing old enemy visuals and entities
 	for visual in enemy_visuals.values():
@@ -338,8 +341,8 @@ func _start_combat(enemy_ids):
 	await animate_enemy_entry()
 	
 	# PLAYER UI BUILDING
-	player_turn_ui._build_abilities_ui()
-	player_turn_ui._build_items_ui()
+	await player_turn_ui._build_abilities_ui()
+	await player_turn_ui._build_items_ui()
 	_reset_ability_cooldowns()
 	
 	# COMBAT STARTS
@@ -350,10 +353,12 @@ func _start_turn_loop():
 	# For checking if passives exist
 	#for ability in PlayerData.abilities:
 		#print(ability.data.id)
-	#PlayerData.add_item(CombatItemDb.get_item("memory_chip"), 6)
-	#PlayerData.add_item(CombatItemDb.get_item("beetlejuice"), 6)
-	#PlayerData.add_item(CombatItemDb.get_item("thick_jelly"), 6)
-	#PlayerData.add_item(CombatItemDb.get_item("soft_branch"), 6)
+	PlayerData.add_item(CombatItemDb.get_item("memory_chip"), 6)
+	PlayerData.add_item(CombatItemDb.get_item("beetlejuice"), 6)
+	PlayerData.add_item(CombatItemDb.get_item("thick_jelly"), 6)
+	PlayerData.add_item(CombatItemDb.get_item("soft_branch"), 6)
+	PlayerData.add_item(CombatItemDb.get_item("ball"), 6)
+	PlayerData.add_item(CombatItemDb.get_item("hypno_bone"), 6)
 	_player_turn()
 
 # TURN FUNCTIONS
@@ -504,16 +509,24 @@ func player_attack(attack_type: CombatTypes.EntityType):
 		func():
 			# Hides hint text
 			tutorial_text.hide_text()
-			
-			# Calculates the hit damage
-			await _apply_axis_shift(selected_enemy, attack_type),
+			var minigame_started = await _apply_axis_shift(selected_enemy, attack_type) # Calculates the hit damage
+			if minigame_started:
+				if combat_has_ended:
+					return
+				
+				if _check_victory():
+					_end_combat(true)
+				else:
+					_enemy_turn(),
 		CONNECT_ONE_SHOT
 	)
 	
 	# End of the turn
 	player_visual.attack_finished.connect(
 		func():
-			await player_visual._move_to_home_position()
+			if in_minigame:
+				return
+			
 			# Check if enemy defeated
 			if _check_victory():
 				_end_combat(true)
@@ -593,7 +606,8 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		if enemy.is_minigame_ready():
 			print("Enemy trust level reached! Triggering minigame now.")
 			await _start_minigame(enemy)
-		_enemy_turn()
+			return true
+		return false
 	else:
 		# Moves towards kill side on the left based on how off guard the enemy is
 		# Off guard is calculated for an exponential multiplier that increases axis movement the more "off guard" an enemy is
@@ -619,6 +633,8 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		# Checking if enemy has been defeated
 		_resolve_enemy_state(enemy)
 		print("Enemy takes %.2f damage, now is %.2f and %.2f left for kill." % [value_shift, enemy.axis_value, enemy.max_hp - value_shift])
+		
+		return false
 
 # Previous method reworked to use a given multiplier parameter (compact and for use with abilities/items)
 func _apply_axis_shift_with_multiplier(enemy: CombatEntity, guess_type: CombatTypes.EntityType, multiplier: float):
@@ -654,7 +670,7 @@ func _apply_axis_shift_with_multiplier(enemy: CombatEntity, guess_type: CombatTy
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
 		enemy_visual.shake(multiplier >= 1.5)
 		#vfx.play_damage_vfx(enemy_visual, abs(actual_shift), multiplier >= 1.5)
-		_resolve_enemy_state(enemy)
+		await _resolve_enemy_state(enemy)
 
 # Logic for starting enemy's minigame in combat
 func _start_minigame(enemy: CombatEntity):
@@ -691,6 +707,9 @@ func _start_minigame(enemy: CombatEntity):
 	
 	await on_minigame_complete(enemy, success)
 	_world_gray_out(false)
+	if combat_has_ended:
+		return
+	
 	if success and enemy.is_tamed():
 		await _resolve_enemy_state(enemy)
 		await player_visual.return_to_home()
@@ -698,8 +717,7 @@ func _start_minigame(enemy: CombatEntity):
 		if _check_victory():
 			_end_combat(true)
 	
-	if combat_has_ended:
-		return
+	await player_visual.return_to_home()
 	
 	#if is_instance_valid(minigame):
 		#minigame.queue_free()
@@ -1230,7 +1248,53 @@ func _item_soft_branch_sequence(item: InventoryItem, target):
 	
 	vfx.spawn_feedback(player_visual, "[color=#eff238][wave freq=14]Power up![/wave][/color]")
 	vfx.spawn_damage_number(player_visual, soft_branch_power_bonus, true)
+
+# Throwable ball item that works like Multi-tame, but does not use chips to tame or kill: this is decided by the strength of the throw minigame
+func _item_ball_sequence(item: InventoryItem, target: CombatEntity):
+	var meter_scene = preload("res://Scenes/VFX/BallMinigame.tscn")
+	var meter = meter_scene.instantiate()
+	minigame_layer.add_child(meter)
+	tutorial_text.show_hint(TutorialText.HintType.BALL)
 	
+	meter.play()
+	var result = await meter.finished
+	tutorial_text.hide_text()
+	
+	var intent: String = result[0]
+	var multiplier: float = result[1]
+	
+	await player_visual.play_item_use()
+	await _resolve_ball_hit(target, intent, multiplier)
+
+# Heals 10% of player's max health for 3 turns
+func _item_ice_cube_sequence(item: InventoryItem, target):
+	ice_cube_active = true
+	ice_cube_turns_remaining = 4
+	vfx.spawn_feedback(player_visual, "[color=#8be9fd][wave freq=14]Cooling[/wave][/color]")
+
+# Hypnotizes enemies into a random axis value, never fully tames any enemies
+func _item_hypno_bone_sequence(item: InventoryItem, target):
+	var alive_enemies = _get_alive_enemies()
+	if alive_enemies.is_empty():
+		return
+	
+	for enemy in alive_enemies:
+		var enemy_visual = enemy_visuals.get(enemy)
+		if enemy_visual == null:
+			continue
+		
+		var old_value = enemy.axis_value
+		var min_value = -enemy.axis_max + 0.25
+		var max_value = enemy.axis_max - 0.25
+		var new_value := randf_range(min_value, max_value)
+		new_value = round_quarter(new_value)
+		
+		enemy.axis_value = new_value
+		var actual_shift = enemy.axis_value - old_value
+		enemy_visual.update_axis(enemy.axis_value, actual_shift)
+		enemy_visual.shake(false)
+		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), false)
+
 # HELPER FUNCTIONS
 # These functions help ACTION functions with calculations and more
 
@@ -1399,13 +1463,17 @@ func _execute_item(target):
 	if item == null:
 		return
 	
-	await player_visual.play_item_use()
-	await item.data.use_effect.call(self, item, target)
+	if item.data.id == "ball":
+		await item.data.use_effect.call(self, item, target)
+	else:
+		await player_visual.play_item_use()
+		await item.data.use_effect.call(self, item, target)
+	
 	var item_index := PlayerData.items.find(item)
 	if item_index != -1:
 		PlayerData.use_item(item_index, self)
 	item_being_used = null
-	player_turn_ui._build_items_ui()
+	await player_turn_ui._build_items_ui()
 	
 	if combat_has_ended:
 		return
@@ -1605,7 +1673,6 @@ func _generate_rewards():
 	_apply_karma_and_outcome_tracking()
 	vfx._update_karma_overlay()
 	print("Currency right now: ", PlayerData.currency)
-	print(item_rewards)
 	
 	return {
 		"currency": total_currency,
@@ -1817,6 +1884,18 @@ func _update_turn_start_effects():
 			soft_branch_power_bonus = 0.0
 			vfx.spawn_feedback(player_visual, "[color=#e72237ff][wave freq=14]Branch broke[/wave][/color]")
 			_sync_player_stats()
+	
+	# Ice Cube: heals 10% max HP every turn for 3 turns
+	if ice_cube_active:
+		if ice_cube_turns_remaining > 0:
+			var heal_amount := round_quarter(player.max_hp * ICE_CUBE_HEAL_RATIO)
+			_change_player_hp(heal_amount)
+			vfx.spawn_damage_number(player_visual, heal_amount, false, true)
+			ice_cube_turns_remaining -= 1
+		
+		if ice_cube_turns_remaining <= 0:
+			ice_cube_active = false
+			vfx.spawn_feedback(player_visual, "[color=#8be9fd][wave freq=14]Ice melted[/wave][/color]")
 
 # Player HP changing methods for better interaction with PlayerData
 func _set_player_hp(value: float):
@@ -1937,6 +2016,34 @@ func _roll_tamed_enemy_drops() -> Array:
 			_add_reward_item(item_rewards, item_data, 1)
 	
 	return item_rewards
+
+# Handles the ball item's hit logic: intent-specific, so even if two different types of creatures are hit, they will both move towards kill/tame at the same time
+func _resolve_ball_hit(target: CombatEntity, intent: String, multiplier: float):
+	var affected = _get_multi_tame_targets(target)
+	if affected.is_empty():
+		return
+
+	var target_visual = enemy_visuals[target]
+	var ball = await vfx.play_multi_tame_ball(player_visual, target_visual, true)
+	for enemy in affected:
+		if enemy_visuals.has(enemy):
+			var visual = enemy_visuals[enemy]
+			visual.hop(2)
+			vfx.play_multihit_feedback(visual)
+
+	await vfx.bounce_and_fade_ball(ball, target_visual.global_position)
+	for enemy in affected:
+		var guess_type = _get_ball_guess_type_for_enemy(enemy, intent)
+		await _apply_axis_shift_with_multiplier(enemy, guess_type, multiplier)
+
+	await _resolve_pending_minigames()
+
+# Returns the type that the ball will apply to a creature after the ball minigame
+func _get_ball_guess_type_for_enemy(enemy: CombatEntity, intent: String) -> CombatTypes.EntityType:
+	if intent == "tame":
+		return enemy.type
+	
+	return Utils._get_wrong_guess_type(enemy.type)
 
 # ANIMATION METHODS
 # Smooth tween BG animation for minigame enter/exiting 

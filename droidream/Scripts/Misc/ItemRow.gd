@@ -10,7 +10,6 @@ func setup(item: InventoryItem, base_scale := 1.0):
 	custom_minimum_size = Vector2(0, 32)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	
-	icon.scale = Vector2.ONE * 0.5
 	visual_root.scale = Vector2.ONE
 	visual_root.modulate = Color.WHITE
 	visual_root.rotation = 0.0
@@ -23,4 +22,3 @@ func setup(item: InventoryItem, base_scale := 1.0):
 
 func _refresh_visual_pivot():
 	visual_root.pivot_offset = visual_root.size * 0.5
-	visual_root.position = Vector2.ZERO

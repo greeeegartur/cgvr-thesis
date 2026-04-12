@@ -15,6 +15,7 @@ var resolved := false
 
 func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	pivot_offset = size * 0.5
 	set_process_unhandled_input(true)
 	_reset_visuals()
 

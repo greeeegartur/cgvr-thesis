@@ -5,6 +5,12 @@ extends Node
 class_name BoonManager
 
 @onready var available_boons: Array[BoonData] = []
+var always_available_ids := [
+		"hp",
+		"power",
+		"defense",
+		"free_chips"
+	]
 
 # Sets up all boons for use
 func _ready():
@@ -67,13 +73,37 @@ func _ready():
 # Rolls random boons
 func roll_boons() -> Array[BoonData]:
 	var pool: Array[BoonData] = []
+	var fallback_pool: Array[BoonData] = []
+	var abilities_full := PlayerData.has_max_abilities()
+	
 	for boon in available_boons:
+		var is_always_available := boon.id in always_available_ids
+		var is_ability_like := boon.id != ""
+		
 		# Skips boons if the player already has them
-		if boon.id != "":
-			if PlayerData.has_ability(boon.id):
-				continue
+		if is_ability_like and PlayerData.has_ability(boon.id):
+			continue
+		
+		# Skip all ability/passive boons if player is at cap
+		if is_ability_like and abilities_full:
+			continue
+		
+		if is_always_available:
+			fallback_pool.append(boon)
 		
 		pool.append(boon)
 	
 	pool.shuffle()
 	return pool.slice(0, 3)
+	
+	var result: Array[BoonData] = pool.duplicate()
+	fallback_pool.shuffle()
+
+	for boon in fallback_pool:
+		if result.size() >= 3:
+			break
+		if result.has(boon):
+			continue
+		result.append(boon)
+
+	return result

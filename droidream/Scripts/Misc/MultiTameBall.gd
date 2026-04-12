@@ -2,6 +2,8 @@ extends Node2D
 class_name MultiTameBall
 
 @onready var sprite := $Sprite2D
+@export var ball_texture : Texture2D
+@export var multi_ball_texture : Texture2D
 
 func fly_to(target_pos: Vector2, arc_height := 40.0, duration := 0.3):
 	var start = global_position
@@ -47,3 +49,11 @@ func _quadratic_bezier(p0: Vector2, p1: Vector2, p2: Vector2, t: float) -> Vecto
 	var q0 = p0.lerp(p1, t)
 	var q1 = p1.lerp(p2, t)
 	return q0.lerp(q1, t)
+
+func set_to_ball_texture():
+	sprite.texture = ball_texture
+	sprite.vframes = 1
+
+func reset_after_ball_texture():
+	sprite.texture = multi_ball_texture
+	sprite.vframes = 2

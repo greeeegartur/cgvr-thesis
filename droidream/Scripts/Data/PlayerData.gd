@@ -254,3 +254,33 @@ func get_ending_type() -> String:
 	if killed > 0 and tamed > 0:
 		return "neutral"
 	return "?" # Should not happen
+
+func has_max_abilities() -> bool:
+	return abilities.size() >= MAX_ABILITY_SLOTS
+
+func has_max_item_types() -> bool:
+	return items.size() >= MAX_ITEM_TYPES
+
+func is_item_stack_full(item_data: ItemData) -> bool:
+	for item in items:
+		if item.data == item_data:
+			return item.amount >= item_data.max_stack
+	return false
+
+func can_add_item(item_data: ItemData, amount := 1) -> bool:
+	# Existing stack can still grow
+	for item in items:
+		if item.data == item_data:
+			return item.amount < item_data.max_stack
+	
+	return items.size() < MAX_ITEM_TYPES
+
+func can_add_ability_resource(ability_data: Resource) -> bool:
+	if not (ability_data is AbilityData or ability_data is PassiveData):
+		return false
+	
+	for a in abilities:
+		if a.data == ability_data:
+			return false
+	
+	return abilities.size() < MAX_ABILITY_SLOTS
