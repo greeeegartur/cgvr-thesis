@@ -26,7 +26,8 @@ var MINIGAME_SCENES = {
 	"base": preload("res://Scenes/Minigames/BaseMinigame.tscn"), # Default, only for testing
 	"beetle_rush": preload("res://Scenes/Minigames/Beetle Rush/BeetleRush.tscn"),
 	"bat_flash": preload("res://Scenes/Minigames/Bat Flash/BatFlash.tscn"),
-	"frog_guess": preload("res://Scenes/Minigames/Frog Guess/FrogGuess.tscn")
+	"frog_guess": preload("res://Scenes/Minigames/Frog Guess/FrogGuess.tscn"),
+	"duck_flap": preload("res://Scenes/Minigames/Duck Flap/DuckFlap.tscn")
 }
 
 # List of all enemy specific attributes that don't fit into their resources

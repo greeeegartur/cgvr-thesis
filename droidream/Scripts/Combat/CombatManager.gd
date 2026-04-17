@@ -87,9 +87,9 @@ var minigame_queue_ongoing := false
 # Creature-specific variables and constants
 const DUCK_TYPE_REVEAL_DURATION := 1.45
 const DUCK_TYPE_COLORS := {
-	CombatTypes.EntityType.SKY: Color("eff238"),
+	CombatTypes.EntityType.SKY: Color("f7ff3c"),
 	CombatTypes.EntityType.EARTH: Color("8b5a2b"),
-	CombatTypes.EntityType.WATER: Color("3d9feb")
+	CombatTypes.EntityType.WATER: Color("4da6ff")
 }
 
 # Ability/passive/item specific variables
@@ -2153,6 +2153,13 @@ func _reveal_duck_type(enemy: CombatEntity):
 		return
 	
 	var color: Color = DUCK_TYPE_COLORS.get(enemy.type, Color.WHITE)
+	match enemy.type:
+		CombatTypes.EntityType.SKY:
+			vfx.spawn_feedback(visual, "[color=f7ff3c]Sky[/color]")
+		CombatTypes.EntityType.EARTH:
+			vfx.spawn_feedback(visual, "[color=8b5a2b]Earth[/color]")
+		CombatTypes.EntityType.WATER:
+			vfx.spawn_feedback(visual, "[color=4da6ff]Water[/color]")
 	await _flash_enemy_type_color(visual, color, DUCK_TYPE_REVEAL_DURATION)
 
 # ANIMATION METHODS
