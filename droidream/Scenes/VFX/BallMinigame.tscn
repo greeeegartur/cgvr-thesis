@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://cksjlu3066fxr"]
+[gd_scene load_steps=4 format=3 uid="uid://cksjlu3066fxr"]
 
 [ext_resource type="Script" uid="uid://df0m2x4oa23u5" path="res://Scripts/Misc/BallMinigame.gd" id="1_r0kjq"]
+[ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="2_irun4"]
+[ext_resource type="Texture2D" uid="uid://unc0jsq2owev" path="res://Graphics/Placeholders/Combat/axis_select.png" id="2_xxwp0"]
 
 [node name="BallMinigame" type="Control"]
 layout_mode = 3
@@ -18,11 +20,67 @@ offset_bottom = 299.0
 [node name="PinkFill" type="ColorRect" parent="MeterBG"]
 layout_mode = 0
 offset_right = 41.0
-offset_bottom = 193.0
+offset_bottom = 194.0
 color = Color(0.8784314, 0.3529412, 0.8901961, 1)
+
+[node name="Hint" type="Label" parent="MeterBG/PinkFill"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -119.0
+offset_top = 49.951645
+offset_right = 33.962433
+offset_bottom = -103.06384
+grow_horizontal = 2
+grow_vertical = 2
+rotation = -1.5707964
+pivot_offset = Vector2(131.5, 12.5)
+size_flags_horizontal = 4
+theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
+theme_override_constants/outline_size = 10
+theme_override_fonts/font = ExtResource("2_irun4")
+theme_override_font_sizes/font_size = 36
+text = "TAME"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
 
 [node name="RedFill" type="ColorRect" parent="MeterBG"]
 layout_mode = 0
 offset_right = 41.0
 offset_bottom = 194.0
 color = Color(0.70603555, 0, 0.21231279, 1)
+
+[node name="Hint" type="Label" parent="MeterBG/RedFill"]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.99700004
+anchor_bottom = 0.9990001
+offset_left = -119.09453
+offset_top = 49.795074
+offset_right = 33.81213
+offset_bottom = -103.02644
+grow_horizontal = 2
+grow_vertical = 2
+rotation = -1.5707964
+pivot_offset = Vector2(131.5, 12.5)
+size_flags_horizontal = 4
+theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
+theme_override_constants/outline_size = 10
+theme_override_fonts/font = ExtResource("2_irun4")
+theme_override_font_sizes/font_size = 36
+text = "KILL"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="TextureRect" type="TextureRect" parent="MeterBG"]
+layout_mode = 0
+offset_left = 44.934647
+offset_top = -4.0
+offset_right = 67.31534
+offset_bottom = 45.934647
+rotation = 1.5707964
+texture = ExtResource("2_xxwp0")
+stretch_mode = 4

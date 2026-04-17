@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnemyAttackPattern" load_steps=2 format=3 uid="uid://c8p01avw73x30"]
+
+[ext_resource type="Script" uid="uid://by18pvdsekurc" path="res://Scripts/Data/EnemyAttackPattern.gd" id="1_rlkxh"]
+
+[resource]
+script = ExtResource("1_rlkxh")
+pattern_id = "duck_tackle_2"
+animation_name = "duck_tackle_2"
+total_duration = 3.2
+hits = Array[Dictionary]([{
+"block_window": Vector2(1.52, 1.87),
+"damage_multiplier": 1.0,
+"time": 1.87
+}])
+metadata/_custom_type_script = "uid://by18pvdsekurc"

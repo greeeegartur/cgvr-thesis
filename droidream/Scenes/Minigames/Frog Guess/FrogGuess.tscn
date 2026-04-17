@@ -1,0 +1,366 @@
+[gd_scene load_steps=24 format=3 uid="uid://rdqurwh47ab2"]
+
+[ext_resource type="Script" uid="uid://fm7l6xhni6vg" path="res://Scripts/Minigames/FrogGuess.gd" id="1_f7if6"]
+[ext_resource type="PackedScene" uid="uid://da38dq6mvu3ji" path="res://Scenes/Minigames/Frog Guess/FrogEntity.tscn" id="2_8er84"]
+[ext_resource type="Texture2D" uid="uid://dsva4n5826gka" path="res://Graphics/Placeholders/Minigames/Frog Guess/Panel.png" id="2_axjd1"]
+[ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="2_cdoao"]
+[ext_resource type="PackedScene" uid="uid://bjh0w31eegrg2" path="res://Scenes/VFX/DamageNumber.tscn" id="3_m2ocw"]
+[ext_resource type="Texture2D" uid="uid://b0axro84k6yfj" path="res://Graphics/Placeholders/Combat/Z.png" id="4_odlyo"]
+[ext_resource type="Texture2D" uid="uid://c8r71sfyfulx1" path="res://Graphics/Placeholders/Minigames/Frog Guess/BG2.png" id="5_j61w8"]
+[ext_resource type="Texture2D" uid="uid://bvm8lg6cts3v3" path="res://Graphics/Placeholders/Minigames/Frog Guess/arrows.png" id="5_odlyo"]
+[ext_resource type="Texture2D" uid="uid://dxbd5kdjuqyr5" path="res://Graphics/Placeholders/Combat/Combat Select.png" id="6_f7if6"]
+[ext_resource type="Texture2D" uid="uid://vcluxskth783" path="res://Graphics/Placeholders/Minigames/Frog Guess/frog_entity_mono.png" id="6_ia45h"]
+[ext_resource type="Texture2D" uid="uid://cjgsbxj3iohwr" path="res://Graphics/Placeholders/Minigames/Frog Guess/BG.png" id="7_kcxyv"]
+[ext_resource type="Texture2D" uid="uid://ifew7wddoo4r" path="res://Graphics/Placeholders/Minigames/Frog Guess/fakefrog_mono.png" id="7_n2xkm"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_g7n8k"]
+texture = ExtResource("2_axjd1")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_f7if6"]
+bg_color = Color(0.8392157, 0.8235294, 0.5686275, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kcxyv"]
+bg_color = Color(0.32930958, 0.6232507, 0.32154667, 1)
+
+[sub_resource type="Animation" id="Animation_7dn3n"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Hint:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_bpygb"]
+resource_name = "pop"
+length = 0.8
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Hint:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.4, 0.8),
+"transitions": PackedFloat32Array(0.30778608, 0.26794332, 0.2679434),
+"update": 0,
+"values": [Vector2(0.9, 0.9), Vector2(1, 1), Vector2(0.9, 0.9)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_8ne7f"]
+_data = {
+&"RESET": SubResource("Animation_7dn3n"),
+&"pop": SubResource("Animation_bpygb")
+}
+
+[sub_resource type="Animation" id="Animation_8ne7f"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="Animation" id="Animation_0s31j"]
+resource_name = "press"
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [1, 0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_5bvr3"]
+_data = {
+&"RESET": SubResource("Animation_8ne7f"),
+&"press": SubResource("Animation_0s31j")
+}
+
+[sub_resource type="Animation" id="Animation_23h33"]
+resource_name = "pop"
+length = 0.8
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("../RightArrow:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.4, 0.8),
+"transitions": PackedFloat32Array(0.30778608, 0.26794332, 0.2679434),
+"update": 0,
+"values": [Vector2(0.9, 0.9), Vector2(1, 1), Vector2(0.9, 0.9)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("../LeftArrow:scale")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.4, 0.8),
+"transitions": PackedFloat32Array(0.30778608, 0.26794332, 0.2679434),
+"update": 0,
+"values": [Vector2(0.9, 0.9), Vector2(1, 1), Vector2(0.9, 0.9)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath(".:scale")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.4, 0.8),
+"transitions": PackedFloat32Array(0.30778608, 0.26794332, 0.2679434),
+"update": 0,
+"values": [Vector2(0.9, 0.9), Vector2(1, 1), Vector2(0.9, 0.9)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_wxod1"]
+_data = {
+&"pop": SubResource("Animation_23h33")
+}
+
+[node name="FrogGuess" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_f7if6")
+FrogEntityScene = ExtResource("2_8er84")
+DamageNumberScene = ExtResource("3_m2ocw")
+background_textures = Array[Texture2D]([ExtResource("7_kcxyv"), ExtResource("5_j61w8")])
+real_frog_textures = Array[Texture2D]([ExtResource("6_ia45h")])
+fake_frog_textures = Array[Texture2D]([ExtResource("7_n2xkm")])
+max_duration = 10.0
+
+[node name="VisualRoot" type="Node2D" parent="."]
+position = Vector2(315, 185)
+
+[node name="UI" type="Node2D" parent="VisualRoot"]
+
+[node name="Background" type="PanelContainer" parent="VisualRoot/UI"]
+z_index = -1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -51.0
+offset_top = -37.0
+offset_right = 49.0
+offset_bottom = 63.0
+scale = Vector2(2.75, 2.75)
+pivot_offset = Vector2(50, 50)
+theme_override_styles/panel = SubResource("StyleBoxTexture_g7n8k")
+metadata/_edit_use_anchors_ = true
+
+[node name="ProgressBar" type="ProgressBar" parent="VisualRoot/UI"]
+offset_left = -125.999985
+offset_top = -157.00002
+offset_right = 74.00003
+offset_bottom = -130.00002
+scale = Vector2(1.25, 1.25)
+theme_override_fonts/font = ExtResource("2_cdoao")
+theme_override_font_sizes/font_size = 24
+theme_override_styles/background = SubResource("StyleBoxFlat_f7if6")
+theme_override_styles/fill = SubResource("StyleBoxFlat_kcxyv")
+show_percentage = false
+metadata/_edit_use_anchors_ = true
+
+[node name="Timer" type="Label" parent="VisualRoot/UI/ProgressBar"]
+layout_mode = 0
+offset_left = 81.60001
+offset_top = 0.79999995
+offset_right = 121.60001
+offset_bottom = 25.8
+theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
+theme_override_constants/outline_size = 5
+theme_override_fonts/font = ExtResource("2_cdoao")
+theme_override_font_sizes/font_size = 24
+text = ".."
+metadata/_edit_use_anchors_ = true
+
+[node name="Hint" type="Label" parent="VisualRoot/UI"]
+z_index = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -132.0
+offset_top = -130.0
+offset_right = 131.0
+offset_bottom = -105.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(131.5, 12.5)
+size_flags_horizontal = 4
+theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("2_cdoao")
+theme_override_font_sizes/font_size = 20
+text = "Guess the number of real frogs!"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint"]
+root_node = NodePath("../..")
+libraries = {
+&"": SubResource("AnimationLibrary_8ne7f")
+}
+autoplay = "pop"
+
+[node name="Z" type="Sprite2D" parent="VisualRoot/UI/Hint"]
+position = Vector2(145.9521, 32.66646)
+scale = Vector2(1.2722012, 1.2722012)
+texture = ExtResource("4_odlyo")
+vframes = 2
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Z"]
+libraries = {
+&"": SubResource("AnimationLibrary_5bvr3")
+}
+autoplay = "press"
+
+[node name="Hint" type="Label" parent="VisualRoot/UI/Hint"]
+z_index = 1
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.57186276
+anchor_top = 5.585647
+anchor_right = 0.57186276
+anchor_bottom = 5.585647
+offset_left = -132.0
+offset_top = -119.0
+offset_right = 131.0
+offset_bottom = -94.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.8724787, 0.8724787)
+pivot_offset = Vector2(131.5, 12.5)
+size_flags_horizontal = 4
+theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("2_cdoao")
+theme_override_font_sizes/font_size = 18
+text = "to select      to confirm"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="Arrows" type="Sprite2D" parent="VisualRoot/UI/Hint"]
+position = Vector2(55.38893, 33.05557)
+scale = Vector2(1.3, 1.3)
+texture = ExtResource("5_odlyo")
+vframes = 2
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Arrows"]
+libraries = {
+&"": SubResource("AnimationLibrary_5bvr3")
+}
+autoplay = "press"
+
+[node name="GuessUI" type="Node2D" parent="VisualRoot/UI"]
+position = Vector2(0, 49)
+scale = Vector2(0.7, 0.7)
+
+[node name="RightArrow" type="Sprite2D" parent="VisualRoot/UI/GuessUI"]
+z_index = 1
+position = Vector2(34, 89)
+rotation = 1.5707964
+scale = Vector2(0.99906015, 0.99906015)
+texture = ExtResource("6_f7if6")
+
+[node name="LeftArrow" type="Sprite2D" parent="VisualRoot/UI/GuessUI"]
+z_index = 1
+position = Vector2(-32, 89)
+rotation = 4.712389
+scale = Vector2(0.99906015, 0.99906015)
+texture = ExtResource("6_f7if6")
+
+[node name="GuessLabel" type="Label" parent="VisualRoot/UI/GuessUI"]
+z_index = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -130.0
+offset_top = 54.5
+offset_right = 133.0
+offset_bottom = 118.5
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.99906015, 0.99906015)
+pivot_offset = Vector2(131.5, 32)
+size_flags_horizontal = 4
+theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
+theme_override_constants/outline_size = 10
+theme_override_fonts/font = ExtResource("2_cdoao")
+theme_override_font_sizes/font_size = 64
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/GuessUI/GuessLabel"]
+libraries = {
+&"": SubResource("AnimationLibrary_wxod1")
+}
+autoplay = "pop"
+
+[node name="PlayArea" type="Control" parent="VisualRoot"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -134.0
+offset_top = -119.0
+offset_right = 132.0
+offset_bottom = 147.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BackgroundRect" type="TextureRect" parent="VisualRoot/PlayArea"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.44402984
+anchor_right = 0.5
+anchor_bottom = 0.44402984
+offset_left = -133.0
+offset_top = -118.0
+offset_right = 1266.9999
+offset_bottom = 1281.9999
+scale = Vector2(0.19, 0.19)
+texture = ExtResource("7_kcxyv")
+metadata/_edit_use_anchors_ = true
+
+[node name="Entities" type="Node2D" parent="VisualRoot/PlayArea"]
+position = Vector2(134, 120)

@@ -5,22 +5,28 @@
 [resource]
 script = ExtResource("1_qaku2")
 enemy_count_weights = {
-1: 0.0,
-2: 0.75,
+1: 0.15,
+2: 0.6,
 3: 0.25
 }
 creature_weights = {
 1: {
-"bat": 0.0,
-"beetle": 0.0
+"bat": 0.1,
+"beetle": 0.0,
+"duck": 0.45,
+"frog": 0.45
 },
 2: {
-"bat": 0.9,
-"beetle": 0.1
+"bat": 0.6,
+"beetle": 0.15,
+"duck": 0.1,
+"frog": 0.15
 },
 3: {
 "bat": 0.6,
-"beetle": 0.4
+"beetle": 0.4,
+"duck": 0.05,
+"frog": 0.05
 }
 }
 metadata/_custom_type_script = "uid://cq42yd5k6nmne"

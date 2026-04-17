@@ -6,21 +6,27 @@
 script = ExtResource("1_u7m4j")
 enemy_count_weights = {
 1: 0.0,
-2: 0.2,
-3: 0.8
+2: 0.4,
+3: 0.6
 }
 creature_weights = {
 1: {
 "bat": 0.0,
-"beetle": 0.0
+"beetle": 0.0,
+"duck": 0.0,
+"frog": 0.0
 },
 2: {
-"bat": 0.6,
-"beetle": 0.4
+"bat": 0.3,
+"beetle": 0.1,
+"duck": 0.4,
+"frog": 0.2
 },
 3: {
-"bat": 0.9,
-"beetle": 0.1
+"bat": 0.4,
+"beetle": 0.1,
+"duck": 0.2,
+"frog": 0.3
 }
 }
 metadata/_custom_type_script = "uid://cq42yd5k6nmne"

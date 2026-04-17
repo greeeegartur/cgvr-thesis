@@ -25,20 +25,31 @@ var ENEMIES : Dictionary
 var MINIGAME_SCENES = {
 	"base": preload("res://Scenes/Minigames/BaseMinigame.tscn"), # Default, only for testing
 	"beetle_rush": preload("res://Scenes/Minigames/Beetle Rush/BeetleRush.tscn"),
-	"bat_flash": preload("res://Scenes/Minigames/Bat Flash/BatFlash.tscn")
+	"bat_flash": preload("res://Scenes/Minigames/Bat Flash/BatFlash.tscn"),
+	"frog_guess": preload("res://Scenes/Minigames/Frog Guess/FrogGuess.tscn")
 }
 
 # List of all enemy specific attributes that don't fit into their resources
 const DATA = {
 	"beetle": {
-		"attack_offset": Vector2(90, 0),
-		"move_speed": 260.0,
-		"drop_item_ids": ["beetlejuice"]
+		"attack_offset": Vector2(90, 3),
+		"move_speed": 240.0,
+		"drop_item_ids": ["beetlejuice", "ball", "soft_branch"]
 	},
 	"bat": {
 		"attack_offset": Vector2(95, 0),
 		"move_speed": 280.0,
-		"drop_item_ids": ["thick_jelly, soft_branch"]
+		"drop_item_ids": ["hypno_bone", "soft_branch", "memory_chip"]
+	},
+	"frog": {
+		"attack_offset": Vector2(95, 0),
+		"move_speed": 200.0,
+		"drop_item_ids": ["thick_jelly", "ice_cube", "ball"]
+	},
+	"duck": {
+		"attack_offset": Vector2(107, 5),
+		"move_speed": 260.0,
+		"drop_item_ids": ["soft_branch", "memory_chip", "ball", "ice_cube"]
 	}
 }
 

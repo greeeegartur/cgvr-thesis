@@ -120,7 +120,7 @@ func show_hint(type: HintType):
 			controls_hint_node.visible = false
 			z_icon.visible = true
 			z_icon.position = Vector2(52.2, 10)
-			show_text("Press      when the meter is completely one color!", label, panel)
+			show_text("Press      when the meter is fully one color!", label, panel)
 
 # Methods for turns
 func show_text(text: String, settable_label: Label, node):

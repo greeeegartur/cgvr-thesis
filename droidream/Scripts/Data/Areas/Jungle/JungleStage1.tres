@@ -11,16 +11,22 @@ enemy_count_weights = {
 }
 creature_weights = {
 1: {
-"bat": 0.2,
-"beetle": 0.8
+"bat": 0.4,
+"beetle": 0.0,
+"duck": 0.6,
+"frog": 0.0
 },
 2: {
 "bat": 0.5,
-"beetle": 0.5
+"beetle": 0.4,
+"duck": 0.0,
+"frog": 0.1
 },
 3: {
 "bat": 0.0,
-"beetle": 0.0
+"beetle": 0.0,
+"duck": 0.0,
+"frog": 0.0
 }
 }
 metadata/_custom_type_script = "uid://cq42yd5k6nmne"

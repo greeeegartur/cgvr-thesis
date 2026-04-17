@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EnemyAttackPattern" load_steps=2 format=3 uid="uid://cbq1ubfjeu2tc"]
+
+[ext_resource type="Script" uid="uid://by18pvdsekurc" path="res://Scripts/Data/EnemyAttackPattern.gd" id="1_ier1s"]
+
+[resource]
+script = ExtResource("1_ier1s")
+pattern_id = "frog_heal"
+animation_name = "frog_heal"
+total_duration = 2.1
+is_support = true
+spawn_chance = 0.0
+metadata/_custom_type_script = "uid://by18pvdsekurc"

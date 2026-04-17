@@ -1,0 +1,80 @@
+[gd_scene load_steps=7 format=3 uid="uid://da38dq6mvu3ji"]
+
+[ext_resource type="Texture2D" uid="uid://b70e36oplvm7a" path="res://Graphics/Placeholders/Minigames/Frog Guess/frog_entity.png" id="1_m3gmq"]
+[ext_resource type="Script" uid="uid://doyuwetr5wbnp" path="res://Scripts/Minigames/FrogEntity.gd" id="1_smd4e"]
+[ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="2_smd4e"]
+
+[sub_resource type="Animation" id="Animation_smd4e"]
+resource_name = "croak"
+length = 0.8
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.4),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [0, 1]
+}
+
+[sub_resource type="Animation" id="Animation_5cslb"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_h7tqo"]
+_data = {
+&"RESET": SubResource("Animation_5cslb"),
+&"croak": SubResource("Animation_smd4e")
+}
+
+[node name="FrogEntity" type="Node2D"]
+script = ExtResource("1_smd4e")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("1_m3gmq")
+vframes = 2
+
+[node name="CountLabel" type="Label" parent="."]
+z_index = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -132.0
+offset_top = -43.0
+offset_right = 131.0
+offset_bottom = -18.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(131.5, 12.5)
+size_flags_horizontal = 4
+theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("2_smd4e")
+theme_override_font_sizes/font_size = 20
+text = "1"
+horizontal_alignment = 1
+vertical_alignment = 1
+metadata/_edit_use_anchors_ = true
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_h7tqo")
+}
+autoplay = "croak"

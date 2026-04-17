@@ -61,7 +61,10 @@ var last_attack_press_time = -1.0
 var last_block_press_time = -1.0
 var current_block_window = Vector2.ZERO
 var block_on_cooldown = false
-const BLOCK_COOLDOWN = 0.7
+const BLOCK_COOLDOWN = 0.45
+var enemy_attack_started_handlers: Dictionary = {}
+var enemy_attack_hit_handlers: Dictionary = {}
+var enemy_attack_finished_handlers: Dictionary = {}
 
 # Crit multipliers (for Recalibration effect)
 const BASE_CRIT_MULTIPLIER := 1.5
@@ -80,6 +83,14 @@ var item_being_used: InventoryItem
 var selected_ability_tame_type: CombatTypes.EntityType
 var ability_tame_select_active := false
 var minigame_queue_ongoing := false
+
+# Creature-specific variables and constants
+const DUCK_TYPE_REVEAL_DURATION := 1.45
+const DUCK_TYPE_COLORS := {
+	CombatTypes.EntityType.SKY: Color("eff238"),
+	CombatTypes.EntityType.EARTH: Color("8b5a2b"),
+	CombatTypes.EntityType.WATER: Color("3d9feb")
+}
 
 # Ability/passive/item specific variables
 # Heat Up effects
@@ -288,6 +299,9 @@ func _reset_combat_state():
 	soft_branch_turns_remaining = 0
 	ice_cube_active = false
 	ice_cube_turns_remaining = 0
+	enemy_attack_started_handlers.clear()
+	enemy_attack_hit_handlers.clear()
+	enemy_attack_finished_handlers.clear()
 	
 	# Freeing old enemy visuals and entities
 	for visual in enemy_visuals.values():
@@ -331,6 +345,14 @@ func _resume_combat():
 	combat_paused = false
 	set_process_input(true)
 
+# If an enemy has a gimmick (like the duck, who has a new type every encounter), it will be loaded in here
+func _apply_enemy_encounter_gimmicks():
+	for enemy in enemies:
+		if enemy.id != "duck":
+			continue
+		
+		_randomize_duck_type(enemy)
+		await _reveal_duck_type(enemy)
 
 # Called from StageFlowController with stage specific area ids to setup entities and start turns
 func _start_combat(enemy_ids):
@@ -339,6 +361,7 @@ func _start_combat(enemy_ids):
 	await _setup_entities(enemy_ids)
 	vfx._update_karma_overlay()
 	await animate_enemy_entry()
+	_apply_enemy_encounter_gimmicks()
 	
 	# PLAYER UI BUILDING
 	await player_turn_ui._build_abilities_ui()
@@ -353,12 +376,7 @@ func _start_turn_loop():
 	# For checking if passives exist
 	#for ability in PlayerData.abilities:
 		#print(ability.data.id)
-	PlayerData.add_item(CombatItemDb.get_item("memory_chip"), 6)
-	PlayerData.add_item(CombatItemDb.get_item("beetlejuice"), 6)
-	PlayerData.add_item(CombatItemDb.get_item("thick_jelly"), 6)
-	PlayerData.add_item(CombatItemDb.get_item("soft_branch"), 6)
-	PlayerData.add_item(CombatItemDb.get_item("ball"), 6)
-	PlayerData.add_item(CombatItemDb.get_item("hypno_bone"), 6)
+	PlayerData.add_item(CombatItemDb.get_item("ball"), 2)
 	_player_turn()
 
 # TURN FUNCTIONS
@@ -734,7 +752,7 @@ func on_minigame_complete(enemy: CombatEntity, success: bool):
 	
 	if success:
 		var restore_ratio := randf_range(0.2, 0.35)
-		enemy.axis_value = enemy.axis_max * restore_ratio
+		enemy.axis_value = round_quarter(enemy.axis_max * restore_ratio)
 		enemy.trust += 1
 		enemy_visual.update_axis(enemy.axis_value)
 		enemy_visual.update_axis_trust() 
@@ -747,7 +765,7 @@ func on_minigame_complete(enemy: CombatEntity, success: bool):
 	else:
 		# Restore enemy's defense by a random amount from 20-35%, rounds it somewhat though
 		var restore_ratio := randf_range(0.2, 0.35)
-		enemy.axis_value = round(enemy.axis_max * restore_ratio)
+		enemy.axis_value = round_quarter(enemy.axis_max * restore_ratio)
 		enemy_visual.update_axis(enemy.axis_value)
 		print("Minigame failed. Enemy axis restored to %.1f" % enemy.axis_value)
 		#if not minigame_queue_ongoing and not combat_has_ended:
@@ -779,70 +797,80 @@ func _handle_support_pattern(enemy: CombatEntity, pattern: EnemyAttackPattern):
 	var visual = enemy_visuals[enemy]
 	await visual.play_support(pattern.animation_name)
 	
-	if not enemy.can_spawn:
-		return
-	
-	# Does nothing if spawn chance does not happen
-	if randf() > pattern.spawn_chance:
-		return
-	
-	var free_index := _get_free_enemy_slot()
-	# If no free position found for enemy to spawn
-	if free_index == -1:
-		return
-	
-	# Spawns enemy with available slot
-	await _spawn_enemy(pattern.spawn_enemy_id, free_index, enemy)
+	match pattern.pattern_id:
+		"frog_heal": # Frog healing
+			await _support_frog_heal(enemy)
+			return
+		
+		_: # Bat spawning
+			if not enemy.can_spawn:
+				return
+			
+			# Does nothing if spawn chance does not happen
+			if randf() > pattern.spawn_chance:
+				return
+			
+			var free_index := _get_free_enemy_slot()
+			# If no free position found for enemy to spawn
+			if free_index == -1:
+				return
+			
+			# Spawns enemy with available slot
+			await _spawn_enemy(pattern.spawn_enemy_id, free_index, enemy)
 
 
 # Plays the given enemy attack pattern during the enemy turn
 func _play_enemy_attack_pattern(enemy: CombatEntity, enemy_visual: EnemyVisual, pattern: EnemyAttackPattern):
 	print("Enemy uses attack pattern: ", pattern.pattern_id)
 	
+	# Cleans up and/or resets previous handlers
+	_disconnect_enemy_attack_handlers(enemy_visual)
+	
 	# Reseting block + setting hit index for block window timing
 	_reset_enemy_attack_timing()
-	var hit_index := 0
+	var hit_state = {"index": 0}
 	
 	# Set current block window
-	current_block_window = pattern.hits[0].block_window
+	current_block_window = pattern.hits[0]["block_window"]
 	# Setting up PlayerVisual for blocking
 	player_visual.set_input_enabled(true)
 	
 	# Connecting with enemy visual script emitters
-	enemy_visual.attack_started.connect(
-		# Marks start of the attacking animation for block timing
-		func():
-			attack_time = 0.0
-			attack_timer_running = true
-			print("!!! DEBUG: attack timer started"),
-		CONNECT_ONE_SHOT
-		)
+	var on_attack_started = func(): # Marks start of the attacking animation for block timing
+		attack_time = 0.0
+		attack_timer_running = true
+		print("!!! DEBUG: attack timer started")
+		print("!!! DEBUG: pattern duration is ", pattern.total_duration)
 	
-	enemy_visual.attack_hit.connect(
-		# Hit processing logic
-		func():
-			if hit_index < pattern.hits.size():
-				# Hides hint text
-				tutorial_text.hide_text()
-				
-				# Works the attack's hitting logic, including the player's blocking window
-				_apply_enemy_hit(enemy, pattern.hits[hit_index])
-				hit_index += 1, # If the attack has multiple hits, it'll process all of them
-		CONNECT_ONE_SHOT
-		)
+	var on_attack_hit = func(): # Hit processing logic
+		var id = hit_state["index"]
+		if id >= pattern.hits.size():
+			return
+		
+		var current_hit = pattern.hits[id].duplicate(true)
+		tutorial_text.hide_text() # Hides hint text
+		_apply_enemy_hit(enemy, current_hit) # Works the attack's hitting logic, including the player's blocking window
+		hit_state["index"] = id + 1 # If the attack has multiple hits, it'll process all of them
+		
+		if hit_state["index"] < pattern.hits.size():
+			current_block_window = pattern.hits[hit_state["index"]]["block_window"]
 	
-	# Checks if combat has ended
-	enemy_visual.attack_finished.connect(
-		func():
-			# DEBUG WHEN ATTACK HAS FINISHED
-			attack_timer_running = false
-			print("!!! DEBUG: attack finished at:", "%.3f" % attack_time)
-			
-			# Reset visual layering for player attack and setting input to false
-			enemy_visual.z_index = 1
-			player_visual.set_input_enabled(false),
-		CONNECT_ONE_SHOT
-		)
+	var on_attack_finished = func(): # Checks if combat has ended
+		attack_timer_running = false
+		print("!!! DEBUG: attack finished at:", "%.3f" % attack_time)
+		
+		enemy_visual.z_index = 1
+		player_visual.set_input_enabled(false) # Reset visual layering for player attack and setting input to false
+		
+		_disconnect_enemy_attack_handlers(enemy_visual)
+	
+	enemy_attack_started_handlers[enemy_visual] = on_attack_started
+	enemy_attack_hit_handlers[enemy_visual] = on_attack_hit
+	enemy_attack_finished_handlers[enemy_visual] = on_attack_finished
+	
+	enemy_visual.attack_started.connect(on_attack_started, CONNECT_ONE_SHOT)
+	enemy_visual.attack_hit.connect(on_attack_hit)
+	enemy_visual.attack_finished.connect(on_attack_finished)
 	
 	# Start animation
 	enemy_visual.play_attack(pattern.animation_name)
@@ -859,6 +887,7 @@ func _apply_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	# Block can happen during this timer, calculates the enemy's damage
 	get_tree().create_timer(window_duration, true, false).timeout.connect(
 		func():
+			current_block_window = hit.block_window
 			_resolve_enemy_hit(enemy, hit),
 		CONNECT_ONE_SHOT
 	)
@@ -962,6 +991,10 @@ func _on_player_block_attempted():
 	
 	# Checks if block is currently on cooldown
 	if block_on_cooldown:
+		return
+	
+	# If the current hit already recorded a valid press, do not overwrite it
+	if last_block_press_time >= current_block_window.x and last_block_press_time <= current_block_window.y:
 		return
 	
 	# Records block press time
@@ -1672,6 +1705,7 @@ func _generate_rewards():
 	_apply_human_at_heart(killed_count)
 	_apply_karma_and_outcome_tracking()
 	vfx._update_karma_overlay()
+	print(item_rewards)
 	print("Currency right now: ", PlayerData.currency)
 	
 	return {
@@ -1998,6 +2032,7 @@ func _add_reward_item(result: Array, item_data: ItemData, amount := 1):
 # Rolls specific item drops for creatures with help from previous method
 func _roll_tamed_enemy_drops() -> Array:
 	var item_rewards: Array = []
+	var amount = randf_range(1, 2)
 	for enemy in enemies:
 		if not enemy.is_tamed():
 			continue
@@ -2011,9 +2046,9 @@ func _roll_tamed_enemy_drops() -> Array:
 		if item_data == null:
 			continue
 		
-		var added := PlayerData.add_item(item_data, 1)
+		var added := PlayerData.add_item(item_data, amount)
 		if added:
-			_add_reward_item(item_rewards, item_data, 1)
+			_add_reward_item(item_rewards, item_data, amount)
 	
 	return item_rewards
 
@@ -2045,6 +2080,81 @@ func _get_ball_guess_type_for_enemy(enemy: CombatEntity, intent: String) -> Comb
 	
 	return Utils._get_wrong_guess_type(enemy.type)
 
+# For handling connected signals
+func _disconnect_enemy_attack_handlers(enemy_visual: EnemyVisual):
+	if enemy_attack_started_handlers.has(enemy_visual):
+		var started_cb: Callable = enemy_attack_started_handlers[enemy_visual]
+		if enemy_visual.attack_started.is_connected(started_cb):
+			enemy_visual.attack_started.disconnect(started_cb)
+		enemy_attack_started_handlers.erase(enemy_visual)
+	
+	if enemy_attack_hit_handlers.has(enemy_visual):
+		var hit_cb: Callable = enemy_attack_hit_handlers[enemy_visual]
+		if enemy_visual.attack_hit.is_connected(hit_cb):
+			enemy_visual.attack_hit.disconnect(hit_cb)
+		enemy_attack_hit_handlers.erase(enemy_visual)
+	
+	if enemy_attack_finished_handlers.has(enemy_visual):
+		var finished_cb: Callable = enemy_attack_finished_handlers[enemy_visual]
+		if enemy_visual.attack_finished.is_connected(finished_cb):
+			enemy_visual.attack_finished.disconnect(finished_cb)
+		enemy_attack_finished_handlers.erase(enemy_visual)
+
+# Frog enemy's (or other enemies that might heal) healing method; moves the creature's axis toward 0
+func _support_frog_heal(enemy: CombatEntity):
+	if enemy == null:
+		return
+	if enemy.is_killed() or enemy.is_tamed():
+		return
+	
+	var visual = enemy_visuals.get(enemy)
+	if visual == null:
+		return
+	
+	var heal_amount := round_quarter(randf_range(1.0, 3.0))
+	var before := enemy.axis_value
+	
+	# Heal toward the center (0 axis)
+	if enemy.axis_value < 0.0:
+		enemy.axis_value = min(enemy.axis_value + heal_amount, 0.0)
+	elif enemy.axis_value > 0.0:
+		enemy.axis_value = max(enemy.axis_value - heal_amount, 0.0)
+	else:
+		# Already centered, so there's nothing to heal
+		return
+	
+	enemy.axis_value = round_quarter(enemy.axis_value)
+	var actual_shift := enemy.axis_value - before
+	
+	if is_zero_approx(actual_shift):
+		return
+	
+	visual.update_axis(enemy.axis_value, actual_shift)
+	visual.shake(false)
+	vfx.spawn_damage_number(visual, abs(actual_shift), false, true)
+	
+	print("Frog healed toward center by %.2f. Axis is now %.2f" % [abs(actual_shift), enemy.axis_value])
+
+# Selects a type for the duck creature
+func _randomize_duck_type(enemy: CombatEntity):
+	var possible_types = [
+		CombatTypes.EntityType.SKY,
+		CombatTypes.EntityType.EARTH,
+		CombatTypes.EntityType.WATER
+	]
+	
+	enemy.type = possible_types.pick_random() # Applies the new type for the duck
+	print("Duck type for this encounter is: ", CombatTypes.guess_type_to_string(enemy.type))
+
+# Reveals the specific duck's type at the start of combat
+func _reveal_duck_type(enemy: CombatEntity):
+	var visual = enemy_visuals.get(enemy)
+	if visual == null:
+		return
+	
+	var color: Color = DUCK_TYPE_COLORS.get(enemy.type, Color.WHITE)
+	await _flash_enemy_type_color(visual, color, DUCK_TYPE_REVEAL_DURATION)
+
 # ANIMATION METHODS
 # Smooth tween BG animation for minigame enter/exiting 
 func _world_gray_out(gray_out: bool):
@@ -2069,3 +2179,13 @@ func animate_enemy_entry():
 		tween.set_ease(Tween.EASE_OUT)
 		
 	await get_tree().create_timer(0.6).timeout
+
+# Animates the duck type reveal at the start of combat
+func _flash_enemy_type_color(visual: EnemyVisual, color: Color, duration: float):
+	var original_modulate := visual.modulate
+	var tween := create_tween()
+	tween.tween_property(visual.visual, "modulate", color, 0.15)
+	tween.tween_interval(duration)
+	tween.tween_property(visual.visual, "modulate", original_modulate, 0.2)
+	
+	await tween.finished

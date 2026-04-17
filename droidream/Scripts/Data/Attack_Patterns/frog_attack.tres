@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnemyAttackPattern" load_steps=2 format=3 uid="uid://hiy1p2vh6cix"]
+
+[ext_resource type="Script" uid="uid://by18pvdsekurc" path="res://Scripts/Data/EnemyAttackPattern.gd" id="1_wtdqh"]
+
+[resource]
+script = ExtResource("1_wtdqh")
+pattern_id = "frog_attack"
+animation_name = "frog_attack"
+total_duration = 2.4
+hits = Array[Dictionary]([{
+"block_window": Vector2(1.76, 1.96),
+"damage_multiplier": 1.0,
+"time": 1.96
+}])
+metadata/_custom_type_script = "uid://by18pvdsekurc"

@@ -206,7 +206,7 @@ func spawn_damage_number(damage: float):
 func spawn_loop():
 	while running:
 		spawn_beetles()
-		await get_tree().create_timer(randf_range(0.55, 0.9)).timeout
+		await get_tree().create_timer(randf_range(0.5, 0.9)).timeout
 
 # Spawns BeetleEntity instantiations in a random amount from 1-3
 func spawn_beetles():

@@ -747,6 +747,7 @@ func _build_list_ui(menu_name: String, entries: Array, row_scene: PackedScene):
 		child.queue_free()
 	
 	await get_tree().process_frame
+	await get_tree().process_frame
 	var row_scale := _get_list_row_scale(entries.size(), menu_name)
 	for entry in entries:
 		var row = row_scene.instantiate()
@@ -760,7 +761,7 @@ func _build_list_ui(menu_name: String, entries: Array, row_scene: PackedScene):
 	await get_tree().process_frame
 	await get_tree().process_frame
 	await get_tree().process_frame
-	await get_tree().process_frame
+
 	_update_list_visuals(menu_name)
 
 func _refresh_list_ui(menu_name: String, entries: Array):
