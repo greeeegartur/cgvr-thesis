@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://6f0q2xbuuu16"]
+[gd_scene load_steps=20 format=3 uid="uid://6f0q2xbuuu16"]
 
 [ext_resource type="Script" uid="uid://d3goy7jibvf76" path="res://Scripts/Combat/PlayerTurnUI.gd" id="1_0fa56"]
 [ext_resource type="Texture2D" uid="uid://fk7vshnojgc" path="res://Graphics/Placeholders/Combat/gearcog.png" id="2_gsd0c"]
@@ -14,6 +14,7 @@
 [ext_resource type="Texture2D" uid="uid://b37q8ukr1rn2k" path="res://Graphics/Placeholders/Combat/itemsStyleBox.png" id="9_7f765"]
 [ext_resource type="Texture2D" uid="uid://iktyp5h7govn" path="res://Graphics/Placeholders/Combat/earth_chip.png" id="9_n7a3j"]
 [ext_resource type="Texture2D" uid="uid://nuoesnjwkg24" path="res://Graphics/Placeholders/Combat/water_chip.png" id="10_x3ufh"]
+[ext_resource type="PackedScene" uid="uid://cn0v8d2gojqkh" path="res://Scenes/VFX/AbilityInfoContainer.tscn" id="14_kk11w"]
 [ext_resource type="PackedScene" uid="uid://dpky3xhxxkv0a" path="res://Scenes/VFX/ItemInfoContainer.tscn" id="15_k6bu5"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_a1yl2"]
@@ -249,6 +250,13 @@ vertical_scroll_mode = 3
 custom_minimum_size = Vector2(79, 55)
 layout_mode = 2
 theme_override_constants/separation = -14
+
+[node name="AbilityInfoContainer" parent="AbilitiesMenu" instance=ExtResource("14_kk11w")]
+visible = false
+offset_left = 329.0
+offset_top = 135.0
+offset_right = 483.0909
+offset_bottom = 248.0
 
 [node name="ItemsMenu" type="Node" parent="."]
 

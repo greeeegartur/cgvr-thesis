@@ -1,15 +1,16 @@
-[gd_resource type="Resource" script_class="AreaData" load_steps=6 format=3 uid="uid://tktqtyrb2dww"]
+[gd_resource type="Resource" script_class="AreaData" load_steps=8 format=3 uid="uid://tktqtyrb2dww"]
 
 [ext_resource type="Script" uid="uid://d2qb3dxys342b" path="res://Scripts/Data/AreaData.gd" id="1_p6ftb"]
 [ext_resource type="Script" uid="uid://cq42yd5k6nmne" path="res://Scripts/Data/StageData.gd" id="2_oh67m"]
 [ext_resource type="Resource" uid="uid://bvr8svd5hedss" path="res://Scripts/Data/Areas/Jungle/JungleStage1.tres" id="2_w78hj"]
 [ext_resource type="Resource" uid="uid://dglocktr21n85" path="res://Scripts/Data/Areas/Jungle/JungleStage2.tres" id="3_oh67m"]
 [ext_resource type="Resource" uid="uid://dn7d5dwhn1rj2" path="res://Scripts/Data/Areas/Jungle/JungleStage3.tres" id="4_mmxe6"]
+[ext_resource type="Resource" uid="uid://c0bkwiihd7nct" path="res://Scripts/Data/Areas/Jungle/JungleStage4.tres" id="6_06cyi"]
+[ext_resource type="Resource" uid="uid://ds15876pknhkp" path="res://Scripts/Data/Areas/Jungle/JungleStage5.tres" id="7_8srjs"]
 
 [resource]
 script = ExtResource("1_p6ftb")
 area_id = "jungle"
 area_name = "The Jungle"
-enemy_pool = Array[String](["enemy_beetle", "enemy_bat"])
-stages = Array[ExtResource("2_oh67m")]([ExtResource("2_w78hj"), ExtResource("3_oh67m"), ExtResource("4_mmxe6")])
+stages = Array[ExtResource("2_oh67m")]([ExtResource("2_w78hj"), ExtResource("3_oh67m"), ExtResource("4_mmxe6"), ExtResource("6_06cyi"), ExtResource("7_8srjs")])
 metadata/_custom_type_script = "uid://d2qb3dxys342b"

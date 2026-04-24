@@ -11,6 +11,7 @@ extends CanvasLayer
 @onready var abilities_panel := $AbilitiesMenu/Panel
 @onready var abilities_list := $AbilitiesMenu/Panel/ScrollContainer/VBox
 @onready var abilities_scroll := $AbilitiesMenu/Panel/ScrollContainer
+@onready var ability_popup := $AbilitiesMenu/AbilityInfoContainer
 @onready var items_panel := $ItemsMenu/Panel
 @onready var items_list := $ItemsMenu/Panel/ScrollContainer/VBox
 @onready var items_scroll := $ItemsMenu/Panel/ScrollContainer
@@ -172,6 +173,7 @@ func _handle_abilities_input(event):
 			shake_panel()
 			return
 		
+		ability_popup.visible = false
 		emit_signal("ability_selected", ability)
 	elif event.is_action_pressed("ui_cancel"):
 		_cancel_to_gear(MENU_ABILITIES)
@@ -280,6 +282,8 @@ func _close_menu(menu_name: String):
 	
 	if menu_name == MENU_ITEMS:
 		item_popup.visible = false
+	elif menu_name == MENU_ABILITIES:
+		ability_popup.visible = false
 	
 	var tween := create_tween()
 	tween.tween_property(panel, "scale", Vector2.ZERO, 0.15)
@@ -553,6 +557,7 @@ func _refresh_abilities_ui():
 
 func _update_abilities_visuals():
 	_update_list_visuals(MENU_ABILITIES)
+	_update_ability_info_popup()
 
 func _build_items_ui():
 	await _build_list_ui(
@@ -590,6 +595,26 @@ func _update_item_info_popup():
 	var row = items_list.get_child(selected_index)
 	item_popup.setup_from_inventory_item(selected_item)
 	item_popup.move_to_row(row, Vector2(0, 134))
+
+func _update_ability_info_popup():
+	var abilities = PlayerData.get_active_abilities()
+	if abilities.is_empty():
+		ability_popup.visible = false
+		return
+	
+	var selected_index = menu_indices[MENU_ABILITIES]
+	if selected_index < 0 or selected_index >= abilities.size():
+		ability_popup.visible = false
+		return
+	
+	if selected_index >= abilities_list.get_child_count():
+		ability_popup.visible = false
+		return
+	
+	var selected_ability = abilities[selected_index]
+	var row = abilities_list.get_child(selected_index)
+	ability_popup.setup_from_inventory_ability(selected_ability)
+	ability_popup.move_to_row(row, Vector2(0, 128))
 
 func update_guess_display():
 	var g = PlayerData.guesses

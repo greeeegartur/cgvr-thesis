@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="StageData" load_steps=2 format=3 uid="uid://ds15876pknhkp"]
+
+[ext_resource type="Script" uid="uid://cq42yd5k6nmne" path="res://Scripts/Data/StageData.gd" id="1_u7w67"]
+
+[resource]
+script = ExtResource("1_u7w67")
+enemy_count_weights = {
+1: 0.0,
+2: 0.1,
+3: 0.9
+}
+creature_weights = {
+1: {
+"bat": 0.0,
+"beetle": 0.0,
+"duck": 0.0,
+"frog": 0.0
+},
+2: {
+"bat": 0.1,
+"beetle": 0.0,
+"duck": 0.5,
+"frog": 0.4
+},
+3: {
+"bat": 0.0,
+"beetle": 0.0,
+"duck": 0.5,
+"frog": 0.5
+}
+}
+metadata/_custom_type_script = "uid://cq42yd5k6nmne"

@@ -32,19 +32,16 @@ var home_position : Vector2 # The player's original position
 var attack_position : Vector2 # The position where the player's pattern will connect to the enemy sprite
 @export var move_speed := 400.0 # Pixels per second
 
-# HUD variables, will change these 
-@onready var hp_bar := $PlayerHUD/HPBar
-@onready var hp_fill := $PlayerHUD/HPBar/Fill
-@onready var hp_label := $PlayerHUD/HPBar/Label
+# HUD variables
+@onready var hp_icon := $PlayerHUD/HPIcon
+@onready var hp_progress: TextureProgressBar = $PlayerHUD/HPIcon/HeartProgress
+@onready var hp_label: Label = $PlayerHUD/HPIcon/Label
 
-var hp_fill_max_width = 10.0
-var def_fill_max_width = 10.0
+var hp_tween: Tween
 
 func _ready():
 	set_home_position()
 	anim.animation_finished.connect(_on_anim_finished)
-	
-	hp_fill_max_width = hp_fill.size.x
 	
 	anim.play("player_idle")
 	# Combat scene's process mode (pausing) for minigames
@@ -181,23 +178,35 @@ func set_block_cooldown(active: bool):
 	block_visual.set_cooldown_active(active)
 
 # Updates UI for player stats with helper functions (identical to EnemyVisual.gd)
-func update_hp(current: float, max_hp):
-	var ratio = clamp(current / max_hp, 0.0, 1.0)
-	hp_fill.size.x = hp_fill_max_width * ratio
-	hp_label.text = "%.1f / %.1f" % [current, max_hp]
+func update_hp(current: float, max_hp: float):
+	var rounded_current = round_quarter(current)
+	var rounded_max = round_quarter(max_hp)
+	var ratio = clamp(rounded_current / rounded_max, 0.0, 1.0)
+	
+	if hp_tween:
+		hp_tween.kill()
+	
+	hp_tween = create_tween()
+	hp_tween.tween_property(hp_progress, "value", ratio, 0.25)\
+		.set_trans(Tween.TRANS_CUBIC)\
+		.set_ease(Tween.EASE_OUT)
+	
+	hp_label.text = "%s" % [
+		format_quarter_number(rounded_current)
+	]
 
 func hide_hp():
 	var tween = create_tween()
-	tween.tween_property(hp_bar, "modulate:a", 0.0, 1)
+	tween.tween_property(hp_icon, "modulate:a", 0.0, 1)
 	await tween.finished
 	
-	hp_bar.visible = false
+	hp_icon.visible = false
 
 func show_hp():
-	hp_bar.visible = true
+	hp_icon.visible = true
 	
 	var tween = create_tween()
-	tween.tween_property(hp_bar, "modulate:a", 1.0, 1)
+	tween.tween_property(hp_icon, "modulate:a", 1.0, 1)
 	await tween.finished
 
 func show_target_arrow():
@@ -207,3 +216,13 @@ func show_target_arrow():
 func hide_target_arrow():
 	target_arrow.visible = false
 	target_arrow_anim.play("RESET")
+
+# HELPERS
+func round_quarter(value: float) -> float:
+	return round(value * 4.0) / 4.0
+
+func format_quarter_number(value: float) -> String:
+	if is_equal_approx(value, round(value)):
+		return str(int(round(value)))
+	
+	return "%.2f" % value

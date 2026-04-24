@@ -1,10 +1,12 @@
-[gd_scene load_steps=38 format=3 uid="uid://wgkbwlbxucav"]
+[gd_scene load_steps=40 format=3 uid="uid://wgkbwlbxucav"]
 
 [ext_resource type="Texture2D" uid="uid://kc6gbkrwm471" path="res://Graphics/Placeholders/Combat/player_idle.png" id="1_ofpci"]
 [ext_resource type="Script" uid="uid://dfpecfsx8ofrf" path="res://Scripts/Combat/PlayerVisual.gd" id="1_sbipa"]
+[ext_resource type="Texture2D" uid="uid://cg3cynxppowlg" path="res://Graphics/Placeholders/Minigames/Beetle Rush/health_back.png" id="2_1q2bo"]
 [ext_resource type="Texture2D" uid="uid://rakqgp68ofme" path="res://Graphics/Placeholders/Combat/player_attack.png" id="2_sbipa"]
 [ext_resource type="Texture2D" uid="uid://vy8qc508qglt" path="res://Graphics/Placeholders/Combat/player_block.png" id="3_fttp1"]
 [ext_resource type="Texture2D" uid="uid://bc580qfjim3gv" path="res://Graphics/Placeholders/Combat/Block_Effect.png" id="3_i8n88"]
+[ext_resource type="Texture2D" uid="uid://drlquwpqjffsc" path="res://Graphics/Placeholders/Minigames/Beetle Rush/health.png" id="3_ilwea"]
 [ext_resource type="Texture2D" uid="uid://bmc0pukfqywrx" path="res://Graphics/Placeholders/Combat/player_defeat.png" id="4_i8n88"]
 [ext_resource type="Texture2D" uid="uid://ddoq6bcqgyk8m" path="res://Graphics/Placeholders/Combat/player_hurt.png" id="5_j66ac"]
 [ext_resource type="Texture2D" uid="uid://d1wibcksjvhpd" path="res://Graphics/Placeholders/Combat/player_walk.png" id="6_f34bn"]
@@ -541,6 +543,46 @@ tracks/2/keys = {
 "values": [5]
 }
 
+[sub_resource type="Animation" id="Animation_krqvu"]
+resource_name = "player_item"
+length = 2.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Visual/Sprite2D:texture")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [ExtResource("13_ud6ce")]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Visual/Sprite2D:vframes")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [9]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Visual/Sprite2D:frame")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.23333333, 0.46666667, 0.6666667, 0.8666667, 1.0666667, 1.2666667, 1.5, 1.7333333),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3, 4, 5, 6, 7, 8]
+}
+
 [sub_resource type="Animation" id="Animation_f34bn"]
 resource_name = "player_subdue"
 length = 2.0
@@ -632,46 +674,6 @@ tracks/2/keys = {
 "transitions": PackedFloat32Array(1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 2, 3]
-}
-
-[sub_resource type="Animation" id="Animation_krqvu"]
-resource_name = "player_item"
-length = 2.0
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Visual/Sprite2D:texture")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [ExtResource("13_ud6ce")]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("Visual/Sprite2D:vframes")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [9]
-}
-tracks/2/type = "value"
-tracks/2/imported = false
-tracks/2/enabled = true
-tracks/2/path = NodePath("Visual/Sprite2D:frame")
-tracks/2/interp = 1
-tracks/2/loop_wrap = true
-tracks/2/keys = {
-"times": PackedFloat32Array(0, 0.23333333, 0.46666667, 0.6666667, 0.8666667, 1.0666667, 1.2666667, 1.5, 1.7333333),
-"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
-"update": 1,
-"values": [0, 1, 2, 3, 4, 5, 6, 7, 8]
 }
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_ilwea"]
@@ -920,36 +922,35 @@ layout_mode = 3
 anchors_preset = 0
 offset_left = -37.0
 offset_top = -67.0
-offset_right = 30.0
-offset_bottom = -43.0
+offset_right = -8.0
+offset_bottom = -37.275
 
-[node name="HPBar" type="Control" parent="PlayerHUD"]
-z_index = 1
-anchors_preset = 0
-offset_right = 67.0
-offset_bottom = 12.0
+[node name="HPIcon" type="Node2D" parent="PlayerHUD"]
 
-[node name="Background" type="ColorRect" parent="PlayerHUD/HPBar"]
-layout_mode = 0
-offset_right = 67.0
-offset_bottom = 12.0
-color = Color(0.37334123, 0.041883618, 0.08140624, 1)
+[node name="HeartProgress" type="TextureProgressBar" parent="PlayerHUD/HPIcon"]
+offset_left = -11.0
+offset_top = 3.0
+offset_right = 5.216217
+offset_bottom = 19.216215
+scale = Vector2(1.85, 1.85)
+max_value = 1.0
+value = 1.0
+fill_mode = 2
+texture_under = ExtResource("2_1q2bo")
+texture_over = ExtResource("3_ilwea")
+texture_progress = ExtResource("3_ilwea")
 
-[node name="Fill" type="ColorRect" parent="PlayerHUD/HPBar"]
-layout_mode = 0
-offset_right = 67.0
-offset_bottom = 12.0
-color = Color(0.9669108, 0.10701466, 0.24572787, 1)
-
-[node name="Label" type="Label" parent="PlayerHUD/HPBar"]
-z_index = 3
-layout_mode = 0
-offset_left = 2.0
-offset_right = 69.0
-offset_bottom = 23.0
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 8
-text = "h"
+[node name="Label" type="Label" parent="PlayerHUD/HPIcon"]
+offset_left = -8.0
+offset_top = 8.0
+offset_right = 14.0
+offset_bottom = 24.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("12_ksby0")
+theme_override_font_sizes/font_size = 16
+text = "10"
+horizontal_alignment = 1
 
 [node name="Visual" type="Node2D" parent="."]
 

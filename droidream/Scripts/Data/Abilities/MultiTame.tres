@@ -7,6 +7,7 @@
 script = ExtResource("1_qtc1b")
 id = "multitame"
 display_name = "Multi-Tame"
+description = "Become able to target multiple creatures at once with a single chip! Works on all surrounding creatures of the selected target."
 icon = ExtResource("1_712sj")
 cooldown_max = 2
 use_mode = 1
