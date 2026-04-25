@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3 uid="uid://b0as27ombq3yp"]
+[gd_scene load_steps=31 format=3 uid="uid://b0as27ombq3yp"]
 
 [ext_resource type="Script" uid="uid://b3u2bq3dgrvtu" path="res://Scripts/Combat/CombatManager.gd" id="1_2mqg5"]
 [ext_resource type="Script" uid="uid://dcdpqt4rgapox" path="res://Scripts/Combat/CombatUI.gd" id="1_memue"]
@@ -22,6 +22,7 @@
 [ext_resource type="PackedScene" uid="uid://dcr1tuso7nppj" path="res://Scenes/VFX/RewardsScreen.tscn" id="14_et1op"]
 [ext_resource type="PackedScene" uid="uid://dc0p2hfu0gp6r" path="res://Scenes/VFX/DeathScreen.tscn" id="15_kwghb"]
 [ext_resource type="PackedScene" uid="uid://cwntedolisxe8" path="res://Scenes/VFX/BoonSelectionScreen.tscn" id="17_ad845"]
+[ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="21_lkk3l"]
 [ext_resource type="PackedScene" uid="uid://mnb3nvh3ofas" path="res://Scenes/VFX/HitFeedbackText.tscn" id="22_b7ydo"]
 [ext_resource type="Texture2D" uid="uid://dhg3luy17q64k" path="res://Graphics/Placeholders/Combat/speedlines.png" id="23_ad845"]
 [ext_resource type="PackedScene" uid="uid://rab42iernju0" path="res://Scenes/VFX/RepairObject.tscn" id="25_mtk7o"]
@@ -169,6 +170,29 @@ theme_override_font_sizes/font_size = 10
 text = "show turn order"
 flat = true
 icon_alignment = 1
+
+[node name="PlayerStatsHUD" type="Control" parent="UI/CombatUI"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 157.0
+offset_bottom = 40.0
+
+[node name="PowerRow" type="HBoxContainer" parent="UI/CombatUI/PlayerStatsHUD"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Icon" type="TextureRect" parent="UI/CombatUI/PlayerStatsHUD/PowerRow"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/CombatUI/PlayerStatsHUD/PowerRow"]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("21_lkk3l")
+theme_override_font_sizes/font_size = 16
+text = "10"
+horizontal_alignment = 1
 
 [node name="Minigames" type="CanvasLayer" parent="."]
 layer = 10

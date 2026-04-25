@@ -926,18 +926,19 @@ offset_right = -8.0
 offset_bottom = -37.275
 
 [node name="HPIcon" type="Node2D" parent="PlayerHUD"]
+position = Vector2(-2, 6)
 
 [node name="HeartProgress" type="TextureProgressBar" parent="PlayerHUD/HPIcon"]
-offset_left = -11.0
-offset_top = 3.0
-offset_right = 5.216217
-offset_bottom = 19.216215
-scale = Vector2(1.85, 1.85)
+offset_left = -11.00001
+offset_top = 1.9999924
+offset_right = 5.2162094
+offset_bottom = 18.216213
+scale = Vector2(1.9, 1.9)
 max_value = 1.0
+step = 0.1
 value = 1.0
-fill_mode = 2
+fill_mode = 3
 texture_under = ExtResource("2_1q2bo")
-texture_over = ExtResource("3_ilwea")
 texture_progress = ExtResource("3_ilwea")
 
 [node name="Label" type="Label" parent="PlayerHUD/HPIcon"]

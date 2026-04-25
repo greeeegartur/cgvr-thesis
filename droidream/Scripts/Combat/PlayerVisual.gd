@@ -43,6 +43,10 @@ func _ready():
 	set_home_position()
 	anim.animation_finished.connect(_on_anim_finished)
 	
+	hp_progress.min_value = 0.0
+	hp_progress.max_value = 1.0
+	hp_progress.value = 1.0
+	
 	anim.play("player_idle")
 	# Combat scene's process mode (pausing) for minigames
 	process_mode = Node.PROCESS_MODE_PAUSABLE
