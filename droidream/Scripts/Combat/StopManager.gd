@@ -24,6 +24,7 @@ var ufo_idle_tween: Tween
 @onready var next_button := $StopUI/NextArrow
 @onready var stop_text := $StopUI/StopText
 @onready var popup := $StopUI/ShopItemContainer
+@onready var combat_ui := $"../UI/CombatUI"
 @onready var item_scene = preload("res://Scenes/ShopItem.tscn")
 @onready var HitFeedbackScene = preload("res://Scenes/VFX/HitFeedbackText.tscn")
 
@@ -167,6 +168,7 @@ func _attempt_purchase(shop_item: ShopItem):
 	_spawn_purchase_feedback(shop_item)
 	
 	shop_item.quantity -= 1
+	combat_ui.refresh_player_hud()
 	_update_selection_visuals()
 
 func enter_stop():

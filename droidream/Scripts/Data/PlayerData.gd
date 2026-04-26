@@ -4,7 +4,7 @@ extends Node
 
 # Base player variables (for reseting)
 const BASE_MAX_HP := 10.0
-const BASE_ATTACK := 4.0
+const BASE_ATTACK := 5.0
 const BASE_DEFENSE := 0.0
 const BASE_GUESSES := {
 	CombatTypes.EntityType.SKY: 3,
@@ -50,6 +50,9 @@ func reset_run():
 	karma = 0
 	killed_creatures.clear()
 	tamed_creatures.clear()
+	
+	# 1 ball to start the run
+	#add_item(CombatItemDb.get_item("ball"))
 
 # Helper methods for use in CombatManager
 func has_guess(t: CombatTypes.EntityType) -> bool:
@@ -284,3 +287,15 @@ func can_add_ability_resource(ability_data: Resource) -> bool:
 			return false
 	
 	return abilities.size() < MAX_ABILITY_SLOTS
+
+func add_currency(amount: int) -> void:
+	currency += amount
+	stats_changed.emit()
+
+func spend_currency(amount: int) -> bool:
+	if currency < amount:
+		return false
+	
+	currency -= amount
+	stats_changed.emit()
+	return true

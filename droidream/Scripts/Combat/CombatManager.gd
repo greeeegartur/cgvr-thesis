@@ -376,7 +376,7 @@ func _start_turn_loop():
 	# For checking if passives exist
 	#for ability in PlayerData.abilities:
 		#print(ability.data.id)
-	PlayerData.add_item(CombatItemDb.get_item("ball"), 2)
+	PlayerData.add_ability(AbilityDb.get_ability("heatup"))
 	_player_turn()
 
 # TURN FUNCTIONS
@@ -629,9 +629,9 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 	else:
 		# Moves towards kill side on the left based on how off guard the enemy is
 		# Off guard is calculated for an exponential multiplier that increases axis movement the more "off guard" an enemy is
-		# So 1) guessing correct once and 2) then guessing wrong will increase damage more than just 1) guessing wrong
+		# So 1) guessing correct once and 2) then guessing wrong will increase damage more than just guessing wrong
 		var off_guard = max(0.0, enemy.axis_ratio())
-		var kill_multiplier := 0.5 + pow(off_guard, 2.5) * 2.0
+		var kill_multiplier := 0.5 + pow(off_guard, 2.5) * 2.35
 		
 		# Damage calculation
 		var value_shift = round_quarter(base * kill_multiplier) # Kill multiplier will just be 0.5 if off_guard is 0
@@ -678,7 +678,7 @@ func _apply_axis_shift_with_multiplier(enemy: CombatEntity, guess_type: CombatTy
 		
 	else:
 		var off_guard = max(0.0, enemy.axis_ratio())
-		var kill_multiplier := 0.5 + pow(off_guard, 2.5) * 2.0
+		var kill_multiplier := 0.5 + pow(off_guard, 2.5) * 2.25
 		var value_shift = round_quarter(base * kill_multiplier)
 		var before = enemy.axis_value
 		enemy.axis_value -= value_shift
@@ -1505,6 +1505,7 @@ func _execute_item(target):
 	var item_index := PlayerData.items.find(item)
 	if item_index != -1:
 		PlayerData.use_item(item_index, self)
+	ui.refresh_player_hud() # Item amount update
 	item_being_used = null
 	await player_turn_ui._build_items_ui()
 	
@@ -1700,7 +1701,7 @@ func _generate_rewards():
 		
 		total_currency += gained_currency
 	
-	PlayerData.currency += total_currency
+	PlayerData.add_currency(total_currency)
 	var item_rewards := _roll_tamed_enemy_drops()
 	_apply_human_at_heart(killed_count)
 	_apply_karma_and_outcome_tracking()
@@ -1757,6 +1758,9 @@ func _sync_player_stats():
 	player.hp = clamp(player.hp, 0.0, player.max_hp)
 	PlayerData.hp = clamp(PlayerData.hp, 0.0, PlayerData.max_hp)
 	player_visual.update_hp(player.hp, player.max_hp)
+	
+	if ui:
+		ui._update_player_stats_hud()
 
 # Progresses all player ability cooldowns
 func _tick_ability_cooldowns():
@@ -2032,7 +2036,7 @@ func _add_reward_item(result: Array, item_data: ItemData, amount := 1):
 # Rolls specific item drops for creatures with help from previous method
 func _roll_tamed_enemy_drops() -> Array:
 	var item_rewards: Array = []
-	var amount = randf_range(1, 2)
+	var amount = randi_range(1, 2)
 	for enemy in enemies:
 		if not enemy.is_tamed():
 			continue

@@ -6,6 +6,7 @@
 
 [node name="DeathScreen" type="Node2D"]
 visible = false
+position = Vector2(0, 33)
 script = ExtResource("1_mr261")
 
 [node name="GameOverLabel" type="Label" parent="."]

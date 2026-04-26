@@ -1,10 +1,11 @@
-[gd_scene load_steps=11 format=3 uid="uid://b8tix1tnrjrpr"]
+[gd_scene load_steps=12 format=3 uid="uid://b8tix1tnrjrpr"]
 
 [ext_resource type="Texture2D" uid="uid://b0axro84k6yfj" path="res://Graphics/Placeholders/Combat/Z.png" id="1_to5ne"]
 [ext_resource type="Script" uid="uid://20ohvqa8my8f" path="res://Scripts/Combat/TutorialText.gd" id="1_y28dn"]
 [ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="2_gr0x8"]
 [ext_resource type="Texture2D" uid="uid://g1cpi65b1lxo" path="res://Graphics/Placeholders/Combat/WASD.png" id="4_pqvjo"]
 [ext_resource type="Texture2D" uid="uid://f73de0keloca" path="res://Graphics/Placeholders/Combat/X.png" id="5_rvsoc"]
+[ext_resource type="Texture2D" uid="uid://dog3tf7f2c301" path="res://Graphics/Placeholders/Combat/C.png" id="6_rvsoc"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gr0x8"]
 bg_color = Color(0.47397572, 0.47397578, 0.4739756, 1)
@@ -62,6 +63,18 @@ tracks/2/keys = {
 "update": 1,
 "values": [0, 1]
 }
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("../../ControlsHint/CIcon:frame")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [0, 1]
+}
 
 [sub_resource type="Animation" id="Animation_y28dn"]
 resource_name = "press"
@@ -107,9 +120,9 @@ anchors_preset = -1
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 17.333328
-offset_top = -46.333336
+offset_top = -41.333344
 offset_right = -17.667618
-offset_bottom = -128.83333
+offset_bottom = -123.83335
 scale = Vector2(0.6, 0.6)
 pivot_offset = Vector2(150, 150)
 theme_override_styles/panel = SubResource("StyleBoxFlat_gr0x8")
@@ -129,7 +142,7 @@ layout_mode = 2
 theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
 theme_override_constants/outline_size = 3
 theme_override_fonts/font = ExtResource("2_gr0x8")
-text = "Press      when the meter is completely one color!"
+text = "Move           / Confirm     / Cancel"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
@@ -156,20 +169,24 @@ texture = ExtResource("1_to5ne")
 vframes = 2
 
 [node name="XIcon" type="Sprite2D" parent="Control/ControlsHint"]
-visible = false
 position = Vector2(228.333, 17.5)
 texture = ExtResource("5_rvsoc")
+vframes = 2
+
+[node name="CIcon" type="Sprite2D" parent="Control/ControlsHint"]
+position = Vector2(368.33298, 17.5)
+texture = ExtResource("6_rvsoc")
 vframes = 2
 
 [node name="Label" type="Label" parent="Control/ControlsHint"]
 custom_minimum_size = Vector2(180, 35)
 offset_left = 18.888895
-offset_right = 257.22223
+offset_right = 518.8889
 offset_bottom = 35.0
 theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
 theme_override_constants/outline_size = 3
 theme_override_fonts/font = ExtResource("2_gr0x8")
-text = "Move           / Confirm     "
+text = "Move           / Confirm     / Cancel     / Toggle Turn Order"
 vertical_alignment = 1
 autowrap_mode = 2
 metadata/_edit_use_anchors_ = true
@@ -182,7 +199,7 @@ libraries = {
 
 [node name="SelectHint" type="Node2D" parent="Control"]
 visible = false
-position = Vector2(0.3333333, 0)
+position = Vector2(1.6666664, 13)
 scale = Vector2(0.6, 0.6)
 
 [node name="Label" type="Label" parent="Control/SelectHint"]

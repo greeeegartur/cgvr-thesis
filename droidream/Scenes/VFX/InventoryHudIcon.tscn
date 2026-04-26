@@ -1,0 +1,40 @@
+[gd_scene load_steps=4 format=3 uid="uid://dcb28riflpghv"]
+
+[ext_resource type="Script" uid="uid://crwf24igvfdm5" path="res://Scripts/Misc/InventoryHudIcon.gd" id="1_2jcni"]
+[ext_resource type="Texture2D" uid="uid://dd8pfdyu0qni" path="res://Graphics/Placeholders/Items/beetlejuice.png" id="1_ctkuq"]
+[ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="2_2jcni"]
+
+[node name="InventoryHudIcon" type="Control"]
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 46.0
+offset_bottom = 42.0
+scale = Vector2(0.5, 0.5)
+script = ExtResource("1_2jcni")
+
+[node name="Icon" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+texture = ExtResource("1_ctkuq")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AmountLabel" type="Label" parent="Icon"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5500001
+anchor_top = 0.50000006
+anchor_right = 0.97000015
+anchor_bottom = 0.82000005
+offset_right = 4.199997
+offset_bottom = 3.199997
+scale = Vector2(0.8, 0.8)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("2_2jcni")
+theme_override_font_sizes/font_size = 16
+text = "x10"
+horizontal_alignment = 1
+metadata/_edit_use_anchors_ = true

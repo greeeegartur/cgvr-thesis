@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="AbilityData" load_steps=3 format=3 uid="uid://cg88nifiu0d83"]
 
-[ext_resource type="Texture2D" uid="uid://cejyw1xju2nb2" path="res://Graphics/Placeholders/Combat/sky_chip.png" id="1_712sj"]
+[ext_resource type="Texture2D" uid="uid://vsmeqr4wqc6v" path="res://Graphics/Placeholders/Boons/multi-tame.png" id="1_712sj"]
 [ext_resource type="Script" uid="uid://dn8yfspxtqdrv" path="res://Scripts/Data/AbilityData.gd" id="1_qtc1b"]
 
 [resource]

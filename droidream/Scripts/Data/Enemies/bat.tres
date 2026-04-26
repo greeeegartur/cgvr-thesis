@@ -10,7 +10,7 @@
 script = ExtResource("2_fh84n")
 enemy_id = "bat"
 name = "Small Bat"
-max_hp = 4.0
+max_hp = 6.0
 attack = 1
 trust_max = 1
 minigame_id = "bat_flash"

@@ -12,6 +12,7 @@ class_name TutorialText
 
 # Selection nodes
 @onready var x_icon := $Control/ControlsHint/XIcon
+@onready var c_icon := $Control/ControlsHint/CIcon
 @onready var controls_hint_node := $Control/ControlsHint
 @onready var controls_hint_label := $Control/ControlsHint/Label
 @onready var anim := $Control/AnimationPlayer
@@ -44,7 +45,8 @@ func show_hint(type: HintType):
 			select_hint_node.visible = false
 			controls_hint_node.visible = true
 			x_icon.visible = true
-			show_text("Move           / Confirm     / Cancel", controls_hint_label, controls_hint_node)
+			c_icon.visible = true
+			show_text("Move           / Confirm     / Cancel     / Toggle Turn Order", controls_hint_label, controls_hint_node)
 
 		HintType.PLAYER_SELECT:
 			current_state = HintType.PLAYER_SELECT
@@ -52,6 +54,7 @@ func show_hint(type: HintType):
 			controls_hint_node.visible = false
 			select_hint_node.visible = true
 			x_icon.visible = false
+			c_icon.visible = false
 			show_text("Select a target entity!", select_hint_label, select_hint_node)
 
 		HintType.SHOP:
@@ -60,6 +63,7 @@ func show_hint(type: HintType):
 			select_hint_node.visible = false
 			controls_hint_node.visible = true
 			x_icon.visible = false
+			c_icon.visible = false
 			show_text("Move           / Confirm     ", controls_hint_label, controls_hint_node)
 
 		HintType.CRIT:

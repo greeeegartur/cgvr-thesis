@@ -15,6 +15,7 @@ class_name StageFlowController
 @onready var tutorial_text := $"../UI/TutorialText"
 @onready var boon_screen := $"../UI/BoonSelectionScreen"
 @onready var boon_manager := $"../BoonManager"
+@onready var combat_ui := $"../UI/CombatUI"
 
 # TO-DO: make backgrounds scenes
 @onready var background := $"../World/Background"
@@ -86,6 +87,8 @@ func _on_back_to_title():
 func _play_victory_sequence(rewards: Dictionary):
 	# Combat end
 	combat_manager._pause_combat() # 1. Pausing combat
+	combat_ui.hide_player_stats_hud()
+	
 	# TO-DO: await player_visual.play_victory() # 2. Showing player visual victory animation
 	camera.victory_focus_on_player(player_visual) # 3. Camera zooms in and focuses on player for victory screen
 	rewards_screen.show_rewards(rewards) # 4. Rewards menu pops up
@@ -95,15 +98,19 @@ func _play_victory_sequence(rewards: Dictionary):
 	await rewards_screen.hide_rewards() # 6. Hides victory screen menu
 	await get_tree().create_timer(0.15).timeout
 	await _show_boons() # 7. Boon selection
-	player_visual.update_hp(PlayerData.hp, PlayerData.max_hp) # UI updates, TO-DO: update according to new UI
+	player_visual.update_hp(PlayerData.hp, PlayerData.max_hp) # UI updates
+	combat_ui.refresh_player_hud()
 	
 	await camera.reset_camera() # 8. Resets camera
 	await _enter_stop() # 9. Stop entering logic
+	await combat_ui.show_player_stats_hud()
+	combat_ui.refresh_player_hud()
 
 func _show_boons():
 	var boons = boon_manager.roll_boons()
 	boon_screen.show_boons(boons)
 	await boon_screen.boon_selected
+	combat_ui.refresh_player_hud()
 
 func _enter_stop():
 	await stop_manager.enter_stop()

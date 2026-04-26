@@ -1,5 +1,6 @@
-[gd_resource type="Resource" script_class="AbilityData" load_steps=2 format=3 uid="uid://b8a5vhavlytf5"]
+[gd_resource type="Resource" script_class="AbilityData" load_steps=3 format=3 uid="uid://b8a5vhavlytf5"]
 
+[ext_resource type="Texture2D" uid="uid://bpeoadvx60k02" path="res://Graphics/Placeholders/Boons/repair.png" id="1_ow3jv"]
 [ext_resource type="Script" uid="uid://dn8yfspxtqdrv" path="res://Scripts/Data/AbilityData.gd" id="1_pyw86"]
 
 [resource]
@@ -7,6 +8,7 @@ script = ExtResource("1_pyw86")
 id = "repair"
 display_name = "Repair"
 description = "Gain the option to heal yourself for up to 50% of your max health!"
+icon = ExtResource("1_ow3jv")
 cooldown_max = 2
 target_type = 1
 metadata/_custom_type_script = "uid://dn8yfspxtqdrv"
