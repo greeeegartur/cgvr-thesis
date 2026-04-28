@@ -1,9 +1,11 @@
-[gd_scene load_steps=40 format=3 uid="uid://wgkbwlbxucav"]
+[gd_scene load_steps=43 format=3 uid="uid://wgkbwlbxucav"]
 
 [ext_resource type="Texture2D" uid="uid://kc6gbkrwm471" path="res://Graphics/Placeholders/Combat/player_idle.png" id="1_ofpci"]
 [ext_resource type="Script" uid="uid://dfpecfsx8ofrf" path="res://Scripts/Combat/PlayerVisual.gd" id="1_sbipa"]
 [ext_resource type="Texture2D" uid="uid://cg3cynxppowlg" path="res://Graphics/Placeholders/Minigames/Beetle Rush/health_back.png" id="2_1q2bo"]
+[ext_resource type="Texture2D" uid="uid://b5bgh61itsx2q" path="res://Graphics/Placeholders/Combat/thoughtbubble_worry.png" id="2_k74ei"]
 [ext_resource type="Texture2D" uid="uid://rakqgp68ofme" path="res://Graphics/Placeholders/Combat/player_attack.png" id="2_sbipa"]
+[ext_resource type="Texture2D" uid="uid://cb64uwveuce7w" path="res://Graphics/Placeholders/Combat/thoughtbubble_exclamation.png" id="3_f4nlf"]
 [ext_resource type="Texture2D" uid="uid://vy8qc508qglt" path="res://Graphics/Placeholders/Combat/player_block.png" id="3_fttp1"]
 [ext_resource type="Texture2D" uid="uid://bc580qfjim3gv" path="res://Graphics/Placeholders/Combat/Block_Effect.png" id="3_i8n88"]
 [ext_resource type="Texture2D" uid="uid://drlquwpqjffsc" path="res://Graphics/Placeholders/Minigames/Beetle Rush/health.png" id="3_ilwea"]
@@ -19,6 +21,7 @@
 [ext_resource type="FontFile" uid="uid://c272uxrl8068e" path="res://Graphics/Fonts/PixelOperator-Bold.ttf" id="13_fmbmo"]
 [ext_resource type="Texture2D" uid="uid://dxbd5kdjuqyr5" path="res://Graphics/Placeholders/Combat/Combat Select.png" id="13_ksby0"]
 [ext_resource type="Texture2D" uid="uid://drq2xc25t0l8h" path="res://Graphics/Placeholders/Combat/player_item.png" id="13_ud6ce"]
+[ext_resource type="Texture2D" uid="uid://cyn7bjruusjwl" path="res://Graphics/Placeholders/Combat/thoughtbubble_question.png" id="20_wv7sg"]
 
 [sub_resource type="Animation" id="Animation_ksby0"]
 length = 0.001
@@ -914,7 +917,10 @@ _data = {
 
 [node name="PlayerVisual" type="Node2D"]
 script = ExtResource("1_sbipa")
-move_speed = 260.0
+worry_emote = ExtResource("2_k74ei")
+exclamation_emote = ExtResource("3_f4nlf")
+question_emote = ExtResource("20_wv7sg")
+move_speed = 250.0
 
 [node name="PlayerHUD" type="Control" parent="."]
 z_index = 1
@@ -1013,3 +1019,11 @@ texture = ExtResource("13_ksby0")
 libraries = {
 &"": SubResource("AnimationLibrary_hei77")
 }
+
+[node name="EmotionBubble" type="Node2D" parent="."]
+visible = false
+
+[node name="Bubble" type="Sprite2D" parent="EmotionBubble"]
+position = Vector2(-31, -57)
+scale = Vector2(1.125, 1.125)
+texture = ExtResource("20_wv7sg")

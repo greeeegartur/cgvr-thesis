@@ -109,7 +109,9 @@ func _play_victory_sequence(rewards: Dictionary):
 func _show_boons():
 	var boons = boon_manager.roll_boons()
 	boon_screen.show_boons(boons)
+	tutorial_text.show_hint(TutorialText.HintType.BOON_SELECT)
 	await boon_screen.boon_selected
+	tutorial_text.hide_text()
 	combat_ui.refresh_player_hud()
 
 func _enter_stop():

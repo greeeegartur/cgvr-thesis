@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="EnemyAttackPattern" load_steps=2 format=3 uid="uid://c7i06xxjo6uav"]
+
+[ext_resource type="Script" uid="uid://by18pvdsekurc" path="res://Scripts/Data/EnemyAttackPattern.gd" id="1_lxx88"]
+
+[resource]
+script = ExtResource("1_lxx88")
+pattern_id = "stall"
+animation_name = "stall"
+total_duration = 0.5
+metadata/_custom_type_script = "uid://by18pvdsekurc"

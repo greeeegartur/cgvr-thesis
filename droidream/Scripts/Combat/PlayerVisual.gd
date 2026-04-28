@@ -26,6 +26,12 @@ var input_enabled = true
 @onready var hud := $PlayerHUD
 @onready var target_arrow := $TargetArrow
 @onready var target_arrow_anim := $TargetArrow/AnimationPlayer
+@onready var emotion_bubble: Node2D = $EmotionBubble
+@onready var emotion_icon: Sprite2D = $EmotionBubble/Bubble
+@export var worry_emote: Texture2D
+@export var exclamation_emote: Texture2D
+@export var question_emote: Texture2D
+var emote_tween: Tween
 
 # Position variables
 var home_position : Vector2 # The player's original position
@@ -46,6 +52,7 @@ func _ready():
 	hp_progress.min_value = 0.0
 	hp_progress.max_value = 1.0
 	hp_progress.value = 1.0
+	emotion_bubble.visible = false
 	
 	anim.play("player_idle")
 	# Combat scene's process mode (pausing) for minigames
@@ -230,3 +237,51 @@ func format_quarter_number(value: float) -> String:
 		return str(int(round(value)))
 	
 	return "%.2f" % value
+
+func bubble_emote(emote_id: String, duration := 1.5):
+	var texture := _get_emote_texture(emote_id)
+	if texture == null:
+		return
+	
+	if emote_tween:
+		emote_tween.kill()
+	
+	emotion_icon.texture = texture
+	emotion_bubble.visible = true
+	emotion_bubble.modulate.a = 0.0
+	emotion_bubble.scale = Vector2.ZERO
+	
+	emote_tween = create_tween()
+	emote_tween.tween_property(emotion_bubble, "scale", Vector2.ONE, 0.18)\
+		.set_trans(Tween.TRANS_BACK)\
+		.set_ease(Tween.EASE_OUT)
+	emote_tween.parallel().tween_property(emotion_bubble, "modulate:a", 1.0, 0.12)
+	emote_tween.tween_interval(duration)
+	emote_tween.tween_property(emotion_bubble, "scale", Vector2.ZERO, 0.15)\
+		.set_trans(Tween.TRANS_BACK)\
+		.set_ease(Tween.EASE_IN)
+	emote_tween.parallel().tween_property(emotion_bubble, "modulate:a", 0.0, 0.15)
+	
+	await emote_tween.finished
+	emotion_bubble.visible = false
+
+func _get_emote_texture(emote_id: String) -> Texture2D:
+	match emote_id:
+		"worry":
+			return worry_emote
+		"exclamation":
+			return exclamation_emote
+		"question":
+			return question_emote
+	
+	push_warning("Unknown player emote: " + emote_id)
+	return null
+
+func hop():
+	var base_y := position.y
+	var tween := create_tween()
+	tween.tween_property(self, "position:y", base_y - 14, 0.12)
+	tween.tween_property(self, "position:y", base_y, 0.18)\
+		.set_trans(Tween.TRANS_BOUNCE)\
+		.set_ease(Tween.EASE_OUT)
+	await tween.finished

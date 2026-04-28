@@ -84,6 +84,17 @@ var selected_ability_tame_type: CombatTypes.EntityType
 var ability_tame_select_active := false
 var minigame_queue_ongoing := false
 
+# Tutorial-specific variables
+signal tutorial_attack_resolved(critical: bool, minigame_started: bool)
+signal tutorial_minigame_started(minigame)
+signal tutorial_minigame_finished(success: bool)
+
+var tutorial_mode := false
+var tutorial_inputs_locked := false
+var last_attack_was_critical := false
+var last_attack_started_minigame := false
+var last_minigame_success := false
+
 # Creature-specific variables and constants
 const DUCK_TYPE_REVEAL_DURATION := 1.45
 const DUCK_TYPE_COLORS := {
@@ -175,7 +186,8 @@ func _setup_entities(enemy_ids):
 		player_visual.set_home_position()
 		
 		# UI
-		await player_visual.ready
+		if not player_visual.is_node_ready():
+			await player_visual.ready
 		player_visual.update_hp(player.hp, player.max_hp)
 	_sync_player_stats() # From possible previous instances
 	
@@ -371,6 +383,30 @@ func _start_combat(enemy_ids):
 	# COMBAT STARTS
 	_start_turn_loop()
 
+func start_tutorial_combat(enemy_ids: Array) -> CombatEntity:
+	tutorial_mode = true
+	combat_has_ended = false
+	combat_paused = false
+	print("tutorial combat: entered")
+	
+	print("tutorial combat: before setup entities")
+	await _setup_entities(enemy_ids)
+	print("tutorial combat: after setup entities")
+	await player_turn_ui._build_abilities_ui()
+	await player_turn_ui._build_items_ui()
+	_reset_ability_cooldowns()
+	
+	locked_enemy_turn_order = _get_enemy_turn_order()
+	player_turn_ui.lock_input()
+	player_turn_ui.hide_player_turn_ui()
+	tutorial_text.hide_text()
+	
+	print(enemies)
+	if enemies.is_empty():
+		return null
+	
+	return enemies[0]
+
 # Starts the actual combat, keeping as method in case of future additions
 func _start_turn_loop():
 	# For checking if passives exist
@@ -453,6 +489,13 @@ func _execute_enemy_turns(order: Array):
 		await _enemy_attack_single(enemy)
 
 func _end_combat(victory: bool):
+	if tutorial_mode:
+		combat_has_ended = true
+		turn = ""
+		player_turn_ui.hide_player_turn_ui()
+		tutorial_text.hide_text()
+		player_turn_ui.lock_input()
+		return
 	if combat_has_ended:
 		return
 	combat_has_ended = true
@@ -545,6 +588,14 @@ func player_attack(attack_type: CombatTypes.EntityType):
 			if in_minigame:
 				return
 			
+			if tutorial_mode:
+				tutorial_attack_resolved.emit(
+					last_attack_was_critical,
+					last_attack_started_minigame
+				)
+				player_visual.set_input_enabled(false)
+				return
+			
 			# Check if enemy defeated
 			if _check_victory():
 				_end_combat(true)
@@ -580,6 +631,8 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		last_attack_press_time >= critical_window.x
 		and last_attack_press_time <= critical_window.y
 	)
+	last_attack_was_critical = critical # For tutorial
+	last_attack_started_minigame = false
 	
 	if critical:
 		base *= _get_crit_multiplier() # Either 1.5 or 1.75
@@ -623,6 +676,7 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		# Checks if enemy's axis value is at max, if it is, starts minigame
 		if enemy.is_minigame_ready():
 			print("Enemy trust level reached! Triggering minigame now.")
+			last_attack_started_minigame = true
 			await _start_minigame(enemy)
 			return true
 		return false
@@ -717,11 +771,16 @@ func _start_minigame(enemy: CombatEntity):
 	
 	# Minigame's damage signal
 	minigame.damage_taken.connect(_on_minigame_damage_taken)
+	if tutorial_mode:
+		tutorial_minigame_started.emit(minigame)
 	
 	minigame.play()
 	var success = await minigame.completed
 	in_minigame = false
 	combat_paused = false
+	last_minigame_success = success
+	if tutorial_mode:
+		tutorial_minigame_finished.emit(success)
 	
 	await on_minigame_complete(enemy, success)
 	_world_gray_out(false)
@@ -1684,8 +1743,8 @@ func _generate_rewards():
 		# Rewards based on how the enemy was defeated
 		if enemy.is_killed():
 			killed_count += 1
-			max_currency = half_hp
-			min_currency = max(0, max_currency + 2)
+			min_currency = half_hp + 2
+			max_currency = min_currency + 3
 		elif enemy.is_tamed():
 			min_currency = half_hp
 			max_currency = min_currency + 2
@@ -1700,13 +1759,12 @@ func _generate_rewards():
 			gained_currency *= 2
 		
 		total_currency += gained_currency
-	
+
 	PlayerData.add_currency(total_currency)
 	var item_rewards := _roll_tamed_enemy_drops()
 	_apply_human_at_heart(killed_count)
 	_apply_karma_and_outcome_tracking()
 	vfx._update_karma_overlay()
-	print(item_rewards)
 	print("Currency right now: ", PlayerData.currency)
 	
 	return {
@@ -2165,6 +2223,49 @@ func _reveal_duck_type(enemy: CombatEntity):
 		CombatTypes.EntityType.WATER:
 			vfx.spawn_feedback(visual, "[color=4da6ff]Water[/color]")
 	await _flash_enemy_type_color(visual, color, DUCK_TYPE_REVEAL_DURATION)
+
+func tutorial_begin_player_turn_locked():
+	combat_paused = false
+	turn = "player"
+	selected_enemy = null
+	is_targeting = false
+	locked_enemy_turn_order = _get_enemy_turn_order()
+	player_turn_ui.start_player_turn()
+	player_turn_ui.update_guess_display()
+	player_turn_ui.lock_input()
+
+func tutorial_unlock_player_turn_ui():
+	player_turn_ui.start_player_turn()
+
+func tutorial_lock_player_turn_ui():
+	player_turn_ui.lock_input()
+
+func tutorial_get_dummy() -> CombatEntity:
+	if enemies.is_empty():
+		return null
+	return enemies[0]
+
+func tutorial_select_dummy():
+	var dummy := tutorial_get_dummy()
+	if dummy == null:
+		return
+	
+	selected_enemy = dummy
+	target_index = 0
+	target_mode = TargetMode.ENEMY
+	is_targeting = true
+	_set_selected_enemy(dummy)
+
+
+func tutorial_prepare_dummy_for_minigame():
+	var dummy := tutorial_get_dummy()
+	if dummy == null:
+		return
+	
+	dummy.axis_value = max(0.0, dummy.axis_max - 1.0)
+	var visual = enemy_visuals.get(dummy)
+	if visual:
+		visual.update_axis(dummy.axis_value)
 
 # ANIMATION METHODS
 # Smooth tween BG animation for minigame enter/exiting 

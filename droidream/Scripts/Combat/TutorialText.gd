@@ -26,6 +26,7 @@ var hint_types_in_battle_panel = [HintType.CRIT, HintType.BLOCK, HintType.REPAIR
 enum HintType {
 	PLAYER_TURN,
 	PLAYER_SELECT,
+	BOON_SELECT,
 	SHOP,
 	CRIT,
 	BLOCK,
@@ -53,14 +54,28 @@ func show_hint(type: HintType):
 			panel.visible = false
 			controls_hint_node.visible = false
 			select_hint_node.visible = true
+			
 			x_icon.visible = false
 			c_icon.visible = false
 			show_text("Select a target entity!", select_hint_label, select_hint_node)
+
+		HintType.BOON_SELECT:
+			current_state = HintType.BOON_SELECT
+			panel.visible = false
+			controls_hint_node.visible = false
+			select_hint_node.visible = true
+			select_hint_node.position = Vector2(-105, 3.33)
+			select_hint_node.scale = Vector2(1.0, 1.0)
+			x_icon.visible = false
+			c_icon.visible = false
+			show_text("Select a boon!", select_hint_label, select_hint_node)
 
 		HintType.SHOP:
 			current_state = HintType.SHOP
 			panel.visible = false
 			select_hint_node.visible = false
+			select_hint_node.position = Vector2(1.667, 13)
+			select_hint_node.scale = Vector2(0.6, 0.6)
 			controls_hint_node.visible = true
 			x_icon.visible = false
 			c_icon.visible = false
@@ -148,6 +163,8 @@ func hide_text():
 		node = panel
 	elif current_state == HintType.PLAYER_TURN or current_state == HintType.SHOP or current_state == HintType.PLAYER_SELECT:
 		node = controls_hint_node
+	else:
+		node = select_hint_node
 	var tween := create_tween()
 	tween.tween_property(node, "modulate:a", 0.0, 0.25)
 	tween.finished.connect(func():

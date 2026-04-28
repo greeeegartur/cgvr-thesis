@@ -27,7 +27,8 @@ var MINIGAME_SCENES = {
 	"beetle_rush": preload("res://Scenes/Minigames/Beetle Rush/BeetleRush.tscn"),
 	"bat_flash": preload("res://Scenes/Minigames/Bat Flash/BatFlash.tscn"),
 	"frog_guess": preload("res://Scenes/Minigames/Frog Guess/FrogGuess.tscn"),
-	"duck_flap": preload("res://Scenes/Minigames/Duck Flap/DuckFlap.tscn")
+	"duck_flap": preload("res://Scenes/Minigames/Duck Flap/DuckFlap.tscn"),
+	"tutorial": preload("res://Scenes/Minigames/Tutorial/Tutorial.tscn")
 }
 
 # List of all enemy specific attributes that don't fit into their resources
@@ -51,6 +52,11 @@ const DATA = {
 		"attack_offset": Vector2(107, 5),
 		"move_speed": 260.0,
 		"drop_item_ids": ["soft_branch", "memory_chip", "ball", "ice_cube"]
+	},
+	"dummy": {
+		"attack_offset": Vector2(0, 0),
+		"move_speed": 0.0,
+		"drop_item_ids": []
 	}
 }
 

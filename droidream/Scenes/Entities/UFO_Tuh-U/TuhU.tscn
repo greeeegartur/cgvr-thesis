@@ -1,8 +1,30 @@
-[gd_scene load_steps=2 format=3 uid="uid://xdci2nsbs7fv"]
+[gd_scene load_steps=12 format=3 uid="uid://xdci2nsbs7fv"]
 
+[ext_resource type="Script" uid="uid://c1cqnmra7of66" path="res://Scripts/Misc/TuhU.gd" id="1_32mqh"]
 [ext_resource type="Texture2D" uid="uid://cyt6rirvfbvl4" path="res://Scenes/Entities/UFO_Tuh-U/tuhu-temp.png" id="1_dahwj"]
+[ext_resource type="Texture2D" uid="uid://b20xl81y8af3f" path="res://Scenes/Entities/UFO_Tuh-U/tuhu-happy.png" id="3_hrwxe"]
+[ext_resource type="Texture2D" uid="uid://cyn7bjruusjwl" path="res://Graphics/Placeholders/Combat/thoughtbubble_question.png" id="3_q2xk0"]
+[ext_resource type="Texture2D" uid="uid://b45p4hbip0k3f" path="res://Scenes/Entities/UFO_Tuh-U/tuhu-sad.png" id="4_aryxy"]
+[ext_resource type="Texture2D" uid="uid://b8ri010fj6jl7" path="res://Scenes/Entities/UFO_Tuh-U/tuhu-right.png" id="5_txc0a"]
+[ext_resource type="Texture2D" uid="uid://bnffj7ia4jdw6" path="res://Scenes/Entities/UFO_Tuh-U/tuhu-down.png" id="6_06v7w"]
+[ext_resource type="Texture2D" uid="uid://dclyismytsgrd" path="res://Scenes/Entities/UFO_Tuh-U/tuhu-up.png" id="7_xws72"]
+[ext_resource type="Texture2D" uid="uid://b5bgh61itsx2q" path="res://Graphics/Placeholders/Combat/thoughtbubble_worry.png" id="8_uu8eu"]
+[ext_resource type="Texture2D" uid="uid://cb64uwveuce7w" path="res://Graphics/Placeholders/Combat/thoughtbubble_exclamation.png" id="9_0l31n"]
+
+[sub_resource type="Gradient" id="Gradient_32mqh"]
+colors = PackedColorArray(0.47843137, 0.9647059, 0.9764706, 1, 0.22352941, 0.52156866, 0.7372549, 1)
 
 [node name="TuhU" type="Node2D"]
+script = ExtResource("1_32mqh")
+normal_texture = ExtResource("1_dahwj")
+happy_texture = ExtResource("3_hrwxe")
+sad_texture = ExtResource("4_aryxy")
+look_right_texture = ExtResource("5_txc0a")
+look_down_texture = ExtResource("6_06v7w")
+look_up_texture = ExtResource("7_xws72")
+worry_emote = ExtResource("8_uu8eu")
+exclamation_emote = ExtResource("9_0l31n")
+question_emote = ExtResource("3_q2xk0")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 scale = Vector2(0.8, 0.8)
@@ -10,3 +32,28 @@ texture = ExtResource("1_dahwj")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Sprite2D"]
 root_node = NodePath("../..")
+
+[node name="CPUParticles2D" type="CPUParticles2D" parent="."]
+z_index = -1
+position = Vector2(0, 13)
+amount = 10
+lifetime = 0.7
+emission_shape = 1
+emission_sphere_radius = 8.0
+direction = Vector2(0, 1)
+spread = 35.0
+gravity = Vector2(0, 20)
+initial_velocity_min = 4.0
+initial_velocity_max = 10.0
+scale_amount_min = 0.4
+scale_amount_max = 0.9
+color = Color(0.47843137, 0.9647059, 0.9764706, 1)
+color_ramp = SubResource("Gradient_32mqh")
+
+[node name="EmotionBubble" type="Node2D" parent="."]
+visible = false
+
+[node name="Bubble" type="Sprite2D" parent="EmotionBubble"]
+position = Vector2(29, -34)
+scale = Vector2(1.125, 1.125)
+texture = ExtResource("3_q2xk0")

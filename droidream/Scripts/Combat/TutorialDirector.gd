@@ -5,15 +5,19 @@ extends Node
 
 class_name TutorialDirector
 
-@onready var top_bar := $"../UI/BlackBars/Above"
-@onready var bottom_bar := $"../UI/BlackBars/Below"
 @onready var black := $"../UI/Black"
 @onready var combat_manager := $"../CombatManager"
 @onready var player_visual := $"../World/PlayerVisual"
+@onready var player_turn_ui := $"../UI/CombatUI/PlayerTurnUi"
 @onready var camera := $"../Camera2D"
 @onready var ufo := $"../World/TuhU"
 @onready var speech_bubble := $"../UI/SpeechBubble"
 @onready var hint_node := $"../UI/HintNode"
+@onready var tutorial_overlay := $"../UI/TutorialOverlay"
+
+var original_ufo_parent: Node
+var original_speech_parent: Node
+var ufo_was_on_overlay := false
 
 # Timer hint logic
 var idle_timer := 0.0
@@ -36,15 +40,26 @@ const TUTORIAL_COLORS := {
 	"bolts": "#ffd700"             # golden
 }
 
+const UFO_POS_INTRO := Vector2(166, 227)
+const UFO_POS_DUMMY := Vector2(390, 195)
+const UFO_POS_GEAR := Vector2(145, 185)
+const UFO_POS_TYPE_PANEL := Vector2(245, 165)
+const UFO_POS_MINIGAME_RIGHT := Vector2(555, 205)
+const UFO_POS_OUTRO := Vector2(150, 205)
+
+var dummy_enemy: CombatEntity
 
 func _ready():
 	await speech_bubble.ready
+	
+	PlayerData.set_guesses(0, 3, 0)
 	player_visual.hide_hp()
 	speech_bubble.set_target(ufo)
 	speech_bubble.hide_tail()
-	enter_cinematic()
+	combat_manager.ui.hide_player_stats_hud()
 	
-	intro_scene()
+	lock_input()
+	await play_tutorial()
 
 func _process(delta: float):
 	if speech_bubble.visible and speech_bubble.mode == SpeechBubble.BubbleMode.CINEMATIC:
@@ -72,24 +87,12 @@ func hint_out():
 
 func lock_input():
 	combat_manager._pause_combat()
-	set_process_input(false)
+	combat_manager.player_turn_ui.lock_input()
+	player_visual.set_input_enabled(false)
 
 func unlock_input():
 	combat_manager._resume_combat()
-
-func enter_cinematic():
-	var tween := create_tween()
-	tween.tween_property(top_bar, "size:y", 45, 0.45)
-	tween.parallel().tween_property(bottom_bar, "size:y", 45, 0.45)
-	tween.set_trans(Tween.TRANS_SINE)
-	tween.set_ease(Tween.EASE_IN_OUT)
-
-func exit_cinematic():
-	var tween := create_tween()
-	tween.tween_property(top_bar, "size:y", 0, 0.45)
-	tween.parallel().tween_property(bottom_bar, "size:y", 0, 0.45)
-	tween.set_trans(Tween.TRANS_SINE)
-	tween.set_ease(Tween.EASE_IN_OUT)
+	player_visual.set_input_enabled(true)
 
 func fade_from_black():
 	await get_tree().create_timer(0.45).timeout
@@ -134,158 +137,540 @@ func _stop_ufo_idle():
 		ufo_idle_tween = null
 
 func play_tutorial():
+	camera.follow(player_visual)
+	_start_ufo_idle()
+	await get_tree().create_timer(1.5).timeout
+	
 	await intro_scene()
-	await spawn_dummy_enemy()
 	await guided_combat_phase()
-	await minigame_interruption()
+	await dream_tutorial_phase()
 	await outro_scene()
 
 func intro_scene():
-	_start_ufo_idle()
-	await camera.follow(player_visual)
-	await get_tree().create_timer(1.0).timeout
+	lock_input()
 	
-	speech_bubble.show_bubble()
-	await speech_bubble.say_line("Hey! Are you alright?")
-	await speech_bubble.say_line("Come on, wake up!")
-	speech_bubble.hide_bubble()
+	# Initial speech before the scene fully fades in.
+	speech_bubble.set_target(ufo)
+	speech_bubble.hide_tail()
+	
+	await say("Hey! Are you alright?", "normal")
+	await say("Come on, wake up!", "normal")
+	end_say()
 	
 	await fade_from_black()
 	speech_bubble.show_tail()
 	
-	speech_bubble.show_bubble()
-	await speech_bubble.say_line("..Oh. You were… sleeping here?")
-	# ufo.play_happy()
-	await speech_bubble.say_line("Quite an odd place for a nap, don’t you think?")
-	speech_bubble.hide_bubble()
+	# Droid wakes up.
+	await get_tree().create_timer(1.0).timeout
 	
-	# *The Droid looks around, notices it’s in a jungle, question mark bubble*
-	await get_tree().create_timer(1).timeout
+	await say("..Oh. You were… sleeping here?", "normal")
+	await say("Quite an odd place for a nap, don’t you think?", "happy")
+	end_say()
 	
-	# ufo.play_normal()
-	speech_bubble.show_bubble()
-	await speech_bubble.say_line("Huh? You’re lost?")
-	# ufo.play_happy()
-	await speech_bubble.say_line("So this isn’t a lifestyle choice. What a relief!")
-	speech_bubble.hide_bubble()
+	# Droid notices the jungle.
+	await player_visual.bubble_emote("question")
+	await get_tree().create_timer(0.25).timeout
 	
-	# *The Droid nods at Tuh-U without emotion*
-	await get_tree().create_timer(1).timeout
+	await say("Huh? You’re lost?", "normal")
+	await say("So this isn’t a lifestyle choice, what a relief!", "happy")
+	end_say()
 	
-	speech_bubble.show_bubble()
-	# ufo.play_normal()
-	await speech_bubble.say_line("..Oh, right. You’re actually lost.")
-	speech_bubble.hide_bubble()
+	# Droid nods silently.
+	await player_nod()
 	
-	#*Camera zooms in on Tuh-U*
-	await get_tree().create_timer(1).timeout
+	await say("..Oh, right. You’re actually lost.", "normal")
+	end_say()
 	
-	speech_bubble.show_bubble()
-	await speech_bubble.say_line("My name is [b]Tuh-U[/b], I know these parts well.")
-	speech_bubble.hide_bubble() 
+	# Camera focuses on Tuh-U introduction.
+	camera.follow(ufo)
+	await get_tree().create_timer(0.35).timeout
 	
-	await get_tree().create_timer(1).timeout
-	#*Camera zooms out to previous position*
+	await say("My name is [b]Tuh-U[/b], I know these parts well.", "normal")
+	end_say()
 	
-	speech_bubble.show_bubble()
-	await speech_bubble.say_line("Can you describe your home? Maybe I can point you in the right direction.")
-	speech_bubble.hide_bubble()
+	camera.follow(player_visual)
+	await get_tree().create_timer(0.25).timeout
 	
-	#*The Droid explains where it last dozed off, Tuh-U exclamation mark bubble*
-	await get_tree().create_timer(1).timeout
+	await say("Can you describe your home? Maybe I can point you in the right direction.", "normal")
+	end_say()
 	
-	speech_bubble.show_bubble()
-	# ufo.play_happy()
-	await speech_bubble.say_line("Ah! I know this place.")
-	await speech_bubble.say_line("Wow, though.. You’ve come quite a long way. ")
-	speech_bubble.hide_bubble()
+	# Droid explains. Tuh-U reacts.
+	await player_explain()
+	await ufo.bubble_emote("exclamation")
 	
-	await get_tree().create_timer(1).timeout
-	#*Worry bubble for The Droid*
+	await say("Ah! I know this place.", "happy")
+	await say("Wow, though.. You’ve come quite a long way.", "normal")
+	end_say()
 	
-	speech_bubble.show_bubble()
-	# ufo.play_look_right()
-	await speech_bubble.say_line("To get back, you’d need to cross the cliffside.")
-	await speech_bubble.say_line("But the cliffside itself is beyond this jungle and a cavern system..")
-	# ufo.play_sad()
-	await speech_bubble.say_line("It’s no easy path, the road is full of all sorts of [color=#8df59a]wild creatures[/color].")
-	await speech_bubble.say_line("For someone so young like yourself… It can be a dangerous journey.")
-	speech_bubble.hide_bubble()
+	await player_visual.bubble_emote("worry")
 	
-	await get_tree().create_timer(1).timeout
-	#*The Droid shows Tuh-U its book about creatures*
+	await say("To get back, you’d need to cross the cliffside.", "right")
+	await say("But the cliffside is beyond this jungle and a cavern system.", "normal")
+	await say("It’s no easy path, the road is full of all sorts of %s." % bb("creatures", "wild creatures"), "sad")
+	await say("For someone so young like yourself… It can be a dangerous journey.", "sad")
+	end_say()
 	
-	speech_bubble.show_bubble()
-	# ufo.play_happy()
-	await speech_bubble.say_line("Oh, wow! A [color=#8df59a]creature book[/color]!")
-	await speech_bubble.say_line("I didn’t think you were this talented! No offense.")
-	await speech_bubble.say_line("You must be an expert at [color=#ffb347]taming creatures[/color] then?")
-	speech_bubble.hide_bubble()
+	# Droid shows creature book.
+	await player_show_book()
 	
-	#*Worry bubble for The Droid as it frowns*
-	await get_tree().create_timer(1).timeout
+	await say("Oh, wow! A %s book!" % bb("creatures", "creature"), "happy")
+	await say("I didn’t think you were this talented! No offense.", "happy")
+	await say("You must be an expert at %s then?" % bb("taming", "taming creatures"), "happy")
+	end_say()
 	
-	speech_bubble.show_bubble()
-	# ufo.play_sad()
-	await speech_bubble.say_line("..Or not?")
-	speech_bubble.hide_bubble()
+	await player_frown()
+	await get_tree().create_timer(0.65).timeout
 	
-	# Pause for a few seconds
-	await get_tree().create_timer(2).timeout
+	await say("..Or not?", "sad")
+	end_say()
 	
-	speech_bubble.show_bubble()
-	# ufo.play_happy()
-	await speech_bubble.say_line("Not to worry though, I can teach you the basics.")
-	speech_bubble.hide_bubble()
+	await get_tree().create_timer(1.4).timeout
 	
-	#*The Droid is surprised, exclamation mark bubble*
-	await get_tree().create_timer(1).timeout
+	await say("Not to worry though, I can teach you the basics.", "happy")
+	end_say()
 	
-	speech_bubble.show_bubble()
-	await speech_bubble.say_line("The journey ahead would still be difficult, but I see great ambition in you!")
-	await speech_bubble.say_line("With a little help, I’m sure you can make it back home!")
-	speech_bubble.hide_bubble()
+	await player_visual.bubble_emote("exclamation")
 	
-	# ufo.flip()
-	await get_tree().create_timer(1).timeout
+	await say("The journey ahead would still be difficult, but I see great ambition in you!", "happy")
+	await say("With a little help, I’m sure you can make it back home!", "happy")
+	end_say()
 	
-	speech_bubble.show_bubble()
-	# ufo.play_normal()
-	await speech_bubble.say_line("..Let’s see now… ")
-	speech_bubble.hide_bubble()
+	await get_tree().create_timer(0.25).timeout
 	
-	#*Tuh-U flies to the right, camera follows*
-	#*Tuh-U releases a beam and spawns in a Dummy*
-	await get_tree().create_timer(1).timeout
-	camera.reset_camera()
-	#*Camera returns to combat scene standard*
+	# Tuh-U thinks, turns, and prepares the tutorial dummy.
+	ufo.flip_toward_right()
+	await say("..Let’s see now…", "normal")
+	end_say()
 	
-	speech_bubble.show_bubble()
-	await speech_bubble.say_line("This should work!")
-	speech_bubble.hide_bubble()
-	
-	# ufo.flip()
-	await get_tree().create_timer(1).timeout
-	
-	speech_bubble.show_bubble()
-	# ufo.play_happy()
-	await speech_bubble.say_line("Are you ready? Let’s begin!")
-	speech_bubble.hide_bubble()
-
+	await spawn_dummy_enemy()
 
 func spawn_dummy_enemy():
-	print("spawn dummy here")
+	camera.follow(ufo)
+	await move_ufo_to(UFO_POS_DUMMY, 0.9, false)
+	
+	ufo.play_look_down()
+	await get_tree().create_timer(0.65).timeout
+	
+	var tutorial_enemy_ids := ["dummy"]
+	dummy_enemy = await combat_manager.start_tutorial_combat(tutorial_enemy_ids)
+	
+	await camera.reset_camera()
+	_start_ufo_idle()
+	
+	await say("This should work!", "happy")
+	end_say()
+	
+	ufo.flip_toward_left()
+	await get_tree().create_timer(0.25).timeout
+	await say("Are you ready? Let’s begin!", "happy")
+	end_say()
 
 func guided_combat_phase():
-	print("combat starts and tuhu talks here during combat")
+	lock_input()
+	combat_manager.tutorial_begin_player_turn_locked()
+	combat_manager.player_turn_ui.visible = true
+	
+	await move_ufo_to(UFO_POS_GEAR, 0.7)
+	camera.follow(ufo)
+	
+	await say("When confronting a %s, there are several ways to handle it." % bb("creatures", "creature"), "normal")
+	
+	player_turn_ui._move_gear(1)
+	await get_tree().create_timer(0.2).timeout
+	
+	await say("You could use your various %s!" % bb("abilities", "abilities"), "happy")
+	await say("..Which you don’t have!", "normal")
+	
+	player_turn_ui._move_gear(1)
+	await get_tree().create_timer(0.2).timeout
+	
+	await say("Or your plethora of %s!" % bb("items", "items"), "happy")
+	await say("..Which you also don’t have as of %s!" % get_month_day_string(), "normal")
+	
+	player_turn_ui._move_gear(1)
+	await get_tree().create_timer(0.2).timeout
+	
+	await overlay_say("..But the general course of action would be to %s creatures." % bb("taming", "tame"), "normal")
+	await wait_for_accept()
+	
+	combat_manager.player_turn_ui.state = combat_manager.player_turn_ui.State.ATTACK_TYPE_SELECT
+	player_turn_ui.lock_input()
+	
+	await camera.reset_camera()
+	await move_ufo_to(UFO_POS_TYPE_PANEL, 0.6)
+	ufo.set_facing_left(false)
+	
+	await say("In order to %s, you must know what %s of creature it is." % [
+		bb("taming", "tame a creature"),
+		bb("type", "type")
+	], "normal")
+	await say("Treating them as the %s they are makes the %s %s." % [
+		bb("type", "type"),
+		bb("creatures", "creature"),
+		bb("trust", "trust you")
+	], "normal")
+	await say("..Any other %s can %s, or even worse…" % [
+		bb("type", "type"),
+		bb("hurt", "hurt the creature")
+	], "sad")
+	end_say()
+	
+	await move_ufo_to(UFO_POS_DUMMY, 0.7)
+	camera.follow(enemy_visual_for_dummy())
+	
+	await say("A %s can be guessed by their characteristics." % bb("type", "creature’s type"), "normal")
+	await say("Usually just looking at %s is enough to know." % bb("creatures", "a creature"), "down")
+	await say("Does it %s? Can it %s? Is it just %s?" % [
+		bb("sky", "fly"),
+		bb("water", "swim"),
+		bb("earth", "standing menacingly")
+	], "happy")
+	await say("Like this dummy here, who is extraordinarily ordinary, is still rooted to %s." % bb("earth", "the ground"), "normal")
+	await say("If it were alive, it would be an %s." % bb("earth", "earth creature"), "normal")
+	end_say()
+	
+	await camera.reset_camera()
+	await overlay_say("For practice, try %s as an %s!" % [
+		bb("taming", "taming it"),
+		bb("earth", "earth creature")
+	], "normal")
+	
+	await tutorial_wait_for_first_earth_hit()
 
-func minigame_interruption():
-	print("tuhu appears and talks during minigame")
+func dream_tutorial_phase():
+	await say("Now there’s one more important thing I want to show you..", "normal")
+	end_say()
+	
+	await move_ufo_to(UFO_POS_DUMMY + Vector2(-30, 0), 0.65)
+	camera.follow(enemy_visual_for_dummy())
+	
+	combat_manager.tutorial_prepare_dummy_for_minigame()
+	await get_tree().create_timer(0.35).timeout
+	
+	await say("Once a %s is close to being tamed, it starts to %s." % [
+		bb("creatures", "creature"),
+		bb("trust", "trust you")
+	], "down")
+	await say("And once it fully does, you, as a %s, have the ability to %s." % [
+		bb("droid", "droid"),
+		bb("trust", "seal that bond")
+	], "normal")
+	await say("What you’ll see is a vision of that %s." % bb("trust", "creature’s dream"), "normal")
+	await say("A %s is unique to a creature and they can be… well, anything really." % bb("trust", "dream"), "happy")
+	await say("For practice sake, let’s pretend the dummy has a %s." % bb("trust", "dream"), "normal")
+	end_say()
+	
+	await camera.reset_camera()
+	
+	await overlay_say("Let’s try %s it one last time!" % bb("taming", "taming"), "normal")
+	await wait_for_accept()
+	
+	combat_manager.tutorial_unlock_player_turn_ui()
+	combat_manager.player_turn_ui.menu_indices[combat_manager.player_turn_ui.MENU_ATTACK] = 1
+	
+	var minigame = await combat_manager.tutorial_minigame_started
+	lock_input()
+	
+	if minigame.has_method("set_tutorial_paused"):
+		minigame.set_tutorial_paused(true)
+	else:
+		get_tree().paused = true
+	
+	await explain_minigame(minigame)
+
 
 func outro_scene():
-	print("droid walks to the right of the scene")
+	lock_input()
+	combat_manager.player_turn_ui.hide_player_turn_ui()
+	
+	camera.follow(ufo)
+	await move_ufo_to(UFO_POS_OUTRO, 0.6)
+	
+	await say("For a first time you picked up on %s real fast!" % bb("taming", "taming"), "happy")
+	await say("Seeing you in practice.. I’m sure you’ll make it back home in one piece.", "happy")
+	await say("I haven’t seen talent like yours in a long time.", "happy")
+	await say("If it’s not much of a bother… I got to thinking.", "down")
+	await say("Would you be okay with me accompanying you to the cliffside?", "normal")
+	end_say()
+	
+	await player_visual.hop()
+	await get_tree().create_timer(0.25).timeout
+	await player_visual.bubble_emote("exclamation")
+	await ufo.hop()
+	
+	await say("I’m glad! We’re sure to make quite the power team!", "happy")
+	await say("I’ll set up all sorts of %s on the way for us to rest." % bb("items", "stops"), "happy")
+	await say("If you find any %s, you can buy all sorts of stuff I find!" % bb("bolts", "bolts"), "happy")
+	await say("%s can also attack you during encounters, so stopping once in a while is a must." % bb("creatures", "Wild creatures"), "down")
+	await say("Though with me by your side, I’m sure we’ll make it there just fine!", "happy")
+	await say("Are you ready? Let’s go!", "normal")
+	end_say()
+	
+	await walk_out_and_finish()
 
 # HELPERS
 
 func bb(key: String, text: String) -> String:
 	return "[color=%s]%s[/color]" % [TUTORIAL_COLORS[key], text]
+
+func say(text: String, mood := "normal", target: Node2D = ufo):
+	speech_bubble.set_target(target)
+	
+	match mood:
+		"happy":
+			ufo.play_happy()
+		"sad":
+			ufo.play_sad()
+		"right":
+			ufo.play_look_right()
+		"down":
+			ufo.play_look_down()
+		"up":
+			ufo.play_look_up()
+		_:
+			ufo.play_normal()
+	
+	speech_bubble.show_bubble()
+	await speech_bubble.say_line(text)
+
+func end_say():
+	speech_bubble.hide_bubble()
+
+func overlay_say(text: String, mood := "normal"):
+	await say(text, mood)
+	hint_node.visible = true
+	hint_in()
+
+func wait_for_accept():
+	while not Input.is_action_just_pressed("ui_accept"):
+		await get_tree().process_frame
+	
+	hint_out()
+	hint_node.visible = false
+
+func move_ufo_to(pos: Vector2, duration := 0.75, restart_idle := true):
+	_stop_ufo_idle()
+	await ufo.move_to(pos, duration)
+	
+	if restart_idle:
+		_start_ufo_idle()
+
+func tutorial_wait_for_first_earth_hit():
+	combat_manager.tutorial_unlock_player_turn_ui()
+	combat_manager.player_turn_ui.menu_indices[combat_manager.player_turn_ui.MENU_ATTACK] = 1 # Earth, based on Sky/Earth/Water order
+	
+	hint_node.visible = true
+	hint_in()
+	
+	var result = await combat_manager.tutorial_attack_resolved
+	hint_out()
+	hint_node.visible = false
+	
+	var critical: bool = result[0]
+	
+	combat_manager.tutorial_lock_player_turn_ui()
+	lock_input()
+	await camera.reset_camera()
+	
+	if critical:
+		await say("Wow, you’ve got a real knack for this!", "happy")
+		await say("I was about to teach you %s during %s, but it seems you figured it out yourself!" % [
+			bb("taming", "a neat trick"),
+			bb("taming", "taming")
+		], "happy")
+	else:
+		await say("That was great! You’re a natural!", "happy")
+	await get_tree().create_timer(0.25).timeout
+	end_say()
+	await get_tree().create_timer(0.25).timeout
+	await explain_memory_chips()
+	
+	if not critical:
+		await crit_tutorial_phase()
+
+func explain_memory_chips():
+	await say("After %s, one of that last %s will be used." % [
+		bb("taming", "taming a creature"),
+		bb("type", "type")
+	], "normal")
+	await say("You’re a %s, so an action like %s processes your %s." % [
+		bb("droid", "droid"),
+		bb("taming", "taming"),
+		bb("type", "memory")
+	], "normal")
+	await say("It’s cool though! On the way you’re bound to get more %s that will restore your %s!" % [
+		bb("droid", "chips"),
+		bb("type", "memory")
+	], "happy")
+	end_say()
+	await get_tree().create_timer(0.25).timeout
+
+func crit_tutorial_phase():
+	await overlay_say("Let’s try %s the dummy again, but this time I want to show you %s!" % [
+		bb("taming", "taming"),
+		bb("taming", "a neat trick")
+	], "normal")
+	await wait_for_accept()
+	
+	combat_manager.tutorial_unlock_player_turn_ui()
+	combat_manager.player_turn_ui.menu_indices[combat_manager.player_turn_ui.MENU_ATTACK] = 1
+	
+	await overlay_say("Once you start %s, try %s right before making contact with the creature." % [
+		bb("taming", "taming"),
+		bb("taming", "timing")
+	], "normal")
+	await wait_for_accept()
+	
+	var result = await combat_manager.tutorial_attack_resolved
+	var critical: bool = result[0]
+	
+	combat_manager.tutorial_lock_player_turn_ui()
+	lock_input()
+	
+	end_say()
+	await camera.reset_camera()
+	
+	if critical:
+		await say("Wow, you’ve got a real knack for this!", "happy")
+	else:
+		await say("That’s okay. The timing is tricky at first!", "sad")
+		await say("I'm sure you'll get it right the more you %s." % [
+			bb("taming", "tame")
+		], "normal")
+	
+	await say("Lots of actions can be %s when confronting %s, so always stay alert!" % [
+		bb("taming", "timed"),
+		bb("creatures", "creatures")
+	], "happy")
+	end_say()
+	await get_tree().create_timer(0.25).timeout
+
+func explain_minigame(minigame):
+	move_tutorial_actors_above_minigame()
+	lock_input()
+	
+	await move_ufo_to(UFO_POS_MINIGAME_RIGHT, 0.5)
+	ufo.set_facing_left(false)
+	speech_bubble.set_target(ufo)
+	
+	await say("This is what a %s looks like." % bb("trust", "creature’s dream"), "normal")
+	await say("Each one’s settings and conditions can be different, it all depends on the %s." % bb("creatures", "creature"), "normal")
+	await say("As a %s, you can see these conditions and will know what to do." % bb("droid", "droid"), "normal")
+	await say("Though %s can’t be seen for long, so it’s important to realise them quick!" % bb("trust", "dreams"), "sad")
+	await say("Let’s see… The dummy wants you to…", "up")
+	
+	await overlay_say("[b]“Press Z”[/b]? For charges? Who even is Z?", "normal")
+	end_say()
+	minigame.set_tutorial_paused(false)
+	var success = await _wait_for_tutorial_minigame_finished()
+	
+	lock_input()
+	await ufo.shake()
+	await get_tree().create_timer(0.4).timeout
+	await ufo.move_to(UFO_POS_OUTRO, 1.5)
+	camera.follow(player_visual)
+	
+	if success:
+		await say("…Well that was something.", "normal")
+		await say("Though good job on %s!" % bb("trust", "realising the dream"), "happy")
+		await say("You really look like you know what you’re doing!", "happy")
+	else:
+		await say("Huh. What a confusing dream.", "normal")
+		await say("Don’t worry about not %s, it was just a dummy." % bb("trust", "realising it"), "normal")
+		await say("In normal circumstances though, I would suggest to be more alert.", "normal")
+	
+	end_say()
+	await get_tree().create_timer(0.25).timeout
+
+func walk_out_and_finish():
+	camera.reset_camera()
+	ufo.flip_toward_right()
+	player_visual.anim.play("player_walk")
+	
+	var tween := create_tween()
+	tween.tween_property(player_visual, "global_position:x", 760, 1.7)
+	tween.parallel().tween_property(ufo, "global_position:x", 800, 1.5)
+	await tween.finished
+	
+	await fade_into_black()
+	PlayerData.reset_run()
+	get_tree().change_scene_to_file("res://Scenes/CombatScene.tscn")
+
+func enemy_visual_for_dummy() -> Node2D:
+	if dummy_enemy == null:
+		return null
+	
+	return combat_manager.enemy_visuals.get(dummy_enemy)
+
+func get_month_day_string() -> String:
+	var date := Time.get_datetime_dict_from_system()
+	return "%02d/%02d" % [date["month"], date["day"]]
+
+func player_nod():
+	# Replace with an actual nod animation later if you make one.
+	var base_y = player_visual.position.y
+	var tween := create_tween()
+	tween.tween_property(player_visual, "position:y", base_y + 4, 0.12)
+	tween.tween_property(player_visual, "position:y", base_y, 0.12)
+	tween.tween_property(player_visual, "position:y", base_y + 4, 0.12)
+	tween.tween_property(player_visual, "position:y", base_y, 0.12)
+	await tween.finished
+
+
+func player_explain():
+	# Small placeholder "talking/gesturing" movement.
+	var original = player_visual.position
+	var tween := create_tween()
+	tween.tween_property(player_visual, "position:x", original.x + 4, 0.12)
+	tween.tween_property(player_visual, "position:x", original.x - 4, 0.12)
+	tween.tween_property(player_visual, "position:x", original.x, 0.12)
+	await tween.finished
+
+
+func player_show_book():
+	# Replace with a book animation later.
+	await player_visual.bubble_emote("exclamation", 1.0)
+	await get_tree().create_timer(0.25).timeout
+
+
+func player_frown():
+	# Optional hook if you later add a frown texture/animation.
+	if player_visual.anim.has_animation("player_frown"):
+		player_visual.anim.play("player_frown")
+		await get_tree().create_timer(0.6).timeout
+	else:
+		await get_tree().create_timer(0.35).timeout
+
+func move_tutorial_actors_above_minigame():
+	if ufo_was_on_overlay:
+		return
+	
+	ufo_was_on_overlay = true
+	
+	original_ufo_parent = ufo.get_parent()
+	original_speech_parent = speech_bubble.get_parent()
+	
+	ufo.reparent(tutorial_overlay, true)
+	speech_bubble.reparent(tutorial_overlay, true)
+	
+	ufo.z_index = 100
+	speech_bubble.layer = 101
+
+
+func restore_tutorial_actors_layer():
+	if not ufo_was_on_overlay:
+		return
+	
+	ufo_was_on_overlay = false
+	
+	ufo.reparent(original_ufo_parent, true)
+	speech_bubble.reparent(original_speech_parent, true)
+	
+	ufo.z_index = 0
+	speech_bubble.z_index = 0
+	
+	speech_bubble.set_target(ufo)
+
+func _wait_for_tutorial_minigame_finished() -> bool:
+	var success: bool = await combat_manager.tutorial_minigame_finished
+	return success

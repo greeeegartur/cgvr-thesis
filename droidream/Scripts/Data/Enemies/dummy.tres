@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="EnemyInfo" load_steps=5 format=3 uid="uid://brgb62yyptfo5"]
+
+[ext_resource type="Script" uid="uid://by18pvdsekurc" path="res://Scripts/Data/EnemyAttackPattern.gd" id="1_k57u4"]
+[ext_resource type="Resource" uid="uid://c7i06xxjo6uav" path="res://Scripts/Data/Attack_Patterns/dummy_stall.tres" id="2_4eu64"]
+[ext_resource type="Script" uid="uid://c8hmcdrkefq7i" path="res://Scripts/Data/EnemyInfo.gd" id="2_vcmwc"]
+[ext_resource type="PackedScene" uid="uid://khdjkj0jhvsw" path="res://Scenes/Entities/Dummy/Dummy.tscn" id="4_ltbh3"]
+
+[resource]
+script = ExtResource("2_vcmwc")
+enemy_id = "dummy"
+name = "Training Dummy"
+type = 1
+max_hp = 15.0
+trust_max = 1
+minigame_id = "tutorial"
+attack_patterns = Array[ExtResource("1_k57u4")]([ExtResource("2_4eu64")])
+visual_scene = ExtResource("4_ltbh3")
+metadata/_custom_type_script = "uid://c8hmcdrkefq7i"

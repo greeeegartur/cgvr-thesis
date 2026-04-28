@@ -199,7 +199,7 @@ libraries = {
 
 [node name="SelectHint" type="Node2D" parent="Control"]
 visible = false
-position = Vector2(1.6666664, 13)
+position = Vector2(1.667, 13)
 scale = Vector2(0.6, 0.6)
 
 [node name="Label" type="Label" parent="Control/SelectHint"]

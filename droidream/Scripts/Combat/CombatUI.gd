@@ -20,8 +20,8 @@ var selected_attack_type := CombatTypes.EntityType.SKY
 var stats_hud_tween: Tween
 
 func _ready():
-	player_stats_hud.visible = true
-	player_stats_hud.modulate.a = 1.0
+	#player_stats_hud.visible = true
+	#player_stats_hud.modulate.a = 1.0
 	refresh_player_hud()
 
 func setup(combat_manager: CombatManager):

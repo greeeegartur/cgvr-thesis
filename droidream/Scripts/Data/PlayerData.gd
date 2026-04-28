@@ -299,3 +299,15 @@ func spend_currency(amount: int) -> bool:
 	currency -= amount
 	stats_changed.emit()
 	return true
+
+func set_guesses(sky: int, earth: int, water: int) -> void:
+	guesses = {
+		CombatTypes.EntityType.SKY: sky,
+		CombatTypes.EntityType.EARTH: earth,
+		CombatTypes.EntityType.WATER: water
+	}
+	stats_changed.emit()
+
+func reset_chips_to_default() -> void:
+	guesses = BASE_GUESSES.duplicate(true)
+	stats_changed.emit()
