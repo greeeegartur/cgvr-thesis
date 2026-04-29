@@ -146,6 +146,7 @@ scale = Vector2(2.5, 2.5)
 transform = Transform2D(2.5, 0, 0, 2.5, 0, 0)
 
 [node name="DeathScreen" parent="UI" instance=ExtResource("15_kwghb")]
+visible = false
 
 [node name="RewardsScreen" parent="UI" instance=ExtResource("14_et1op")]
 offset_left = 330.0

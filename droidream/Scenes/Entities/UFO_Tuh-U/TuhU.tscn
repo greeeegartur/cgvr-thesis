@@ -33,7 +33,7 @@ texture = ExtResource("1_dahwj")
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Sprite2D"]
 root_node = NodePath("../..")
 
-[node name="CPUParticles2D" type="CPUParticles2D" parent="."]
+[node name="HoverParticles" type="CPUParticles2D" parent="."]
 z_index = -1
 position = Vector2(0, 13)
 amount = 10

@@ -13,7 +13,7 @@ class_name TutorialDirector
 @onready var ufo := $"../World/TuhU"
 @onready var speech_bubble := $"../UI/SpeechBubble"
 @onready var hint_node := $"../UI/HintNode"
-@onready var tutorial_overlay := $"../UI/TutorialOverlay"
+@onready var tutorial_overlay := $"../TutorialOverlay"
 
 var original_ufo_parent: Node
 var original_speech_parent: Node
@@ -177,6 +177,7 @@ func intro_scene():
 	
 	# Droid nods silently.
 	await player_nod()
+	await get_tree().create_timer(0.35).timeout
 	
 	await say("..Oh, right. You’re actually lost.", "normal")
 	end_say()
@@ -205,7 +206,7 @@ func intro_scene():
 	await player_visual.bubble_emote("worry")
 	
 	await say("To get back, you’d need to cross the cliffside.", "right")
-	await say("But the cliffside is beyond this jungle and a cavern system.", "normal")
+	await say("But to get there, you'd need to cross this jungle and a cavern system.", "normal")
 	await say("It’s no easy path, the road is full of all sorts of %s." % bb("creatures", "wild creatures"), "sad")
 	await say("For someone so young like yourself… It can be a dangerous journey.", "sad")
 	end_say()
@@ -260,7 +261,7 @@ func spawn_dummy_enemy():
 	await say("This should work!", "happy")
 	end_say()
 	
-	ufo.flip_toward_left()
+	ufo.flip_toward_left(true)
 	await get_tree().create_timer(0.25).timeout
 	await say("Are you ready? Let’s begin!", "happy")
 	end_say()
@@ -584,7 +585,7 @@ func explain_minigame(minigame):
 
 func walk_out_and_finish():
 	camera.reset_camera()
-	ufo.flip_toward_right()
+	ufo.flip_toward_left(true)
 	player_visual.anim.play("player_walk")
 	
 	var tween := create_tween()

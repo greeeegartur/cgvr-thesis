@@ -24,9 +24,9 @@ creature_weights = {
 },
 3: {
 "bat": 0.4,
-"beetle": 0.1,
+"beetle": 0.2,
 "duck": 0.2,
-"frog": 0.3
+"frog": 0.2
 }
 }
 metadata/_custom_type_script = "uid://cq42yd5k6nmne"

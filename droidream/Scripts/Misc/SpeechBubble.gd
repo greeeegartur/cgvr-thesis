@@ -12,7 +12,7 @@ enum BubbleMode {
 var mode := BubbleMode.CINEMATIC
 
 @onready var root := $BubbleRoot
-@onready var anim := $BubbleRoot/AnimationPlayer
+@onready var anim := $AnimationPlayer
 @onready var label := $BubbleRoot/RichTextLabel
 @onready var tail := $BubbleRoot/Tail
 @onready var tail_line: Line2D = $BubbleRoot/Tail/Line2D

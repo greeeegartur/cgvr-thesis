@@ -156,7 +156,7 @@ const ICE_CUBE_HEAL_RATIO := 0.10
 # Prepares combat by loading entities (player and enemy(s)) and starting combat
 func _ready():
 	set_process_input(true)
-	_setup_ui()
+	await _setup_ui()
 	# Combat scene's process mode (pausing) for minigames
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	camera.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -269,6 +269,9 @@ func _spawn_enemy(enemy_id: String, slot_index: int, spawner: CombatEntity):
 	await tween.finished
 
 func _setup_ui():
+	if not ui.is_node_ready():
+		await ui.ready
+
 	ui.setup(self)
 	
 	# PLAYER
@@ -285,8 +288,6 @@ func _setup_ui():
 	# TOP UI
 	# Turn order button signal
 	ui.turn_order_toggled.connect(_on_turn_order_toggled)
-	
-	await ui.ready
 
 # Resets combat for new round
 func _reset_combat_state():

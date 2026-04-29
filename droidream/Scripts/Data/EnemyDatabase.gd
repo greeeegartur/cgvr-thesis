@@ -76,19 +76,28 @@ func _load_enemy_resources():
 	var file_name := dir.get_next()
 	
 	while file_name != "":
-		if file_name.ends_with(".tres"):
-			var path : String = FOLDER + file_name
-			var enemy = load(path)
-			
-			# Checks correct type
-			if enemy is EnemyInfo:
-				ENEMIES[enemy.enemy_id] = enemy
-			else:
-				push_warning("Not an EnemyInfo resource: %s" % path)
+		if not dir.current_is_dir():
+			var resource_file := _get_resource_file_name(file_name)
+			if resource_file != "":
+				var path : String = FOLDER + resource_file
+				var enemy = load(path)
 				
+				# Checks correct type
+				if enemy is EnemyInfo:
+					ENEMIES[enemy.enemy_id] = enemy
+				else:
+					push_warning("Not an EnemyInfo resource: %s" % path)
+
 		file_name = dir.get_next()
 		
 	dir.list_dir_end()
+
+func _get_resource_file_name(file_name: String) -> String:
+	if file_name.ends_with(".tres"):
+		return file_name
+	if file_name.ends_with(".tres.remap"):
+		return file_name.trim_suffix(".remap")
+	return ""
 
 
 func get_enemy(id: String):

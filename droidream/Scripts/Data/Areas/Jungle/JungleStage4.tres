@@ -23,10 +23,10 @@ creature_weights = {
 "frog": 0.4
 },
 3: {
-"bat": 0.33,
-"beetle": 0.0,
+"bat": 0.17,
+"beetle": 0.25,
 "duck": 0.33,
-"frog": 0.34
+"frog": 0.25
 }
 }
 metadata/_custom_type_script = "uid://cq42yd5k6nmne"

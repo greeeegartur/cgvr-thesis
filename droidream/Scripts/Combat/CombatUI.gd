@@ -65,6 +65,11 @@ func _format_quarter(value: float) -> String:
 	return "%.2f" % rounded
 
 func hide_player_stats_hud():
+	if not is_node_ready():
+		await ready
+	if player_stats_hud == null:
+		return
+
 	if stats_hud_tween:
 		stats_hud_tween.kill()
 	stats_hud_tween = create_tween()
@@ -75,6 +80,11 @@ func hide_player_stats_hud():
 
 
 func show_player_stats_hud():
+	if not is_node_ready():
+		await ready
+	if player_stats_hud == null:
+		return
+
 	if stats_hud_tween:
 		stats_hud_tween.kill()
 	player_stats_hud.visible = true

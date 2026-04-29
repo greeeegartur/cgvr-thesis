@@ -234,3 +234,4 @@ layer = 10
 
 [node name="TutorialOverlay" type="CanvasLayer" parent="."]
 layer = 12
+follow_viewport_enabled = true
