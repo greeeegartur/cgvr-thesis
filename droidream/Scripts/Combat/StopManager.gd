@@ -534,6 +534,7 @@ func enter_demo_ending_stop():
 
 func _play_demo_ending_dialogue():
 	camera.follow(player_visual)
+	player_visual.hide_hp()
 	await get_tree().create_timer(0.35).timeout
 	
 	await say("Hey, we made it to the end of the jungle!", "happy")
