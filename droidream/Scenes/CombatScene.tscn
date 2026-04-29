@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3 uid="uid://b0as27ombq3yp"]
+[gd_scene load_steps=33 format=3 uid="uid://b0as27ombq3yp"]
 
 [ext_resource type="Script" uid="uid://b3u2bq3dgrvtu" path="res://Scripts/Combat/CombatManager.gd" id="1_2mqg5"]
 [ext_resource type="Script" uid="uid://dcdpqt4rgapox" path="res://Scripts/Combat/CombatUI.gd" id="1_memue"]
@@ -26,6 +26,7 @@
 [ext_resource type="PackedScene" uid="uid://dcb28riflpghv" path="res://Scenes/VFX/InventoryHudIcon.tscn" id="20_mrytc"]
 [ext_resource type="PackedScene" uid="uid://mnb3nvh3ofas" path="res://Scenes/VFX/HitFeedbackText.tscn" id="22_b7ydo"]
 [ext_resource type="Texture2D" uid="uid://dhg3luy17q64k" path="res://Graphics/Placeholders/Combat/speedlines.png" id="23_ad845"]
+[ext_resource type="PackedScene" uid="uid://cdsa8xop7dyes" path="res://Scenes/VFX/SpeechBubble.tscn" id="23_gemcu"]
 [ext_resource type="PackedScene" uid="uid://rab42iernju0" path="res://Scenes/VFX/RepairObject.tscn" id="25_mtk7o"]
 [ext_resource type="PackedScene" uid="uid://bsjp4kq22yg6i" path="res://Scenes/VFX/MultiTameBall.tscn" id="26_6ulev"]
 
@@ -163,6 +164,20 @@ InventoryHudIconScene = ExtResource("20_mrytc")
 [node name="PlayerStatsHUD" parent="UI/CombatUI" instance=ExtResource("20_lkk3l")]
 
 [node name="PlayerTurnUi" parent="UI/CombatUI" instance=ExtResource("9_7t358")]
+
+[node name="Black" type="ColorRect" parent="UI"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[node name="SpeechBubble" parent="UI" instance=ExtResource("23_gemcu")]
+layer = 5
+follow_viewport_enabled = true
 
 [node name="Minigames" type="CanvasLayer" parent="."]
 layer = 10

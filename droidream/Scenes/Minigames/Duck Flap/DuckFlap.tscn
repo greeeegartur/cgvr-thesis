@@ -122,6 +122,7 @@ fish_spawn_interval_min = 0.6
 fish_jump_duration_min = 1.1
 fish_jump_duration_max = 1.5
 player_start_pos = Vector2(60, 45)
+max_duration = 8.5
 
 [node name="VisualRoot" type="Node2D" parent="."]
 position = Vector2(315, 185)

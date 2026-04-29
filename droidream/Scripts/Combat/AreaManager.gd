@@ -22,7 +22,7 @@ func get_current_stage() -> StageData:
 
 func advance_stage():
 	stage_index += 1
-	if stage_index >= 3:
+	if stage_index >= 5:
 		advance_area()
 	else:
 		stage_changed.emit(stage_index)

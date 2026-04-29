@@ -35,6 +35,7 @@ var velocity := Vector2.ZERO
 var hits_taken := 0
 var fish_collected := 0
 
+var flight_started := false
 var spawn_active := false
 var player_locked := false
 var win_started := false
@@ -47,7 +48,7 @@ const SIDE_PADDING := 18.0
 const WATER_SURFACE_Y := 178.0
 
 func _ready():
-	set_duration(6.5)
+	set_duration(8.5) # actual is 6.5
 
 	progress_bar.max_value = max_duration
 	progress_bar.value = max_duration
@@ -75,6 +76,7 @@ func start():
 	player_locked = false
 	win_started = false
 	timer_active = true
+	flight_started = false
 
 func _process(delta):
 	super._process(delta)
@@ -85,7 +87,7 @@ func _process(delta):
 	if timer_active:
 		update_timer_ui()
 
-	if not player_locked:
+	if not player_locked and flight_started:
 		update_player_physics(delta)
 
 	update_fish_entities(delta)
@@ -97,6 +99,8 @@ func _unhandled_input(event):
 		return
 
 	if event.is_action_pressed("ui_accept"):
+		if not flight_started:
+			flight_started = true
 		flap()
 
 func flap():

@@ -1,0 +1,331 @@
+[gd_scene load_steps=23 format=3 uid="uid://bdojf0fpbit33"]
+
+[ext_resource type="Texture2D" uid="uid://c6ophq81sgiog" path="res://Graphics/Placeholders/Art/Title/title(sky) _0001.png" id="1_2jiiu"]
+[ext_resource type="Script" uid="uid://bmei5lbsbwlxd" path="res://Scripts/Misc/TitleScreen.gd" id="1_4hokt"]
+[ext_resource type="Texture2D" uid="uid://dve736fxxrsyr" path="res://Graphics/Placeholders/Art/Title/title(cloudspink) _0001.png" id="1_uebgo"]
+[ext_resource type="Texture2D" uid="uid://cppif0i330x1d" path="res://Graphics/Placeholders/Art/Title/title_stars.png" id="2_awp6w"]
+[ext_resource type="Texture2D" uid="uid://bjg7d0u4rmam6" path="res://Graphics/Placeholders/Art/Title/title(Layer 8) _0001.png" id="4_qu6cc"]
+[ext_resource type="Texture2D" uid="uid://byw0vyyd7scbb" path="res://Graphics/Placeholders/Art/Title/title(cloudspurple) _0001.png" id="5_4hokt"]
+[ext_resource type="Texture2D" uid="uid://k8twifjahhg7" path="res://Graphics/Placeholders/Art/Title/title(sea) _0001.png" id="6_swiah"]
+[ext_resource type="Texture2D" uid="uid://d4kvcu7p622ul" path="res://Graphics/Placeholders/Art/Title/title(distanthill) _0001.png" id="7_75epk"]
+[ext_resource type="Texture2D" uid="uid://llkjoeal0aew" path="res://Graphics/Placeholders/Art/Title/title(hill) _0001.png" id="8_3ah5x"]
+[ext_resource type="Texture2D" uid="uid://bp2m0yffvv0tg" path="res://Graphics/Placeholders/Art/Title/title_droid.png" id="9_2jiiu"]
+[ext_resource type="Texture2D" uid="uid://cg3q8sngcqmhp" path="res://Graphics/Placeholders/Art/Title/title(Layer 11) _0001.png" id="10_deutk"]
+[ext_resource type="Texture2D" uid="uid://c3bhkdb62dfrv" path="res://Graphics/Placeholders/Art/Title/title_beam.png" id="11_awp6w"]
+[ext_resource type="Texture2D" uid="uid://dmri53hoxksq" path="res://Graphics/Placeholders/Art/Title/title(Layer 13) _0001.png" id="12_o6bmn"]
+[ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="13_qu6cc"]
+[ext_resource type="Texture2D" uid="uid://dxbd5kdjuqyr5" path="res://Graphics/Placeholders/Combat/Combat Select.png" id="15_swiah"]
+[ext_resource type="Texture2D" uid="uid://g1cpi65b1lxo" path="res://Graphics/Placeholders/Combat/WASD.png" id="16_75epk"]
+[ext_resource type="Texture2D" uid="uid://b0axro84k6yfj" path="res://Graphics/Placeholders/Combat/Z.png" id="17_3ah5x"]
+
+[sub_resource type="Animation" id="Animation_qu6cc"]
+resource_name = "idle"
+length = 6.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Droid (Layer9):frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5, 1, 1.5096432, 2.0429766, 2.5429764, 3.1236901, 3.6570234, 4.1570234, 4.6666665, 5.2, 5.7),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Droid (Layer9):position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 3, 6),
+"transitions": PackedFloat32Array(0.53588665, 1.6245049, 0.53588665),
+"update": 0,
+"values": [Vector2(0, 0), Vector2(-2, -15), Vector2(0, 0)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Droid (Layer9):rotation")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 4.6),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, 0.08726646259971647]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("UFOBeam (Layer11):frame")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.7666667, 1.5666667, 2.4, 3.2, 4, 4.8, 5.6000004),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 0, 1, 2, 0, 1]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Stars (Layer2):frame")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 1.6, 3.3523743, 4.9666667),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 1,
+"values": [0, 2, 0, 1]
+}
+
+[sub_resource type="Animation" id="Animation_4hokt"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Droid (Layer9):frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Droid (Layer9):position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0, 0)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Droid (Layer9):rotation")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("UFOBeam (Layer11):frame")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Stars (Layer2):frame")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_swiah"]
+_data = {
+&"RESET": SubResource("Animation_4hokt"),
+&"idle": SubResource("Animation_qu6cc")
+}
+
+[sub_resource type="Animation" id="Animation_75epk"]
+resource_name = "idle"
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("WASD:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [0, 1]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("ZIcon:frame")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [0, 1]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_3ah5x"]
+_data = {
+&"idle": SubResource("Animation_75epk")
+}
+
+[node name="TitleScreen" type="Node2D"]
+script = ExtResource("1_4hokt")
+
+[node name="Background" type="Node2D" parent="."]
+position = Vector2(320, 180)
+
+[node name="Sky (Layer1)" type="Sprite2D" parent="Background"]
+texture = ExtResource("1_2jiiu")
+
+[node name="Stars (Layer2)" type="Sprite2D" parent="Background"]
+texture = ExtResource("2_awp6w")
+hframes = 3
+
+[node name="CloudsPink (Layer3)" type="Sprite2D" parent="Background"]
+modulate = Color(1, 1, 1, 0.22352941)
+texture = ExtResource("1_uebgo")
+
+[node name="CloudsDistant (Layer4)" type="Sprite2D" parent="Background"]
+modulate = Color(1, 1, 1, 0.22745098)
+texture = ExtResource("4_qu6cc")
+
+[node name="CloudsPurple (Layer5)" type="Sprite2D" parent="Background"]
+modulate = Color(1, 1, 1, 0.30980393)
+texture = ExtResource("5_4hokt")
+
+[node name="Sea (Layer6)" type="Sprite2D" parent="Background"]
+texture = ExtResource("6_swiah")
+
+[node name="DistantHill (Layer7)" type="Sprite2D" parent="Background"]
+texture = ExtResource("7_75epk")
+
+[node name="Hill (Layer8)" type="Sprite2D" parent="Background"]
+texture = ExtResource("8_3ah5x")
+
+[node name="Droid (Layer9)" type="Sprite2D" parent="Background"]
+texture = ExtResource("9_2jiiu")
+hframes = 3
+
+[node name="DistantBeam (Layer10)" type="Sprite2D" parent="Background"]
+modulate = Color(1, 1, 1, 0.25882354)
+texture = ExtResource("10_deutk")
+
+[node name="UFOBeam (Layer11)" type="Sprite2D" parent="Background"]
+modulate = Color(1, 1, 1, 0.09019608)
+texture = ExtResource("11_awp6w")
+hframes = 3
+
+[node name="Title (Layer12)" type="Sprite2D" parent="Background"]
+position = Vector2(2, 0)
+texture = ExtResource("12_o6bmn")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Background"]
+libraries = {
+&"": SubResource("AnimationLibrary_swiah")
+}
+autoplay = "idle"
+
+[node name="Options" type="Node2D" parent="."]
+position = Vector2(320, 180)
+
+[node name="PlayLabel" type="Label" parent="Options"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -308.0
+offset_top = -58.0
+offset_right = -60.0
+offset_bottom = 6.0
+grow_horizontal = 2
+pivot_offset = Vector2(124, 32)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_fonts/font = ExtResource("13_qu6cc")
+theme_override_font_sizes/font_size = 36
+text = "Play"
+horizontal_alignment = 1
+
+[node name="QuitLabel" type="Label" parent="Options"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -308.0
+offset_top = 1.0
+offset_right = -60.0
+offset_bottom = 65.0
+grow_horizontal = 2
+pivot_offset = Vector2(124, 32)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_fonts/font = ExtResource("13_qu6cc")
+theme_override_font_sizes/font_size = 36
+text = "Quit"
+horizontal_alignment = 1
+
+[node name="Black" type="ColorRect" parent="."]
+visible = false
+z_index = 1
+offset_right = 641.0
+offset_bottom = 361.0
+color = Color(0, 0, 0, 1)
+
+[node name="RightArrow" type="Sprite2D" parent="."]
+position = Vector2(179, 201)
+rotation = 1.5707964
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("15_swiah")
+
+[node name="LeftArrow" type="Sprite2D" parent="."]
+position = Vector2(93.00006, 201)
+rotation = -1.5707964
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("15_swiah")
+
+[node name="ControlsHint" type="Node2D" parent="."]
+position = Vector2(-15, 333)
+
+[node name="WASD" type="Sprite2D" parent="ControlsHint"]
+position = Vector2(70.66669, 12.666671)
+texture = ExtResource("16_75epk")
+vframes = 2
+
+[node name="ZIcon" type="Sprite2D" parent="ControlsHint"]
+position = Vector2(160.33035, 17.49998)
+texture = ExtResource("17_3ah5x")
+vframes = 2
+
+[node name="Label" type="Label" parent="ControlsHint"]
+custom_minimum_size = Vector2(180, 35)
+offset_left = 18.888895
+offset_right = 518.8889
+offset_bottom = 35.0
+theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
+theme_override_constants/outline_size = 3
+theme_override_fonts/font = ExtResource("13_qu6cc")
+text = "Move           / Confirm    "
+vertical_alignment = 1
+autowrap_mode = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="ControlsHint"]
+libraries = {
+&"": SubResource("AnimationLibrary_3ah5x")
+}
+autoplay = "idle"

@@ -11,16 +11,16 @@ enemy_count_weights = {
 }
 creature_weights = {
 1: {
-"bat": 0.4,
-"beetle": 0.6,
+"bat": 0.2,
+"beetle": 0.8,
 "duck": 0.0,
 "frog": 0.0
 },
 2: {
-"bat": 0.5,
-"beetle": 0.4,
+"bat": 0.4,
+"beetle": 0.6,
 "duck": 0.0,
-"frog": 0.1
+"frog": 0.0
 },
 3: {
 "bat": 0.0,

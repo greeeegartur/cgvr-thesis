@@ -18,14 +18,14 @@ creature_weights = {
 },
 2: {
 "bat": 0.6,
-"beetle": 0.15,
-"duck": 0.1,
-"frog": 0.15
+"beetle": 0.35,
+"duck": 0.0,
+"frog": 0.05
 },
 3: {
-"bat": 0.6,
-"beetle": 0.4,
-"duck": 0.05,
+"bat": 0.5,
+"beetle": 0.45,
+"duck": 0.0,
 "frog": 0.05
 }
 }

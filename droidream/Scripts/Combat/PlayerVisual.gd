@@ -193,6 +193,8 @@ func update_hp(current: float, max_hp: float):
 	var rounded_current = round_quarter(current)
 	var rounded_max = round_quarter(max_hp)
 	var ratio = clamp(rounded_current / rounded_max, 0.0, 1.0)
+	if rounded_max > 0.0:
+		ratio = clamp(rounded_current / rounded_max, 0.0, 1.0)
 	
 	if hp_tween:
 		hp_tween.kill()
@@ -202,9 +204,8 @@ func update_hp(current: float, max_hp: float):
 		.set_trans(Tween.TRANS_CUBIC)\
 		.set_ease(Tween.EASE_OUT)
 	
-	hp_label.text = "%s" % [
-		format_quarter_number(rounded_current)
-	]
+	hp_label.text = format_quarter_number(rounded_current)
+	_fit_hp_label()
 
 func hide_hp():
 	var tween = create_tween()
@@ -233,10 +234,39 @@ func round_quarter(value: float) -> float:
 	return round(value * 4.0) / 4.0
 
 func format_quarter_number(value: float) -> String:
+	value = round_quarter(value)
+	
 	if is_equal_approx(value, round(value)):
 		return str(int(round(value)))
 	
-	return "%.2f" % value
+	var text := "%.2f" % value
+	if text.ends_with("0"):
+		text = text.left(text.length() - 1)
+	
+	return text
+
+func _fit_hp_label():
+	await get_tree().process_frame
+	
+	var max_size := 16
+	var min_size := 12
+	var current_size := max_size
+	
+	while current_size >= min_size:
+		hp_label.add_theme_font_size_override("font_size", current_size)
+		await get_tree().process_frame
+		
+		if not _is_hp_label_overflowing():
+			return
+		
+		current_size -= 1
+
+func _is_hp_label_overflowing() -> bool:
+	var font := hp_label.get_theme_font("font")
+	var font_size := hp_label.get_theme_font_size("font_size")
+	var text_size := font.get_string_size(hp_label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
+	
+	return text_size.x > hp_label.size.x or text_size.y > hp_label.size.y
 
 func bubble_emote(emote_id: String, duration := 1.5):
 	var texture := _get_emote_texture(emote_id)
@@ -285,3 +315,21 @@ func hop():
 		.set_trans(Tween.TRANS_BOUNCE)\
 		.set_ease(Tween.EASE_OUT)
 	await tween.finished
+
+func walk_in_to(target_pos: Vector2, from_offset := Vector2(-180, 0), duration := 0.9):
+	visible = true
+	position = target_pos + from_offset
+	home_position = target_pos
+	
+	anim.play("player_walk")
+	
+	var tween := create_tween()
+	tween.tween_property(self, "position", target_pos, duration)\
+		.set_trans(Tween.TRANS_CUBIC)\
+		.set_ease(Tween.EASE_OUT)
+	
+	await tween.finished
+	
+	position = target_pos
+	set_home_position()
+	anim.play("player_idle")

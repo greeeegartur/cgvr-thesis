@@ -17,10 +17,10 @@ creature_weights = {
 "frog": 0.0
 },
 2: {
-"bat": 0.1,
+"bat": 0.0,
 "beetle": 0.0,
 "duck": 0.5,
-"frog": 0.4
+"frog": 0.5
 },
 3: {
 "bat": 0.0,

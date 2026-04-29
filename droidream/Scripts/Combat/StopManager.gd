@@ -3,6 +3,7 @@ extends Node
 class_name StopManager
 
 signal stop_finished
+signal demo_ending_finished
 
 # States
 enum State {
@@ -25,12 +26,16 @@ var ufo_idle_tween: Tween
 @onready var stop_text := $StopUI/StopText
 @onready var popup := $StopUI/ShopItemContainer
 @onready var combat_ui := $"../UI/CombatUI"
+@onready var player_visual := $"../World/PlayerVisual"
+@onready var camera := $"../Camera2D"
+@onready var speech_bubble := $"../UI/SpeechBubble"
 @onready var item_scene = preload("res://Scenes/ShopItem.tscn")
 @onready var HitFeedbackScene = preload("res://Scenes/VFX/HitFeedbackText.tscn")
 
 var popup_tween: Tween
 var popup_scale_tween: Tween
-# TO-DO: karma based prices
+const UFO_STOP_POS := Vector2(390, 210)
+const UFO_ENDING_POS := Vector2(170, 210)
 
 func _ready():
 	var base_y = popup.position.y + 5
@@ -447,3 +452,134 @@ func _spawn_inventory_full_feedback(shop_item: ShopItem, message: String):
 	feedback.rotation_degrees = randf_range(-3, 3)
 	feedback.global_position = shop_item.global_position + Vector2(0, -20)
 	feedback.play(message)
+
+# ENDING METHODS
+func say(text: String, mood := "normal"):
+	speech_bubble.set_target(ufo)
+	
+	match mood:
+		"happy":
+			ufo.play_happy()
+		"sad":
+			ufo.play_sad()
+		"right":
+			ufo.play_look_right()
+		"down":
+			ufo.play_look_down()
+		"up":
+			ufo.play_look_up()
+		_:
+			ufo.play_normal()
+	
+	speech_bubble.show_bubble()
+	await speech_bubble.say_line(text)
+
+
+func end_say():
+	speech_bubble.hide_bubble()
+
+
+func move_ufo_to(pos: Vector2, duration := 0.75, restart_idle := true):
+	_stop_ufo_idle()
+	
+	if ufo.has_method("move_to"):
+		await ufo.move_to(pos, duration)
+	else:
+		var tween := create_tween()
+		tween.tween_property(ufo, "position", pos, duration)\
+			.set_trans(Tween.TRANS_CUBIC)\
+			.set_ease(Tween.EASE_OUT)
+		await tween.finished
+	
+	if restart_idle:
+		_start_ufo_idle()
+
+func enter_demo_ending_stop():
+	state = State.ENTERING
+	set_process_input(false)
+	
+	ui.visible = true
+	
+	# Hide normal shop UI.
+	popup.visible = false
+	items_container.visible = false
+	next_button.visible = false
+	stop_text.visible = false
+	
+	# Clear any leftover shop items.
+	for child in items_container.get_children():
+		child.queue_free()
+	
+	if not speech_bubble.is_node_ready():
+		await speech_bubble.ready
+	
+	speech_bubble.set_target(ufo)
+	speech_bubble.show_tail()
+	
+	await _animate_ufo_entry()
+	await move_ufo_to(UFO_ENDING_POS, 0.8)
+	
+	await _play_demo_ending_dialogue()
+	
+	set_process_input(false)
+	
+	end_say()
+	await get_tree().create_timer(0.25).timeout
+	await move_ufo_to(UFO_STOP_POS, 0.5)
+	
+	state = State.INACTIVE
+	ui.visible = false
+	
+	demo_ending_finished.emit()
+
+func _play_demo_ending_dialogue():
+	camera.follow(player_visual)
+	await get_tree().create_timer(0.35).timeout
+	
+	await say("Hey, we made it to the end of the jungle!", "happy")
+	await say("You're sure to become an excellent caretaker! There's no doubt in my mind!", "happy")
+	await say("Unfortunately I have to break the fourth wall with some bad news.", "sad")
+	await say("You've reached the end of the demo made for this thesis.", "normal")
+	await say("There's kinda nothing beyond this point other than unfinished assets.", "right")
+	await say("Feel free to try playing through the jungle again though! The experience is different each time!", "happy")
+	
+	await player_visual.bubble_emote("worry")
+	await get_tree().create_timer(0.25).timeout
+	
+	await say("Oh right, about your progress..", "normal")
+	
+	match PlayerData.get_ending_type():
+		"pacifist":
+			await _play_pacifist_demo_dialogue()
+		"neutral":
+			await _play_neutral_demo_dialogue()
+		"genocide":
+			await _play_genocide_demo_dialogue()
+		_:
+			await say("Honestly, I'm not sure how to evaluate you.", "normal") # Should not happen
+	
+	await say("I'm sending you back to the title screen now.", "normal")
+	end_say()
+
+func _play_pacifist_demo_dialogue():
+	await say("You managed to tame every creature in the jungle! You've done incredibly well!", "happy")
+	await say("I'm sure it must've been difficult, managing so many resources and whatnot.", "normal")
+	await say("You really are a true creature caretaker! I'm so proud!", "happy")
+
+
+func _play_neutral_demo_dialogue():
+	await say("You tamed some creatures, but had to resort to killing too.", "down")
+	await say("It must have been tough with all those wild creatures trying to attack you.", "normal")
+	await say("Not to say you did bad, in fact you did very well coming all this way!", "happy")
+	await say("The developer definitely did not expect anyone to come this far, so you've done superbly!", "happy")
+
+
+func _play_genocide_demo_dialogue():
+	await say("...", "down")
+	await say("..I, uh.. I'm truly at a loss for words..", "down")
+	await say("..Does it feel good? Having killed all those creatures?", "normal")
+	await say("You somehow managed to do the exact opposite of what I taught you. I hope you're proud.", "normal")
+	await say("Those creatures were only trying to protect themselves, thinking you were a threat.", "normal")
+	await say("And I guess they were right, you're a murderer through and through.", "normal")
+	await say("Was that your dream? To stain this world red? To become human?", "normal")
+	await say("Either way, I'm ashamed.", "sad")

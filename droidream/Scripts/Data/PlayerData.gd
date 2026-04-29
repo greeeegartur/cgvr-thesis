@@ -7,9 +7,9 @@ const BASE_MAX_HP := 10.0
 const BASE_ATTACK := 5.0
 const BASE_DEFENSE := 0.0
 const BASE_GUESSES := {
-	CombatTypes.EntityType.SKY: 3,
-	CombatTypes.EntityType.EARTH: 3,
-	CombatTypes.EntityType.WATER: 3
+	CombatTypes.EntityType.SKY: 4,
+	CombatTypes.EntityType.EARTH: 4,
+	CombatTypes.EntityType.WATER: 4
 }
 const MAX_ITEM_TYPES := 6
 const MAX_ABILITY_SLOTS := 6
@@ -50,9 +50,9 @@ func reset_run():
 	karma = 0
 	killed_creatures.clear()
 	tamed_creatures.clear()
+	abilities.clear()
+	items.clear()
 	
-	# 1 ball to start the run
-	#add_item(CombatItemDb.get_item("ball"))
 
 # Helper methods for use in CombatManager
 func has_guess(t: CombatTypes.EntityType) -> bool:

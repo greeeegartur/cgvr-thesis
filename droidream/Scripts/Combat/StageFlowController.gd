@@ -16,9 +16,13 @@ class_name StageFlowController
 @onready var boon_screen := $"../UI/BoonSelectionScreen"
 @onready var boon_manager := $"../BoonManager"
 @onready var combat_ui := $"../UI/CombatUI"
+@onready var black := $"../UI/Black"
 
 # TO-DO: make backgrounds scenes
 @onready var background := $"../World/Background"
+
+const PLAYER_COMBAT_POS := Vector2(96, 277)
+const PLAYER_WALK_IN_OFFSET := Vector2(-190, 0)
 
 func _ready():
 	combat_manager.combat_end.connect(_on_combat_finished)
@@ -40,7 +44,50 @@ func start_stage():
 	print("Entering stage: ", area_manager.stage_index)
 	print(enemies)
 	
-	combat_manager._start_combat(enemies)
+	if _should_play_area_intro():
+		await _start_stage_with_intro(enemies)
+	else:
+		combat_manager._start_combat(enemies)
+
+# INTRO METHODS
+func _should_play_area_intro() -> bool:
+	return area_manager.stage_index == 0
+
+func _start_stage_with_intro(enemies: Array):
+	combat_manager._pause_combat()
+	combat_ui.hide_player_stats_hud()
+	player_visual.hide_hp()
+	
+	black.visible = true
+	black.modulate.a = 1.0
+	
+	await combat_manager.prepare_combat_for_intro(enemies)
+	
+	player_visual.position = PLAYER_COMBAT_POS + PLAYER_WALK_IN_OFFSET
+	player_visual.set_home_position()
+	
+	await _fade_from_black()
+	await player_visual.walk_in_to(PLAYER_COMBAT_POS, PLAYER_WALK_IN_OFFSET)
+	
+	await get_tree().create_timer(0.3).timeout
+	
+	combat_manager.begin_combat_after_intro()
+	
+	combat_manager._resume_combat()
+	await combat_ui.show_player_stats_hud()
+	combat_ui.refresh_player_hud()
+
+func _fade_from_black(duration := 0.9):
+	black.visible = true
+	black.modulate.a = 1.0
+	
+	var tween := create_tween()
+	tween.tween_property(black, "modulate:a", 0.0, duration)\
+		.set_trans(Tween.TRANS_SINE)\
+		.set_ease(Tween.EASE_OUT)
+	
+	await tween.finished
+	black.visible = false
 
 # Transitions from stage -> stop
 func _on_combat_finished(victory: bool, rewards):
@@ -76,6 +123,7 @@ func _on_retry():
 	player_visual.anim.play("player_idle")
 	player_visual.update_hp(PlayerData.max_hp, PlayerData.max_hp)
 	combat_manager._setup_ui()
+	combat_ui.refresh_player_hud()
 	
 	# Combat reset
 	start_stage()
@@ -102,6 +150,11 @@ func _play_victory_sequence(rewards: Dictionary):
 	combat_ui.refresh_player_hud()
 	
 	await camera.reset_camera() # 8. Resets camera
+	
+	if _is_demo_final_stage(): # 8.5. If ending has been reached
+		await _enter_demo_ending_stop()
+		return
+	
 	await _enter_stop() # 9. Stop entering logic
 	await combat_ui.show_player_stats_hud()
 	combat_ui.refresh_player_hud()
@@ -121,9 +174,12 @@ func _enter_stop():
 # Transitions from stop -> next stage (also checks for next area and advances to next area if so)
 func _on_stop_finished():
 	tutorial_text.hide_text()
+	var old_area_index = area_manager.area_index
 	area_manager.advance_stage()
+	if area_manager.area_index != old_area_index:
+		return
 	combat_manager._resume_combat()
-	start_stage()
+	await start_stage()
 
 # Reacts to AreaManager method and transitions to next area
 func _on_area_changed(new_area: AreaData):
@@ -134,4 +190,29 @@ func _on_area_changed(new_area: AreaData):
 func _transition_to_next_area(area: AreaData):
 	await player_visual.walk_off_screen()
 	await background.transition_to(area)
-	await player_visual.walk_in()
+	#await player_visual.walk_in()
+
+func _is_demo_final_stage() -> bool:
+	return area_manager.area_index == 0 and area_manager.stage_index == 4
+
+func _enter_demo_ending_stop():
+	tutorial_text.hide_text()
+	combat_ui.hide_player_stats_hud()
+	combat_manager._pause_combat()
+	
+	await stop_manager.enter_demo_ending_stop()
+	await _fade_into_black()
+	
+	PlayerData.reset_run()
+	get_tree().change_scene_to_file("res://Scenes/TitleScreen.tscn")
+
+func _fade_into_black(duration := 1.2):
+	black.visible = true
+	black.modulate.a = 0.0
+	
+	var tween := create_tween()
+	tween.tween_property(black, "modulate:a", 1.0, duration)\
+		.set_trans(Tween.TRANS_SINE)\
+		.set_ease(Tween.EASE_IN_OUT)
+	
+	await tween.finished

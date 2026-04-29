@@ -36,8 +36,8 @@ const DAMAGE := 0.5
 
 func _ready():
 	# Setup with bat spawning
-	set_duration(6.0)
-	max_duration = 6.0
+	set_duration(8.5) # real time is 6
+	max_duration = 8.5
 	background.texture = background_textures.pick_random()
 	darkness.material.set_shader_parameter("radius", base_light_radius)
 	set_process_unhandled_input(true)

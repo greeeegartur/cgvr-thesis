@@ -87,8 +87,9 @@ metadata/_edit_use_anchors_ = true
 layout_direction = 2
 layout_mode = 0
 offset_left = 193.0
+offset_top = 2.0
 offset_right = 334.0
-offset_bottom = 21.0
+offset_bottom = 23.0
 theme_override_constants/separation = 4
 
 [node name="AbilitiesLabel" type="Label" parent="."]

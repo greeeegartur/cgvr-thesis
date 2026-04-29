@@ -157,6 +157,7 @@ BatScene = ExtResource("2_4vwvk")
 DamageNumberScene = ExtResource("3_b55n2")
 background_textures = Array[Texture2D]([ExtResource("3_qksyg"), ExtResource("3_b5buc")])
 bat_variants = Array[Texture2D]([ExtResource("4_na8lq"), ExtResource("5_4vwvk")])
+max_duration = 8.5
 
 [node name="VisualRoot" type="Node2D" parent="."]
 position = Vector2(315, 185)

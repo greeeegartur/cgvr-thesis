@@ -52,7 +52,7 @@ var dummy_enemy: CombatEntity
 func _ready():
 	await speech_bubble.ready
 	
-	PlayerData.set_guesses(0, 3, 0)
+	PlayerData.set_guesses(0, 4, 0)
 	player_visual.hide_hp()
 	speech_bubble.set_target(ufo)
 	speech_bubble.hide_tail()

@@ -78,32 +78,36 @@ func roll_boons() -> Array[BoonData]:
 	
 	for boon in available_boons:
 		var is_always_available := boon.id in always_available_ids
-		var is_ability_like := boon.id != ""
+		var is_ability_boon := not is_always_available
 		
-		# Skips boons if the player already has them
-		if is_ability_like and PlayerData.has_ability(boon.id):
-			continue
-		
-		# Skip all ability/passive boons if player is at cap
-		if is_ability_like and abilities_full:
-			continue
-		
+		# Always-available boons are your fallback options
 		if is_always_available:
 			fallback_pool.append(boon)
+		
+		# Skip ability/passive boons if player already has them
+		if is_ability_boon and PlayerData.has_ability(boon.id):
+			continue
+		
+		# Skip ability/passive boons if ability slots are full
+		if is_ability_boon and abilities_full:
+			continue
 		
 		pool.append(boon)
 	
 	pool.shuffle()
-	return pool.slice(0, 3)
 	
-	var result: Array[BoonData] = pool.duplicate()
-	fallback_pool.shuffle()
-
-	for boon in fallback_pool:
-		if result.size() >= 3:
-			break
-		if result.has(boon):
-			continue
-		result.append(boon)
-
+	var result: Array[BoonData] = pool.slice(0, 3)
+	
+	# Fills missing slots with fallback boons
+	if result.size() < 3:
+		fallback_pool.shuffle()
+		
+		for boon in fallback_pool:
+			if result.size() >= 3:
+				break
+			if result.has(boon):
+				continue
+			
+			result.append(boon)
+	
 	return result

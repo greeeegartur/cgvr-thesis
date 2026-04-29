@@ -268,7 +268,6 @@ func _spawn_enemy(enemy_id: String, slot_index: int, spawner: CombatEntity):
 	tween.set_ease(Tween.EASE_OUT)
 	await tween.finished
 
-
 func _setup_ui():
 	ui.setup(self)
 	
@@ -368,20 +367,45 @@ func _apply_enemy_encounter_gimmicks():
 
 # Called from StageFlowController with stage specific area ids to setup entities and start turns
 func _start_combat(enemy_ids):
+	await _prepare_combat(enemy_ids, true)
+	_start_turn_loop()
+
+func prepare_combat_for_intro(enemy_ids):
+	await _prepare_combat(enemy_ids, false)
+
+func begin_combat_after_intro():
+	await _play_enemy_intro()
+	_start_turn_loop()
+
+func _prepare_combat(enemy_ids, play_enemy_intro := true):
 	# CORE BUILDING
 	combat_has_ended = false
 	await _setup_entities(enemy_ids)
 	vfx._update_karma_overlay()
-	await animate_enemy_entry()
-	_apply_enemy_encounter_gimmicks()
+	
+	if play_enemy_intro:
+		await _play_enemy_intro()
+	else:
+		_set_enemy_visuals_visible(false)
 	
 	# PLAYER UI BUILDING
 	await player_turn_ui._build_abilities_ui()
 	await player_turn_ui._build_items_ui()
 	_reset_ability_cooldowns()
-	
-	# COMBAT STARTS
-	_start_turn_loop()
+
+func _play_enemy_intro():
+	_set_enemy_visuals_visible(true)
+	await animate_enemy_entry()
+	_apply_enemy_encounter_gimmicks()
+	await get_tree().create_timer(0.25).timeout
+
+func _set_enemy_visuals_visible(value: bool):
+	for visual in enemy_visuals.values():
+		if not is_instance_valid(visual):
+			continue
+		
+		visual.visible = value
+		visual.modulate.a = 1.0 if value else 0.0
 
 func start_tutorial_combat(enemy_ids: Array) -> CombatEntity:
 	tutorial_mode = true
@@ -412,7 +436,7 @@ func _start_turn_loop():
 	# For checking if passives exist
 	#for ability in PlayerData.abilities:
 		#print(ability.data.id)
-	PlayerData.add_ability(AbilityDb.get_ability("heatup"))
+	#PlayerData.add_ability(AbilityDb.get_ability("multitame"))
 	_player_turn()
 
 # TURN FUNCTIONS
@@ -1322,7 +1346,7 @@ func _item_memory_chip_sequence(item: InventoryItem, target):
 	
 	vfx.spawn_feedback(
 		player_visual,
-		"[color=#eff238][wave freq=14]%s restored![/wave][/color]" % CombatTypes.guess_type_to_string(restored_type)
+		"[color=#eff238][wave freq=14]Restored![/wave][/color]"
 	)
 
 # Grants even more block power for the player for 3 turns
@@ -1586,6 +1610,8 @@ func _on_attack_selected(attack_type: CombatTypes.EntityType):
 	
 	# Sets selected attack type as the selected one and hides player turn UI
 	selected_attack_type = attack_type
+	item_being_used = null
+	ability_being_used = null
 	
 	# Starts enemy targeting
 	start_target_selection()
@@ -1595,6 +1621,7 @@ func _on_ability_selected(ability: InventoryAbility):
 	if turn != "player":
 		return
 	ability_being_used = ability
+	item_being_used = null
 	
 	match ability.data.use_mode:
 		AbilityData.UseMode.STANDARD:
@@ -1629,6 +1656,7 @@ func _on_item_selected(item: InventoryItem):
 	if turn != "player":
 		return
 	
+	ability_being_used = null
 	item_being_used = item
 	match item.data.target_type:
 		ItemData.TargetType.ENEMY:
@@ -1663,6 +1691,7 @@ func _cancel_target_selection():
 	
 	# Cancels out and resets accordingly 
 	ability_being_used = null
+	item_being_used = null
 	selected_ability_tame_type = CombatTypes.EntityType.NONE
 	ability_tame_select_active = false
 	player_turn_ui.selecting_tame_for_ability = false
@@ -2282,6 +2311,9 @@ func _world_gray_out(gray_out: bool):
 
 func animate_enemy_entry():
 	for visual in enemy_visuals.values():
+		visual.visible = true
+		visual.modulate.a = 1.0
+		
 		var target_pos = visual.position
 		visual.position.x += 300
 		
