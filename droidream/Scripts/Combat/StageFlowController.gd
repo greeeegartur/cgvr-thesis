@@ -71,6 +71,7 @@ func _start_stage_with_intro(enemies: Array):
 	
 	await get_tree().create_timer(0.3).timeout
 	
+	player_visual.show_hp()
 	combat_manager.begin_combat_after_intro()
 	
 	combat_manager._resume_combat()

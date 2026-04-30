@@ -16,7 +16,7 @@ class_name DuckFlap
 @export var fish_target_count := 5
 @export var max_hits := 3
 @export var combat_damage_per_hit := 0.25
-@export var player_start_pos := Vector2(78, 122)
+@export var player_start_pos := Vector2(60, 87)
 @export var respawn_invuln_time := 0.45
 
 @onready var play_area: Control = $VisualRoot/PlayArea

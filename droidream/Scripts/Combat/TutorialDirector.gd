@@ -261,7 +261,7 @@ func spawn_dummy_enemy():
 	await say("This should work!", "happy")
 	end_say()
 	
-	ufo.flip_toward_left(true)
+	ufo.flip_toward_left()
 	await get_tree().create_timer(0.25).timeout
 	await say("Are you ready? Let’s begin!", "happy")
 	end_say()
@@ -585,7 +585,7 @@ func explain_minigame(minigame):
 
 func walk_out_and_finish():
 	camera.reset_camera()
-	ufo.flip_toward_left(true)
+	ufo.flip_toward_right()
 	player_visual.anim.play("player_walk")
 	
 	var tween := create_tween()

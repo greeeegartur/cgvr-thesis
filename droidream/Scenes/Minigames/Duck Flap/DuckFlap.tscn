@@ -121,7 +121,6 @@ forward_speed = 155.0
 fish_spawn_interval_min = 0.6
 fish_jump_duration_min = 1.1
 fish_jump_duration_max = 1.5
-player_start_pos = Vector2(60, 45)
 max_duration = 8.5
 
 [node name="VisualRoot" type="Node2D" parent="."]
@@ -297,7 +296,7 @@ metadata/_edit_use_anchors_ = true
 [node name="FishLayer" type="Node2D" parent="VisualRoot/PlayArea"]
 
 [node name="Player" type="Area2D" parent="VisualRoot/PlayArea"]
-position = Vector2(60, 45)
+position = Vector2(60, 87)
 
 [node name="Sprite2D" type="Sprite2D" parent="VisualRoot/PlayArea/Player"]
 scale = Vector2(1.5, 1.5)
