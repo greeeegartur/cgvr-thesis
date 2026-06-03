@@ -1,23 +1,23 @@
-[gd_scene load_steps=5 format=3 uid="uid://dnjjp23rtsa8t"]
+[gd_scene format=3 uid="uid://dnjjp23rtsa8t"]
 
 [ext_resource type="PackedScene" uid="uid://xdci2nsbs7fv" path="res://Scenes/Entities/UFO_Tuh-U/TuhU.tscn" id="1_hij4j"]
 [ext_resource type="PackedScene" uid="uid://bsrbbjhdvlwcr" path="res://Scenes/VFX/ShopItemContainer.tscn" id="2_paqs8"]
 [ext_resource type="Texture2D" uid="uid://c6gn5w834m7lf" path="res://Graphics/Placeholders/Combat/next_arrow.png" id="2_phf0x"]
 [ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="3_paqs8"]
 
-[node name="StopUI" type="Control"]
+[node name="StopUI" type="Control" unique_id=1109706006]
 visible = false
 layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
 
-[node name="TuhU" parent="." instance=ExtResource("1_hij4j")]
+[node name="TuhU" parent="." unique_id=1632627710 instance=ExtResource("1_hij4j")]
 position = Vector2(463, -20)
 
-[node name="ItemsContainer" type="Node2D" parent="."]
+[node name="ItemsContainer" type="Node2D" parent="." unique_id=1047387348]
 
-[node name="ShopItemContainer" parent="." instance=ExtResource("2_paqs8")]
+[node name="ShopItemContainer" parent="." unique_id=407759787 instance=ExtResource("2_paqs8")]
 visible = false
 layout_mode = 0
 offset_left = 350.0
@@ -26,13 +26,13 @@ offset_right = 441.97058
 offset_bottom = 349.0
 pivot_offset = Vector2(46, 29.5)
 
-[node name="NextArrow" type="Sprite2D" parent="."]
+[node name="NextArrow" type="Sprite2D" parent="." unique_id=1698961739]
 visible = false
 position = Vector2(593, 231.00002)
 scale = Vector2(1.4, 1.4)
 texture = ExtResource("2_phf0x")
 
-[node name="NameLabel" type="Label" parent="NextArrow"]
+[node name="NameLabel" type="Label" parent="NextArrow" unique_id=1881010017]
 offset_left = -34.285732
 offset_top = -9.285721
 offset_right = 9.714268
@@ -44,12 +44,12 @@ theme_override_font_sizes/font_size = 14
 text = "Next"
 horizontal_alignment = 1
 
-[node name="StopText" type="Label" parent="."]
+[node name="StopText" type="Label" parent="." unique_id=1149498367]
 visible = false
 layout_mode = 0
-offset_left = 429.0
+offset_left = 426.0
 offset_top = 155.0
-offset_right = 508.0
+offset_right = 505.0
 offset_bottom = 182.0
 pivot_offset = Vector2(39.5, 13.5)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)

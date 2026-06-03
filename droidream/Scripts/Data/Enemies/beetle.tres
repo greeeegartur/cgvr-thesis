@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EnemyInfo" load_steps=5 format=3 uid="uid://uakolov6gkf"]
+[gd_resource type="Resource" script_class="EnemyInfo" format=3 uid="uid://uakolov6gkf"]
 
 [ext_resource type="Script" uid="uid://by18pvdsekurc" path="res://Scripts/Data/EnemyAttackPattern.gd" id="1_ua3kc"]
 [ext_resource type="Resource" uid="uid://domaj7lm4s3o8" path="res://Scripts/Data/Attack_Patterns/beetle_tackle.tres" id="2_ijlsq"]

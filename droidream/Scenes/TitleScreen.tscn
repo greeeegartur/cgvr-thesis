@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3 uid="uid://bdojf0fpbit33"]
+[gd_scene format=3 uid="uid://bdojf0fpbit33"]
 
 [ext_resource type="Texture2D" uid="uid://c6ophq81sgiog" path="res://Graphics/Placeholders/Art/Title/title(sky) _0001.png" id="1_2jiiu"]
 [ext_resource type="Script" uid="uid://bmei5lbsbwlxd" path="res://Scripts/Misc/TitleScreen.gd" id="1_4hokt"]
@@ -185,67 +185,65 @@ _data = {
 &"idle": SubResource("Animation_75epk")
 }
 
-[node name="TitleScreen" type="Node2D"]
+[node name="TitleScreen" type="Node2D" unique_id=1404277924]
 script = ExtResource("1_4hokt")
 
-[node name="Background" type="Node2D" parent="."]
+[node name="Background" type="Node2D" parent="." unique_id=226624491]
 position = Vector2(320, 180)
 
-[node name="Sky (Layer1)" type="Sprite2D" parent="Background"]
+[node name="Sky (Layer1)" type="Sprite2D" parent="Background" unique_id=133852857]
 texture = ExtResource("1_2jiiu")
 
-[node name="Stars (Layer2)" type="Sprite2D" parent="Background"]
+[node name="Stars (Layer2)" type="Sprite2D" parent="Background" unique_id=1144989663]
 texture = ExtResource("2_awp6w")
 hframes = 3
 
-[node name="CloudsPink (Layer3)" type="Sprite2D" parent="Background"]
+[node name="CloudsPink (Layer3)" type="Sprite2D" parent="Background" unique_id=1682306601]
 modulate = Color(1, 1, 1, 0.22352941)
 texture = ExtResource("1_uebgo")
 
-[node name="CloudsDistant (Layer4)" type="Sprite2D" parent="Background"]
+[node name="CloudsDistant (Layer4)" type="Sprite2D" parent="Background" unique_id=77586712]
 modulate = Color(1, 1, 1, 0.22745098)
 texture = ExtResource("4_qu6cc")
 
-[node name="CloudsPurple (Layer5)" type="Sprite2D" parent="Background"]
+[node name="CloudsPurple (Layer5)" type="Sprite2D" parent="Background" unique_id=405029169]
 modulate = Color(1, 1, 1, 0.30980393)
 texture = ExtResource("5_4hokt")
 
-[node name="Sea (Layer6)" type="Sprite2D" parent="Background"]
+[node name="Sea (Layer6)" type="Sprite2D" parent="Background" unique_id=1752452175]
 texture = ExtResource("6_swiah")
 
-[node name="DistantHill (Layer7)" type="Sprite2D" parent="Background"]
+[node name="DistantHill (Layer7)" type="Sprite2D" parent="Background" unique_id=1886327391]
 texture = ExtResource("7_75epk")
 
-[node name="Hill (Layer8)" type="Sprite2D" parent="Background"]
+[node name="Hill (Layer8)" type="Sprite2D" parent="Background" unique_id=1703492978]
 texture = ExtResource("8_3ah5x")
 
-[node name="Droid (Layer9)" type="Sprite2D" parent="Background"]
+[node name="Droid (Layer9)" type="Sprite2D" parent="Background" unique_id=1385190184]
 texture = ExtResource("9_2jiiu")
 hframes = 3
 
-[node name="DistantBeam (Layer10)" type="Sprite2D" parent="Background"]
+[node name="DistantBeam (Layer10)" type="Sprite2D" parent="Background" unique_id=1955851586]
 modulate = Color(1, 1, 1, 0.25882354)
 texture = ExtResource("10_deutk")
 
-[node name="UFOBeam (Layer11)" type="Sprite2D" parent="Background"]
+[node name="UFOBeam (Layer11)" type="Sprite2D" parent="Background" unique_id=2122544172]
 modulate = Color(1, 1, 1, 0.09019608)
 texture = ExtResource("11_awp6w")
 hframes = 3
 
-[node name="Title (Layer12)" type="Sprite2D" parent="Background"]
+[node name="Title (Layer12)" type="Sprite2D" parent="Background" unique_id=1811987270]
 position = Vector2(2, 0)
 texture = ExtResource("12_o6bmn")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="Background"]
-libraries = {
-&"": SubResource("AnimationLibrary_swiah")
-}
-autoplay = "idle"
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Background" unique_id=781888746]
+libraries/ = SubResource("AnimationLibrary_swiah")
+autoplay = &"idle"
 
-[node name="Options" type="Node2D" parent="."]
+[node name="Options" type="Node2D" parent="." unique_id=1261396799]
 position = Vector2(320, 180)
 
-[node name="PlayLabel" type="Label" parent="Options"]
+[node name="PlayLabel" type="Label" parent="Options" unique_id=168079286]
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -262,7 +260,7 @@ theme_override_font_sizes/font_size = 36
 text = "Play"
 horizontal_alignment = 1
 
-[node name="QuitLabel" type="Label" parent="Options"]
+[node name="QuitLabel" type="Label" parent="Options" unique_id=2111056483]
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -279,39 +277,39 @@ theme_override_font_sizes/font_size = 36
 text = "Quit"
 horizontal_alignment = 1
 
-[node name="Black" type="ColorRect" parent="."]
+[node name="Black" type="ColorRect" parent="." unique_id=1640636065]
 visible = false
 z_index = 1
 offset_right = 641.0
 offset_bottom = 361.0
 color = Color(0, 0, 0, 1)
 
-[node name="RightArrow" type="Sprite2D" parent="."]
+[node name="RightArrow" type="Sprite2D" parent="." unique_id=817259135]
 position = Vector2(179, 201)
 rotation = 1.5707964
 scale = Vector2(0.8, 0.8)
 texture = ExtResource("15_swiah")
 
-[node name="LeftArrow" type="Sprite2D" parent="."]
+[node name="LeftArrow" type="Sprite2D" parent="." unique_id=466883211]
 position = Vector2(93.00006, 201)
 rotation = -1.5707964
 scale = Vector2(0.8, 0.8)
 texture = ExtResource("15_swiah")
 
-[node name="ControlsHint" type="Node2D" parent="."]
+[node name="ControlsHint" type="Node2D" parent="." unique_id=413623788]
 position = Vector2(-15, 333)
 
-[node name="WASD" type="Sprite2D" parent="ControlsHint"]
+[node name="WASD" type="Sprite2D" parent="ControlsHint" unique_id=758726324]
 position = Vector2(70.66669, 12.666671)
 texture = ExtResource("16_75epk")
 vframes = 2
 
-[node name="ZIcon" type="Sprite2D" parent="ControlsHint"]
+[node name="ZIcon" type="Sprite2D" parent="ControlsHint" unique_id=1965708077]
 position = Vector2(160.33035, 17.49998)
 texture = ExtResource("17_3ah5x")
 vframes = 2
 
-[node name="Label" type="Label" parent="ControlsHint"]
+[node name="Label" type="Label" parent="ControlsHint" unique_id=2002000684]
 custom_minimum_size = Vector2(180, 35)
 offset_left = 18.888895
 offset_right = 518.8889
@@ -324,8 +322,6 @@ vertical_alignment = 1
 autowrap_mode = 2
 metadata/_edit_use_anchors_ = true
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="ControlsHint"]
-libraries = {
-&"": SubResource("AnimationLibrary_3ah5x")
-}
-autoplay = "idle"
+[node name="AnimationPlayer" type="AnimationPlayer" parent="ControlsHint" unique_id=511043244]
+libraries/ = SubResource("AnimationLibrary_3ah5x")
+autoplay = &"idle"

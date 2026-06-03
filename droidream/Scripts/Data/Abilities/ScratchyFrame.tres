@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="PassiveData" load_steps=2 format=3 uid="uid://rtwjgnbha1vb"]
+[gd_resource type="Resource" script_class="PassiveData" format=3 uid="uid://rtwjgnbha1vb"]
 
 [ext_resource type="Script" uid="uid://dqqq30gwb44lh" path="res://Scripts/Data/PassiveData.gd" id="1_qu7s2"]
 
@@ -6,5 +6,5 @@
 script = ExtResource("1_qu7s2")
 id = "scratchy_frame"
 display_name = "Scratchy Frame"
-description = "When a creature damages you, its intent will shift for that same amount of damage. This cannot kill or tame the creature."
+description = "When a creature damages you, its kill/tame meter will shift for that same amount. This cannot kill or tame the creature."
 metadata/_custom_type_script = "uid://dqqq30gwb44lh"

@@ -118,12 +118,12 @@ var harden_turns_remaining := 0
 
 # Microbots effects
 var microbots_turn_counter := -1
-const MICROBOTS_HEAL_RATIO := 0.10
-const MICROBOTS_CHIP_RESTORE_CHANCE := 0.20
+const MICROBOTS_HEAL_RATIO := 0.20
+const MICROBOTS_CHIP_RESTORE_CHANCE := 0.30
 
 # Reflexive Sensors effects
-const REFLEXIVE_SENSORS_MISS_CHANCE := 0.075
-const REFLEXIVE_SENSORS_BLOCK_BOOST_CHANCE := 0.30
+const REFLEXIVE_SENSORS_MISS_CHANCE := 0.1
+const REFLEXIVE_SENSORS_BLOCK_BOOST_CHANCE := 0.35
 const REFLEXIVE_SENSORS_BLOCK_MULTIPLIER := 0.5
 
 # Enamor constant
@@ -438,6 +438,10 @@ func _start_turn_loop():
 	#for ability in PlayerData.abilities:
 		#print(ability.data.id)
 	#PlayerData.add_ability(AbilityDb.get_ability("multitame"))
+	#PlayerData.add_ability(AbilityDb.get_ability("repair"))
+	#PlayerData.add_item(CombatItemDb.get_item("ball"), 2)
+	#PlayerData.add_item(CombatItemDb.get_item("ice_cube"), 2)
+	#PlayerData.add_item(CombatItemDb.get_item("beetlejuice"), 2)
 	_player_turn()
 
 # TURN FUNCTIONS
@@ -755,6 +759,8 @@ func _apply_axis_shift_with_multiplier(enemy: CombatEntity, guess_type: CombatTy
 		#vfx.play_damage_vfx(enemy_visual, abs(actual_shift), multiplier >= 1.5)
 		#vfx.play_crit_feedback(enemy_visual)
 		
+		_try_restore_chip(guess_type, true) # Always true for Multi-tame, but might change
+		
 	else:
 		var off_guard = max(0.0, enemy.axis_ratio())
 		var kill_multiplier := 0.5 + pow(off_guard, 2.5) * 2.25
@@ -767,6 +773,8 @@ func _apply_axis_shift_with_multiplier(enemy: CombatEntity, guess_type: CombatTy
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
 		enemy_visual.shake(multiplier >= 1.5)
 		#vfx.play_damage_vfx(enemy_visual, abs(actual_shift), multiplier >= 1.5)
+		_try_restore_chip(guess_type, true)
+		
 		await _resolve_enemy_state(enemy)
 
 # Logic for starting enemy's minigame in combat

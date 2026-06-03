@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://pskv7a421pqn"]
+[gd_scene format=3 uid="uid://pskv7a421pqn"]
 
 [ext_resource type="Script" uid="uid://cx4ejov60luxh" path="res://Scripts/Combat/EnemyVisual.gd" id="1_fvduc"]
 [ext_resource type="PackedScene" uid="uid://ngw3am72av6" path="res://Scenes/Entities/EnemyAxisBar.tscn" id="2_6raiu"]
@@ -206,51 +206,6 @@ tracks/1/keys = {
 "transitions": PackedFloat32Array(1, 1),
 "update": 0,
 "values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
-}
-
-[sub_resource type="Animation" id="Animation_7naox"]
-resource_name = "subdue"
-length = 0.4
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("..:modulate")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.4),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0.39215687)]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("../../EnemyAxisBar:modulate")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0, 0.4),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
-}
-
-[sub_resource type="Animation" id="Animation_x4blf"]
-resource_name = "idle"
-length = 0.6
-loop_mode = 1
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath(".:frame")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.3),
-"transitions": PackedFloat32Array(1, 1),
-"update": 1,
-"values": [0, 1]
 }
 
 [sub_resource type="Animation" id="Animation_wej4k"]
@@ -682,6 +637,51 @@ tracks/6/keys = {
 "values": [Vector2(-10.000001, -16.000002), Vector2(-21, -16.000002)]
 }
 
+[sub_resource type="Animation" id="Animation_x4blf"]
+resource_name = "idle"
+length = 0.6
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.3),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [0, 1]
+}
+
+[sub_resource type="Animation" id="Animation_7naox"]
+resource_name = "subdue"
+length = 0.4
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("..:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.4),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0.39215687)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("../../EnemyAxisBar:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.4),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_ej3yk"]
 _data = {
 &"RESET": SubResource("Animation_7l13l"),
@@ -695,50 +695,46 @@ _data = {
 &"subdue": SubResource("Animation_7naox")
 }
 
-[node name="EnemyVisual" type="Node2D"]
+[node name="EnemyVisual" type="Node2D" unique_id=51252555]
 z_index = 1
 script = ExtResource("1_fvduc")
 
-[node name="EnemyAxisBar" parent="." instance=ExtResource("2_6raiu")]
+[node name="EnemyAxisBar" parent="." unique_id=1967246209 instance=ExtResource("2_6raiu")]
 offset_left = -39.0
-offset_top = -41.0
+offset_top = -45.0
 offset_right = -39.0
-offset_bottom = -41.0
+offset_bottom = -45.0
 
-[node name="Visual" type="Node2D" parent="."]
+[node name="Visual" type="Node2D" parent="." unique_id=392927880]
 z_index = 1
 
-[node name="Sprite2D" type="Sprite2D" parent="Visual"]
+[node name="Sprite2D" type="Sprite2D" parent="Visual" unique_id=328531143]
 position = Vector2(0, -4)
 scale = Vector2(1.7, 1.7)
 texture = ExtResource("3_bqvxm")
 vframes = 3
 
-[node name="Screech" type="Sprite2D" parent="Visual"]
+[node name="Screech" type="Sprite2D" parent="Visual" unique_id=588986789]
 visible = false
 position = Vector2(-10.000001, -16.000002)
 texture = ExtResource("4_x4blf")
 
-[node name="TargetArrow" type="Node2D" parent="."]
+[node name="TargetArrow" type="Node2D" parent="." unique_id=1669918180]
 visible = false
 
-[node name="Sprite2D" type="Sprite2D" parent="TargetArrow"]
+[node name="Sprite2D" type="Sprite2D" parent="TargetArrow" unique_id=2043506705]
 position = Vector2(2, -80)
 texture = ExtResource("4_yee2c")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="TargetArrow"]
-libraries = {
-&"": SubResource("AnimationLibrary_hei77")
-}
+[node name="AnimationPlayer" type="AnimationPlayer" parent="TargetArrow" unique_id=63316333]
+libraries/ = SubResource("AnimationLibrary_hei77")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=479649545]
 root_node = NodePath("../Visual/Sprite2D")
-libraries = {
-&"": SubResource("AnimationLibrary_ej3yk")
-}
-autoplay = "idle"
+libraries/ = SubResource("AnimationLibrary_ej3yk")
+autoplay = &"idle"
 
-[node name="TurnOrder" type="Label" parent="."]
+[node name="TurnOrder" type="Label" parent="." unique_id=30056701]
 visible = false
 offset_left = 13.0
 offset_top = -75.0

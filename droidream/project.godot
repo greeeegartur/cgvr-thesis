@@ -8,11 +8,15 @@
 
 config_version=5
 
+[animation]
+
+compatibility/default_parent_skeleton_in_mesh_instance_3d=true
+
 [application]
 
 config/name="Droidream"
 run/main_scene="uid://bdojf0fpbit33"
-config/features=PackedStringArray("4.5", "GL Compatibility")
+config/features=PackedStringArray("4.6", "GL Compatibility")
 boot_splash/image="uid://dr12gpiwhcjh6"
 config/icon="res://icon.svg"
 
@@ -25,6 +29,7 @@ PlayerData="*res://Scripts/Data/PlayerData.gd"
 ItemDb="*res://Scripts/Data/ItemDB.gd"
 AbilityDb="*res://Scripts/Data/AbilityDB.gd"
 CombatItemDb="*res://Scripts/Data/CombatItemDb.gd"
+DevShortcutManager="*uid://binqg35ejukr0"
 
 [display]
 

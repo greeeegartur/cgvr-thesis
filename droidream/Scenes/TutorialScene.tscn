@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3 uid="uid://b3hccjt07sqqj"]
+[gd_scene format=3 uid="uid://b3hccjt07sqqj"]
 
 [ext_resource type="Script" uid="uid://b3u2bq3dgrvtu" path="res://Scripts/Combat/CombatManager.gd" id="1_jbvax"]
 [ext_resource type="Script" uid="uid://hu3le3k7d1o5" path="res://Scripts/Combat/TutorialDirector.gd" id="2_hp5wx"]
@@ -81,65 +81,65 @@ _data = {
 &"play": SubResource("Animation_121m8")
 }
 
-[node name="TutorialScene" type="Node2D"]
+[node name="TutorialScene" type="Node2D" unique_id=1902285264]
 
-[node name="CombatManager" type="Node" parent="."]
+[node name="CombatManager" type="Node" parent="." unique_id=857501694]
 script = ExtResource("1_jbvax")
 
-[node name="TutorialDirector" type="Node" parent="."]
+[node name="TutorialDirector" type="Node" parent="." unique_id=572212710]
 script = ExtResource("2_hp5wx")
 
-[node name="World" type="Node2D" parent="."]
+[node name="World" type="Node2D" parent="." unique_id=382174409]
 
-[node name="CombatBackground" parent="World" instance=ExtResource("3_pujgt")]
+[node name="CombatBackground" parent="World" unique_id=126587925 instance=ExtResource("3_pujgt")]
 
-[node name="PlayerVisual" parent="World" instance=ExtResource("3_hp5wx")]
+[node name="PlayerVisual" parent="World" unique_id=1888988356 instance=ExtResource("3_hp5wx")]
 z_index = 3
 position = Vector2(96, 278)
 
-[node name="EnemyPosition1" type="Node2D" parent="World"]
+[node name="EnemyPosition1" type="Node2D" parent="World" unique_id=288001378]
 z_index = 1
 position = Vector2(363, 283)
 
-[node name="EnemyPosition2" type="Node2D" parent="World"]
+[node name="EnemyPosition2" type="Node2D" parent="World" unique_id=87732961]
 z_index = 1
 position = Vector2(463, 283)
 
-[node name="EnemyPosition3" type="Node2D" parent="World"]
+[node name="EnemyPosition3" type="Node2D" parent="World" unique_id=1407540157]
 z_index = 1
 position = Vector2(563, 283)
 
-[node name="TuhU" parent="World" instance=ExtResource("5_33lju")]
+[node name="TuhU" parent="World" unique_id=983720807 instance=ExtResource("5_33lju")]
 position = Vector2(166, 227.00002)
 scale = Vector2(0.9, 0.9)
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="UI" type="CanvasLayer" parent="." unique_id=1372294674]
 
-[node name="Black" type="ColorRect" parent="UI"]
+[node name="Black" type="ColorRect" parent="UI" unique_id=1617975991]
 z_index = 10
 offset_right = 643.0
 offset_bottom = 363.0
 color = Color(0, 0, 0, 1)
 
-[node name="SpeechBubble" parent="UI" instance=ExtResource("8_u2gab")]
+[node name="SpeechBubble" parent="UI" unique_id=852700335 instance=ExtResource("8_u2gab")]
 layer = 5
 follow_viewport_enabled = true
 
-[node name="TutorialText" parent="UI" instance=ExtResource("9_ls7or")]
+[node name="TutorialText" parent="UI" unique_id=1873582270 instance=ExtResource("9_ls7or")]
 visible = false
 scale = Vector2(2.5, 2.5)
 transform = Transform2D(2.5, 0, 0, 2.5, 0, 0)
 
-[node name="HintNode" type="Node2D" parent="UI"]
+[node name="HintNode" type="Node2D" parent="UI" unique_id=430952229]
 visible = false
 z_index = 10
 
-[node name="ZIcon" type="Sprite2D" parent="UI/HintNode"]
+[node name="ZIcon" type="Sprite2D" parent="UI/HintNode" unique_id=380250860]
 position = Vector2(556, 349)
 texture = ExtResource("10_pujgt")
 vframes = 2
 
-[node name="Label" type="Label" parent="UI/HintNode"]
+[node name="Label" type="Label" parent="UI/HintNode" unique_id=824033217]
 custom_minimum_size = Vector2(180, 35)
 offset_left = 510.0
 offset_top = 332.0
@@ -153,44 +153,40 @@ vertical_alignment = 1
 autowrap_mode = 2
 metadata/_edit_use_anchors_ = true
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="UI/HintNode"]
-libraries = {
-&"": SubResource("AnimationLibrary_xkm2r")
-}
+[node name="AnimationPlayer" type="AnimationPlayer" parent="UI/HintNode" unique_id=323609632]
+libraries/ = SubResource("AnimationLibrary_xkm2r")
 
-[node name="CombatUI" type="Node" parent="UI"]
+[node name="CombatUI" type="Node" parent="UI" unique_id=1742265900]
 script = ExtResource("5_jbvax")
 InventoryHudIconScene = ExtResource("7_hrv55")
 
-[node name="PlayerTurnUi" parent="UI/CombatUI" instance=ExtResource("6_hp5wx")]
+[node name="PlayerTurnUi" parent="UI/CombatUI" unique_id=1985090969 instance=ExtResource("6_hp5wx")]
 
-[node name="PlayerStatsHUD" parent="UI/CombatUI" instance=ExtResource("8_h4w16")]
+[node name="PlayerStatsHUD" parent="UI/CombatUI" unique_id=217459020 instance=ExtResource("8_h4w16")]
 visible = false
 
-[node name="Camera2D" type="Camera2D" parent="."]
+[node name="Camera2D" type="Camera2D" parent="." unique_id=737164750]
 position = Vector2(320, 180)
 position_smoothing_enabled = true
 position_smoothing_speed = 8.5
 script = ExtResource("6_map6f")
 
-[node name="Speedlines" type="Sprite2D" parent="Camera2D"]
+[node name="Speedlines" type="Sprite2D" parent="Camera2D" unique_id=1709057595]
 modulate = Color(1, 1, 1, 0)
 z_index = 5
 texture = ExtResource("15_eggky")
 vframes = 2
 
-[node name="Player" type="AnimationPlayer" parent="Camera2D/Speedlines"]
-libraries = {
-&"": SubResource("AnimationLibrary_6ulev")
-}
-autoplay = "play"
+[node name="Player" type="AnimationPlayer" parent="Camera2D/Speedlines" unique_id=634694315]
+libraries/ = SubResource("AnimationLibrary_6ulev")
+autoplay = &"play"
 speed_scale = 1.5
 
-[node name="VFX" type="CanvasLayer" parent="."]
+[node name="VFX" type="CanvasLayer" parent="." unique_id=1669215610]
 layer = 9
 follow_viewport_enabled = true
 
-[node name="Vignette" type="ColorRect" parent="VFX"]
+[node name="Vignette" type="ColorRect" parent="VFX" unique_id=1081660460]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -205,7 +201,7 @@ size_flags_vertical = 4
 mouse_filter = 2
 color = Color(1, 1, 1, 0)
 
-[node name="VFXCombatManager" type="Node" parent="VFX" node_paths=PackedStringArray("camera")]
+[node name="VFXCombatManager" type="Node" parent="VFX" unique_id=1894235466 node_paths=PackedStringArray("camera")]
 script = ExtResource("14_gh30y")
 DamageNumberScene = ExtResource("15_ymeo7")
 ExplosionFXScene = ExtResource("16_eggky")
@@ -214,13 +210,13 @@ RepairObjectScene = ExtResource("18_pijee")
 MultiTameBallScene = ExtResource("19_pea10")
 camera = NodePath("../../Camera2D")
 
-[node name="DamageNumbers" type="Node2D" parent="VFX"]
+[node name="DamageNumbers" type="Node2D" parent="VFX" unique_id=605095485]
 
-[node name="Particles" type="Node2D" parent="VFX"]
+[node name="Particles" type="Node2D" parent="VFX" unique_id=752174733]
 
-[node name="FeedbackText" type="Node2D" parent="VFX"]
+[node name="FeedbackText" type="Node2D" parent="VFX" unique_id=894778908]
 
-[node name="KarmaOverlay" type="ColorRect" parent="VFX"]
+[node name="KarmaOverlay" type="ColorRect" parent="VFX" unique_id=1204443900]
 modulate = Color(1, 1, 1, 0)
 offset_left = -192.0
 offset_top = -41.0
@@ -229,9 +225,9 @@ offset_bottom = 378.0
 mouse_filter = 2
 color = Color(0.49725664, 0, 0.08825985, 1)
 
-[node name="Minigames" type="CanvasLayer" parent="."]
+[node name="Minigames" type="CanvasLayer" parent="." unique_id=1175611697]
 layer = 10
 
-[node name="TutorialOverlay" type="CanvasLayer" parent="."]
+[node name="TutorialOverlay" type="CanvasLayer" parent="." unique_id=70249202]
 layer = 12
 follow_viewport_enabled = true

@@ -37,13 +37,13 @@ func play_prompt() -> float:
 			var t = clamp(elapsed / shrink_time, 0.0, 1.0)
 			var accuracy = 1.0 - abs(t - 1.0)
 			
-			if accuracy >= 0.92:
+			if accuracy >= 0.86:
 				score = 1.0
-			elif accuracy >= 0.82:
+			elif accuracy >= 0.76:
 				score = 0.9
-			elif accuracy >= 0.68:
+			elif accuracy >= 0.62:
 				score = 0.75
-			elif accuracy >= 0.52:
+			elif accuracy >= 0.46:
 				score = 0.6
 			else:
 				score = 0.4

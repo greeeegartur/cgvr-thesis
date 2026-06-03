@@ -5,7 +5,7 @@ class_name CombatCamera
 
 # Camera zoom variables
 @export var zoom_normal = Vector2(1.0, 1.0)
-@export var zoom_focus = Vector2(1.15, 1.15)
+@export var zoom_focus = Vector2(1.23, 1.23)
 
 # Camera movement variable
 @export var follow_speed := 3.0
@@ -100,8 +100,8 @@ func victory_focus_on_player(target: Node2D) -> void:
 	var player_pos = target.global_position - Vector2(-60, 90)
 	var tween := create_tween()
 	tween.tween_property(self, "global_position", player_pos, 0.8)
-	tween.parallel().tween_property(self, "zoom", Vector2(2.2, 2.2), 0.6)
-	tween.parallel().tween_property(self, "offset", Vector2(10, 65), 0.6)
+	tween.parallel().tween_property(self, "zoom", Vector2(2.4, 2.4), 0.6)
+	tween.parallel().tween_property(self, "offset", Vector2(-2.5, 65), 0.6)
 	tween.set_trans(Tween.TRANS_QUAD)
 	tween.set_ease(Tween.EASE_OUT)
 	await tween.finished
@@ -124,6 +124,7 @@ func reset_camera():
 
 func ability_focus_on_player(target: Node2D, zoom_amount: Vector2, duration := 0.4):
 	follow_target = target
+	position.y = position.y + 10.0
 	override = false
 	
 	if zoom_tween:

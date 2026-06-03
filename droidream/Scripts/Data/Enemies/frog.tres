@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EnemyInfo" load_steps=7 format=3 uid="uid://b3ejqms0dxqok"]
+[gd_resource type="Resource" script_class="EnemyInfo" format=3 uid="uid://b3ejqms0dxqok"]
 
 [ext_resource type="Script" uid="uid://by18pvdsekurc" path="res://Scripts/Data/EnemyAttackPattern.gd" id="1_cef08"]
 [ext_resource type="Script" uid="uid://c8hmcdrkefq7i" path="res://Scripts/Data/EnemyInfo.gd" id="2_0rq60"]
@@ -12,9 +12,9 @@ script = ExtResource("2_0rq60")
 enemy_id = "frog"
 name = "Jungle Frog"
 type = 2
-max_hp = 10.0
+max_hp = 14.0
 attack = 2
-trust_max = 2
+trust_max = 1
 minigame_id = "frog_guess"
 attack_patterns = Array[ExtResource("1_cef08")]([ExtResource("2_p35hh"), ExtResource("3_sg6d1"), ExtResource("4_sg6d1")])
 visual_scene = ExtResource("5_xg5om")

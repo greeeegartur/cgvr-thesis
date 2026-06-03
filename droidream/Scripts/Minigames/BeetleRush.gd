@@ -46,7 +46,7 @@ var hits_taken := 0 # Default
 
 # Constants
 const FLICK_DISTANCE := 80.0
-const DAMAGE := 0.3 # Damage player takes if hurt, TO-DO: change this to consider for defense in the future
+const DAMAGE := 0.25 # Damage player takes if hurt, TO-DO: change this to consider for defense in the future
 
 # Start/Pause variables
 var collision_enabled := false
@@ -66,7 +66,7 @@ func _ready():
 	hand_anim.animation_finished.connect(_on_hand_anim_finished)
 	
 	# Starting minigame – FOR TESTING INSIDE SCENE, DO NOT TURN ON FOR COMBATMANAGER
-	#play()
+	# play()
 
 func _process(delta):
 	super._process(delta) # for elapsing variable and minigame end condition

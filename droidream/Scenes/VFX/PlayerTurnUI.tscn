@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://6f0q2xbuuu16"]
+[gd_scene format=3 uid="uid://6f0q2xbuuu16"]
 
 [ext_resource type="Script" uid="uid://d3goy7jibvf76" path="res://Scripts/Combat/PlayerTurnUI.gd" id="1_0fa56"]
 [ext_resource type="Texture2D" uid="uid://fk7vshnojgc" path="res://Graphics/Placeholders/Combat/gearcog.png" id="2_gsd0c"]
@@ -26,29 +26,29 @@ texture = ExtResource("8_ffjt8")
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_nbpvq"]
 texture = ExtResource("9_7f765")
 
-[node name="PlayerTurnUi" type="CanvasLayer"]
+[node name="PlayerTurnUi" type="CanvasLayer" unique_id=125681138]
 visible = false
 script = ExtResource("1_0fa56")
 AbilityRowScene = ExtResource("2_n7a3j")
 ItemRowScene = ExtResource("3_x3ufh")
 
-[node name="GearMenu" type="Node2D" parent="."]
+[node name="GearMenu" type="Node2D" parent="." unique_id=378466650]
 position = Vector2(171.00002, 247.00002)
 scale = Vector2(0.75, 0.75)
 
-[node name="GearSprite" type="Sprite2D" parent="GearMenu"]
+[node name="GearSprite" type="Sprite2D" parent="GearMenu" unique_id=1076427538]
 position = Vector2(-4, -2.666687)
 texture = ExtResource("2_gsd0c")
 
-[node name="Options" type="Node2D" parent="GearMenu"]
+[node name="Options" type="Node2D" parent="GearMenu" unique_id=935449372]
 
-[node name="Attack" type="Node2D" parent="GearMenu/Options"]
+[node name="Attack" type="Node2D" parent="GearMenu/Options" unique_id=1219089025]
 position = Vector2(-3.0769997, -76.51268)
 
-[node name="AttackSprite" type="Sprite2D" parent="GearMenu/Options/Attack"]
+[node name="AttackSprite" type="Sprite2D" parent="GearMenu/Options/Attack" unique_id=1933021644]
 texture = ExtResource("3_j6txv")
 
-[node name="Label" type="Label" parent="GearMenu/Options/Attack"]
+[node name="Label" type="Label" parent="GearMenu/Options/Attack" unique_id=1063335207]
 visible = false
 modulate = Color(1, 1, 1, 0)
 offset_left = -20.0
@@ -62,13 +62,13 @@ text = "Tame"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Abilities" type="Node2D" parent="GearMenu/Options"]
+[node name="Abilities" type="Node2D" parent="GearMenu/Options" unique_id=1453791135]
 position = Vector2(44.615, -59.589676)
 
-[node name="AbilitiesSprite" type="Sprite2D" parent="GearMenu/Options/Abilities"]
+[node name="AbilitiesSprite" type="Sprite2D" parent="GearMenu/Options/Abilities" unique_id=633864827]
 texture = ExtResource("4_1nchb")
 
-[node name="Label" type="Label" parent="GearMenu/Options/Abilities"]
+[node name="Label" type="Label" parent="GearMenu/Options/Abilities" unique_id=2123080191]
 visible = false
 modulate = Color(1, 1, 1, 0)
 offset_left = -29.333359
@@ -82,13 +82,13 @@ text = "Abilities"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Items" type="Node2D" parent="GearMenu/Options"]
+[node name="Items" type="Node2D" parent="GearMenu/Options" unique_id=40447440]
 position = Vector2(-50.768997, -59.589676)
 
-[node name="ItemsSprite" type="Sprite2D" parent="GearMenu/Options/Items"]
+[node name="ItemsSprite" type="Sprite2D" parent="GearMenu/Options/Items" unique_id=1866897651]
 texture = ExtResource("5_7cvk2")
 
-[node name="Label" type="Label" parent="GearMenu/Options/Items"]
+[node name="Label" type="Label" parent="GearMenu/Options/Items" unique_id=130953258]
 visible = false
 modulate = Color(1, 1, 1, 0)
 offset_left = -29.231018
@@ -102,9 +102,9 @@ text = "Items"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="AttackTypeMenu" type="Node" parent="."]
+[node name="AttackTypeMenu" type="Node" parent="." unique_id=987324954]
 
-[node name="Panel" type="Panel" parent="AttackTypeMenu"]
+[node name="Panel" type="Panel" parent="AttackTypeMenu" unique_id=1051379953]
 visible = false
 anchors_preset = -1
 anchor_right = 0.23
@@ -116,16 +116,16 @@ offset_bottom = 18.799988
 theme_override_styles/panel = SubResource("StyleBoxTexture_a1yl2")
 metadata/_edit_use_anchors_ = true
 
-[node name="VBox" type="VBoxContainer" parent="AttackTypeMenu/Panel"]
+[node name="VBox" type="VBoxContainer" parent="AttackTypeMenu/Panel" unique_id=1729801803]
 layout_mode = 0
 offset_right = 100.0
 offset_bottom = 80.0
 metadata/_edit_use_anchors_ = true
 
-[node name="SkyOption" type="Node2D" parent="AttackTypeMenu/Panel/VBox"]
+[node name="SkyOption" type="Node2D" parent="AttackTypeMenu/Panel/VBox" unique_id=267344536]
 position = Vector2(0, -2)
 
-[node name="Label" type="Label" parent="AttackTypeMenu/Panel/VBox/SkyOption"]
+[node name="Label" type="Label" parent="AttackTypeMenu/Panel/VBox/SkyOption" unique_id=1699112451]
 offset_left = 11.0
 offset_top = 13.0
 offset_right = 72.0
@@ -137,10 +137,10 @@ text = "Sky"
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
-[node name="EarthOption" type="Node2D" parent="AttackTypeMenu/Panel/VBox"]
+[node name="EarthOption" type="Node2D" parent="AttackTypeMenu/Panel/VBox" unique_id=1795819051]
 position = Vector2(0, -2)
 
-[node name="Label" type="Label" parent="AttackTypeMenu/Panel/VBox/EarthOption"]
+[node name="Label" type="Label" parent="AttackTypeMenu/Panel/VBox/EarthOption" unique_id=134143639]
 offset_left = 11.0
 offset_top = 31.0
 offset_right = 72.0
@@ -152,10 +152,10 @@ text = "Earth"
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
-[node name="WaterOption" type="Node2D" parent="AttackTypeMenu/Panel/VBox"]
+[node name="WaterOption" type="Node2D" parent="AttackTypeMenu/Panel/VBox" unique_id=1851207276]
 position = Vector2(0, -2)
 
-[node name="Label" type="Label" parent="AttackTypeMenu/Panel/VBox/WaterOption"]
+[node name="Label" type="Label" parent="AttackTypeMenu/Panel/VBox/WaterOption" unique_id=772326634]
 offset_left = 11.0
 offset_top = 49.0
 offset_right = 72.0
@@ -167,10 +167,10 @@ text = "Water"
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
-[node name="Counts" type="Node2D" parent="AttackTypeMenu/Panel"]
+[node name="Counts" type="Node2D" parent="AttackTypeMenu/Panel" unique_id=906256943]
 position = Vector2(0, -2)
 
-[node name="SkyCount" type="Label" parent="AttackTypeMenu/Panel/Counts"]
+[node name="SkyCount" type="Label" parent="AttackTypeMenu/Panel/Counts" unique_id=576299405]
 offset_left = 76.0
 offset_top = 18.0
 offset_right = 176.0
@@ -183,12 +183,12 @@ text = "x"
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
-[node name="SkyChip" type="Sprite2D" parent="AttackTypeMenu/Panel/Counts/SkyCount"]
+[node name="SkyChip" type="Sprite2D" parent="AttackTypeMenu/Panel/Counts/SkyCount" unique_id=1542048791]
 position = Vector2(-8, 7)
 scale = Vector2(0.9, 0.9)
 texture = ExtResource("8_nbpvq")
 
-[node name="EarthCount" type="Label" parent="AttackTypeMenu/Panel/Counts"]
+[node name="EarthCount" type="Label" parent="AttackTypeMenu/Panel/Counts" unique_id=824812645]
 offset_left = 76.0
 offset_top = 36.0
 offset_right = 176.0
@@ -201,12 +201,12 @@ text = "x"
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
-[node name="EarthChip" type="Sprite2D" parent="AttackTypeMenu/Panel/Counts/EarthCount"]
+[node name="EarthChip" type="Sprite2D" parent="AttackTypeMenu/Panel/Counts/EarthCount" unique_id=1672198965]
 position = Vector2(-8, 7)
 scale = Vector2(0.9, 0.9)
 texture = ExtResource("9_n7a3j")
 
-[node name="WaterCount" type="Label" parent="AttackTypeMenu/Panel/Counts"]
+[node name="WaterCount" type="Label" parent="AttackTypeMenu/Panel/Counts" unique_id=1137836215]
 offset_left = 76.0
 offset_top = 54.0
 offset_right = 176.0
@@ -219,14 +219,14 @@ text = "x"
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
-[node name="WaterChip" type="Sprite2D" parent="AttackTypeMenu/Panel/Counts/WaterCount"]
+[node name="WaterChip" type="Sprite2D" parent="AttackTypeMenu/Panel/Counts/WaterCount" unique_id=1366732795]
 position = Vector2(-8, 7)
 scale = Vector2(0.9, 0.9)
 texture = ExtResource("10_x3ufh")
 
-[node name="AbilitiesMenu" type="Node" parent="."]
+[node name="AbilitiesMenu" type="Node" parent="." unique_id=478345387]
 
-[node name="Panel" type="Panel" parent="AbilitiesMenu"]
+[node name="Panel" type="Panel" parent="AbilitiesMenu" unique_id=1442784781]
 visible = false
 anchors_preset = -1
 anchor_right = 0.23
@@ -237,7 +237,7 @@ offset_right = 178.8
 offset_bottom = 18.800003
 theme_override_styles/panel = SubResource("StyleBoxTexture_irvsa")
 
-[node name="ScrollContainer" type="ScrollContainer" parent="AbilitiesMenu/Panel"]
+[node name="ScrollContainer" type="ScrollContainer" parent="AbilitiesMenu/Panel" unique_id=878070570]
 clip_contents = false
 layout_mode = 1
 offset_left = 16.0
@@ -246,21 +246,21 @@ offset_bottom = 80.0
 horizontal_scroll_mode = 3
 vertical_scroll_mode = 3
 
-[node name="VBox" type="VBoxContainer" parent="AbilitiesMenu/Panel/ScrollContainer"]
+[node name="VBox" type="VBoxContainer" parent="AbilitiesMenu/Panel/ScrollContainer" unique_id=1366233294]
 custom_minimum_size = Vector2(79, 55)
 layout_mode = 2
 theme_override_constants/separation = -14
 
-[node name="AbilityInfoContainer" parent="AbilitiesMenu" instance=ExtResource("14_kk11w")]
+[node name="AbilityInfoContainer" parent="AbilitiesMenu" unique_id=847411139 instance=ExtResource("14_kk11w")]
 visible = false
 offset_left = 329.0
 offset_top = 135.0
 offset_right = 483.0909
 offset_bottom = 248.0
 
-[node name="ItemsMenu" type="Node" parent="."]
+[node name="ItemsMenu" type="Node" parent="." unique_id=323166057]
 
-[node name="Panel" type="Panel" parent="ItemsMenu"]
+[node name="Panel" type="Panel" parent="ItemsMenu" unique_id=623408838]
 visible = false
 anchors_preset = -1
 anchor_right = 0.23
@@ -271,7 +271,7 @@ offset_right = 178.8
 offset_bottom = 18.800003
 theme_override_styles/panel = SubResource("StyleBoxTexture_nbpvq")
 
-[node name="ScrollContainer" type="ScrollContainer" parent="ItemsMenu/Panel"]
+[node name="ScrollContainer" type="ScrollContainer" parent="ItemsMenu/Panel" unique_id=746644039]
 clip_contents = false
 layout_mode = 1
 offset_left = 16.0
@@ -280,12 +280,12 @@ offset_bottom = 80.0
 horizontal_scroll_mode = 3
 vertical_scroll_mode = 3
 
-[node name="VBox" type="VBoxContainer" parent="ItemsMenu/Panel/ScrollContainer"]
+[node name="VBox" type="VBoxContainer" parent="ItemsMenu/Panel/ScrollContainer" unique_id=1712440226]
 custom_minimum_size = Vector2(79, 55)
 layout_mode = 2
-theme_override_constants/separation = -22
+theme_override_constants/separation = -20
 
-[node name="ItemInfoContainer" parent="ItemsMenu" instance=ExtResource("15_k6bu5")]
+[node name="ItemInfoContainer" parent="ItemsMenu" unique_id=1450266360 instance=ExtResource("15_k6bu5")]
 visible = false
 offset_left = 329.0
 offset_top = 135.0

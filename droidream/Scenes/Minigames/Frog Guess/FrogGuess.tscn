@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://rdqurwh47ab2"]
+[gd_scene format=3 uid="uid://rdqurwh47ab2"]
 
 [ext_resource type="Script" uid="uid://fm7l6xhni6vg" path="res://Scripts/Minigames/FrogGuess.gd" id="1_f7if6"]
 [ext_resource type="PackedScene" uid="uid://da38dq6mvu3ji" path="res://Scenes/Minigames/Frog Guess/FrogEntity.tscn" id="2_8er84"]
@@ -143,7 +143,7 @@ _data = {
 &"pop": SubResource("Animation_23h33")
 }
 
-[node name="FrogGuess" type="Control"]
+[node name="FrogGuess" type="Control" unique_id=592491805]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -158,12 +158,12 @@ real_frog_textures = Array[Texture2D]([ExtResource("6_ia45h")])
 fake_frog_textures = Array[Texture2D]([ExtResource("7_n2xkm")])
 max_duration = 10.0
 
-[node name="VisualRoot" type="Node2D" parent="."]
+[node name="VisualRoot" type="Node2D" parent="." unique_id=744897018]
 position = Vector2(315, 185)
 
-[node name="UI" type="Node2D" parent="VisualRoot"]
+[node name="UI" type="Node2D" parent="VisualRoot" unique_id=864816914]
 
-[node name="Background" type="PanelContainer" parent="VisualRoot/UI"]
+[node name="Background" type="PanelContainer" parent="VisualRoot/UI" unique_id=9250131]
 z_index = -1
 anchors_preset = 8
 anchor_left = 0.5
@@ -179,7 +179,7 @@ pivot_offset = Vector2(50, 50)
 theme_override_styles/panel = SubResource("StyleBoxTexture_g7n8k")
 metadata/_edit_use_anchors_ = true
 
-[node name="ProgressBar" type="ProgressBar" parent="VisualRoot/UI"]
+[node name="ProgressBar" type="ProgressBar" parent="VisualRoot/UI" unique_id=95565210]
 offset_left = -125.999985
 offset_top = -157.00002
 offset_right = 74.00003
@@ -192,7 +192,7 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_kcxyv")
 show_percentage = false
 metadata/_edit_use_anchors_ = true
 
-[node name="Timer" type="Label" parent="VisualRoot/UI/ProgressBar"]
+[node name="Timer" type="Label" parent="VisualRoot/UI/ProgressBar" unique_id=1792641228]
 layout_mode = 0
 offset_left = 81.60001
 offset_top = 0.79999995
@@ -205,7 +205,7 @@ theme_override_font_sizes/font_size = 24
 text = ".."
 metadata/_edit_use_anchors_ = true
 
-[node name="Hint" type="Label" parent="VisualRoot/UI"]
+[node name="Hint" type="Label" parent="VisualRoot/UI" unique_id=947294586]
 z_index = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -229,26 +229,22 @@ horizontal_alignment = 1
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint"]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint" unique_id=2070419485]
 root_node = NodePath("../..")
-libraries = {
-&"": SubResource("AnimationLibrary_8ne7f")
-}
-autoplay = "pop"
+libraries/ = SubResource("AnimationLibrary_8ne7f")
+autoplay = &"pop"
 
-[node name="Z" type="Sprite2D" parent="VisualRoot/UI/Hint"]
+[node name="Z" type="Sprite2D" parent="VisualRoot/UI/Hint" unique_id=1349611584]
 position = Vector2(145.9521, 32.66646)
 scale = Vector2(1.2722012, 1.2722012)
 texture = ExtResource("4_odlyo")
 vframes = 2
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Z"]
-libraries = {
-&"": SubResource("AnimationLibrary_5bvr3")
-}
-autoplay = "press"
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Z" unique_id=824765838]
+libraries/ = SubResource("AnimationLibrary_5bvr3")
+autoplay = &"press"
 
-[node name="Hint" type="Label" parent="VisualRoot/UI/Hint"]
+[node name="Hint" type="Label" parent="VisualRoot/UI/Hint" unique_id=1810264142]
 z_index = 1
 layout_mode = 1
 anchors_preset = -1
@@ -274,37 +270,35 @@ horizontal_alignment = 1
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
-[node name="Arrows" type="Sprite2D" parent="VisualRoot/UI/Hint"]
+[node name="Arrows" type="Sprite2D" parent="VisualRoot/UI/Hint" unique_id=392759205]
 position = Vector2(55.38893, 33.05557)
 scale = Vector2(1.3, 1.3)
 texture = ExtResource("5_odlyo")
 vframes = 2
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Arrows"]
-libraries = {
-&"": SubResource("AnimationLibrary_5bvr3")
-}
-autoplay = "press"
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Arrows" unique_id=976008136]
+libraries/ = SubResource("AnimationLibrary_5bvr3")
+autoplay = &"press"
 
-[node name="GuessUI" type="Node2D" parent="VisualRoot/UI"]
+[node name="GuessUI" type="Node2D" parent="VisualRoot/UI" unique_id=825073719]
 position = Vector2(0, 49)
 scale = Vector2(0.7, 0.7)
 
-[node name="RightArrow" type="Sprite2D" parent="VisualRoot/UI/GuessUI"]
+[node name="RightArrow" type="Sprite2D" parent="VisualRoot/UI/GuessUI" unique_id=1874613590]
 z_index = 1
 position = Vector2(34, 89)
 rotation = 1.5707964
 scale = Vector2(0.99906015, 0.99906015)
 texture = ExtResource("6_f7if6")
 
-[node name="LeftArrow" type="Sprite2D" parent="VisualRoot/UI/GuessUI"]
+[node name="LeftArrow" type="Sprite2D" parent="VisualRoot/UI/GuessUI" unique_id=200564973]
 z_index = 1
 position = Vector2(-32, 89)
 rotation = 4.712389
 scale = Vector2(0.99906015, 0.99906015)
 texture = ExtResource("6_f7if6")
 
-[node name="GuessLabel" type="Label" parent="VisualRoot/UI/GuessUI"]
+[node name="GuessLabel" type="Label" parent="VisualRoot/UI/GuessUI" unique_id=618764615]
 z_index = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -329,13 +323,11 @@ horizontal_alignment = 1
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/GuessUI/GuessLabel"]
-libraries = {
-&"": SubResource("AnimationLibrary_wxod1")
-}
-autoplay = "pop"
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/GuessUI/GuessLabel" unique_id=319505574]
+libraries/ = SubResource("AnimationLibrary_wxod1")
+autoplay = &"pop"
 
-[node name="PlayArea" type="Control" parent="VisualRoot"]
+[node name="PlayArea" type="Control" parent="VisualRoot" unique_id=1786556004]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -347,7 +339,7 @@ offset_bottom = 147.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="BackgroundRect" type="TextureRect" parent="VisualRoot/PlayArea"]
+[node name="BackgroundRect" type="TextureRect" parent="VisualRoot/PlayArea" unique_id=1565191312]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.5
@@ -362,5 +354,5 @@ scale = Vector2(0.19, 0.19)
 texture = ExtResource("7_kcxyv")
 metadata/_edit_use_anchors_ = true
 
-[node name="Entities" type="Node2D" parent="VisualRoot/PlayArea"]
+[node name="Entities" type="Node2D" parent="VisualRoot/PlayArea" unique_id=2036779301]
 position = Vector2(134, 120)

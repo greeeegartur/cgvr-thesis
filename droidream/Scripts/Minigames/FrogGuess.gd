@@ -25,7 +25,7 @@ const MIN_ENTITIES := 2
 const MAX_ENTITIES := 9
 const MIN_SCALE := 0.6
 const MAX_SCALE := 1.6
-const DAMAGE_PER_MISS := 0.2
+const DAMAGE_PER_MISS := 0.25
 const REVEAL_SCALE := 2.0
 const POSITION_ATTEMPTS := 16
 
@@ -44,7 +44,7 @@ func _ready():
 	
 	# FOR TESTING ONLY
 	# await get_tree().process_frame
-	play()
+	# play()
 
 func _process(delta):
 	super._process(delta)

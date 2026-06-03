@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="BoonData" load_steps=3 format=3 uid="uid://dc27635kky15e"]
+[gd_resource type="Resource" script_class="BoonData" format=3 uid="uid://dc27635kky15e"]
 
 [ext_resource type="Texture2D" uid="uid://8whci0nik5ex" path="res://Graphics/Placeholders/Boons/reflexive_sensors.png" id="1_co1um"]
 [ext_resource type="Script" uid="uid://yjimuc2myefo" path="res://Scripts/Data/BoonData.gd" id="1_kn88u"]
@@ -7,7 +7,7 @@
 script = ExtResource("1_kn88u")
 id = "reflexive_sensors"
 name = "Reflexive Sensors"
-description = "Have a 30% chance to block damage even more and a 7.5% chance to avoid damage entirely."
+description = "Have a 35% chance to block damage even more and a 10% chance to avoid damage entirely."
 type = "Passive"
 icon = ExtResource("1_co1um")
 metadata/_custom_type_script = "uid://yjimuc2myefo"

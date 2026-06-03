@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EnemyInfo" load_steps=9 format=3 uid="uid://3mpx7vrldw17"]
+[gd_resource type="Resource" script_class="EnemyInfo" format=3 uid="uid://3mpx7vrldw17"]
 
 [ext_resource type="Script" uid="uid://by18pvdsekurc" path="res://Scripts/Data/EnemyAttackPattern.gd" id="1_oxen2"]
 [ext_resource type="Resource" uid="uid://b7rrm4v2u510e" path="res://Scripts/Data/Attack_Patterns/duck_tackle.tres" id="2_kqrxu"]
@@ -6,7 +6,6 @@
 [ext_resource type="Resource" uid="uid://c8p01avw73x30" path="res://Scripts/Data/Attack_Patterns/duck_tackle_2.tres" id="3_5lmmp"]
 [ext_resource type="PackedScene" uid="uid://pskv7a421pqn" path="res://Scenes/Entities/Duck/Duck.tscn" id="3_m67jr"]
 [ext_resource type="Resource" uid="uid://bf15r6xf50b2e" path="res://Scripts/Data/Attack_Patterns/duck_tackle_3.tres" id="4_dbtrf"]
-[ext_resource type="Resource" uid="uid://cfm5acc4dh3d2" path="res://Scripts/Data/Attack_Patterns/duck_tackle_4.tres" id="5_l3ulx"]
 [ext_resource type="Resource" uid="uid://c25nurwfgmc2n" path="res://Scripts/Data/Attack_Patterns/duck_tackle_5.tres" id="6_i0arf"]
 
 [resource]
@@ -17,6 +16,6 @@ max_hp = 8.0
 attack = 2
 trust_max = 2
 minigame_id = "duck_flap"
-attack_patterns = Array[ExtResource("1_oxen2")]([ExtResource("2_kqrxu"), ExtResource("3_5lmmp"), ExtResource("4_dbtrf"), ExtResource("5_l3ulx"), ExtResource("6_i0arf")])
+attack_patterns = Array[ExtResource("1_oxen2")]([ExtResource("2_kqrxu"), ExtResource("3_5lmmp"), ExtResource("4_dbtrf"), ExtResource("6_i0arf")])
 visual_scene = ExtResource("3_m67jr")
 metadata/_custom_type_script = "uid://c8hmcdrkefq7i"

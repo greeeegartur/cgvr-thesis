@@ -46,13 +46,13 @@ func _score_to_multiplier(scores: Array[float]) -> float:
 	avg /= scores.size()
 	print(avg)
 	if avg >= 0.93:
-		return 1.75
+		return 1.85
 	elif avg >= 0.82:
-		return 1.5
+		return 1.6
 	elif avg >= 0.68:
-		return 1.25
+		return 1.35
 	elif avg >= 0.54:
-		return 1.0
+		return 1.1
 	elif avg >= 0.38:
-		return 0.5
+		return 0.6
 	return 0.25

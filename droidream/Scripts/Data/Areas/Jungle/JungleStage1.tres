@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="StageData" load_steps=2 format=3 uid="uid://bvr8svd5hedss"]
+[gd_resource type="Resource" script_class="StageData" format=3 uid="uid://bvr8svd5hedss"]
 
 [ext_resource type="Script" uid="uid://cq42yd5k6nmne" path="res://Scripts/Data/StageData.gd" id="1_ojq6v"]
 

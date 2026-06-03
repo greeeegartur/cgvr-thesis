@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://ci52l1d2k3d2u"]
+[gd_scene format=3 uid="uid://ci52l1d2k3d2u"]
 
 [ext_resource type="Script" uid="uid://27bcjfpq07as" path="res://Scripts/Minigames/DuckFlap.gd" id="1_2r27y"]
 [ext_resource type="Texture2D" uid="uid://dy7cbuqasjay0" path="res://Graphics/Placeholders/Minigames/Duck Flap/Panel.png" id="2_6jw1b"]
@@ -103,7 +103,7 @@ size = Vector2(48, 34)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_2r27y"]
 size = Vector2(266, 88)
 
-[node name="BaseMinigame" type="Control"]
+[node name="BaseMinigame" type="Control" unique_id=1563999328]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -123,12 +123,12 @@ fish_jump_duration_min = 1.1
 fish_jump_duration_max = 1.5
 max_duration = 8.5
 
-[node name="VisualRoot" type="Node2D" parent="."]
+[node name="VisualRoot" type="Node2D" parent="." unique_id=1595877277]
 position = Vector2(315, 185)
 
-[node name="UI" type="Node2D" parent="VisualRoot"]
+[node name="UI" type="Node2D" parent="VisualRoot" unique_id=765021372]
 
-[node name="Background" type="PanelContainer" parent="VisualRoot/UI"]
+[node name="Background" type="PanelContainer" parent="VisualRoot/UI" unique_id=1474362255]
 z_index = -1
 anchors_preset = 8
 anchor_left = 0.5
@@ -144,7 +144,7 @@ pivot_offset = Vector2(50, 50)
 theme_override_styles/panel = SubResource("StyleBoxTexture_2r27y")
 metadata/_edit_use_anchors_ = true
 
-[node name="ProgressBar" type="ProgressBar" parent="VisualRoot/UI"]
+[node name="ProgressBar" type="ProgressBar" parent="VisualRoot/UI" unique_id=2027507701]
 offset_left = -125.999985
 offset_top = -157.00002
 offset_right = 74.00003
@@ -157,7 +157,7 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_dx57b")
 show_percentage = false
 metadata/_edit_use_anchors_ = true
 
-[node name="Timer" type="Label" parent="VisualRoot/UI/ProgressBar"]
+[node name="Timer" type="Label" parent="VisualRoot/UI/ProgressBar" unique_id=105630961]
 layout_mode = 0
 offset_left = 81.60001
 offset_top = 0.79999995
@@ -170,7 +170,7 @@ theme_override_font_sizes/font_size = 24
 text = ".."
 metadata/_edit_use_anchors_ = true
 
-[node name="Hint" type="Label" parent="VisualRoot/UI"]
+[node name="Hint" type="Label" parent="VisualRoot/UI" unique_id=1575817889]
 z_index = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -194,26 +194,22 @@ horizontal_alignment = 1
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint"]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint" unique_id=958971714]
 root_node = NodePath("../..")
-libraries = {
-&"": SubResource("AnimationLibrary_8ne7f")
-}
-autoplay = "pop"
+libraries/ = SubResource("AnimationLibrary_8ne7f")
+autoplay = &"pop"
 
-[node name="Z" type="Sprite2D" parent="VisualRoot/UI/Hint"]
+[node name="Z" type="Sprite2D" parent="VisualRoot/UI/Hint" unique_id=1500298995]
 position = Vector2(194.95209, 12.666458)
 scale = Vector2(1.8, 1.8)
 texture = ExtResource("4_1necn")
 vframes = 2
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Z"]
-libraries = {
-&"": SubResource("AnimationLibrary_5bvr3")
-}
-autoplay = "press"
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Z" unique_id=1045115303]
+libraries/ = SubResource("AnimationLibrary_5bvr3")
+autoplay = &"press"
 
-[node name="HealthContainer" type="HBoxContainer" parent="VisualRoot/UI"]
+[node name="HealthContainer" type="HBoxContainer" parent="VisualRoot/UI" unique_id=1696293165]
 z_index = 1
 offset_left = -33.0
 offset_top = 141.0
@@ -221,22 +217,22 @@ offset_right = 2.0
 offset_bottom = 150.0
 scale = Vector2(2, 2)
 
-[node name="1" type="TextureRect" parent="VisualRoot/UI/HealthContainer"]
+[node name="1" type="TextureRect" parent="VisualRoot/UI/HealthContainer" unique_id=1079515659]
 layout_mode = 2
 texture = ExtResource("5_1necn")
 expand_mode = 3
 
-[node name="2" type="TextureRect" parent="VisualRoot/UI/HealthContainer"]
+[node name="2" type="TextureRect" parent="VisualRoot/UI/HealthContainer" unique_id=699280852]
 layout_mode = 2
 texture = ExtResource("5_1necn")
 expand_mode = 3
 
-[node name="3" type="TextureRect" parent="VisualRoot/UI/HealthContainer"]
+[node name="3" type="TextureRect" parent="VisualRoot/UI/HealthContainer" unique_id=1537406784]
 layout_mode = 2
 texture = ExtResource("5_1necn")
 expand_mode = 3
 
-[node name="FishLabel" type="Label" parent="VisualRoot/UI"]
+[node name="FishLabel" type="Label" parent="VisualRoot/UI" unique_id=907532709]
 z_index = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -260,13 +256,13 @@ text = "0/5"
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
-[node name="Sprite2D" type="Sprite2D" parent="VisualRoot/UI/FishLabel"]
+[node name="Sprite2D" type="Sprite2D" parent="VisualRoot/UI/FishLabel" unique_id=1516388325]
 position = Vector2(51.636368, 16.863663)
 scale = Vector2(1.9289786, 1.9289786)
 texture = ExtResource("8_6dwnd")
 vframes = 2
 
-[node name="PlayArea" type="Control" parent="VisualRoot"]
+[node name="PlayArea" type="Control" parent="VisualRoot" unique_id=569458516]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -278,7 +274,7 @@ offset_bottom = 147.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="SkyBG" type="TextureRect" parent="VisualRoot/PlayArea"]
+[node name="SkyBG" type="TextureRect" parent="VisualRoot/PlayArea" unique_id=1178900200]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.5
@@ -293,33 +289,33 @@ scale = Vector2(0.19, 0.19)
 texture = ExtResource("5_ikf3d")
 metadata/_edit_use_anchors_ = true
 
-[node name="FishLayer" type="Node2D" parent="VisualRoot/PlayArea"]
+[node name="FishLayer" type="Node2D" parent="VisualRoot/PlayArea" unique_id=834411347]
 
-[node name="Player" type="Area2D" parent="VisualRoot/PlayArea"]
+[node name="Player" type="Area2D" parent="VisualRoot/PlayArea" unique_id=1521578322]
 position = Vector2(60, 87)
 
-[node name="Sprite2D" type="Sprite2D" parent="VisualRoot/PlayArea/Player"]
+[node name="Sprite2D" type="Sprite2D" parent="VisualRoot/PlayArea/Player" unique_id=203419740]
 scale = Vector2(1.5, 1.5)
 texture = ExtResource("8_53t1g")
 vframes = 2
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="VisualRoot/PlayArea/Player"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="VisualRoot/PlayArea/Player" unique_id=199522358]
 position = Vector2(-1, -5)
 shape = SubResource("RectangleShape2D_dx57b")
 
-[node name="WaterHitbox" type="Area2D" parent="VisualRoot/PlayArea"]
+[node name="WaterHitbox" type="Area2D" parent="VisualRoot/PlayArea" unique_id=2131670306]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="VisualRoot/PlayArea/WaterHitbox"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="VisualRoot/PlayArea/WaterHitbox" unique_id=1187123416]
 position = Vector2(133, 222)
 shape = SubResource("RectangleShape2D_2r27y")
 
-[node name="SeaClip" type="Control" parent="VisualRoot/PlayArea"]
+[node name="SeaClip" type="Control" parent="VisualRoot/PlayArea" unique_id=893677857]
 clip_contents = true
 anchors_preset = 0
 offset_right = 266.0
 offset_bottom = 266.0
 
-[node name="SeaA" type="TextureRect" parent="VisualRoot/PlayArea/SeaClip"]
+[node name="SeaA" type="TextureRect" parent="VisualRoot/PlayArea/SeaClip" unique_id=1675957911]
 texture_repeat = 3
 layout_mode = 0
 offset_right = 1400.0
@@ -327,7 +323,7 @@ offset_bottom = 1400.0
 scale = Vector2(0.19, 0.19)
 texture = ExtResource("7_2r27y")
 
-[node name="SeaB" type="TextureRect" parent="VisualRoot/PlayArea/SeaClip"]
+[node name="SeaB" type="TextureRect" parent="VisualRoot/PlayArea/SeaClip" unique_id=71698109]
 texture_repeat = 3
 layout_mode = 0
 offset_right = 1400.0

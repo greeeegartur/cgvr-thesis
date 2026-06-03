@@ -32,7 +32,7 @@ var base_light_radius := 0.25
 var bats_remaining := 0
 var timer_active := true
 
-const DAMAGE := 0.5
+const DAMAGE := 0.25
 
 func _ready():
 	# Setup with bat spawning
@@ -50,7 +50,7 @@ func _ready():
 
 	# Starting minigame – FOR TESTING INSIDE SCENE, DO NOT TURN ON FOR COMBATMANAGER
 	await get_tree().process_frame
-	#play()
+	# play()
 
 func _process(delta):
 	super._process(delta) # For elapsing variable and minigame end condition

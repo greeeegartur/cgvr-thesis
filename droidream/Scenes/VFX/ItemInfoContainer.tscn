@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://dpky3xhxxkv0a"]
+[gd_scene format=3 uid="uid://dpky3xhxxkv0a"]
 
 [ext_resource type="Script" uid="uid://0dtmke8e0w88" path="res://Scripts/Misc/ItemInfoContainer.gd" id="1_d01pd"]
 [ext_resource type="Texture2D" uid="uid://cr24wv5nqj3rx" path="res://Graphics/Placeholders/Combat/listInfoContainer.png" id="1_v7j3g"]
@@ -7,15 +7,14 @@
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_m2cl7"]
 texture = ExtResource("1_v7j3g")
 
-[node name="ItemInfoContainer" type="Panel"]
+[node name="ItemInfoContainer" type="Panel" unique_id=1761603919]
 self_modulate = Color(0.35817945, 0.8334315, 0.92583656, 1)
 offset_right = 119.05882
 offset_bottom = 88.0
-scale = Vector2(0.6, 0.6)
 theme_override_styles/panel = SubResource("StyleBoxTexture_m2cl7")
 script = ExtResource("1_d01pd")
 
-[node name="Description" type="RichTextLabel" parent="."]
+[node name="Description" type="RichTextLabel" parent="." unique_id=958118368]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.23500001

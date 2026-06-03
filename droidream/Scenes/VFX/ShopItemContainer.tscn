@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://bsrbbjhdvlwcr"]
+[gd_scene format=3 uid="uid://bsrbbjhdvlwcr"]
 
 [ext_resource type="Texture2D" uid="uid://dyfrj4h0ptkn5" path="res://Graphics/Placeholders/Combat/shopContainer.png" id="1_1ws2h"]
 [ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="2_1ws2h"]
@@ -8,14 +8,15 @@
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_vg8xk"]
 texture = ExtResource("1_1ws2h")
 
-[node name="ShopItemContainer" type="Panel"]
+[node name="ShopItemContainer" type="Panel" unique_id=2108855406]
 self_modulate = Color(0.63521314, 0.9938325, 0.99999994, 1)
 offset_right = 124.70589
 offset_bottom = 80.0
+pivot_offset = Vector2(62.35, 40)
 theme_override_styles/panel = SubResource("StyleBoxTexture_vg8xk")
 script = ExtResource("2_vg8xk")
 
-[node name="Name" type="RichTextLabel" parent="."]
+[node name="Name" type="RichTextLabel" parent="." unique_id=1290808629]
 layout_mode = 0
 offset_left = 16.599998
 offset_top = 17.600002
@@ -27,8 +28,9 @@ theme_override_fonts/normal_font = ExtResource("2_1ws2h")
 theme_override_font_sizes/normal_font_size = 10
 bbcode_enabled = true
 text = "Name"
+fit_content = true
 
-[node name="Description" type="RichTextLabel" parent="."]
+[node name="Description" type="RichTextLabel" parent="." unique_id=125374762]
 custom_minimum_size = Vector2(0, 45.4)
 layout_mode = 1
 anchors_preset = -1
@@ -36,26 +38,25 @@ anchor_left = 0.037
 anchor_top = 0.027
 anchor_right = 0.95400006
 anchor_bottom = 0.37300003
-offset_left = -0.014118671
+offset_left = 1.9858813
 offset_top = 26.440002
-offset_right = 0.030578613
-offset_bottom = 44.159996
+offset_right = 5.0305786
+offset_bottom = 47.159996
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 1
+theme_override_constants/outline_size = 2
 theme_override_fonts/normal_font = ExtResource("2_1ws2h")
-theme_override_font_sizes/normal_font_size = 7
+theme_override_font_sizes/normal_font_size = 8
 bbcode_enabled = true
 text = "UGASIHGSAHGIUASHGIUASHGIUASHGIUASHGIUASGHIAUSHGAIUSHGIUASHGIAUSHGIUASHGIUASHGIUAHSGIUASHGIUASHGIUASHGIUASHGIUAHSGIUAH"
 fit_content = true
 scroll_active = false
-justification_flags = 131
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1416383692]
 position = Vector2(9.6, 22.6)
 scale = Vector2(0.7, 0.7)
 texture = ExtResource("3_vg8xk")
 
-[node name="Cost" type="Label" parent="Sprite2D"]
+[node name="Cost" type="Label" parent="Sprite2D" unique_id=1701471013]
 offset_left = -4.285716
 offset_top = 1.4285774
 offset_right = 4.2857113

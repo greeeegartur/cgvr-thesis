@@ -1,4 +1,4 @@
-[gd_scene load_steps=43 format=3 uid="uid://wgkbwlbxucav"]
+[gd_scene format=3 uid="uid://wgkbwlbxucav"]
 
 [ext_resource type="Texture2D" uid="uid://kc6gbkrwm471" path="res://Graphics/Placeholders/Combat/player_idle.png" id="1_ofpci"]
 [ext_resource type="Script" uid="uid://dfpecfsx8ofrf" path="res://Scripts/Combat/PlayerVisual.gd" id="1_sbipa"]
@@ -915,14 +915,14 @@ _data = {
 &"idle": SubResource("Animation_m0kqe")
 }
 
-[node name="PlayerVisual" type="Node2D"]
+[node name="PlayerVisual" type="Node2D" unique_id=474045390]
 script = ExtResource("1_sbipa")
 worry_emote = ExtResource("2_k74ei")
 exclamation_emote = ExtResource("3_f4nlf")
 question_emote = ExtResource("20_wv7sg")
 move_speed = 250.0
 
-[node name="PlayerHUD" type="Control" parent="."]
+[node name="PlayerHUD" type="Control" parent="." unique_id=919468022]
 z_index = 1
 layout_mode = 3
 anchors_preset = 0
@@ -931,10 +931,10 @@ offset_top = -67.0
 offset_right = -8.0
 offset_bottom = -37.275
 
-[node name="HPIcon" type="Node2D" parent="PlayerHUD"]
+[node name="HPIcon" type="Node2D" parent="PlayerHUD" unique_id=1158120154]
 position = Vector2(-2, 6)
 
-[node name="HeartProgress" type="TextureProgressBar" parent="PlayerHUD/HPIcon"]
+[node name="HeartProgress" type="TextureProgressBar" parent="PlayerHUD/HPIcon" unique_id=1338271580]
 offset_left = -11.00001
 offset_top = 1.9999924
 offset_right = 5.2162094
@@ -947,7 +947,7 @@ fill_mode = 3
 texture_under = ExtResource("2_1q2bo")
 texture_progress = ExtResource("3_ilwea")
 
-[node name="Label" type="Label" parent="PlayerHUD/HPIcon"]
+[node name="Label" type="Label" parent="PlayerHUD/HPIcon" unique_id=35333983]
 offset_left = -7.0
 offset_top = 8.0
 offset_right = 15.0
@@ -960,27 +960,25 @@ text = "10"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="Visual" type="Node2D" parent="."]
+[node name="Visual" type="Node2D" parent="." unique_id=1582545363]
 
-[node name="Sprite2D" type="Sprite2D" parent="Visual"]
+[node name="Sprite2D" type="Sprite2D" parent="Visual" unique_id=1648469605]
 scale = Vector2(1.6, 1.6)
 texture = ExtResource("1_ofpci")
 vframes = 5
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="Visual/Sprite2D"]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Visual/Sprite2D" unique_id=294168841]
 root_node = NodePath("../../..")
-libraries = {
-&"": SubResource("AnimationLibrary_ilwea")
-}
-autoplay = "player_walk"
+libraries/ = SubResource("AnimationLibrary_ilwea")
+autoplay = &"player_walk"
 
-[node name="VFX" type="Sprite2D" parent="Visual"]
+[node name="VFX" type="Sprite2D" parent="Visual" unique_id=421929633]
 modulate = Color(1, 1, 1, 0)
 position = Vector2(-32, 4)
 scale = Vector2(0.15, 0.15)
 texture = ExtResource("3_i8n88")
 
-[node name="RichTextLabel" type="RichTextLabel" parent="Visual"]
+[node name="RichTextLabel" type="RichTextLabel" parent="Visual" unique_id=1965144352]
 visible = false
 z_index = 2
 offset_left = -86.0
@@ -1001,30 +999,26 @@ scroll_active = false
 autowrap_mode = 0
 horizontal_alignment = 1
 
-[node name="TextAnimationPlayer" type="AnimationPlayer" parent="Visual/RichTextLabel"]
+[node name="TextAnimationPlayer" type="AnimationPlayer" parent="Visual/RichTextLabel" unique_id=813322034]
 root_node = NodePath("../../..")
-libraries = {
-&"": SubResource("AnimationLibrary_wv7sg")
-}
+libraries/ = SubResource("AnimationLibrary_wv7sg")
 
-[node name="PlayerBlockVisual" parent="." instance=ExtResource("8_fttp1")]
+[node name="PlayerBlockVisual" parent="." unique_id=983571387 instance=ExtResource("8_fttp1")]
 
-[node name="TargetArrow" type="Node2D" parent="."]
+[node name="TargetArrow" type="Node2D" parent="." unique_id=1632995889]
 visible = false
 
-[node name="Sprite2D" type="Sprite2D" parent="TargetArrow"]
+[node name="Sprite2D" type="Sprite2D" parent="TargetArrow" unique_id=798185150]
 position = Vector2(2, -80)
 texture = ExtResource("13_ksby0")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="TargetArrow"]
-libraries = {
-&"": SubResource("AnimationLibrary_hei77")
-}
+[node name="AnimationPlayer" type="AnimationPlayer" parent="TargetArrow" unique_id=526083405]
+libraries/ = SubResource("AnimationLibrary_hei77")
 
-[node name="EmotionBubble" type="Node2D" parent="."]
+[node name="EmotionBubble" type="Node2D" parent="." unique_id=1963214672]
 visible = false
 
-[node name="Bubble" type="Sprite2D" parent="EmotionBubble"]
+[node name="Bubble" type="Sprite2D" parent="EmotionBubble" unique_id=1025845511]
 position = Vector2(-31, -57)
 scale = Vector2(1.125, 1.125)
 texture = ExtResource("20_wv7sg")

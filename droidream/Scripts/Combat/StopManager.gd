@@ -38,7 +38,7 @@ const UFO_STOP_POS := Vector2(390, 210)
 const UFO_ENDING_POS := Vector2(170, 210)
 
 func _ready():
-	var base_y = popup.position.y + 5
+	var base_y = popup.position.y - 10.0
 	var t = create_tween()
 	t.set_loops()
 	t.tween_property(popup, "position:y", base_y + 3, 1.2)
@@ -82,7 +82,7 @@ func _update_selection_visuals():
 func _move_popup_to(item: ShopItem):
 	popup.visible = true
 	popup.setup(item.item_data, item.quantity, _get_modified_price(item.item_data.cost))
-	var target_x = item.global_position.x -55
+	var target_x = item.global_position.x - 72
 	
 	if popup_tween:
 		popup_tween.kill()
@@ -92,7 +92,7 @@ func _move_popup_to(item: ShopItem):
 	popup_tween.tween_property(
 		popup,
 		"global_position:x",
-		target_x + 5,
+		target_x + 4,
 		0.18
 	)
 	popup_tween.tween_property(popup, "global_position:x", target_x, 0.08)
@@ -271,7 +271,7 @@ func _play_purchase_feedback(shop_item: ShopItem):
 	tween.tween_property(
 		popup,
 		"scale",
-		Vector2.ONE * 1.2,
+		Vector2.ONE * 1.6,
 		0.18
 	).set_trans(Tween.TRANS_BACK)
 
@@ -279,7 +279,7 @@ func _play_purchase_feedback(shop_item: ShopItem):
 	tween.parallel().tween_property(
 		shop_item,
 		"scale",
-		Vector2(1.55,1.55),
+		Vector2(1.45, 1.45),
 		0.12
 	)
 	tween.tween_property(
@@ -298,7 +298,7 @@ func _spawn_items():
 	
 	for i in rolled_items.size():
 		var item_instance = item_scene.instantiate()
-		item_instance.position = Vector2(410 + (i * 53), 283)
+		item_instance.position = Vector2(410 + (i * 53), 250)
 		items_container.add_child(item_instance)
 		
 		var data = rolled_items[i]
@@ -426,7 +426,7 @@ func _show_popup():
 	popup_scale_tween.tween_property(
 		popup,
 		"scale",
-		Vector2.ONE * 1.2,
+		Vector2.ONE * 1.6,
 		0.15
 	)
 

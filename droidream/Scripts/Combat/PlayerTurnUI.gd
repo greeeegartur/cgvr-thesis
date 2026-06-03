@@ -594,7 +594,7 @@ func _update_item_info_popup():
 	var selected_item = items[selected_index]
 	var row = items_list.get_child(selected_index)
 	item_popup.setup_from_inventory_item(selected_item)
-	item_popup.move_to_row(row, Vector2(0, 134))
+	item_popup.move_to_row(row, Vector2(0, 115))
 
 func _update_ability_info_popup():
 	var abilities = PlayerData.get_active_abilities()
@@ -614,7 +614,7 @@ func _update_ability_info_popup():
 	var selected_ability = abilities[selected_index]
 	var row = abilities_list.get_child(selected_index)
 	ability_popup.setup_from_inventory_ability(selected_ability)
-	ability_popup.move_to_row(row, Vector2(0, 128))
+	ability_popup.move_to_row(row, Vector2(0, 110))
 
 func update_guess_display():
 	var g = PlayerData.guesses

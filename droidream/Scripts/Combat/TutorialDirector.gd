@@ -26,17 +26,17 @@ var hint_delay := 6.0
 var ufo_idle_tween : Tween
 
 const TUTORIAL_COLORS := {
-	"creatures": "#8df59a",        # light green
-	"taming": "#ffb347",           # light orange
-	"abilities": "#b388ff",        # purple
-	"items": "#7ec8ff",            # light blue
-	"type": "#5cff7a",             # green
-	"trust": "#ff9de2",            # dreamish pink
+	"creatures": "#33a642",        # light green
+	"taming": "#cc8623",           # light orange
+	"abilities": "#6e47b3",        # purple
+	"items": "#397fb3",            # light blue
+	"type": "#1dad38",             # green
+	"trust": "#c87dd4",            # dreamish pink
 	"hurt": "#ff4d4d",             # red
-	"sky": "#f7ff3c",              # neon yellow
+	"sky": "#e8d04d",              # neon yellow
 	"water": "#4da6ff",            # blue
-	"earth": "#8b5a2b",            # brown
-	"droid": "#bfbfbf",            # gray
+	"earth": "#664220",            # brown
+	"droid": "#636363",            # gray
 	"bolts": "#ffd700"             # golden
 }
 
@@ -605,7 +605,7 @@ func enemy_visual_for_dummy() -> Node2D:
 
 func get_month_day_string() -> String:
 	var date := Time.get_datetime_dict_from_system()
-	return "%02d/%02d" % [date["month"], date["day"]]
+	return "%02d/%02d" % [date["day"], date["month"]]
 
 func player_nod():
 	# Replace with an actual nod animation later if you make one.

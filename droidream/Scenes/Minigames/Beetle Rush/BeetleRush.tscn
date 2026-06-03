@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3 uid="uid://becs0nn0eomo7"]
+[gd_scene format=3 uid="uid://becs0nn0eomo7"]
 
 [ext_resource type="Script" uid="uid://d1175ka40exha" path="res://Scripts/Minigames/BeetleRush.gd" id="1_4y3s6"]
 [ext_resource type="PackedScene" uid="uid://dtr6w15nmc20o" path="res://Scenes/Minigames/Beetle Rush/BeetleEntity.tscn" id="2_be64l"]
@@ -289,7 +289,7 @@ _data = {
 &"press": SubResource("Animation_0s31j")
 }
 
-[node name="BeetleRush" type="Control"]
+[node name="BeetleRush" type="Control" unique_id=1672250016]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -300,56 +300,54 @@ script = ExtResource("1_4y3s6")
 beetle_entity = ExtResource("2_be64l")
 DamageNumberScene = ExtResource("3_dp0jl")
 
-[node name="VisualRoot" type="Node2D" parent="."]
+[node name="VisualRoot" type="Node2D" parent="." unique_id=2141326616]
 position = Vector2(315, 193)
 
-[node name="Lanes" type="Node2D" parent="VisualRoot"]
+[node name="Lanes" type="Node2D" parent="VisualRoot" unique_id=1877553093]
 position = Vector2(0, -1.5258789e-05)
 scale = Vector2(0.99999994, 0.99999994)
 
-[node name="LeftLane" type="Node2D" parent="VisualRoot/Lanes"]
+[node name="LeftLane" type="Node2D" parent="VisualRoot/Lanes" unique_id=1018064765]
 position = Vector2(-45, 109)
 rotation = -0.23561946
 
-[node name="Spawn" type="Marker2D" parent="VisualRoot/Lanes/LeftLane"]
+[node name="Spawn" type="Marker2D" parent="VisualRoot/Lanes/LeftLane" unique_id=1254386157]
 position = Vector2(-7, -162)
 
-[node name="Control" type="Marker2D" parent="VisualRoot/Lanes/LeftLane"]
+[node name="Control" type="Marker2D" parent="VisualRoot/Lanes/LeftLane" unique_id=893183986]
 
-[node name="MiddleLane" type="Node2D" parent="VisualRoot/Lanes"]
+[node name="MiddleLane" type="Node2D" parent="VisualRoot/Lanes" unique_id=1301164456]
 position = Vector2(0, 111)
 
-[node name="RightLane" type="Node2D" parent="VisualRoot/Lanes"]
+[node name="RightLane" type="Node2D" parent="VisualRoot/Lanes" unique_id=1846632595]
 position = Vector2(50, 109)
 rotation = 0.2443461
 
-[node name="Spawn" type="Marker2D" parent="VisualRoot/Lanes/RightLane"]
+[node name="Spawn" type="Marker2D" parent="VisualRoot/Lanes/RightLane" unique_id=621844263]
 position = Vector2(3, -162)
 
-[node name="Control" type="Marker2D" parent="VisualRoot/Lanes/RightLane"]
+[node name="Control" type="Marker2D" parent="VisualRoot/Lanes/RightLane" unique_id=1135238741]
 
-[node name="Beetles" type="Node2D" parent="VisualRoot"]
+[node name="Beetles" type="Node2D" parent="VisualRoot" unique_id=1980478671]
 z_index = 4
 position = Vector2(0, -50)
 scale = Vector2(2.75, 2.75)
 
-[node name="PlayerHand" type="Node2D" parent="VisualRoot"]
+[node name="PlayerHand" type="Node2D" parent="VisualRoot" unique_id=19686622]
 z_index = 4
 position = Vector2(0, 111)
 scale = Vector2(2.7499998, 2.7499998)
 
-[node name="Sprite2D" type="Sprite2D" parent="VisualRoot/PlayerHand"]
+[node name="Sprite2D" type="Sprite2D" parent="VisualRoot/PlayerHand" unique_id=584471101]
 z_index = 1
 position = Vector2(1.091, -8)
 scale = Vector2(0.6, 0.6)
 texture = ExtResource("3_rc4ds")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/PlayerHand"]
-libraries = {
-&"": SubResource("AnimationLibrary_dp0jl")
-}
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/PlayerHand" unique_id=596860532]
+libraries/ = SubResource("AnimationLibrary_dp0jl")
 
-[node name="BG" type="TextureRect" parent="VisualRoot"]
+[node name="BG" type="TextureRect" parent="VisualRoot" unique_id=1105084277]
 offset_left = -132.0
 offset_top = -132.0
 offset_right = 1267.9999
@@ -358,20 +356,20 @@ scale = Vector2(0.19, 0.19)
 texture = ExtResource("3_wmxbk")
 metadata/_edit_use_anchors_ = true
 
-[node name="LeftLane" type="Sprite2D" parent="VisualRoot/BG"]
+[node name="LeftLane" type="Sprite2D" parent="VisualRoot/BG" unique_id=675025016]
 position = Vector2(367.78516, 931.579)
 scale = Vector2(1.0304438, 1.82977)
 texture = ExtResource("4_rc4ds")
 flip_h = true
 
-[node name="RightLane" type="Sprite2D" parent="VisualRoot/BG"]
+[node name="RightLane" type="Sprite2D" parent="VisualRoot/BG" unique_id=1806479745]
 position = Vector2(1021.0527, 928.9473)
 scale = Vector2(1.0304438, 1.8400497)
 texture = ExtResource("4_rc4ds")
 
-[node name="UI" type="Node2D" parent="VisualRoot"]
+[node name="UI" type="Node2D" parent="VisualRoot" unique_id=397886477]
 
-[node name="Background" type="PanelContainer" parent="VisualRoot/UI"]
+[node name="Background" type="PanelContainer" parent="VisualRoot/UI" unique_id=860425335]
 z_index = -1
 anchors_preset = 8
 anchor_left = 0.5
@@ -389,7 +387,7 @@ pivot_offset = Vector2(50, 50)
 theme_override_styles/panel = SubResource("StyleBoxTexture_7dn3n")
 metadata/_edit_use_anchors_ = true
 
-[node name="ProgressBar" type="ProgressBar" parent="VisualRoot/UI"]
+[node name="ProgressBar" type="ProgressBar" parent="VisualRoot/UI" unique_id=499808999]
 offset_left = -124.000015
 offset_top = -166.0
 offset_right = 75.999985
@@ -402,7 +400,7 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_bpygb")
 show_percentage = false
 metadata/_edit_use_anchors_ = true
 
-[node name="Timer" type="Label" parent="VisualRoot/UI/ProgressBar"]
+[node name="Timer" type="Label" parent="VisualRoot/UI/ProgressBar" unique_id=1419362998]
 layout_mode = 0
 offset_left = 81.60001
 offset_top = 0.79999995
@@ -415,7 +413,7 @@ theme_override_font_sizes/font_size = 24
 text = ".."
 metadata/_edit_use_anchors_ = true
 
-[node name="Hint" type="Label" parent="VisualRoot/UI"]
+[node name="Hint" type="Label" parent="VisualRoot/UI" unique_id=1390317602]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -438,55 +436,49 @@ horizontal_alignment = 1
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint"]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint" unique_id=230385762]
 root_node = NodePath("../..")
-libraries = {
-&"": SubResource("AnimationLibrary_8ne7f")
-}
-autoplay = "pop"
+libraries/ = SubResource("AnimationLibrary_8ne7f")
+autoplay = &"pop"
 
-[node name="Left" type="Sprite2D" parent="VisualRoot/UI/Hint"]
+[node name="Left" type="Sprite2D" parent="VisualRoot/UI/Hint" unique_id=879372450]
 position = Vector2(171.5, 12)
 scale = Vector2(1.8, 1.8)
 texture = ExtResource("10_7dn3n")
 vframes = 2
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Left"]
-libraries = {
-&"": SubResource("AnimationLibrary_pcn5q")
-}
-autoplay = "press"
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Left" unique_id=1846739051]
+libraries/ = SubResource("AnimationLibrary_pcn5q")
+autoplay = &"press"
 
-[node name="Right" type="Sprite2D" parent="VisualRoot/UI/Hint"]
+[node name="Right" type="Sprite2D" parent="VisualRoot/UI/Hint" unique_id=1374900087]
 position = Vector2(228.5, 12)
 scale = Vector2(1.8, 1.8)
 texture = ExtResource("11_w632w")
 vframes = 2
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Right"]
-libraries = {
-&"": SubResource("AnimationLibrary_5bvr3")
-}
-autoplay = "press"
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Right" unique_id=643349605]
+libraries/ = SubResource("AnimationLibrary_5bvr3")
+autoplay = &"press"
 
-[node name="HealthContainer" type="HBoxContainer" parent="VisualRoot/UI"]
+[node name="HealthContainer" type="HBoxContainer" parent="VisualRoot/UI" unique_id=766268059]
 offset_left = -33.0
 offset_top = 130.0
 offset_right = 2.0
 offset_bottom = 139.0
 scale = Vector2(2, 2)
 
-[node name="1" type="TextureRect" parent="VisualRoot/UI/HealthContainer"]
+[node name="1" type="TextureRect" parent="VisualRoot/UI/HealthContainer" unique_id=1172058116]
 layout_mode = 2
 texture = ExtResource("12_lm3u6")
 expand_mode = 3
 
-[node name="2" type="TextureRect" parent="VisualRoot/UI/HealthContainer"]
+[node name="2" type="TextureRect" parent="VisualRoot/UI/HealthContainer" unique_id=327503839]
 layout_mode = 2
 texture = ExtResource("12_lm3u6")
 expand_mode = 3
 
-[node name="3" type="TextureRect" parent="VisualRoot/UI/HealthContainer"]
+[node name="3" type="TextureRect" parent="VisualRoot/UI/HealthContainer" unique_id=581039508]
 layout_mode = 2
 texture = ExtResource("12_lm3u6")
 expand_mode = 3

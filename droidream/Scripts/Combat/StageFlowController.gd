@@ -35,7 +35,7 @@ func _ready():
 	# Starts the current stage from AreaManager
 	start_stage()
 
-func start_stage():
+func start_stage(reset := false):
 	combat_manager._resume_combat()
 	
 	var stage = area_manager.get_current_stage()
@@ -45,7 +45,7 @@ func start_stage():
 	print(enemies)
 	
 	if _should_play_area_intro():
-		await _start_stage_with_intro(enemies)
+		await _start_stage_with_intro(enemies, reset)
 	else:
 		combat_manager._start_combat(enemies)
 
@@ -53,13 +53,16 @@ func start_stage():
 func _should_play_area_intro() -> bool:
 	return area_manager.stage_index == 0
 
-func _start_stage_with_intro(enemies: Array):
+func _start_stage_with_intro(enemies: Array, reset := false):
 	combat_manager._pause_combat()
 	combat_ui.hide_player_stats_hud()
 	player_visual.hide_hp()
 	
 	black.visible = true
 	black.modulate.a = 1.0
+	if reset:
+		camera.reset_camera()
+		await get_tree().create_timer(0.3).timeout
 	
 	await combat_manager.prepare_combat_for_intro(enemies)
 	
@@ -127,7 +130,7 @@ func _on_retry():
 	combat_ui.refresh_player_hud()
 	
 	# Combat reset
-	start_stage()
+	start_stage(true)
 
 # TO-DO
 func _on_back_to_title():

@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3 uid="uid://cadom7tm2bqpu"]
+[gd_scene format=3 uid="uid://cadom7tm2bqpu"]
 
 [ext_resource type="Script" uid="uid://b43ko7pwkabm2" path="res://Scripts/Minigames/BatFlash.gd" id="1_8pk08"]
 [ext_resource type="PackedScene" uid="uid://joxdoxep5l61" path="res://Scenes/Minigames/Bat Flash/BatEntity.tscn" id="2_4vwvk"]
@@ -145,7 +145,7 @@ shader_parameter/radius = 0.25
 shader_parameter/softness = 0.2
 shader_parameter/darkness = 0.94
 
-[node name="BatFlash" type="Control"]
+[node name="BatFlash" type="Control" unique_id=616428273]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -159,12 +159,12 @@ background_textures = Array[Texture2D]([ExtResource("3_qksyg"), ExtResource("3_b
 bat_variants = Array[Texture2D]([ExtResource("4_na8lq"), ExtResource("5_4vwvk")])
 max_duration = 8.5
 
-[node name="VisualRoot" type="Node2D" parent="."]
+[node name="VisualRoot" type="Node2D" parent="." unique_id=217779053]
 position = Vector2(315, 185)
 
-[node name="UI" type="Node2D" parent="VisualRoot"]
+[node name="UI" type="Node2D" parent="VisualRoot" unique_id=1881934726]
 
-[node name="Background" type="PanelContainer" parent="VisualRoot/UI"]
+[node name="Background" type="PanelContainer" parent="VisualRoot/UI" unique_id=1121871497]
 z_index = -1
 anchors_preset = 8
 anchor_left = 0.5
@@ -182,7 +182,7 @@ pivot_offset = Vector2(50, 50)
 theme_override_styles/panel = SubResource("StyleBoxTexture_0uxlo")
 metadata/_edit_use_anchors_ = true
 
-[node name="ProgressBar" type="ProgressBar" parent="VisualRoot/UI"]
+[node name="ProgressBar" type="ProgressBar" parent="VisualRoot/UI" unique_id=1730920922]
 offset_left = -125.999985
 offset_top = -157.00002
 offset_right = 74.00003
@@ -195,7 +195,7 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_448i1")
 show_percentage = false
 metadata/_edit_use_anchors_ = true
 
-[node name="Timer" type="Label" parent="VisualRoot/UI/ProgressBar"]
+[node name="Timer" type="Label" parent="VisualRoot/UI/ProgressBar" unique_id=538030335]
 layout_mode = 0
 offset_left = 81.60001
 offset_top = 0.79999995
@@ -208,7 +208,7 @@ theme_override_font_sizes/font_size = 24
 text = ".."
 metadata/_edit_use_anchors_ = true
 
-[node name="Hint" type="Label" parent="VisualRoot/UI"]
+[node name="Hint" type="Label" parent="VisualRoot/UI" unique_id=686085343]
 z_index = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -232,38 +232,32 @@ horizontal_alignment = 1
 vertical_alignment = 1
 metadata/_edit_use_anchors_ = true
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint"]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint" unique_id=1740266450]
 root_node = NodePath("../..")
-libraries = {
-&"": SubResource("AnimationLibrary_8ne7f")
-}
-autoplay = "pop"
+libraries/ = SubResource("AnimationLibrary_8ne7f")
+autoplay = &"pop"
 
-[node name="Arrows" type="Sprite2D" parent="VisualRoot/UI/Hint"]
+[node name="Arrows" type="Sprite2D" parent="VisualRoot/UI/Hint" unique_id=306132250]
 position = Vector2(159.50002, 8)
 scale = Vector2(1.3, 1.3)
 texture = ExtResource("9_wng6b")
 vframes = 2
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Arrows"]
-libraries = {
-&"": SubResource("AnimationLibrary_pcn5q")
-}
-autoplay = "press"
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Arrows" unique_id=1652370912]
+libraries/ = SubResource("AnimationLibrary_pcn5q")
+autoplay = &"press"
 
-[node name="Z" type="Sprite2D" parent="VisualRoot/UI/Hint"]
+[node name="Z" type="Sprite2D" parent="VisualRoot/UI/Hint" unique_id=21614273]
 position = Vector2(232.5, 12)
 scale = Vector2(1.8, 1.8)
 texture = ExtResource("10_b55n2")
 vframes = 2
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Z"]
-libraries = {
-&"": SubResource("AnimationLibrary_5bvr3")
-}
-autoplay = "press"
+[node name="AnimationPlayer" type="AnimationPlayer" parent="VisualRoot/UI/Hint/Z" unique_id=952336813]
+libraries/ = SubResource("AnimationLibrary_5bvr3")
+autoplay = &"press"
 
-[node name="PlayArea" type="Control" parent="VisualRoot"]
+[node name="PlayArea" type="Control" parent="VisualRoot" unique_id=1399550246]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -275,7 +269,7 @@ offset_bottom = 147.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="CaveBackground" type="TextureRect" parent="VisualRoot/PlayArea"]
+[node name="CaveBackground" type="TextureRect" parent="VisualRoot/PlayArea" unique_id=2072809090]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.5
@@ -290,25 +284,25 @@ scale = Vector2(0.19, 0.19)
 texture = ExtResource("3_qksyg")
 metadata/_edit_use_anchors_ = true
 
-[node name="Bats" type="Node2D" parent="VisualRoot/PlayArea"]
+[node name="Bats" type="Node2D" parent="VisualRoot/PlayArea" unique_id=1185714716]
 position = Vector2(134, 120)
 
-[node name="Flashlight" type="Node2D" parent="VisualRoot/PlayArea"]
+[node name="Flashlight" type="Node2D" parent="VisualRoot/PlayArea" unique_id=1294141218]
 position = Vector2(134, 120)
 
-[node name="PointLight2D" type="PointLight2D" parent="VisualRoot/PlayArea/Flashlight"]
+[node name="PointLight2D" type="PointLight2D" parent="VisualRoot/PlayArea/Flashlight" unique_id=606895492]
 color = Color(1, 1, 1, 0.7882353)
 energy = 1.2
 shadow_color = Color(1, 1, 1, 1)
 texture = ExtResource("4_b5buc")
 texture_scale = 2.42
 
-[node name="FlashArea" type="Area2D" parent="VisualRoot/PlayArea/Flashlight"]
+[node name="FlashArea" type="Area2D" parent="VisualRoot/PlayArea/Flashlight" unique_id=22054499]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="VisualRoot/PlayArea/Flashlight/FlashArea"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="VisualRoot/PlayArea/Flashlight/FlashArea" unique_id=665227901]
 shape = SubResource("CircleShape2D_qksyg")
 
-[node name="DarknessOverlay" type="ColorRect" parent="VisualRoot/PlayArea"]
+[node name="DarknessOverlay" type="ColorRect" parent="VisualRoot/PlayArea" unique_id=671327299]
 material = SubResource("ShaderMaterial_1hnun")
 layout_mode = 0
 offset_top = -1.0
