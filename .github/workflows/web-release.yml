@@ -1,0 +1,64 @@
+name: Web build and itch.io release
+
+# main  -> exports the Web preset and publishes it to itch.io
+# PRs to dev/main and manual runs -> build only, so export problems show up before a release
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: "4.7"
+  PROJECT_PATH: droidream
+  EXPORT_PRESET: Web
+  ITCH_USER: greeeegartur
+  ITCH_GAME: droidream
+  ITCH_CHANNEL: html5
+
+concurrency:
+  group: web-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  export-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Godot ${{ env.GODOT_VERSION }} and export templates
+        run: |
+          base="https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}-stable"
+          wget -q "$base/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -O godot.zip
+          wget -q "$base/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -O templates.zip
+          unzip -q godot.zip
+          sudo mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" /usr/local/bin/godot
+          mkdir -p ~/.local/share/godot/export_templates
+          unzip -q templates.zip
+          mv templates "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+
+      - name: Import project
+        # first import builds the .godot cache (git-ignored); non-zero exit on harmless warnings is tolerated
+        run: godot --headless --path "$PROJECT_PATH" --import || true
+
+      - name: Export Web build
+        run: |
+          mkdir -p build/web
+          godot --headless --path "$PROJECT_PATH" --export-release "$EXPORT_PRESET" "$GITHUB_WORKSPACE/build/web/index.html"
+          test -f build/web/index.html
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: droidream-web
+          path: build/web
+
+      - name: Publish to itch.io
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: manleydev/butler-publish-itch-action@v1.0.3
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_USER: ${{ env.ITCH_USER }}
+          ITCH_GAME: ${{ env.ITCH_GAME }}
+          CHANNEL: ${{ env.ITCH_CHANNEL }}
+          PACKAGE: build/web

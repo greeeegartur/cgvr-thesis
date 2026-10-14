@@ -1,11 +1,56 @@
 # macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+Icon?
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
 # Godot 4+
 droidream/.godot/
+droidream/.mono/
 droidream/android/
+droidream/export_credentials.cfg
+*.translation
 
-# Tooling / local artifacts
+# Build output
+builds/
+build/
+export/
+*.dmg
+*.exe
+*.pck
+*.apk
+*.aab
+
+# Editors and temp files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.tmp
+*.bak
+*.orig
+*.log
+
+# Archives
+*.zip
+*.7z
+*.rar
+
+# Local tooling output
 .claude-flow/
 droidream/.claude-flow/
-*.zip
+.claude/settings.local.json
+.swarm/
+ruvector.db
+graphify-out/
