@@ -1,0 +1,11 @@
+# macOS
+.DS_Store
+
+# Godot 4+
+droidream/.godot/
+droidream/android/
+
+# Tooling / local artifacts
+.claude-flow/
+droidream/.claude-flow/
+*.zip
