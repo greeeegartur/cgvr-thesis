@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ShopEntry" load_steps=4 format=3 uid="uid://r7o8s7np026y"]
+[gd_resource type="Resource" script_class="ShopEntry" format=3 uid="uid://r7o8s7np026y"]
 
 [ext_resource type="Resource" uid="uid://b8a5vhavlytf5" path="res://Scripts/Data/Abilities/Repair.tres" id="1_ej280"]
 [ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_wvbfh"]

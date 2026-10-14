@@ -11,7 +11,6 @@ signal attack_finished
 # Node variables
 @onready var anim := $AnimationPlayer
 @onready var visual: Node2D = $Visual
-@onready var hud := $EnemyHUD
 @onready var target_arrow := $TargetArrow
 @onready var target_arrow_anim := $TargetArrow/AnimationPlayer
 @onready var turn_order_label: Label = $TurnOrder

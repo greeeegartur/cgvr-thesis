@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="BoonData" load_steps=3 format=3 uid="uid://c2rfa3tt8uy5v"]
+[gd_resource type="Resource" script_class="BoonData" format=3 uid="uid://c2rfa3tt8uy5v"]
 
 [ext_resource type="Script" uid="uid://yjimuc2myefo" path="res://Scripts/Data/BoonData.gd" id="1_6dyqx"]
 [ext_resource type="Texture2D" uid="uid://cj1wisdq0iq8h" path="res://Graphics/Sprites/Boons/power.png" id="1_sepsi"]

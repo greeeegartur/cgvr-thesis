@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ShopEntry" load_steps=4 format=3 uid="uid://dpj6wo2p2okk1"]
+[gd_resource type="Resource" script_class="ShopEntry" format=3 uid="uid://dpj6wo2p2okk1"]
 
 [ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_ufev3"]
 [ext_resource type="Resource" uid="uid://cg88nifiu0d83" path="res://Scripts/Data/Abilities/MultiTame.tres" id="1_vk0cj"]

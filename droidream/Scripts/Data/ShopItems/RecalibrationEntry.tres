@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ShopEntry" load_steps=4 format=3 uid="uid://b7tvpl4e5vwlt"]
+[gd_resource type="Resource" script_class="ShopEntry" format=3 uid="uid://b7tvpl4e5vwlt"]
 
 [ext_resource type="Texture2D" uid="uid://cmxlsmd1xo2e5" path="res://Graphics/Sprites/Boons/recalibration.png" id="1_2l56q"]
 [ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_gqkes"]

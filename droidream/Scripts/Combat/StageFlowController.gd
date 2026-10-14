@@ -18,8 +18,7 @@ class_name StageFlowController
 @onready var combat_ui := $"../UI/CombatUI"
 @onready var black := $"../UI/Black"
 
-# TO-DO: make backgrounds scenes
-@onready var background := $"../World/Background"
+@onready var background := $"../World/CombatBackground"
 
 const PLAYER_COMBAT_POS := Vector2(96, 277)
 const PLAYER_WALK_IN_OFFSET := Vector2(-190, 0)
@@ -32,8 +31,8 @@ func _ready():
 	death_screen.retry_selected.connect(_on_retry)
 	death_screen.back_selected.connect(_on_back_to_title)
 	
-	# Starts the current stage from AreaManager
-	start_stage()
+	# Starts the current stage from AreaManager (deferred so the sibling World nodes finish their _ready first)
+	start_stage.call_deferred()
 
 func start_stage(reset := false):
 	combat_manager._resume_combat()

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ShopEntry" load_steps=4 format=3 uid="uid://b0con4sy1xqmw"]
+[gd_resource type="Resource" script_class="ShopEntry" format=3 uid="uid://b0con4sy1xqmw"]
 
 [ext_resource type="Texture2D" uid="uid://dorqklqvc8fje" path="res://Graphics/Sprites/Boons/enamor.png" id="1_8t3kw"]
 [ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_g7gqp"]

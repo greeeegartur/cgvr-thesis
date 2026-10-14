@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://cbkw6op5uwibe"]
+[gd_resource type="Resource" script_class="ItemData" format=3 uid="uid://cbkw6op5uwibe"]
 
 [ext_resource type="Script" uid="uid://heqkiwbydg3j" path="res://Scripts/Data/ItemData.gd" id="1_nkbs7"]
 [ext_resource type="Texture2D" uid="uid://dn4q1hif8cd1f" path="res://Graphics/Sprites/Items/thick_jelly.png" id="1_sxdm8"]

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="AbilityData" load_steps=3 format=3 uid="uid://cm5lnevnduthj"]
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://cm5lnevnduthj"]
 
 [ext_resource type="Texture2D" uid="uid://3xupqgv4ca1m" path="res://Graphics/Sprites/Boons/harden.png" id="1_8ok0p"]
 [ext_resource type="Script" uid="uid://dn8yfspxtqdrv" path="res://Scripts/Data/AbilityData.gd" id="1_eud2b"]

@@ -98,7 +98,7 @@ droidream/
   Graphics/
     Fonts/
     Sprites/        Backgrounds, Boons, Items, Minigames/<Name>, Player, Title, UI, VFX
-  Resources/        project meta: code_standards.md (not exported)
+  Resources/        project meta: code_standards.md, graphify-out/ code graph (not exported)
   Scenes/
     Screens/        top-level scenes (Title, Tutorial, Combat)
     Combat/         combat background, stop/pause UI

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="BoonData" load_steps=3 format=3 uid="uid://bpli2jlyv5vmw"]
+[gd_resource type="Resource" script_class="BoonData" format=3 uid="uid://bpli2jlyv5vmw"]
 
 [ext_resource type="Script" uid="uid://yjimuc2myefo" path="res://Scripts/Data/BoonData.gd" id="1_7vx0x"]
 [ext_resource type="Texture2D" uid="uid://cmxlsmd1xo2e5" path="res://Graphics/Sprites/Boons/recalibration.png" id="1_mjxrf"]

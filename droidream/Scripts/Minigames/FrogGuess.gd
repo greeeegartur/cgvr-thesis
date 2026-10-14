@@ -13,8 +13,6 @@ class_name FrogGuess
 @onready var entities_node: Node2D = $VisualRoot/PlayArea/Entities
 @onready var hint_label: Label = $VisualRoot/UI/Hint
 @onready var guess_label: Label = $VisualRoot/UI/GuessUI/GuessLabel
-@onready var reveal_left: Marker2D = $VisualRoot/PlayArea/RevealBounds/Left
-@onready var reveal_right: Marker2D = $VisualRoot/PlayArea/RevealBounds/Right
 
 var current_guess := 1
 var answer_count := 0

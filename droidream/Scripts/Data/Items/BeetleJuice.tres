@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://dq3hj6xqbsyha"]
+[gd_resource type="Resource" script_class="ItemData" format=3 uid="uid://dq3hj6xqbsyha"]
 
 [ext_resource type="Texture2D" uid="uid://dd8pfdyu0qni" path="res://Graphics/Sprites/Items/beetlejuice.png" id="1_8pq4p"]
 [ext_resource type="Script" uid="uid://heqkiwbydg3j" path="res://Scripts/Data/ItemData.gd" id="1_54lwa"]

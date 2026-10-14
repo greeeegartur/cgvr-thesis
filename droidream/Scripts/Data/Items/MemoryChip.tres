@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://cmts4mx4vv6we"]
+[gd_resource type="Resource" script_class="ItemData" format=3 uid="uid://cmts4mx4vv6we"]
 
 [ext_resource type="Texture2D" uid="uid://cwrb4wclqbr73" path="res://Graphics/Sprites/Items/memorychip.png" id="1_5uq1j"]
 [ext_resource type="Script" uid="uid://heqkiwbydg3j" path="res://Scripts/Data/ItemData.gd" id="1_r6tkn"]

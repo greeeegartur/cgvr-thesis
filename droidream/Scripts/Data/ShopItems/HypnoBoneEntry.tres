@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ShopEntry" load_steps=4 format=3 uid="uid://xttakalrn3ov"]
+[gd_resource type="Resource" script_class="ShopEntry" format=3 uid="uid://xttakalrn3ov"]
 
 [ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_alee0"]
 [ext_resource type="Texture2D" uid="uid://bbctatyc1u7qi" path="res://Graphics/Sprites/Items/hypnobone.png" id="1_eu5cp"]

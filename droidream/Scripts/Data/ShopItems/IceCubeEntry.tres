@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ShopEntry" load_steps=4 format=3 uid="uid://j7gnfskjv330"]
+[gd_resource type="Resource" script_class="ShopEntry" format=3 uid="uid://j7gnfskjv330"]
 
 [ext_resource type="Texture2D" uid="uid://x7nehk80lrqd" path="res://Graphics/Sprites/Items/icecube.png" id="1_1nhdd"]
 [ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_i4ywe"]
