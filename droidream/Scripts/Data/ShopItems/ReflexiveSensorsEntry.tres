@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="ShopEntry" format=3 uid="uid://bbkw14p5jjh1l"]
 
 [ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_cm17s"]
-[ext_resource type="Texture2D" uid="uid://8whci0nik5ex" path="res://Graphics/Placeholders/Boons/reflexive_sensors.png" id="1_cucws"]
+[ext_resource type="Texture2D" uid="uid://8whci0nik5ex" path="res://Graphics/Sprites/Boons/reflexive_sensors.png" id="1_cucws"]
 [ext_resource type="Resource" uid="uid://bsadn0fq85rud" path="res://Scripts/Data/Abilities/ReflexiveSensors.tres" id="2_asx4v"]
 
 [resource]

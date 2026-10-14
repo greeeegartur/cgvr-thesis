@@ -1199,7 +1199,7 @@ func _ability_repair_sequence(ability: InventoryAbility):
 # Here the player must match shapes with their ghosts – the more matched makes the player deal more shift damage
 func _ability_multi_tame_sequence(ability: InventoryAbility, target: CombatEntity):
 	var multiplier := 1.0
-	var minigame_scene = preload("res://Scenes/VFX/MultiTameScene.tscn")
+	var minigame_scene = preload("res://Scenes/PlayerActions/MultiTameScene.tscn")
 	var minigame = minigame_scene.instantiate()
 	minigame_layer.add_child(minigame)
 	
@@ -1213,7 +1213,7 @@ func _ability_multi_tame_sequence(ability: InventoryAbility, target: CombatEntit
 # Executes the heat up ability sequence
 # Here the player must press the correct keys that appear on screen at random locations; the more pressed, the more power buff the player gets
 func _ability_heat_up_sequence(ability: InventoryAbility):
-	var minigame_scene = preload("res://Scenes/VFX/HeatUpMinigame.tscn")
+	var minigame_scene = preload("res://Scenes/PlayerActions/HeatUpMinigame.tscn")
 	var minigame = minigame_scene.instantiate()
 	minigame_layer.add_child(minigame)
 	
@@ -1245,7 +1245,7 @@ func _ability_heat_up_sequence(ability: InventoryAbility):
 # Executes the harden ability sequence
 # Here the player must press keys in a specific order; the more stages finished, the more defense boost gained
 func _ability_harden_sequence(ability: InventoryAbility):
-	var minigame_scene = preload("res://Scenes/VFX/HardenMinigame.tscn")
+	var minigame_scene = preload("res://Scenes/PlayerActions/HardenMinigame.tscn")
 	var minigame = minigame_scene.instantiate()
 	minigame_layer.add_child(minigame)
 	tutorial_text.show_hint(TutorialText.HintType.HARDEN)
@@ -1376,7 +1376,7 @@ func _item_soft_branch_sequence(item: InventoryItem, target):
 
 # Throwable ball item that works like Multi-tame, but does not use chips to tame or kill: this is decided by the strength of the throw minigame
 func _item_ball_sequence(item: InventoryItem, target: CombatEntity):
-	var meter_scene = preload("res://Scenes/VFX/BallMinigame.tscn")
+	var meter_scene = preload("res://Scenes/PlayerActions/BallMinigame.tscn")
 	var meter = meter_scene.instantiate()
 	minigame_layer.add_child(meter)
 	tutorial_text.show_hint(TutorialText.HintType.BALL)

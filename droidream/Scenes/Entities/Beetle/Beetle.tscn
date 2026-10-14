@@ -1,10 +1,10 @@
 [gd_scene load_steps=15 format=3 uid="uid://buy3a8wt3qe8f"]
 
 [ext_resource type="Texture2D" uid="uid://dqqukw2jmv5vm" path="res://Scenes/Entities/Beetle/beetle.png" id="1_8bngv"]
-[ext_resource type="Script" uid="uid://cx4ejov60luxh" path="res://Scripts/Combat/EnemyVisual.gd" id="1_edmr7"]
+[ext_resource type="Script" uid="uid://cx4ejov60luxh" path="res://Scripts/Entities/EnemyVisual.gd" id="1_edmr7"]
 [ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="5_ex8ay"]
 [ext_resource type="PackedScene" uid="uid://ngw3am72av6" path="res://Scenes/Entities/EnemyAxisBar.tscn" id="5_hei77"]
-[ext_resource type="Texture2D" uid="uid://dxbd5kdjuqyr5" path="res://Graphics/Placeholders/Combat/Combat Select.png" id="5_m0kqe"]
+[ext_resource type="Texture2D" uid="uid://dxbd5kdjuqyr5" path="res://Graphics/Sprites/UI/Combat_Select.png" id="5_m0kqe"]
 
 [sub_resource type="Animation" id="Animation_ex8ay"]
 length = 0.001

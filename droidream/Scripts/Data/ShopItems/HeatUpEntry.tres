@@ -2,7 +2,7 @@
 
 [ext_resource type="Resource" uid="uid://dltvx1i4yort8" path="res://Scripts/Data/Abilities/HeatUp.tres" id="1_4e0lv"]
 [ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_qfyug"]
-[ext_resource type="Texture2D" uid="uid://b6hm3y0vd8iof" path="res://Graphics/Placeholders/Boons/heat-up.png" id="2_nekrq"]
+[ext_resource type="Texture2D" uid="uid://b6hm3y0vd8iof" path="res://Graphics/Sprites/Boons/heat-up.png" id="2_nekrq"]
 
 [resource]
 script = ExtResource("1_qfyug")

@@ -208,7 +208,7 @@ func _enter_demo_ending_stop():
 	await _fade_into_black()
 	
 	PlayerData.reset_run()
-	get_tree().change_scene_to_file("res://Scenes/TitleScreen.tscn")
+	get_tree().change_scene_to_file("res://Scenes/Screens/TitleScreen.tscn")
 
 func _fade_into_black(duration := 1.2):
 	black.visible = true

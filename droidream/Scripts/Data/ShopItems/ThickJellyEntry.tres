@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ShopEntry" load_steps=4 format=3 uid="uid://d2iauyvjg6gpt"]
 
-[ext_resource type="Texture2D" uid="uid://dn4q1hif8cd1f" path="res://Graphics/Placeholders/Items/thick jelly.png" id="1_tbjhf"]
+[ext_resource type="Texture2D" uid="uid://dn4q1hif8cd1f" path="res://Graphics/Sprites/Items/thick_jelly.png" id="1_tbjhf"]
 [ext_resource type="Resource" uid="uid://cbkw6op5uwibe" path="res://Scripts/Data/Items/ThickJelly.tres" id="2_l4e2e"]
 [ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="3_35d4n"]
 

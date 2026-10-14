@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_ufev3"]
 [ext_resource type="Resource" uid="uid://cg88nifiu0d83" path="res://Scripts/Data/Abilities/MultiTame.tres" id="1_vk0cj"]
-[ext_resource type="Texture2D" uid="uid://vsmeqr4wqc6v" path="res://Graphics/Placeholders/Boons/multi-tame.png" id="2_vk0cj"]
+[ext_resource type="Texture2D" uid="uid://vsmeqr4wqc6v" path="res://Graphics/Sprites/Boons/multi-tame.png" id="2_vk0cj"]
 
 [resource]
 script = ExtResource("1_ufev3")

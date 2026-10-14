@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="BoonData" load_steps=3 format=3 uid="uid://corh8udaf6vy4"]
 
 [ext_resource type="Script" uid="uid://yjimuc2myefo" path="res://Scripts/Data/BoonData.gd" id="1_2f1rk"]
-[ext_resource type="Texture2D" uid="uid://dorqklqvc8fje" path="res://Graphics/Placeholders/Boons/enamor.png" id="1_eq7af"]
+[ext_resource type="Texture2D" uid="uid://dorqklqvc8fje" path="res://Graphics/Sprites/Boons/enamor.png" id="1_eq7af"]
 
 [resource]
 script = ExtResource("1_2f1rk")

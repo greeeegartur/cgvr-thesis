@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="BoonData" format=3 uid="uid://d0bxawl6jr8of"]
 
 [ext_resource type="Script" uid="uid://yjimuc2myefo" path="res://Scripts/Data/BoonData.gd" id="1_8nc1p"]
-[ext_resource type="Texture2D" uid="uid://bf48p5c6hsygy" path="res://Graphics/Placeholders/Boons/microbots.png" id="1_aac7m"]
+[ext_resource type="Texture2D" uid="uid://bf48p5c6hsygy" path="res://Graphics/Sprites/Boons/microbots.png" id="1_aac7m"]
 
 [resource]
 script = ExtResource("1_8nc1p")

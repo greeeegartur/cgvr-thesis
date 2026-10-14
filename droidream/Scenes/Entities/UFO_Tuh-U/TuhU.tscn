@@ -1,15 +1,15 @@
 [gd_scene load_steps=12 format=3 uid="uid://xdci2nsbs7fv"]
 
-[ext_resource type="Script" uid="uid://c1cqnmra7of66" path="res://Scripts/Misc/TuhU.gd" id="1_32mqh"]
+[ext_resource type="Script" uid="uid://c1cqnmra7of66" path="res://Scripts/Entities/TuhU.gd" id="1_32mqh"]
 [ext_resource type="Texture2D" uid="uid://cyt6rirvfbvl4" path="res://Scenes/Entities/UFO_Tuh-U/tuhu-temp.png" id="1_dahwj"]
 [ext_resource type="Texture2D" uid="uid://b20xl81y8af3f" path="res://Scenes/Entities/UFO_Tuh-U/tuhu-happy.png" id="3_hrwxe"]
-[ext_resource type="Texture2D" uid="uid://cyn7bjruusjwl" path="res://Graphics/Placeholders/Combat/thoughtbubble_question.png" id="3_q2xk0"]
+[ext_resource type="Texture2D" uid="uid://cyn7bjruusjwl" path="res://Graphics/Sprites/UI/thoughtbubble_question.png" id="3_q2xk0"]
 [ext_resource type="Texture2D" uid="uid://b45p4hbip0k3f" path="res://Scenes/Entities/UFO_Tuh-U/tuhu-sad.png" id="4_aryxy"]
 [ext_resource type="Texture2D" uid="uid://b8ri010fj6jl7" path="res://Scenes/Entities/UFO_Tuh-U/tuhu-right.png" id="5_txc0a"]
 [ext_resource type="Texture2D" uid="uid://bnffj7ia4jdw6" path="res://Scenes/Entities/UFO_Tuh-U/tuhu-down.png" id="6_06v7w"]
 [ext_resource type="Texture2D" uid="uid://dclyismytsgrd" path="res://Scenes/Entities/UFO_Tuh-U/tuhu-up.png" id="7_xws72"]
-[ext_resource type="Texture2D" uid="uid://b5bgh61itsx2q" path="res://Graphics/Placeholders/Combat/thoughtbubble_worry.png" id="8_uu8eu"]
-[ext_resource type="Texture2D" uid="uid://cb64uwveuce7w" path="res://Graphics/Placeholders/Combat/thoughtbubble_exclamation.png" id="9_0l31n"]
+[ext_resource type="Texture2D" uid="uid://b5bgh61itsx2q" path="res://Graphics/Sprites/UI/thoughtbubble_worry.png" id="8_uu8eu"]
+[ext_resource type="Texture2D" uid="uid://cb64uwveuce7w" path="res://Graphics/Sprites/UI/thoughtbubble_exclamation.png" id="9_0l31n"]
 
 [sub_resource type="Gradient" id="Gradient_32mqh"]
 colors = PackedColorArray(0.47843137, 0.9647059, 0.9764706, 1, 0.22352941, 0.52156866, 0.7372549, 1)

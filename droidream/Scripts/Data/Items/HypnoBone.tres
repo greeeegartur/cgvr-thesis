@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3 uid="uid://pdlil4a7qhqh"]
 
-[ext_resource type="Texture2D" uid="uid://bbctatyc1u7qi" path="res://Graphics/Placeholders/Items/hypnobone.png" id="1_6fkcv"]
+[ext_resource type="Texture2D" uid="uid://bbctatyc1u7qi" path="res://Graphics/Sprites/Items/hypnobone.png" id="1_6fkcv"]
 [ext_resource type="Script" uid="uid://heqkiwbydg3j" path="res://Scripts/Data/ItemData.gd" id="1_yfa6n"]
 
 [resource]

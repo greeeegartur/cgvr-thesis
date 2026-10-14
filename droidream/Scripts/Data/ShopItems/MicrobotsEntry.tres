@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="ShopEntry" format=3 uid="uid://bo5ypo6bxxekl"]
 
 [ext_resource type="Script" uid="uid://b56nw6bpevr7t" path="res://Scripts/Data/ShopEntry.gd" id="1_dhvmd"]
-[ext_resource type="Texture2D" uid="uid://bf48p5c6hsygy" path="res://Graphics/Placeholders/Boons/microbots.png" id="1_nkrqp"]
+[ext_resource type="Texture2D" uid="uid://bf48p5c6hsygy" path="res://Graphics/Sprites/Boons/microbots.png" id="1_nkrqp"]
 [ext_resource type="Resource" uid="uid://64xn8on4cc1m" path="res://Scripts/Data/Abilities/Microbots.tres" id="2_xtal1"]
 
 [resource]

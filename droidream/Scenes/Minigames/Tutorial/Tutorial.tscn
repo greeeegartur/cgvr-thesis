@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://04p2jrd2n1g0" path="res://Scripts/Minigames/Tutorial.gd" id="1_kau0k"]
 [ext_resource type="Texture2D" uid="uid://nt4l4semx6t0" path="res://Scenes/Minigames/Tutorial/Panel.png" id="2_3rein"]
 [ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="2_373e1"]
-[ext_resource type="Texture2D" uid="uid://b0axro84k6yfj" path="res://Graphics/Placeholders/Combat/Z.png" id="4_jvxmj"]
+[ext_resource type="Texture2D" uid="uid://b0axro84k6yfj" path="res://Graphics/Sprites/UI/Z.png" id="4_jvxmj"]
 [ext_resource type="Texture2D" uid="uid://do2hubhwdu7d5" path="res://Scenes/Minigames/Tutorial/tutorial.png" id="5_pw8od"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_hgwi1"]

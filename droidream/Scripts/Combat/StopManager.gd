@@ -29,7 +29,7 @@ var ufo_idle_tween: Tween
 @onready var player_visual := $"../World/PlayerVisual"
 @onready var camera := $"../Camera2D"
 @onready var speech_bubble := $"../UI/SpeechBubble"
-@onready var item_scene = preload("res://Scenes/ShopItem.tscn")
+@onready var item_scene = preload("res://Scenes/UI/ShopItem.tscn")
 @onready var HitFeedbackScene = preload("res://Scenes/VFX/HitFeedbackText.tscn")
 
 var popup_tween: Tween
