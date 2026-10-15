@@ -57,6 +57,10 @@ func load_from_player() -> void:
 	defense = PlayerData.defense
 	karma = PlayerData.karma
 
+# Single entry point for changing the intent axis: quantized to quarters, kept on the bar, snapped to an end when one step away
+func set_axis(value: float) -> void:
+	axis_value = Utils.snap_axis(value, axis_max)
+
 # Methods for checking enemy defeat conditions and axis ratio
 func is_killed() -> bool:
 	return axis_value <= -axis_max

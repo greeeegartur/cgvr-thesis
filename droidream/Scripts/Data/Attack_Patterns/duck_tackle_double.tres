@@ -9,11 +9,11 @@ animation_name = "duck_tackle_double"
 total_duration = 4.5
 hits = Array[Dictionary]([{
 "block_window": Vector2(1.52, 1.87),
-"damage_multiplier": 0.75,
+"damage_multiplier": 0.5,
 "time": 1.87
 }, {
 "block_window": Vector2(2.59, 2.94),
-"damage_multiplier": 0.75,
+"damage_multiplier": 0.5,
 "time": 2.94
 }])
 metadata/_custom_type_script = "uid://by18pvdsekurc"

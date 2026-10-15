@@ -85,12 +85,30 @@ func _load_enemy_resources():
 				# Checks correct type
 				if enemy is EnemyInfo:
 					ENEMIES[enemy.enemy_id] = enemy
+					_warn_if_off_grid(enemy, path)
 				else:
 					push_warning("Not an EnemyInfo resource: %s" % path)
 
 		file_name = dir.get_next()
 		
 	dir.list_dir_end()
+
+# Dev-time check: enemy HP, attack and the damage of every hit (unblocked and blocked) should sit on the quarter grid
+func _warn_if_off_grid(enemy: EnemyInfo, path: String):
+	if not OS.is_debug_build():
+		return
+	
+	var values := {"max_hp": enemy.max_hp, "attack": float(enemy.attack)}
+	for pattern in enemy.attack_patterns:
+		for hit in pattern.hits:
+			var damage: float = enemy.attack * hit.damage_multiplier
+			values["%s hit" % pattern.pattern_id] = damage
+			values["%s blocked hit" % pattern.pattern_id] = damage * 0.5
+	
+	for label in values:
+		var value: float = values[label]
+		if not is_equal_approx(value, Utils.quantize(value)):
+			push_warning("Off the 0.25 grid: %s on %s is %s" % [label, path, value])
 
 func _get_resource_file_name(file_name: String) -> String:
 	if file_name.ends_with(".tres"):

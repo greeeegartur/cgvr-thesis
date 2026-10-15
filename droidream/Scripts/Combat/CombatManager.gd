@@ -691,10 +691,9 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 			resistance = lerp(1.5, 2.5, abs(enemy.axis_ratio()))
 		
 		# Damage calculation
-		var value_shift = round_quarter(base / resistance) # Just base if previous change did not apply
+		var value_shift = Utils.quantize_min(base / resistance) # Just base if previous change did not apply
 		var before = enemy.axis_value
-		enemy.axis_value += value_shift
-		enemy.axis_value = round_quarter(min(enemy.axis_value, enemy.axis_max)) # Ensures the bar does not go beyond axis bar limits (to look good)
+		enemy.set_axis(enemy.axis_value + value_shift) # Quantized, kept on the bar and snapped to tame when one step away
 		var actual_shift = enemy.axis_value - before
 		
 		# Visual effects
@@ -723,10 +722,9 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		var kill_multiplier := 0.5 + pow(off_guard, 2.5) * 2.35
 		
 		# Damage calculation
-		var value_shift = round_quarter(base * kill_multiplier) # Kill multiplier will just be 0.5 if off_guard is 0
+		var value_shift = Utils.quantize_min(base * kill_multiplier) # Kill multiplier will just be 0.5 if off_guard is 0
 		var before = enemy.axis_value
-		enemy.axis_value -= value_shift
-		enemy.axis_value = round_quarter(max(enemy.axis_value, -enemy.axis_max)) # Ensures the bar does not go beyond axis bar limits (to look good)
+		enemy.set_axis(enemy.axis_value - value_shift)
 		var actual_shift = enemy.axis_value - before
 		
 		# Visual effects
@@ -754,10 +752,9 @@ func _apply_axis_shift_with_multiplier(enemy: CombatEntity, guess_type: CombatTy
 		if enemy.axis_value < 0:
 			resistance = lerp(1.5, 2.5, abs(enemy.axis_ratio()))
 		
-		var value_shift = round_quarter(base / resistance)
+		var value_shift = Utils.quantize_min(base / resistance)
 		var before = enemy.axis_value
-		enemy.axis_value += value_shift
-		enemy.axis_value = round_quarter(min(enemy.axis_value, enemy.axis_max))
+		enemy.set_axis(enemy.axis_value + value_shift)
 		var actual_shift = enemy.axis_value - before
 		
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
@@ -770,10 +767,9 @@ func _apply_axis_shift_with_multiplier(enemy: CombatEntity, guess_type: CombatTy
 	else:
 		var off_guard = max(0.0, enemy.axis_ratio())
 		var kill_multiplier := 0.5 + pow(off_guard, 2.5) * 2.25
-		var value_shift = round_quarter(base * kill_multiplier)
+		var value_shift = Utils.quantize_min(base * kill_multiplier)
 		var before = enemy.axis_value
-		enemy.axis_value -= value_shift
-		enemy.axis_value = round_quarter(max(enemy.axis_value, -enemy.axis_max))
+		enemy.set_axis(enemy.axis_value - value_shift)
 		var actual_shift = enemy.axis_value - before
 		
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
@@ -843,7 +839,7 @@ func _start_minigame(enemy: CombatEntity, play_explosion := true):
 
 # Connects BaseMinigame signal to give player damage based on minigame
 func _on_minigame_damage_taken(amount: float, pos: Vector2):
-	_change_player_hp(-amount)
+	_change_player_hp(-Utils.quantize_min(amount))
 	vfx.play_overlay_effects("normal")
 
 # Decides minigame outcome on minigame end
@@ -854,7 +850,7 @@ func on_minigame_complete(enemy: CombatEntity, success: bool):
 	
 	if success:
 		var restore_ratio := randf_range(0.2, 0.35)
-		enemy.axis_value = round_quarter(enemy.axis_max * restore_ratio)
+		enemy.set_axis(enemy.axis_max * restore_ratio)
 		enemy.trust += 1
 		enemy_visual.update_axis(enemy.axis_value)
 		enemy_visual.update_axis_trust() 
@@ -867,7 +863,7 @@ func on_minigame_complete(enemy: CombatEntity, success: bool):
 	else:
 		# Restore enemy's defense by a random amount from 20-35%, rounds it somewhat though
 		var restore_ratio := randf_range(0.2, 0.35)
-		enemy.axis_value = round_quarter(enemy.axis_max * restore_ratio)
+		enemy.set_axis(enemy.axis_max * restore_ratio)
 		enemy_visual.update_axis(enemy.axis_value)
 		print("Minigame failed. Enemy axis restored to %.1f" % enemy.axis_value)
 		#if not minigame_queue_ongoing and not combat_has_ended:
@@ -1060,7 +1056,7 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 		print("Failed block")
 
 	print("Player HP is: ", player.hp)
-	damage = max(0.0, damage - player.defense)
+	damage = Utils.hit_damage(damage, player.defense) # Rounded once at the end, at least one step for any hit that deals damage
 	print("Damage is: ", damage)
 	_change_player_hp(-damage)
 
@@ -1215,7 +1211,7 @@ func _ability_repair_sequence(ability: InventoryAbility):
 	# Healing logic after game
 	collected = min(collected, max_collect)
 	var heal_ratio = collected * 0.1
-	var heal_amount = player.max_hp * heal_ratio
+	var heal_amount = Utils.quantize_min(player.max_hp * heal_ratio)
 	
 	_change_player_hp(heal_amount)
 	vfx.spawn_damage_number(player_visual, heal_amount, false, true)
@@ -1343,7 +1339,7 @@ func _passive_microbots():
 	if microbots_turn_counter >= 2:
 		microbots_turn_counter = 0
 	
-		var heal_amount = max(1.0, player.max_hp * MICROBOTS_HEAL_RATIO)
+		var heal_amount = Utils.quantize_min(max(1.0, player.max_hp * MICROBOTS_HEAL_RATIO))
 		_change_player_hp(heal_amount)
 		vfx.spawn_damage_number(player_visual, heal_amount, false, true)
 		print("Microbots healed player damage by ", heal_amount, ", player now at ", player.hp)
@@ -1361,7 +1357,7 @@ func _passive_microbots():
 # Heals the player for a random amount between 20-50%
 func _item_beetle_juice_sequence(inventory_item: InventoryItem, target = null):
 	var heal_ratio := randf_range(0.20, 0.50)
-	var heal_amount := round_quarter(player.max_hp * heal_ratio)
+	var heal_amount := Utils.quantize_min(player.max_hp * heal_ratio)
 	_change_player_hp(heal_amount)
 	print("Healed for ", heal_amount)
 	vfx.spawn_damage_number(player_visual, heal_amount, false, true)
@@ -1439,12 +1435,11 @@ func _item_hypno_bone_sequence(item: InventoryItem, target):
 			continue
 		
 		var old_value = enemy.axis_value
-		var min_value = -enemy.axis_max + 0.25
-		var max_value = enemy.axis_max - 0.25
+		var min_value = -enemy.axis_max + Utils.AXIS_SAFE_MARGIN
+		var max_value = enemy.axis_max - Utils.AXIS_SAFE_MARGIN
 		var new_value := randf_range(min_value, max_value)
-		new_value = round_quarter(new_value)
 		
-		enemy.axis_value = new_value
+		enemy.set_axis(new_value) # Quantized; stays clear of the snap distance
 		var actual_shift = enemy.axis_value - old_value
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
 		enemy_visual.shake(false)
@@ -1791,10 +1786,6 @@ func _clear_enemy_turn_order_visuals():
 	for v in enemy_visuals.values():
 		v.hide_turn_order()
 
-# Rounds damage number by quarters, so no damage will ever be something like "2.584", but rather just "2.5"
-func round_quarter(value: float) -> float:
-	return round(value * 4.0) / 4.0
-
 func _generate_rewards():
 	var total_currency = 0
 	var killed_count := 0
@@ -2080,7 +2071,7 @@ func _update_turn_start_effects():
 	# Ice Cube: heals 10% max HP every turn for 3 turns
 	if ice_cube_active:
 		if ice_cube_turns_remaining > 0:
-			var heal_amount := round_quarter(player.max_hp * ICE_CUBE_HEAL_RATIO)
+			var heal_amount := Utils.quantize_min(player.max_hp * ICE_CUBE_HEAL_RATIO)
 			_change_player_hp(heal_amount)
 			vfx.spawn_damage_number(player_visual, heal_amount, false, true)
 			ice_cube_turns_remaining -= 1
@@ -2091,7 +2082,7 @@ func _update_turn_start_effects():
 
 # Player HP changing methods for better interaction with PlayerData
 func _set_player_hp(value: float):
-	player.hp = clamp(value, 0.0, player.max_hp)
+	player.hp = clampf(Utils.quantize(value), 0.0, player.max_hp) # HP always sits on the quarter grid
 	PlayerData.hp = player.hp
 	player_visual.update_hp(player.hp, player.max_hp)
 
@@ -2100,7 +2091,7 @@ func _change_player_hp(amount: float):
 
 # The amount of damage reflected back at the enemy with Scratchy Frame passive ability
 func _get_scratchy_frame_reflect_amount(enemy: CombatEntity, incoming_damage: float) -> float:
-	var margin := 0.25
+	var margin := Utils.AXIS_SAFE_MARGIN # Reflect never reaches the snap distance, so it cannot tame or kill
 	if enemy.axis_value > 0.0: # When enemy is on the tame side
 		var max_allowed := (enemy.axis_max - margin) - enemy.axis_value
 		return max(0.0, min(incoming_damage, max_allowed))
@@ -2119,13 +2110,10 @@ func _apply_scratchy_frame_reflect(enemy: CombatEntity, amount: float):
 	
 	var before := enemy.axis_value
 	if enemy.axis_value > 0.0: # When on the tame side
-		enemy.axis_value += amount
-		enemy.axis_value = min(enemy.axis_value, enemy.axis_max - 0.25) # Prevents taming/killing with this ability
+		enemy.set_axis(min(enemy.axis_value + amount, enemy.axis_max - Utils.AXIS_SAFE_MARGIN)) # Prevents taming/killing with this ability
 	else: # When on the kill side
-		enemy.axis_value -= amount
-		enemy.axis_value = max(enemy.axis_value, -enemy.axis_max + 0.25)
-	
-	enemy.axis_value = round_quarter(enemy.axis_value) # Applies damage
+		enemy.set_axis(max(enemy.axis_value - amount, -enemy.axis_max + Utils.AXIS_SAFE_MARGIN))
+
 	var actual_shift = enemy.axis_value - before
 	if is_zero_approx(actual_shift): # Does not update past damage where there is 0.25 HP left to an intent
 		return
@@ -2145,10 +2133,10 @@ func _apply_human_at_heart(killed_count: int):
 	if not PlayerData.has_ability("human_at_heart"):
 		return
 	
-	var total_heal := PlayerData.max_hp * HUMAN_AT_HEART_HEAL_RATIO * killed_count
+	var total_heal := Utils.quantize_min(PlayerData.max_hp * HUMAN_AT_HEART_HEAL_RATIO * killed_count)
 	var total_power_gain := HUMAN_AT_HEART_POWER_GAIN * killed_count
 	PlayerData.attack += total_power_gain
-	PlayerData.hp = min(PlayerData.hp + total_heal, PlayerData.max_hp)
+	PlayerData.hp = min(Utils.quantize(PlayerData.hp + total_heal), PlayerData.max_hp)
 	print("Human At Heart: Healed for: ", total_heal)
 	print("Human At Heart: Power increased by: ", total_power_gain)
 	
@@ -2271,19 +2259,17 @@ func _support_frog_heal(enemy: CombatEntity):
 	if visual == null:
 		return
 	
-	var heal_amount := round_quarter(randf_range(1.0, 3.0))
+	var heal_amount := Utils.quantize_min(randf_range(1.0, 3.0))
 	var before := enemy.axis_value
 	
 	# Heal toward the center (0 axis)
 	if enemy.axis_value < 0.0:
-		enemy.axis_value = min(enemy.axis_value + heal_amount, 0.0)
+		enemy.set_axis(min(enemy.axis_value + heal_amount, 0.0))
 	elif enemy.axis_value > 0.0:
-		enemy.axis_value = max(enemy.axis_value - heal_amount, 0.0)
+		enemy.set_axis(max(enemy.axis_value - heal_amount, 0.0))
 	else:
 		# Already centered, so there's nothing to heal
 		return
-	
-	enemy.axis_value = round_quarter(enemy.axis_value)
 	var actual_shift := enemy.axis_value - before
 	
 	if is_zero_approx(actual_shift):
@@ -2354,7 +2340,7 @@ func tutorial_prepare_dummy_for_minigame():
 	if dummy == null:
 		return
 	
-	dummy.axis_value = max(0.0, dummy.axis_max - 1.0)
+	dummy.set_axis(max(0.0, dummy.axis_max - 1.0))
 	var visual = enemy_visuals.get(dummy)
 	if visual:
 		visual.update_axis(dummy.axis_value)

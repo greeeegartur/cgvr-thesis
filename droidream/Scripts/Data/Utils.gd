@@ -46,3 +46,34 @@ func _get_wrong_guess_type(enemy_type: CombatTypes.EntityType) -> CombatTypes.En
 			wrong_types.append(t)
 	
 	return wrong_types.pick_random()
+
+# QUARTER-STEP MATH
+# All HP and intent meter values live on a 0.25 grid (see Resources/prd/hp-and-damage-math.md)
+const QUARTER := 0.25
+const AXIS_SNAP := 0.25 # A creature this close to either end counts as tamed/killed
+const AXIS_SAFE_MARGIN := 0.5 # Effects that must never tame or kill (Scratchy Frame, Hypno Bone) stop this far from the ends
+
+# Rounds a value to the nearest quarter (ties away from zero)
+func quantize(value: float) -> float:
+	return round(value / QUARTER) * QUARTER
+
+# Rounds to the nearest quarter, but a positive amount never rounds down to nothing
+func quantize_min(value: float, minimum := QUARTER) -> float:
+	if value <= 0.0:
+		return 0.0
+	return max(quantize(value), minimum)
+
+# Damage a hit deals to the player: rounded once at the end; a hit that deals damage is at least one step, even after defense
+func hit_damage(raw_damage: float, defense: float) -> float:
+	if raw_damage <= 0.0:
+		return 0.0
+	return max(quantize(raw_damage - defense), QUARTER)
+
+# Quantizes an axis value, keeps it on the bar and snaps it to the end when it is within one step of it
+func snap_axis(value: float, axis_max: float) -> float:
+	var v := clampf(quantize(value), -axis_max, axis_max)
+	if v >= axis_max - AXIS_SNAP:
+		return axis_max
+	if v <= -axis_max + AXIS_SNAP:
+		return -axis_max
+	return v

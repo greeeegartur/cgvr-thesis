@@ -76,8 +76,8 @@ func add_defense(amount):
 	stats_changed.emit()
 
 func add_hp(amount):
-	max_hp += amount
-	hp += amount
+	max_hp = Utils.quantize(max_hp + amount)
+	hp = Utils.quantize(hp + amount)
 	stats_changed.emit()
 
 func _get_total_chips():

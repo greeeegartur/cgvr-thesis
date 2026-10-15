@@ -199,9 +199,10 @@ func set_block_cooldown(active: bool):
 
 # Updates UI for player stats with helper functions (identical to EnemyVisual.gd)
 func update_hp(current: float, max_hp: float):
-	var rounded_current = round_quarter(current)
-	var rounded_max = round_quarter(max_hp)
-	var ratio = clamp(rounded_current / rounded_max, 0.0, 1.0)
+	# HP is already stored in quarters, so it is shown as it is
+	var rounded_current = current
+	var rounded_max = max_hp
+	var ratio := 0.0
 	if rounded_max > 0.0:
 		ratio = clamp(rounded_current / rounded_max, 0.0, 1.0)
 	
@@ -239,11 +240,8 @@ func hide_target_arrow():
 	target_arrow_anim.play("RESET")
 
 # HELPERS
-func round_quarter(value: float) -> float:
-	return round(value * 4.0) / 4.0
-
 func format_quarter_number(value: float) -> String:
-	value = round_quarter(value)
+	value = Utils.quantize(value)
 	
 	if is_equal_approx(value, round(value)):
 		return str(int(round(value)))
