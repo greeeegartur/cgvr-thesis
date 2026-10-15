@@ -10,4 +10,5 @@ display_name = "Ball"
 description = "Every creature's favorite! Can be thrown to tame creatures. This does not use chips."
 icon = ExtResource("1_m27l2")
 target_type = 1
+target_reach = 1
 metadata/_custom_type_script = "uid://heqkiwbydg3j"

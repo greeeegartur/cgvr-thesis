@@ -19,6 +19,7 @@ var in_ability_animation := false
 var input_enabled = true
 
 # Node variables
+var selection_pulse: SelectionPulse
 @onready var anim := $Visual/Sprite2D/AnimationPlayer
 @onready var text_anim := $Visual/RichTextLabel/TextAnimationPlayer
 @onready var text := $Visual/RichTextLabel
@@ -46,6 +47,7 @@ var attack_position : Vector2 # The position where the player's pattern will con
 var hp_tween: Tween
 
 func _ready():
+	selection_pulse = SelectionPulse.new(self, $Visual, $Visual/Sprite2D)
 	set_home_position()
 	anim.animation_finished.connect(_on_anim_finished)
 	
@@ -231,13 +233,15 @@ func show_hp():
 	tween.tween_property(hp_icon, "modulate:a", 1.0, 1)
 	await tween.finished
 
+# The player's selection uses the same effect as creatures: pop, tint, outline and arrow bob on one beat
 func show_target_arrow():
 	target_arrow.visible = true
-	target_arrow_anim.play("idle")
+	target_arrow_anim.stop()
+	selection_pulse.start(1.0, 1.5, target_arrow.get_node("Sprite2D"))
 
 func hide_target_arrow():
+	selection_pulse.stop()
 	target_arrow.visible = false
-	target_arrow_anim.play("RESET")
 
 # HELPERS
 func format_quarter_number(value: float) -> String:

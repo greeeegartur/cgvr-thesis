@@ -32,6 +32,7 @@ var player : CombatEntity
 var enemies: Array[CombatEntity] = [] # Initially empty, TO-DO: make this load area-specific
 var turn = "player" # Player always starts first, this variable is a failsafe check condition in case turn logic goes wrong
 var selected_enemy : CombatEntity
+var current_target_reach := 0 # Creatures hit on each side of the main target by the action being targeted
 var target_index = 0
 var target_mode := TargetMode.NONE
 enum TargetMode {
@@ -262,6 +263,7 @@ func _spawn_enemy(enemy_id: String, slot_index: int, spawner: CombatEntity):
 	visual.move_speed = EnemyDatabase.get_move_speed(enemy_id)
 	visual.z_index = 1
 	enemy_visuals[entity] = visual
+	_check_slot_order()
 	
 	await visual.ready
 	visual.setup_axis(entity.axis_max, entity.trust_max)
@@ -300,6 +302,7 @@ func _reset_combat_state():
 	# Variables reset
 	turn = ""
 	selected_enemy = null
+	current_target_reach = 0
 	attack_timer_running = false
 	last_attack_press_time = 0.0
 	heat_up_pending_power_bonus = 0
@@ -1293,7 +1296,7 @@ func _ability_harden_sequence(ability: InventoryAbility):
 
 # Processes the hit from the Multi-tame ability after the action sequence has been processed
 func _resolve_multi_tame_hit(target: CombatEntity, multiplier: float):
-	var affected = _get_multi_tame_targets(target) # All adjacent targets (including the target itself)
+	var affected = _get_action_targets(target, current_target_reach) # All adjacent targets (including the target itself)
 	if affected.is_empty():
 		return
 	
@@ -1460,6 +1463,19 @@ func _get_alive_enemies() -> Array:
 		return !e.is_killed() and !e.is_tamed()
 	)
 
+# Debug check: the enemies list must stay in slot order, because target neighbors and cycling rely on it
+func _check_slot_order():
+	if not OS.is_debug_build():
+		return
+	for i in enemies.size():
+		if i >= enemy_positions.size():
+			continue
+		var visual = enemy_visuals.get(enemies[i])
+		if visual == null:
+			continue
+		if not visual.home_position.is_equal_approx(enemy_positions[i].global_position):
+			push_warning("Enemy list is out of slot order at index %d" % i)
+
 # Gets the enemy turn order at the start of enemy turn
 # This is decided by 1) which enemy has higher axis value (is more tamed) or (if some or all enemies have same axis value) 2) by position to player
 func _get_enemy_turn_order() -> Array:
@@ -1514,6 +1530,10 @@ func start_target_selection():
 	
 	tutorial_text.show_hint(TutorialText.HintType.PLAYER_SELECT)
 	
+	# Remembers how wide the action reaches, so the preview and the hit use the same targets
+	current_target_reach = _get_current_target_reach()
+	_check_slot_order()
+	
 	# Targeting always starts at index 0 out of alive enemies
 	target_index = 0
 	selected_enemy = alive[target_index]
@@ -1544,13 +1564,29 @@ func cycle_target(dir: int):
 
 # Setter for selected_enemy -> listens to UI and sets the currently selected enemy (and keeps it after selection is confirmed)
 func _set_selected_enemy(enemy: CombatEntity):
-	# Hides all enemy arrows
-	for e in enemy_visuals.keys():
-		enemy_visuals[e].hide_target_arrow()
-	
-	# Shows only one selected enemy arrow
+	_clear_target_markers()
 	selected_enemy = enemy
-	enemy_visuals[enemy].show_target_arrow()
+	
+	# Other creatures the action will hit get the small markers, the main target gets the big arrow and the count
+	var affected := _get_action_targets(enemy, current_target_reach)
+	for e in affected:
+		if e != enemy and enemy_visuals.has(e):
+			enemy_visuals[e].show_target_secondary()
+	enemy_visuals[enemy].show_target_main(maxi(affected.size(), 1))
+
+# Hides every target preview marker on all creatures
+func _clear_target_markers():
+	for v in enemy_visuals.values():
+		if is_instance_valid(v):
+			v.clear_target_markers()
+
+# Reach of the ability or item being targeted (0 for plain attacks)
+func _get_current_target_reach() -> int:
+	if ability_being_used:
+		return ability_being_used.data.target_reach
+	if item_being_used:
+		return item_being_used.data.target_reach
+	return 0
 
 # Finalizing target selection after _set_selected_enemy (hiding enemy_visual's target arrow) and starting player attack
 func _confirm_target_selection():
@@ -1567,7 +1603,7 @@ func _confirm_target_selection():
 	match target_mode:
 		TargetMode.ENEMY: # Player is targeting creature(s)
 			if selected_enemy:
-				enemy_visuals[selected_enemy].hide_target_arrow()
+				_clear_target_markers()
 				if item_being_used:
 					_execute_item(selected_enemy)
 					return
@@ -1713,9 +1749,9 @@ func _cancel_target_selection():
 	selected_enemy = null
 	target_index = 0
 	
-	# Hides all enemy arrows and defaults selected enemy and index
-	for v in enemy_visuals.values():
-		v.hide_target_arrow()
+	# Hides all target markers and defaults selected enemy and index
+	_clear_target_markers()
+	current_target_reach = 0
 	player_visual.hide_target_arrow()
 	
 	_update_enemy_turn_order_display()
@@ -1941,14 +1977,16 @@ func _reset_ability_cooldowns():
 		ability.cooldown = 0
 		ability.just_used = false
 
-# Gets and returns targets for Multi-tame (including adjacent ones)
-func _get_multi_tame_targets(main_target: CombatEntity) -> Array[CombatEntity]:
+# The creatures an action hits: the main target and the living creatures up to reach steps beside it in the list
+# The list is in slot order (screen order); a defeated creature leaves a gap that is not skipped
+# Used by both the target preview and the hit itself, so they always match
+func _get_action_targets(main_target: CombatEntity, reach: int) -> Array[CombatEntity]:
 	var result: Array[CombatEntity] = []
 	var idx := enemies.find(main_target)
 	if idx == -1:
 		return result
 	
-	for i in range(idx - 1, idx + 2):
+	for i in range(idx - reach, idx + reach + 1):
 		if i < 0 or i >= enemies.size():
 			continue
 	
@@ -2202,7 +2240,7 @@ func _roll_tamed_enemy_drops() -> Array:
 
 # Handles the ball item's hit logic: intent-specific, so even if two different types of creatures are hit, they will both move towards kill/tame at the same time
 func _resolve_ball_hit(target: CombatEntity, intent: String, multiplier: float):
-	var affected = _get_multi_tame_targets(target)
+	var affected = _get_action_targets(target, current_target_reach)
 	if affected.is_empty():
 		return
 

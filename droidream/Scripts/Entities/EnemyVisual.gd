@@ -16,6 +16,18 @@ signal attack_finished
 @onready var turn_order_label: Label = $TurnOrder
 @onready var axis_bar := $EnemyAxisBar
 
+# Target preview markers (created in code, so every creature scene gets them)
+const OUTLINE_SHADER := preload("res://Scenes/VFX/TargetOutline.gdshader")
+const SECONDARY_ARROW_SCALE := 0.6 # Secondary arrows are 60% of the main arrow
+const SECONDARY_STRENGTH := 0.3 # Secondary targets pop and tint much less than the main target
+const SECONDARY_OUTLINE_ALPHA := 0.55 # ...and have a fainter outline
+const SECONDARY_ARROW_ALPHA := 0.6 # ...and a fainter arrow
+const OUTLINE_WIDTH_MAIN := 1.5
+const OUTLINE_WIDTH_SECONDARY := 1.0
+var secondary_arrow: Node2D
+var target_count_label: Label
+var selection_pulse: SelectionPulse
+
 # Shake variables
 @export var shake_strength = 3.0
 @export var crit_shake_strength = 6.0
@@ -59,6 +71,7 @@ func _ready():
 	z_index = 1
 	
 	anim.animation_finished.connect(on_anim_finished)
+	_setup_target_markers()
 	
 	# Combat scene's process mode (pausing) for minigames
 	process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -166,6 +179,64 @@ func clear_minigame_highlight():
 	# Hides the arrow directly (hide_target_arrow ignores defeated creatures)
 	target_arrow.visible = false
 	target_arrow_anim.play("RESET")
+
+# Builds the secondary arrow, the count label and the shared selection effect once
+func _setup_target_markers():
+	# Secondary arrow: a copy of the main arrow; it is driven by the selection effect (60% of the main arrow's size)
+	secondary_arrow = target_arrow.duplicate()
+	secondary_arrow.name = "SecondaryArrow"
+	secondary_arrow.visible = false
+	secondary_arrow.get_node("AnimationPlayer").queue_free()
+	add_child(secondary_arrow)
+	
+	# Count label: sits above the main arrow and bobs with it
+	var main_sprite: Sprite2D = target_arrow.get_node("Sprite2D")
+	var arrow_height := main_sprite.texture.get_height() * main_sprite.scale.y
+	target_count_label = Label.new()
+	target_count_label.visible = false
+	target_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	target_count_label.add_theme_font_override("font", load("res://Graphics/Fonts/PixelOperator-Bold.ttf"))
+	target_count_label.add_theme_font_size_override("font_size", 16)
+	target_count_label.add_theme_color_override("font_color", Color("#fff27a"))
+	target_count_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	target_count_label.add_theme_constant_override("outline_size", 4)
+	target_count_label.size = Vector2(48, 20)
+	target_count_label.position = Vector2(-24, -arrow_height / 2.0 - 22) # Above the arrow, relative to the arrow sprite
+	main_sprite.add_child(target_count_label)
+	
+	# Selection effect shared with the player
+	selection_pulse = SelectionPulse.new(self, visual, visual.get_node_or_null("Sprite2D") as Sprite2D)
+
+# Main target of the previewed action: big arrow, pop, tint, outline and the count of creatures that will be hit
+func show_target_main(affected_count := 1):
+	if is_defeated:
+		return
+	secondary_arrow.visible = false
+	target_arrow_anim.stop()
+	target_arrow.visible = true
+	target_count_label.text = "x%d" % affected_count
+	target_count_label.visible = affected_count >= 2
+	selection_pulse.start(1.0, OUTLINE_WIDTH_MAIN, target_arrow.get_node("Sprite2D"))
+
+# Another creature affected by the previewed action: small pale arrow, a lighter pop and a thin outline
+func show_target_secondary():
+	if is_defeated:
+		return
+	target_arrow_anim.stop()
+	target_arrow.visible = false
+	target_count_label.visible = false
+	secondary_arrow.visible = true
+	selection_pulse.start(SECONDARY_STRENGTH, OUTLINE_WIDTH_SECONDARY, secondary_arrow.get_node("Sprite2D"), SECONDARY_ARROW_SCALE, SECONDARY_OUTLINE_ALPHA, SECONDARY_ARROW_ALPHA)
+
+# Removes every target preview marker (arrows, count, outline, pop and tint)
+func clear_target_markers():
+	if selection_pulse:
+		selection_pulse.stop()
+	target_arrow.visible = false
+	if secondary_arrow:
+		secondary_arrow.visible = false
+	if target_count_label:
+		target_count_label.visible = false
 
 # Target arrow UI elements
 func show_target_arrow():
