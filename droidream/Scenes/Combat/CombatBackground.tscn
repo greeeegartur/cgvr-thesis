@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://c8emryl3wnon2"]
+[gd_scene format=3 uid="uid://c8emryl3wnon2"]
 
 [ext_resource type="Script" uid="uid://cw73ra5puwgw1" path="res://Scripts/Combat/CombatBackground.gd" id="1_118ub"]
 [ext_resource type="Texture2D" uid="uid://dfpxxyang1yhs" path="res://Graphics/Sprites/Backgrounds/CombatFrames/BG11.png" id="1_giowh"]
@@ -14,126 +14,126 @@
 [ext_resource type="Texture2D" uid="uid://cbr6p8idqt76g" path="res://Graphics/Sprites/Backgrounds/CombatFrames/BG3_extended.png" id="11_dmumh"]
 [ext_resource type="Texture2D" uid="uid://t2raa8lgdct7" path="res://Graphics/Sprites/Backgrounds/CombatFrames/BG2_extended.png" id="12_h5d1v"]
 
-[node name="CombatBackground" type="ParallaxBackground"]
+[node name="CombatBackground" type="ParallaxBackground" unique_id=955622821]
 script = ExtResource("1_118ub")
 
-[node name="Layer11_Sky" type="ParallaxLayer" parent="."]
+[node name="Layer11_Sky" type="ParallaxLayer" parent="." unique_id=288587592]
 position = Vector2(317, 180)
 motion_offset = Vector2(0.02, 0)
 
-[node name="Sprite2D" type="Sprite2D" parent="Layer11_Sky"]
+[node name="Sprite2D" type="Sprite2D" parent="Layer11_Sky" unique_id=289763704]
 texture = ExtResource("1_giowh")
 
-[node name="Layer10_Clouds" type="ParallaxLayer" parent="."]
+[node name="Layer10_Clouds" type="ParallaxLayer" parent="." unique_id=1024464887]
 position = Vector2(317, 180)
 motion_offset = Vector2(0.05, 0.02)
 
-[node name="CloudsDrift" type="Node" parent="Layer10_Clouds"]
+[node name="CloudsDrift" type="Node" parent="Layer10_Clouds" unique_id=1432718033]
 
-[node name="CloudsA" type="Sprite2D" parent="Layer10_Clouds/CloudsDrift"]
+[node name="CloudsA" type="Sprite2D" parent="Layer10_Clouds/CloudsDrift" unique_id=1513816087]
 position = Vector2(317, 180)
 texture = ExtResource("2_118ub")
 
-[node name="CloudsB" type="Sprite2D" parent="Layer10_Clouds/CloudsDrift"]
+[node name="CloudsB" type="Sprite2D" parent="Layer10_Clouds/CloudsDrift" unique_id=1140039859]
 position = Vector2(317, 180)
 texture = ExtResource("2_118ub")
 
-[node name="Layer09_Mountains" type="ParallaxLayer" parent="."]
+[node name="Layer09_Mountains" type="ParallaxLayer" parent="." unique_id=546511898]
 position = Vector2(317, 180)
 motion_offset = Vector2(0.1, 0.03)
 
-[node name="Sprite2D" type="Sprite2D" parent="Layer09_Mountains"]
+[node name="Sprite2D" type="Sprite2D" parent="Layer09_Mountains" unique_id=1298765972]
 texture = ExtResource("3_dmumh")
 
-[node name="Layer08_TreesFar" type="ParallaxLayer" parent="."]
+[node name="Layer08_TreesFar" type="ParallaxLayer" parent="." unique_id=1462902119]
 position = Vector2(317, 180)
 motion_offset = Vector2(0.18, 0.05)
 
-[node name="Sprite2D" type="Sprite2D" parent="Layer08_TreesFar"]
+[node name="Sprite2D" type="Sprite2D" parent="Layer08_TreesFar" unique_id=1612371064]
 texture = ExtResource("4_h5d1v")
 
-[node name="JungleLightRays" parent="Layer08_TreesFar" instance=ExtResource("8_dmumh")]
+[node name="JungleLightRays" parent="Layer08_TreesFar" unique_id=711589501 instance=ExtResource("8_dmumh")]
 position = Vector2(368.99994, 78.99999)
 scale = Vector2(0.7, 0.7)
 
-[node name="JungleLightRays2" parent="Layer08_TreesFar" instance=ExtResource("8_dmumh")]
+[node name="JungleLightRays2" parent="Layer08_TreesFar" unique_id=753532117 instance=ExtResource("8_dmumh")]
 position = Vector2(-264, 90)
 rotation = 0.3281219
 scale = Vector2(0.49999994, 0.49999994)
 
-[node name="JungleLightRays3" parent="Layer08_TreesFar" instance=ExtResource("8_dmumh")]
+[node name="JungleLightRays3" parent="Layer08_TreesFar" unique_id=2003871774 instance=ExtResource("8_dmumh")]
 position = Vector2(63, 122)
 rotation = 0.143117
 scale = Vector2(0.49999994, 0.49999994)
 
-[node name="JungleLightRays4" parent="Layer08_TreesFar" instance=ExtResource("8_dmumh")]
+[node name="JungleLightRays4" parent="Layer08_TreesFar" unique_id=865186521 instance=ExtResource("8_dmumh")]
 position = Vector2(-68.00003, 144.99998)
 rotation = 0.2635447
 scale = Vector2(0.7, 0.7)
 
-[node name="Layer07_TreesMid" type="ParallaxLayer" parent="."]
+[node name="Layer07_TreesMid" type="ParallaxLayer" parent="." unique_id=1543984998]
 position = Vector2(317, 180)
 
-[node name="Sprite2D" type="Sprite2D" parent="Layer07_TreesMid"]
+[node name="Sprite2D" type="Sprite2D" parent="Layer07_TreesMid" unique_id=1327592809]
 texture = ExtResource("5_u1ho4")
 
-[node name="Layer06_PlantsFar" type="ParallaxLayer" parent="."]
+[node name="Layer06_PlantsFar" type="ParallaxLayer" parent="." unique_id=570399868]
 position = Vector2(317, 180)
 
-[node name="Sprite2D" type="Sprite2D" parent="Layer06_PlantsFar"]
+[node name="Sprite2D" type="Sprite2D" parent="Layer06_PlantsFar" unique_id=1348605954]
 texture = ExtResource("6_qrvdg")
 
-[node name="JungleLightRays" parent="Layer06_PlantsFar" instance=ExtResource("8_dmumh")]
+[node name="JungleLightRays" parent="Layer06_PlantsFar" unique_id=65189113 instance=ExtResource("8_dmumh")]
 position = Vector2(154, 2)
 rotation = 0.15882497
 
-[node name="JungleLightRays3" parent="Layer06_PlantsFar" instance=ExtResource("8_dmumh")]
+[node name="JungleLightRays3" parent="Layer06_PlantsFar" unique_id=1127012220 instance=ExtResource("8_dmumh")]
 position = Vector2(-223.99994, 75)
 rotation = 0.424115
 scale = Vector2(1.1, 1.1)
 
-[node name="JungleLightRays4" parent="Layer06_PlantsFar" instance=ExtResource("8_dmumh")]
+[node name="JungleLightRays4" parent="Layer06_PlantsFar" unique_id=337546555 instance=ExtResource("8_dmumh")]
 position = Vector2(-35.000015, 224.99998)
 rotation = 0.25481808
 scale = Vector2(1.6, 1.6)
 
-[node name="Layer05_TreesClose" type="ParallaxLayer" parent="."]
+[node name="Layer05_TreesClose" type="ParallaxLayer" parent="." unique_id=1145943827]
 position = Vector2(317, 180)
 
-[node name="Sprite2D" type="Sprite2D" parent="Layer05_TreesClose"]
+[node name="Sprite2D" type="Sprite2D" parent="Layer05_TreesClose" unique_id=1130736653]
 texture = ExtResource("7_garvs")
 
-[node name="Layer04_PlantsClose" type="ParallaxLayer" parent="."]
+[node name="Layer04_PlantsClose" type="ParallaxLayer" parent="." unique_id=451316649]
 position = Vector2(317, 180)
 
-[node name="Sprite2D" type="Sprite2D" parent="Layer04_PlantsClose"]
+[node name="Sprite2D" type="Sprite2D" parent="Layer04_PlantsClose" unique_id=827306556]
 texture = ExtResource("8_plqbn")
 
-[node name="Layer03_Ground" type="ParallaxLayer" parent="."]
+[node name="Layer03_Ground" type="ParallaxLayer" parent="." unique_id=310769637]
 position = Vector2(317, 180)
 
-[node name="Sprite2D" type="Sprite2D" parent="Layer03_Ground"]
+[node name="Sprite2D" type="Sprite2D" parent="Layer03_Ground" unique_id=311118854]
 position = Vector2(40, 0)
 texture = ExtResource("11_dmumh")
 
-[node name="Layer02_BaseObjects" type="ParallaxLayer" parent="."]
+[node name="Layer02_BaseObjects" type="ParallaxLayer" parent="." unique_id=316716864]
 position = Vector2(317, 180)
 
-[node name="Sprite2D" type="Sprite2D" parent="Layer02_BaseObjects"]
+[node name="Sprite2D" type="Sprite2D" parent="Layer02_BaseObjects" unique_id=844070153]
 position = Vector2(40, 0)
 texture = ExtResource("12_h5d1v")
 
-[node name="JungleLightRays2" parent="Layer02_BaseObjects" instance=ExtResource("8_dmumh")]
+[node name="JungleLightRays2" parent="Layer02_BaseObjects" unique_id=838512650 instance=ExtResource("8_dmumh")]
 position = Vector2(-291.99997, -9)
 rotation = 0.5794493
 scale = Vector2(1.4, 1.4)
 
-[node name="Layer01_Foreground" type="ParallaxLayer" parent="."]
+[node name="Layer01_Foreground" type="ParallaxLayer" parent="." unique_id=1759382460]
 position = Vector2(317, 180)
 
-[node name="Sprite2D" type="Sprite2D" parent="Layer01_Foreground"]
+[node name="Sprite2D" type="Sprite2D" parent="Layer01_Foreground" unique_id=828508804]
 texture = ExtResource("11_1eefx")
 
-[node name="JungleLightRays2" parent="Layer01_Foreground" instance=ExtResource("8_dmumh")]
+[node name="JungleLightRays2" parent="Layer01_Foreground" unique_id=1762285900 instance=ExtResource("8_dmumh")]
 position = Vector2(330.99994, 9.999998)
 scale = Vector2(1.4, 1.4)

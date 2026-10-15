@@ -24,6 +24,7 @@ var karma := 0
 # Specific enemy variables
 var spawned := false
 var can_spawn := true
+var turns_taken := 0 # Turns this creature has taken in combat, used for the quick tame reward bonus
 
 
 # Loads enemy info for entity via enemy_id string
@@ -44,6 +45,7 @@ func load_from_enemy_id(enemy_id: String) -> void:
 	visual_scene = data.visual_scene
 	spawned = false
 	can_spawn = true
+	turns_taken = 0
 
 
 # Loads player data from PlayerData object

@@ -151,6 +151,26 @@ func spawn_feedback(target_visual: Node2D, text: String):
 	feedback.position = target_visual.position + Vector2(randf_range(-18, 18), randf_range(-8, 8))
 	feedback.play(text)
 
+# Item, ability and reveal texts: smaller and longer than combat feedback so they are easy to read
+func spawn_info(target_visual: Node2D, text: String):
+	if not HitFeedbackScene:
+		return
+	
+	var feedback := HitFeedbackScene.instantiate()
+	feedback_layer.add_child(feedback)
+	feedback.position = target_visual.position + Vector2(0, -20)
+	feedback.play_info(text)
+
+# When taming a creature before its first turn
+func play_perfect_feedback(target_visual: Node2D):
+	if HitFeedbackScene:
+		var feedback := HitFeedbackScene.instantiate()
+		feedback_layer.add_child(feedback)
+		feedback.position = target_visual.position + Vector2(0, -30)
+		feedback.play_flair("[color=#fff27a][wave amp=18 freq=8]Perfect![/wave][/color]")
+	
+	emit_explosion(target_visual, crit_flash_color, true)
+
 func play_crit_feedback(target_visual):
 	var texts = [
 		"[color=#9a2ea3ff][wave freq=14]Awesome![/wave][/color]",

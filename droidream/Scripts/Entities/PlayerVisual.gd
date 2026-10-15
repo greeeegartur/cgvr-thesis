@@ -118,11 +118,20 @@ func play_restore_chip():
 	text_anim.play("restored")
 	
 
+# Plays the block pose on every block button press, regardless of timing or cooldown
+func play_block_press():
+	if in_ability_animation:
+		return
+	anim.play("player_block")
+	block_visual.play_press()
+
 # PlayerBlockVisual methods to call
 func play_block_success():
 	if in_ability_animation:
 		return
-	anim.play("player_block")
+	# Does not restart the pose if the press already started it
+	if anim.current_animation != "player_block":
+		anim.play("player_block")
 	block_visual.play_success()
 
 func play_block_fail():

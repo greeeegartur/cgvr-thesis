@@ -29,13 +29,43 @@ class_name StageData
 	}
 }
 
+# Generation fairness: weight multipliers that make repeats less likely
+const SAME_ENCOUNTER_PENALTY := 0.3 # Per copy already picked in this encounter (2nd copy x0.3, 3rd x0.09)
+const PREVIOUS_ENCOUNTER_PENALTY := 0.7 # For creatures that appeared in the previous encounter
+const NO_CHIP_PENALTY := 0.6 # For creatures whose type the player has no chips left for
+const MIN_WEIGHT := 0.02
+
+# Creatures of the last generated encounter (shared by all stages)
+static var last_encounter: Array = []
+
 func generate():
 	var count = Utils.weighted_pick(enemy_count_weights)
 	var result := []
 	
-	var weights = creature_weights[count]
+	var base_weights = creature_weights[count]
 	for i in count:
-		var enemy_id = Utils.weighted_pick(weights)
-		result.append(enemy_id)
+		var weights := {}
+		for enemy_id in base_weights:
+			var base: float = base_weights[enemy_id]
+			if base <= 0.0:
+				weights[enemy_id] = 0.0 # Creatures not part of this stage stay out
+				continue
+			weights[enemy_id] = max(MIN_WEIGHT, base * _fairness_multiplier(enemy_id, result))
+		result.append(Utils.weighted_pick(weights))
 	
+	last_encounter = result.duplicate()
 	return result
+
+# Lowers a creature's odds based on this encounter so far, the previous encounter and the player's chips
+func _fairness_multiplier(enemy_id: String, picked_so_far: Array) -> float:
+	var multiplier := 1.0
+	multiplier *= pow(SAME_ENCOUNTER_PENALTY, picked_so_far.count(enemy_id))
+	
+	if last_encounter.has(enemy_id):
+		multiplier *= PREVIOUS_ENCOUNTER_PENALTY
+	
+	var enemy = EnemyDatabase.get_enemy(enemy_id)
+	if enemy is EnemyInfo and enemy.type != CombatTypes.EntityType.NONE and not PlayerData.has_guess(enemy.type):
+		multiplier *= NO_CHIP_PENALTY
+	
+	return multiplier

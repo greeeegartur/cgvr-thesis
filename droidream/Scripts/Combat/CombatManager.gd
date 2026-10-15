@@ -62,6 +62,8 @@ var last_block_press_time = -1.0
 var current_block_window = Vector2.ZERO
 var block_on_cooldown = false
 const BLOCK_COOLDOWN = 0.45
+const BLOCK_INPUT_LOCKOUT_MSEC := 250 # Cooldown in-between blocks
+var last_block_input_msec := -1000
 var enemy_attack_started_handlers: Dictionary = {}
 var enemy_attack_hit_handlers: Dictionary = {}
 var enemy_attack_finished_handlers: Dictionary = {}
@@ -94,6 +96,10 @@ var tutorial_inputs_locked := false
 var last_attack_was_critical := false
 var last_attack_started_minigame := false
 var last_minigame_success := false
+
+# Quick tame reward bonus (creature tamed before its first turn)
+const QUICK_TAME_MAX_BONUS_CURRENCY := 3
+const QUICK_TAME_BONUS_ITEMS := 1
 
 # Creature-specific variables and constants
 const DUCK_TYPE_REVEAL_DURATION := 1.45
@@ -439,8 +445,8 @@ func _start_turn_loop():
 		#print(ability.data.id)
 	#PlayerData.add_ability(AbilityDb.get_ability("multitame"))
 	#PlayerData.add_ability(AbilityDb.get_ability("repair"))
-	#PlayerData.add_item(CombatItemDb.get_item("ball"), 2)
-	#PlayerData.add_item(CombatItemDb.get_item("ice_cube"), 2)
+	PlayerData.add_item(CombatItemDb.get_item("ball"), 2)
+	PlayerData.add_item(CombatItemDb.get_item("memory_chip"), 2)
 	#PlayerData.add_item(CombatItemDb.get_item("beetlejuice"), 2)
 	_player_turn()
 
@@ -778,7 +784,8 @@ func _apply_axis_shift_with_multiplier(enemy: CombatEntity, guess_type: CombatTy
 		await _resolve_enemy_state(enemy)
 
 # Logic for starting enemy's minigame in combat
-func _start_minigame(enemy: CombatEntity):
+# play_explosion is false when the explosion VFX was already played for a group of creatures (consecutive minigames)
+func _start_minigame(enemy: CombatEntity, play_explosion := true):
 	if not EnemyDatabase.MINIGAME_SCENES.has(enemy.minigame_id):
 		push_error("Missing minigame: " + enemy.minigame_id)
 		return
@@ -788,8 +795,10 @@ func _start_minigame(enemy: CombatEntity):
 	in_minigame = true
 	
 	# Taming visuals
-	vfx.play_subdue(enemy_visual)
+	if play_explosion:
+		vfx.play_subdue(enemy_visual)
 	await player_visual.play_subdue()
+	enemy_visual.clear_minigame_highlight() # The highlight has done its job once the minigame starts
 	
 	# Minigame scene instantiation
 	var minigame = EnemyDatabase.MINIGAME_SCENES[enemy.minigame_id].instantiate()
@@ -841,6 +850,7 @@ func _on_minigame_damage_taken(amount: float, pos: Vector2):
 func on_minigame_complete(enemy: CombatEntity, success: bool):
 	# Getting enemy visual
 	var enemy_visual = enemy_visuals[enemy]
+	enemy_visual.clear_minigame_highlight()
 	
 	if success:
 		var restore_ratio := randf_range(0.2, 0.35)
@@ -865,6 +875,8 @@ func on_minigame_complete(enemy: CombatEntity, success: bool):
 
 # Performs a single enemy's attack pattern based on existing logic
 func _enemy_attack_single(enemy: CombatEntity):
+	enemy.turns_taken += 1
+	
 	# Setting enemy attack
 	var visual = enemy_visuals[enemy]
 	visual.z_index = 3
@@ -873,6 +885,9 @@ func _enemy_attack_single(enemy: CombatEntity):
 	# Support patterns
 	if pattern.is_support:
 		await _handle_support_pattern(enemy, pattern)
+		# Support patterns have no attack-finished handler, so the enemy's base layer is restored here (keeps the player above it)
+		if is_instance_valid(visual):
+			visual.z_index = 1
 		return
 	
 	# Setting attack position for enemy (relative to player)
@@ -1081,6 +1096,15 @@ func _on_player_block_attempted():
 	if turn != "enemy":
 		return
 	
+	# Ignores presses made right after the previous one
+	var now := Time.get_ticks_msec()
+	if now - last_block_input_msec < BLOCK_INPUT_LOCKOUT_MSEC:
+		return
+	last_block_input_msec = now
+	
+	# The block pose always plays on a press, even if the press does not count
+	player_visual.play_block_press()
+	
 	# Checks if block is currently on cooldown
 	if block_on_cooldown:
 		return
@@ -1116,6 +1140,10 @@ func _start_block_cooldown():
 	# After cooldown resets previous changes
 	block_on_cooldown = false
 	player_visual.set_block_cooldown(false)
+
+# A quick tame is a creature tamed before it got to take a single turn
+func _is_quick_tame(enemy: CombatEntity) -> bool:
+	return enemy.is_tamed() and enemy.turns_taken == 0
 
 # Chip restoring function for the player to gain back chips with crits; also acts as a softlock prevention method
 func _try_restore_chip(used_type: CombatTypes.EntityType, critical: bool):
@@ -1236,7 +1264,7 @@ func _ability_heat_up_sequence(ability: InventoryAbility):
 		minigame.queue_free()
 	
 	heat_up_pending_power_bonus = power_bonus
-	vfx.spawn_feedback(player_visual, "[color=#e72237ff][wave freq=14]Heated up![/wave][/color]")
+	vfx.spawn_info(player_visual, "[color=#e72237]Heated up![/color]")
 	vfx.spawn_damage_number(player_visual, power_bonus, true) # Power VFX
 	vfx.spawn_damage_number(player_visual, HEAT_UP_DEFENSE_PENALTY, false, true) # Defense VFX
 	await camera.reset_camera()
@@ -1263,7 +1291,7 @@ func _ability_harden_sequence(ability: InventoryAbility):
 	harden_turns_remaining = 1
 	_sync_player_stats()
 	
-	vfx.spawn_feedback(player_visual, "[color=#3d9feb][wave freq=14]Harden applied![/wave][/color]")
+	vfx.spawn_info(player_visual, "[color=#3d9feb]Harden applied![/color]")
 	vfx.spawn_damage_number(player_visual, defense_bonus, false, true)
 	
 
@@ -1328,7 +1356,7 @@ func _passive_microbots():
 			]
 			var restored_type = available_types.pick_random()
 			_restore_chip(restored_type)
-			vfx.spawn_feedback(player_visual, "[color=#eff238][wave freq=14]%s restored![/wave][/color]" % CombatTypes.guess_type_to_string(restored_type))
+			vfx.spawn_info(player_visual, "[color=#eff238]Chip restored![/color]\n%s" % CombatTypes.type_bbcode(restored_type))
 
 # Heals the player for a random amount between 20-50%
 func _item_beetle_juice_sequence(inventory_item: InventoryItem, target = null):
@@ -1341,7 +1369,7 @@ func _item_beetle_juice_sequence(inventory_item: InventoryItem, target = null):
 # Restores 1 or 2 random chips for the player
 func _item_memory_chip_sequence(item: InventoryItem, target):
 	var restore_count := randi_range(1, 2)
-	var restored_type
+	var restored_names: Array[String] = [] # Type names already colored as bbcode
 	var possible_types = [
 		CombatTypes.EntityType.SKY,
 		CombatTypes.EntityType.EARTH,
@@ -1350,19 +1378,21 @@ func _item_memory_chip_sequence(item: InventoryItem, target):
 	
 	possible_types.shuffle()
 	for i in range(min(restore_count, possible_types.size())):
-		restored_type = possible_types[i]
+		var restored_type = possible_types[i]
 		_restore_chip(restored_type)
+		restored_names.append(CombatTypes.type_bbcode(restored_type))
 	
-	vfx.spawn_feedback(
+	# Shows which chips were restored, colored by type (e.g. "Chips restored!" over "Sky + Earth")
+	vfx.spawn_info(
 		player_visual,
-		"[color=#eff238][wave freq=14]Restored![/wave][/color]"
+		"[color=#cfcfcf]Chips restored![/color]\n%s" % " + ".join(restored_names)
 	)
 
 # Grants even more block power for the player for 3 turns
 func _item_thick_jelly_sequence(item: InventoryItem, target):
 	thick_jelly_active = true
 	thick_jelly_turns_remaining = 4 # Actually 3 turns because of how combat reads effects
-	vfx.spawn_feedback(player_visual, "[color=#8be9fd][wave freq=14]Jelly applied![/wave][/color]")
+	vfx.spawn_info(player_visual, "[color=#8be9fd]Jelly applied![/color]")
 
 # Gives the player +1 power for 2 turns
 func _item_soft_branch_sequence(item: InventoryItem, target):
@@ -1371,7 +1401,7 @@ func _item_soft_branch_sequence(item: InventoryItem, target):
 	soft_branch_turns_remaining = 3 # Because of how combat reads effects, actually 2
 	_sync_player_stats()
 	
-	vfx.spawn_feedback(player_visual, "[color=#eff238][wave freq=14]Power up![/wave][/color]")
+	vfx.spawn_info(player_visual, "[color=#eff238]Power up![/color]")
 	vfx.spawn_damage_number(player_visual, soft_branch_power_bonus, true)
 
 # Throwable ball item that works like Multi-tame, but does not use chips to tame or kill: this is decided by the strength of the throw minigame
@@ -1395,7 +1425,7 @@ func _item_ball_sequence(item: InventoryItem, target: CombatEntity):
 func _item_ice_cube_sequence(item: InventoryItem, target):
 	ice_cube_active = true
 	ice_cube_turns_remaining = 4
-	vfx.spawn_feedback(player_visual, "[color=#8be9fd][wave freq=14]Cooling[/wave][/color]")
+	vfx.spawn_info(player_visual, "[color=#8be9fd]Cooling[/color]")
 
 # Hypnotizes enemies into a random axis value, never fully tames any enemies
 func _item_hypno_bone_sequence(item: InventoryItem, target):
@@ -1715,6 +1745,8 @@ func _resolve_enemy_state(enemy: CombatEntity):
 		await visual.play_defeat(false)
 	elif enemy.is_tamed():
 		visual.z_index = 1
+		if _is_quick_tame(enemy):
+			vfx.play_perfect_feedback(visual)
 		await visual.play_defeat(true)
 
 # Sets camera follow state for the turn with the turn variable
@@ -1795,6 +1827,10 @@ func _generate_rewards():
 		# Enamor chance to double a tamed creature's rewards
 		if enamor_chance:
 			gained_currency *= 2
+		
+		# Quick tame bonus: taming a creature before its first turn gives up to +3 bolts
+		if _is_quick_tame(enemy):
+			gained_currency += randi_range(1, QUICK_TAME_MAX_BONUS_CURRENCY)
 		
 		total_currency += gained_currency
 
@@ -1941,12 +1977,34 @@ func _resolve_pending_minigames():
 		if enemy.is_minigame_ready() and not enemy.is_tamed() and not enemy.is_killed():
 			ready.append(enemy)
 	
-	for enemy in ready:
+	# When several creatures were tamed at once, all of their explosions go off before entering the dreams
+	var group_explosion := ready.size() > 1
+	if group_explosion:
+		for enemy in ready:
+			if enemy_visuals.has(enemy):
+				vfx.play_subdue(enemy_visuals[enemy])
+	
+	for i in ready.size():
+		var enemy: CombatEntity = ready[i]
 		if enemy.is_killed() or enemy.is_tamed():
 			continue
 		if not enemy.is_minigame_ready():
 			continue
-		await _start_minigame(enemy)
+		
+		if group_explosion:
+			# Creatures still waiting (not the completed ones) get their explosion again, then the next one is highlighted
+			if i > 0:
+				for j in range(i, ready.size()):
+					var waiting: CombatEntity = ready[j]
+					if not waiting.is_killed() and not waiting.is_tamed() and enemy_visuals.has(waiting):
+						vfx.play_subdue(enemy_visuals[waiting])
+			if enemy_visuals.has(enemy):
+				await enemy_visuals[enemy].play_minigame_highlight()
+		
+		await _start_minigame(enemy, not group_explosion)
+		
+		if enemy_visuals.has(enemy):
+			enemy_visuals[enemy].clear_minigame_highlight()
 		
 		if combat_has_ended:
 			minigame_queue_ongoing = false
@@ -1980,7 +2038,7 @@ func _update_turn_start_effects():
 			print("Heat Up continues. %d turn left." % heat_up_turns_remaining)
 		else:
 			print("Heat Up ended.")
-			vfx.spawn_feedback(player_visual, "[color=#3d9feb][wave freq=14]Cooled down[/wave][/color]")
+			vfx.spawn_info(player_visual, "[color=#3d9feb]Cooled down[/color]")
 			heat_up_active = false
 			heat_up_power_bonus = 0
 			heat_up_turns_remaining = 0
@@ -1995,7 +2053,7 @@ func _update_turn_start_effects():
 			harden_active = false
 			harden_defense_bonus = 0.0
 			harden_turns_remaining = 0
-			vfx.spawn_feedback(player_visual, "[color=#e72237ff][wave freq=14]Harden ended[/wave][/color]")
+			vfx.spawn_info(player_visual, "[color=#e72237]Harden ended[/color]")
 			_sync_player_stats()
 	
 		# Thick Jelly: grants temporary stronger blocks
@@ -2005,7 +2063,7 @@ func _update_turn_start_effects():
 		
 		if thick_jelly_turns_remaining <= 0:
 			thick_jelly_active = false
-			vfx.spawn_feedback(player_visual, "[color=#e72237ff][wave freq=14]Jelly used up[/wave][/color]")
+			vfx.spawn_info(player_visual, "[color=#e72237]Jelly used up[/color]")
 			_sync_player_stats()
 	
 	# Soft Branch: temporary +1 power for 2 turns
@@ -2016,7 +2074,7 @@ func _update_turn_start_effects():
 		if soft_branch_turns_remaining <= 0:
 			soft_branch_active = false
 			soft_branch_power_bonus = 0.0
-			vfx.spawn_feedback(player_visual, "[color=#e72237ff][wave freq=14]Branch broke[/wave][/color]")
+			vfx.spawn_info(player_visual, "[color=#e72237]Branch broke[/color]")
 			_sync_player_stats()
 	
 	# Ice Cube: heals 10% max HP every turn for 3 turns
@@ -2029,7 +2087,7 @@ func _update_turn_start_effects():
 		
 		if ice_cube_turns_remaining <= 0:
 			ice_cube_active = false
-			vfx.spawn_feedback(player_visual, "[color=#8be9fd][wave freq=14]Ice melted[/wave][/color]")
+			vfx.spawn_info(player_visual, "[color=#8be9fd]Ice melted[/color]")
 
 # Player HP changing methods for better interaction with PlayerData
 func _set_player_hp(value: float):
@@ -2146,9 +2204,11 @@ func _roll_tamed_enemy_drops() -> Array:
 		if item_data == null:
 			continue
 		
-		var added := PlayerData.add_item(item_data, amount)
+		# Quick tame bonus: +1 of the dropped item
+		var drop_amount: int = amount + (QUICK_TAME_BONUS_ITEMS if _is_quick_tame(enemy) else 0)
+		var added := PlayerData.add_item(item_data, drop_amount)
 		if added:
-			_add_reward_item(item_rewards, item_data, amount)
+			_add_reward_item(item_rewards, item_data, drop_amount)
 	
 	return item_rewards
 
@@ -2253,13 +2313,7 @@ func _reveal_duck_type(enemy: CombatEntity):
 		return
 	
 	var color: Color = DUCK_TYPE_COLORS.get(enemy.type, Color.WHITE)
-	match enemy.type:
-		CombatTypes.EntityType.SKY:
-			vfx.spawn_feedback(visual, "[color=f7ff3c]Sky[/color]")
-		CombatTypes.EntityType.EARTH:
-			vfx.spawn_feedback(visual, "[color=8b5a2b]Earth[/color]")
-		CombatTypes.EntityType.WATER:
-			vfx.spawn_feedback(visual, "[color=4da6ff]Water[/color]")
+	vfx.spawn_info(visual, "Type revealed!\n%s" % CombatTypes.type_bbcode(enemy.type))
 	await _flash_enemy_type_color(visual, color, DUCK_TYPE_REVEAL_DURATION)
 
 func tutorial_begin_player_turn_locked():

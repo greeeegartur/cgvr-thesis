@@ -129,6 +129,44 @@ func hop(times := 1):
 		tween.tween_property(self, "position:y", orig.y - 18, 0.16)
 		tween.tween_property(self, "position:y", orig.y, 0.2)
 
+# Marks the creature whose minigame is up next: target arrow, a double pop and a warm flash
+var highlight_tween: Tween
+var highlight_active := false
+var base_visual_scale := Vector2.ONE
+var base_visual_modulate := Color.WHITE
+
+func play_minigame_highlight():
+	show_target_arrow()
+	
+	if highlight_tween:
+		highlight_tween.kill()
+	if not highlight_active:
+		base_visual_scale = visual.scale
+		base_visual_modulate = visual.modulate
+	highlight_active = true
+	
+	highlight_tween = create_tween()
+	for i in 2:
+		highlight_tween.tween_property(visual, "scale", base_visual_scale * 1.3, 0.1)
+		highlight_tween.parallel().tween_property(visual, "modulate", Color(1.0, 1.0, 0.55), 0.1)
+		highlight_tween.tween_property(visual, "scale", base_visual_scale, 0.14)
+		highlight_tween.parallel().tween_property(visual, "modulate", base_visual_modulate, 0.14)
+	await highlight_tween.finished
+
+# Removes the minigame highlight (arrow, scale and tint); defeat animations keep control of a defeated creature's look
+func clear_minigame_highlight():
+	if highlight_tween:
+		highlight_tween.kill()
+	
+	if highlight_active and not is_defeated:
+		visual.scale = base_visual_scale
+		visual.modulate = base_visual_modulate
+	highlight_active = false
+	
+	# Hides the arrow directly (hide_target_arrow ignores defeated creatures)
+	target_arrow.visible = false
+	target_arrow_anim.play("RESET")
+
 # Target arrow UI elements
 func show_target_arrow():
 	if target_arrow.visible:
