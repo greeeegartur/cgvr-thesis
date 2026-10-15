@@ -2313,7 +2313,7 @@ func _reveal_duck_type(enemy: CombatEntity):
 		return
 	
 	var color: Color = DUCK_TYPE_COLORS.get(enemy.type, Color.WHITE)
-	vfx.spawn_info(visual, "Type revealed!\n%s" % CombatTypes.type_bbcode(enemy.type))
+	vfx.spawn_info(visual, "%s" % CombatTypes.type_bbcode(enemy.type))
 	await _flash_enemy_type_color(visual, color, DUCK_TYPE_REVEAL_DURATION)
 
 func tutorial_begin_player_turn_locked():
