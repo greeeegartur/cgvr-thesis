@@ -34,7 +34,7 @@ var MINIGAME_SCENES = {
 # List of all enemy specific attributes that don't fit into their resources
 const DATA = {
 	"beetle": {
-		"attack_offset": Vector2(90, 3),
+		"attack_offset": Vector2(92.3, 3),
 		"move_speed": 240.0,
 		"drop_item_ids": ["beetlejuice", "ball", "soft_branch"]
 	},
@@ -44,12 +44,12 @@ const DATA = {
 		"drop_item_ids": ["hypno_bone", "soft_branch", "memory_chip"]
 	},
 	"frog": {
-		"attack_offset": Vector2(95, 0),
+		"attack_offset": Vector2(98.6, 0),
 		"move_speed": 200.0,
 		"drop_item_ids": ["thick_jelly", "ice_cube", "ball"]
 	},
 	"duck": {
-		"attack_offset": Vector2(107, 5),
+		"attack_offset": Vector2(109.85, 5),
 		"move_speed": 260.0,
 		"drop_item_ids": ["soft_branch", "memory_chip", "ball", "ice_cube"]
 	},

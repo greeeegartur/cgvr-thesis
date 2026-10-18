@@ -19,7 +19,7 @@ tracks/0/keys = {
 "times": PackedFloat32Array(0),
 "transitions": PackedFloat32Array(1),
 "update": 0,
-"values": [Vector2(2, -80)]
+"values": [Vector2(2, -87.2)]
 }
 tracks/1/type = "value"
 tracks/1/imported = false
@@ -60,7 +60,7 @@ tracks/0/keys = {
 "times": PackedFloat32Array(0, 0.4, 0.8, 1.2, 1.6),
 "transitions": PackedFloat32Array(1, 0.3298769, 2, 0.3298769, 2),
 "update": 0,
-"values": [Vector2(0, -75), Vector2(0, -90), Vector2(0, -75), Vector2(0, -90), Vector2(0, -75)]
+"values": [Vector2(0, -82.2), Vector2(0, -97.2), Vector2(0, -82.2), Vector2(0, -97.2), Vector2(0, -82.2)]
 }
 tracks/1/type = "value"
 tracks/1/imported = false
@@ -153,7 +153,7 @@ tracks/4/keys = {
 "times": PackedFloat32Array(0),
 "transitions": PackedFloat32Array(1),
 "update": 0,
-"values": [Vector2(1, 1)]
+"values": [Vector2(1.1611, 1.1611)]
 }
 tracks/5/type = "value"
 tracks/5/imported = false
@@ -177,7 +177,7 @@ tracks/6/keys = {
 "times": PackedFloat32Array(0),
 "transitions": PackedFloat32Array(1),
 "update": 0,
-"values": [Vector2(-10.000001, -16.000002)]
+"values": [Vector2(-11.4743, -21.2205)]
 }
 
 [sub_resource type="Animation" id="Animation_6ly4o"]
@@ -206,96 +206,6 @@ tracks/1/keys = {
 "transitions": PackedFloat32Array(1, 1),
 "update": 0,
 "values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
-}
-
-[sub_resource type="Animation" id="Animation_23ha3"]
-resource_name = "duck_tackle_single"
-length = 3.2
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath(".:frame")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.2, 0.4, 0.61364985, 0.8372832, 1.2821453, 1.3489454, 1.415612, 1.4822786, 1.5489452, 1.6156118, 1.6822784, 1.7489455, 1.8156121, 1.9060061, 2.3455672, 2.545567, 2.7455668, 2.9455671),
-"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
-"update": 1,
-"values": [1, 2, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 2, 0, 1, 0, 1]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath(".:position")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0, 1.2666667, 1.8700097, 2.1366768, 2.355321, 3.1),
-"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
-"update": 0,
-"values": [Vector2(0, 0), Vector2(-30.650848, -3.8313546), Vector2(-81.000015, -3.9999995), Vector2(-48.99999, -33.000004), Vector2(-32, 0), Vector2(0, 0)]
-}
-tracks/2/type = "value"
-tracks/2/imported = false
-tracks/2/enabled = true
-tracks/2/path = NodePath("../Screech:visible")
-tracks/2/interp = 1
-tracks/2/loop_wrap = true
-tracks/2/keys = {
-"times": PackedFloat32Array(0, 0.16666667),
-"transitions": PackedFloat32Array(1, 1),
-"update": 1,
-"values": [false, true]
-}
-tracks/3/type = "value"
-tracks/3/imported = false
-tracks/3/enabled = true
-tracks/3/path = NodePath("../Screech:modulate")
-tracks/3/interp = 1
-tracks/3/loop_wrap = true
-tracks/3/keys = {
-"times": PackedFloat32Array(0.16666667, 0.36666667, 0.56666666),
-"transitions": PackedFloat32Array(1, 1, 1),
-"update": 0,
-"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
-}
-tracks/4/type = "value"
-tracks/4/imported = false
-tracks/4/enabled = true
-tracks/4/path = NodePath("../Screech:scale")
-tracks/4/interp = 1
-tracks/4/loop_wrap = true
-tracks/4/keys = {
-"times": PackedFloat32Array(0.16666667, 0.56666666),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [Vector2(1, 1), Vector2(3, 3)]
-}
-tracks/5/type = "method"
-tracks/5/imported = false
-tracks/5/enabled = true
-tracks/5/path = NodePath("../..")
-tracks/5/interp = 1
-tracks/5/loop_wrap = true
-tracks/5/keys = {
-"times": PackedFloat32Array(1.8700337),
-"transitions": PackedFloat32Array(1),
-"values": [{
-"args": [],
-"method": &"on_attack_hit"
-}]
-}
-tracks/6/type = "value"
-tracks/6/imported = false
-tracks/6/enabled = true
-tracks/6/path = NodePath("../Screech:position")
-tracks/6/interp = 1
-tracks/6/loop_wrap = true
-tracks/6/keys = {
-"times": PackedFloat32Array(0, 0.6666667, 1.1065834),
-"transitions": PackedFloat32Array(1, 1, 1),
-"update": 0,
-"values": [Vector2(-10.000001, -16.000002), Vector2(-21, -16.000002), Vector2(-10.000001, -16.000002)]
 }
 
 [sub_resource type="Animation" id="Animation_yrf1u"]
@@ -359,7 +269,7 @@ tracks/4/keys = {
 "times": PackedFloat32Array(0.16666667, 0.56666666),
 "transitions": PackedFloat32Array(1, 1),
 "update": 0,
-"values": [Vector2(1, 1), Vector2(3, 3)]
+"values": [Vector2(1.1611, 1.1611), Vector2(3.4834, 3.4834)]
 }
 tracks/5/type = "method"
 tracks/5/imported = false
@@ -388,7 +298,97 @@ tracks/6/keys = {
 "times": PackedFloat32Array(0, 0.56666666),
 "transitions": PackedFloat32Array(1, 1),
 "update": 0,
-"values": [Vector2(-10.000001, -16.000002), Vector2(-21, -16.000002)]
+"values": [Vector2(-11.4743, -21.2205), Vector2(-24.2467, -21.2205)]
+}
+
+[sub_resource type="Animation" id="Animation_23ha3"]
+resource_name = "duck_tackle_single"
+length = 3.2
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.2, 0.4, 0.61364985, 0.8372832, 1.2821453, 1.3489454, 1.415612, 1.4822786, 1.5489452, 1.6156118, 1.6822784, 1.7489455, 1.8156121, 1.9060061, 2.3455672, 2.545567, 2.7455668, 2.9455671),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [1, 2, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 2, 0, 1, 0, 1]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 1.2666667, 1.8700097, 2.1366768, 2.355321, 3.1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0, 0), Vector2(-30.650848, -3.8313546), Vector2(-81.000015, -3.9999995), Vector2(-48.99999, -33.000004), Vector2(-32, 0), Vector2(0, 0)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("../Screech:visible")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.16666667),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [false, true]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("../Screech:modulate")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0.16666667, 0.36666667, 0.56666666),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("../Screech:scale")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0.16666667, 0.56666666),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(1.1611, 1.1611), Vector2(3.4834, 3.4834)]
+}
+tracks/5/type = "method"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("../..")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(1.8700337),
+"transitions": PackedFloat32Array(1),
+"values": [{
+"args": [],
+"method": &"on_attack_hit"
+}]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("../Screech:position")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0, 0.6666667, 1.1065834),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector2(-11.4743, -21.2205), Vector2(-24.2467, -21.2205), Vector2(-11.4743, -21.2205)]
 }
 
 [sub_resource type="Animation" id="Animation_x4blf"]
@@ -440,41 +440,43 @@ tracks/1/keys = {
 _data = {
 &"RESET": SubResource("Animation_7l13l"),
 &"death": SubResource("Animation_6ly4o"),
-&"duck_tackle_single": SubResource("Animation_23ha3"),
 &"duck_tackle_double": SubResource("Animation_yrf1u"),
+&"duck_tackle_single": SubResource("Animation_23ha3"),
 &"idle": SubResource("Animation_x4blf"),
 &"subdue": SubResource("Animation_7naox")
 }
 
 [node name="EnemyVisual" type="Node2D" unique_id=51252555]
 z_index = 1
+position = Vector2(0, 6)
 script = ExtResource("1_fvduc")
 
 [node name="EnemyAxisBar" parent="." unique_id=1967246209 instance=ExtResource("2_6raiu")]
 offset_left = -39.0
-offset_top = -45.0
+offset_top = -52.2
 offset_right = -39.0
-offset_bottom = -45.0
+offset_bottom = -52.2
 
 [node name="Visual" type="Node2D" parent="." unique_id=392927880]
 z_index = 1
 
 [node name="Sprite2D" type="Sprite2D" parent="Visual" unique_id=328531143]
 position = Vector2(0, -4)
-scale = Vector2(1.7, 1.7)
+scale = Vector2(1.6, 1.6)
 texture = ExtResource("3_bqvxm")
 vframes = 3
 
 [node name="Screech" type="Sprite2D" parent="Visual" unique_id=588986789]
 visible = false
-position = Vector2(-10.000001, -16.000002)
+position = Vector2(-11.4743, -21.2205)
+scale = Vector2(1.1611, 1.1611)
 texture = ExtResource("4_x4blf")
 
 [node name="TargetArrow" type="Node2D" parent="." unique_id=1669918180]
 visible = false
 
 [node name="Sprite2D" type="Sprite2D" parent="TargetArrow" unique_id=2043506705]
-position = Vector2(2, -80)
+position = Vector2(2, -87.2)
 texture = ExtResource("4_yee2c")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="TargetArrow" unique_id=63316333]
@@ -488,9 +490,9 @@ autoplay = &"idle"
 [node name="TurnOrder" type="Label" parent="." unique_id=30056701]
 visible = false
 offset_left = 13.0
-offset_top = -75.0
+offset_top = -82.2
 offset_right = 53.0
-offset_bottom = -50.0
+offset_bottom = -57.2
 theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
 theme_override_constants/outline_size = 5
 theme_override_fonts/font = ExtResource("5_cqi0o")

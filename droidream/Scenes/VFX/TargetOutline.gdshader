@@ -17,9 +17,16 @@ bool inside_frame(vec2 uv) {
 	return uv.x >= frame_rect.x && uv.y >= frame_rect.y && uv.x <= frame_rect.z && uv.y <= frame_rect.w;
 }
 
+// The inherited modulate (tint and fade from the pulse and the defeat animations); in fragment() COLOR is already multiplied by the texture
+varying vec4 tint;
+
+void vertex() {
+	tint = COLOR;
+}
+
 void fragment() {
 	vec4 base = texture(TEXTURE, UV);
-	COLOR = base;
+	COLOR = base * tint;
 	if (outline_width > 0.0 && base.a < 0.5) {
 		float ring1 = 0.0;
 		float ring2 = 0.0;
@@ -38,9 +45,9 @@ void fragment() {
 			}
 		}
 		if (ring1 > 0.5) {
-			COLOR = outline_color;
+			COLOR = vec4(outline_color.rgb, outline_color.a * tint.a);
 		} else if (outline_width > 1.0 && ring2 > 0.5) {
-			COLOR = vec4(outline_color.rgb, outline_color.a * (outline_width - 1.0));
+			COLOR = vec4(outline_color.rgb, outline_color.a * (outline_width - 1.0) * tint.a);
 		}
 	}
 }

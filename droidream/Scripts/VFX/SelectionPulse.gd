@@ -10,8 +10,8 @@ const POP_SCALE := 0.10 # How much a main target grows at the peak
 const TINT_COLOR := Color(1.0, 0.9, 0.4)
 const TINT_AMOUNT := 0.5 # How far a main target is tinted at the peak
 const FLASH_DIP := 0.45 # How far a main target's opacity dips mid-beat (the selection flash)
-const ARROW_LOW := -75.0
-const ARROW_HIGH := -90.0
+const ARROW_LOW := 5.0 # Arrow offset from its rest position at the start of the beat
+const ARROW_HIGH := -10.0 # ...and at the middle of the beat
 const ARROW_SCALE_LOW := 1.0
 const ARROW_SCALE_HIGH := 1.2
 const OUTLINE_SHADER := preload("res://Scenes/VFX/TargetOutline.gdshader")
@@ -19,6 +19,7 @@ const OUTLINE_SHADER := preload("res://Scenes/VFX/TargetOutline.gdshader")
 var owner: Node
 var visual: Node2D # Node that pops and is tinted
 var arrow: Sprite2D # Arrow that bobs in rhythm (can be null)
+var arrow_rest := Vector2.ZERO # Where the arrow sits when not pulsing
 var body: Sprite2D # Sprite that receives the outline
 var material: ShaderMaterial
 var tween: Tween
@@ -44,6 +45,8 @@ func start(p_strength: float, outline_width: float, p_arrow: Sprite2D = null, p_
 	strength = p_strength
 	arrow = p_arrow
 	arrow_factor = p_arrow_factor
+	if arrow:
+		arrow_rest = arrow.position
 	base_scale = visual.scale
 	base_modulate = visual.modulate
 	if material:
@@ -58,16 +61,19 @@ func start(p_strength: float, outline_width: float, p_arrow: Sprite2D = null, p_
 
 # Stops pulsing and restores scale, tint, outline and the arrow
 func stop():
+	# Only restores when it was pulsing, so a late stop() cannot undo a defeat animation
+	var was_pulsing := tween != null
 	if tween:
 		tween.kill()
 		tween = null
-	if is_instance_valid(visual) and base_scale != Vector2.ZERO:
+	if was_pulsing and is_instance_valid(visual):
 		visual.scale = base_scale
 		visual.modulate = base_modulate
 	if material:
 		material.set_shader_parameter("outline_width", 0.0)
 	if is_instance_valid(arrow):
 		arrow.modulate.a = 1.0
+		arrow.position = arrow_rest
 	arrow = null
 
 # Tells the outline shader which part of the sprite sheet is the current frame, so it cannot read neighboring frames
@@ -104,5 +110,5 @@ func _apply(phase: float):
 	
 	# Arrow bob: low at the start of the beat, highest in the middle
 	if arrow and is_instance_valid(arrow):
-		arrow.position = Vector2(0.0, lerpf(ARROW_LOW, ARROW_HIGH, wave))
+		arrow.position = arrow_rest + Vector2(0.0, lerpf(ARROW_LOW, ARROW_HIGH, wave))
 		arrow.scale = Vector2.ONE * lerpf(ARROW_SCALE_HIGH, ARROW_SCALE_LOW, wave) * arrow_factor

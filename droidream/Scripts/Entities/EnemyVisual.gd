@@ -58,6 +58,9 @@ func play_support(animation_name: String):
 
 # Plays from CombatManager to decide defeat animation
 func play_defeat(subdued: bool):
+	# Selection pulse and minigame highlight must not fight the defeat animation over scale and modulate
+	clear_target_markers()
+	clear_minigame_highlight()
 	is_defeated = true
 	anim.play("subdue" if subdued else "death")
 

@@ -63,10 +63,10 @@ func _set_texture(texture: Texture2D):
 		texture_tween.kill()
 	
 	sprite.texture = texture
-	sprite.scale = Vector2(0.72, 0.88)
+	sprite.scale = Vector2(1.44, 1.76)
 	
 	texture_tween = create_tween()
-	texture_tween.tween_property(sprite, "scale", Vector2(0.8, 0.8), 0.12)\
+	texture_tween.tween_property(sprite, "scale", Vector2(1.6, 1.6), 0.12)\
 		.set_trans(Tween.TRANS_BACK)\
 		.set_ease(Tween.EASE_OUT)
 

@@ -111,7 +111,6 @@ position = Vector2(563, 283)
 
 [node name="TuhU" parent="World" unique_id=983720807 instance=ExtResource("5_33lju")]
 position = Vector2(166, 227.00002)
-scale = Vector2(0.9, 0.9)
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1372294674]
 
