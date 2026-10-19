@@ -8,7 +8,6 @@
 [ext_resource type="Script" uid="uid://dcdpqt4rgapox" path="res://Scripts/UI/CombatUI.gd" id="5_jbvax"]
 [ext_resource type="PackedScene" uid="uid://6f0q2xbuuu16" path="res://Scenes/UI/PlayerTurnUI.tscn" id="6_hp5wx"]
 [ext_resource type="Script" uid="uid://dqcuun735xvqm" path="res://Scripts/Combat/CameraController.gd" id="6_map6f"]
-[ext_resource type="PackedScene" uid="uid://dcb28riflpghv" path="res://Scenes/UI/InventoryHudIcon.tscn" id="7_hrv55"]
 [ext_resource type="PackedScene" uid="uid://bilcw1d1fyc74" path="res://Scenes/UI/PlayerStatsHUD.tscn" id="8_h4w16"]
 [ext_resource type="PackedScene" uid="uid://cdsa8xop7dyes" path="res://Scenes/UI/SpeechBubble.tscn" id="8_u2gab"]
 [ext_resource type="PackedScene" uid="uid://b8tix1tnrjrpr" path="res://Scenes/UI/TutorialText.tscn" id="9_ls7or"]
@@ -157,7 +156,6 @@ libraries/ = SubResource("AnimationLibrary_xkm2r")
 
 [node name="CombatUI" type="Node" parent="UI" unique_id=1742265900]
 script = ExtResource("5_jbvax")
-InventoryHudIconScene = ExtResource("7_hrv55")
 
 [node name="PlayerTurnUi" parent="UI/CombatUI" unique_id=1985090969 instance=ExtResource("6_hp5wx")]
 

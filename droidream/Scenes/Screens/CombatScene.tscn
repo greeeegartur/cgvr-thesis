@@ -23,7 +23,6 @@
 [ext_resource type="PackedScene" uid="uid://dc0p2hfu0gp6r" path="res://Scenes/UI/DeathScreen.tscn" id="15_kwghb"]
 [ext_resource type="PackedScene" uid="uid://cwntedolisxe8" path="res://Scenes/UI/BoonSelectionScreen.tscn" id="17_ad845"]
 [ext_resource type="PackedScene" uid="uid://bilcw1d1fyc74" path="res://Scenes/UI/PlayerStatsHUD.tscn" id="20_lkk3l"]
-[ext_resource type="PackedScene" uid="uid://dcb28riflpghv" path="res://Scenes/UI/InventoryHudIcon.tscn" id="20_mrytc"]
 [ext_resource type="PackedScene" uid="uid://mnb3nvh3ofas" path="res://Scenes/VFX/HitFeedbackText.tscn" id="22_b7ydo"]
 [ext_resource type="Texture2D" uid="uid://dhg3luy17q64k" path="res://Graphics/Sprites/VFX/speedlines.png" id="23_ad845"]
 [ext_resource type="PackedScene" uid="uid://cdsa8xop7dyes" path="res://Scenes/UI/SpeechBubble.tscn" id="23_gemcu"]
@@ -158,7 +157,6 @@ visible = false
 
 [node name="CombatUI" type="Node" parent="UI" unique_id=1171448395]
 script = ExtResource("1_memue")
-InventoryHudIconScene = ExtResource("20_mrytc")
 
 [node name="PlayerStatsHUD" parent="UI/CombatUI" unique_id=501279696 instance=ExtResource("20_lkk3l")]
 

@@ -1,64 +1,68 @@
-[gd_scene load_steps=5 format=3 uid="uid://bilcw1d1fyc74"]
+[gd_scene format=3 uid="uid://bilcw1d1fyc74"]
 
 [ext_resource type="Texture2D" uid="uid://ceg2xuh76gad5" path="res://Graphics/Sprites/Minigames/BeetleRush/tamePowerIcon.png" id="1_f8kt3"]
 [ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="2_0775a"]
 [ext_resource type="Texture2D" uid="uid://ertbyem16l54" path="res://Graphics/Sprites/Minigames/BeetleRush/defenseIcon.png" id="3_de6p7"]
 [ext_resource type="Texture2D" uid="uid://urxx3qi5l8d0" path="res://Graphics/Sprites/VFX/bolt.png" id="4_q88xl"]
+[ext_resource type="Script" path="res://Scripts/UI/HudSlotRow.gd" id="5_row"]
+[ext_resource type="Texture2D" uid="uid://dwxh5x6vwpat8" path="res://Graphics/Sprites/UI/abilitiesIcon.png" id="6_abil"]
+[ext_resource type="Texture2D" uid="uid://dn6qn615b2785" path="res://Graphics/Sprites/UI/itemsIcon.png" id="7_items"]
 
 [node name="PlayerStatsHUD" type="Control"]
 layout_mode = 3
 anchors_preset = 0
-offset_right = 157.0
-offset_bottom = 40.0
+offset_right = 300.0
+offset_bottom = 72.0
 
-[node name="PowerRow" type="Node2D" parent="."]
-position = Vector2(5, 2)
+[node name="PowerRow" type="Control" parent="."]
+anchors_preset = 0
+offset_left = 6.0
+offset_top = 2.0
 
 [node name="Icon" type="TextureRect" parent="PowerRow"]
-offset_top = -2.9999995
-offset_right = 27.0
-offset_bottom = 25.0
-scale = Vector2(1.6, 1.6)
+layout_mode = 0
+offset_right = 32.0
+offset_bottom = 32.0
 texture = ExtResource("1_f8kt3")
+expand_mode = 1
 stretch_mode = 5
-metadata/_edit_use_anchors_ = true
 
 [node name="Label" type="Label" parent="PowerRow"]
-offset_left = 11.0
-offset_top = 15.0
-offset_right = 30.0
-offset_bottom = 31.0
+layout_mode = 0
+offset_left = 35.0
+offset_top = 7.0
+offset_right = 75.0
+offset_bottom = 25.0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 3
+theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("2_0775a")
 theme_override_font_sizes/font_size = 16
-text = "10"
-horizontal_alignment = 1
-metadata/_edit_use_anchors_ = true
+text = "+2"
 
-[node name="DefenseRow" type="Node2D" parent="."]
-position = Vector2(50, 2)
+[node name="DefenseRow" type="Control" parent="."]
+anchors_preset = 0
+offset_left = 6.0
+offset_top = 36.0
 
 [node name="Icon" type="TextureRect" parent="DefenseRow"]
-offset_right = 27.0
-offset_bottom = 28.0
-scale = Vector2(1.5, 1.5)
+layout_mode = 0
+offset_right = 32.0
+offset_bottom = 32.0
 texture = ExtResource("3_de6p7")
+expand_mode = 1
 stretch_mode = 5
-metadata/_edit_use_anchors_ = true
 
 [node name="Label" type="Label" parent="DefenseRow"]
-offset_left = 7.0
-offset_top = 12.0
-offset_right = 32.0
-offset_bottom = 28.0
+layout_mode = 0
+offset_left = 35.0
+offset_top = 7.0
+offset_right = 75.0
+offset_bottom = 25.0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 3
+theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("2_0775a")
 theme_override_font_sizes/font_size = 16
-text = "10"
-horizontal_alignment = 1
-metadata/_edit_use_anchors_ = true
+text = "+2"
 
 [node name="BoltsRow" type="HBoxContainer" parent="."]
 layout_mode = 0
@@ -71,7 +75,6 @@ offset_bottom = 21.0
 layout_mode = 2
 texture = ExtResource("4_q88xl")
 stretch_mode = 5
-metadata/_edit_use_anchors_ = true
 
 [node name="Label" type="Label" parent="BoltsRow"]
 layout_mode = 2
@@ -81,50 +84,22 @@ theme_override_fonts/font = ExtResource("2_0775a")
 theme_override_font_sizes/font_size = 16
 text = "x10"
 horizontal_alignment = 1
-metadata/_edit_use_anchors_ = true
 
-[node name="AbilitiesRow" type="HBoxContainer" parent="."]
-layout_direction = 2
-layout_mode = 0
-offset_left = 193.0
+[node name="AbilitiesRow" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 82.0
 offset_top = 2.0
-offset_right = 334.0
-offset_bottom = 23.0
-theme_override_constants/separation = 4
+script = ExtResource("5_row")
+preset = 1
+header_icon = ExtResource("6_abil")
 
-[node name="AbilitiesLabel" type="Label" parent="."]
-layout_mode = 0
-offset_left = 96.0
-offset_top = 4.0
-offset_right = 192.0
-offset_bottom = 20.0
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 3
-theme_override_fonts/font = ExtResource("2_0775a")
-theme_override_font_sizes/font_size = 16
-text = "Abilities: (0/6)"
-horizontal_alignment = 1
-metadata/_edit_use_anchors_ = true
-
-[node name="ItemsLabel" type="Label" parent="."]
-layout_mode = 0
-offset_left = 96.0
-offset_top = 25.0
-offset_right = 172.0
-offset_bottom = 41.0
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 3
-theme_override_fonts/font = ExtResource("2_0775a")
-theme_override_font_sizes/font_size = 16
-text = "Items: (0/6)"
-horizontal_alignment = 1
-metadata/_edit_use_anchors_ = true
-
-[node name="ItemsRow" type="HBoxContainer" parent="."]
-layout_direction = 2
-layout_mode = 0
-offset_left = 173.0
-offset_top = 23.0
-offset_right = 314.0
-offset_bottom = 43.0
-theme_override_constants/separation = 4
+[node name="ItemsRow" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 82.0
+offset_top = 36.0
+script = ExtResource("5_row")
+preset = 2
+header_icon = ExtResource("7_items")
+popup_color = Color(0.82, 0.96, 1, 1)
