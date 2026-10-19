@@ -10,6 +10,7 @@ const ROW_HEIGHT := 32
 const SLOT_GAP := 2
 const HEADER_WIDTH := 36
 const POPUP_HOLD := 1.2
+const COUNT_FONT_SIZE := 12 # Stack counts are smaller than the 16 px text
 const HOP_PIXELS := 3.0
 const EMPTY_STYLE_BASE := Color(0.16, 0.16, 0.16)
 
@@ -53,13 +54,13 @@ func _ready() -> void:
 		icons.append(icon)
 		
 		var count := Label.new()
-		count.size = Vector2(SLOT_SIZE, 16)
-		count.position = Vector2(1, SLOT_SIZE - 15)
+		count.size = Vector2(SLOT_SIZE, 13)
+		count.position = Vector2(1, SLOT_SIZE - 13)
 		count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		count.add_theme_font_override("font", UIRow.FONT)
-		count.add_theme_font_size_override("font_size", UIRow.FONT_SIZE)
+		count.add_theme_font_size_override("font_size", COUNT_FONT_SIZE)
 		count.add_theme_color_override("font_outline_color", Color.BLACK)
-		count.add_theme_constant_override("outline_size", 4)
+		count.add_theme_constant_override("outline_size", 3)
 		count.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		slot.add_child(count)
 		counts.append(count)

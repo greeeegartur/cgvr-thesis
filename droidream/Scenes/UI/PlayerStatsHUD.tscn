@@ -88,7 +88,7 @@ horizontal_alignment = 1
 [node name="AbilitiesRow" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 82.0
+offset_left = 74.0
 offset_top = 2.0
 script = ExtResource("5_row")
 preset = 1
@@ -97,7 +97,7 @@ header_icon = ExtResource("6_abil")
 [node name="ItemsRow" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 82.0
+offset_left = 74.0
 offset_top = 36.0
 script = ExtResource("5_row")
 preset = 2

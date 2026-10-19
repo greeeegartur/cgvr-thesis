@@ -75,6 +75,9 @@ var gear_beat_tween: Tween
 var gear_beat_sprite: Sprite2D # Sprite of the selected option that bounces on the beat
 var gear_beat_label: Label # Its text hops with it
 var gear_beat_label_rest := 0.0
+var gear_flash_material: ShaderMaterial # Flashes the selected option's text toward white
+
+const GEAR_LABEL_REST := Color(0.85, 0.85, 0.85) # The text rests a little below white and flashes up to it
 var tame_title: Label # "Tame as..." above the tame type panel
 
 const GEAR_ARROW_GAP := 10.0 # Distance from the selected icon to each arrow
@@ -152,6 +155,11 @@ func _start_gear_beat():
 	gear_beat_sprite = option.get_child(0) as Sprite2D
 	gear_beat_label = option.get_node("Label") as Label
 	gear_beat_label_rest = gear_beat_label.position.y
+	if gear_flash_material == null:
+		gear_flash_material = ShaderMaterial.new()
+		gear_flash_material.shader = preload("res://Scenes/UI/FlashWhite.gdshader")
+	gear_beat_label.material = gear_flash_material
+	gear_beat_label.self_modulate = GEAR_LABEL_REST
 	gear_beat_tween = create_tween().set_loops()
 	gear_beat_tween.tween_method(func(phase: float):
 		var envelope := SelectionPulse.beat_envelope(phase)
@@ -159,6 +167,7 @@ func _start_gear_beat():
 		var hop := roundf(GEAR_BEAT_HOP * envelope) # Whole pixels, so the text stays crisp
 		gear_beat_sprite.position.y = -hop
 		gear_beat_label.position.y = gear_beat_label_rest - hop
+		gear_flash_material.set_shader_parameter("flash", envelope)
 	, 0.0, 1.0, SelectionPulse.BEAT)
 
 func _stop_gear_beat():
@@ -169,6 +178,8 @@ func _stop_gear_beat():
 		gear_beat_sprite.scale = Vector2.ONE
 		gear_beat_sprite.position.y = 0.0
 		gear_beat_label.position.y = gear_beat_label_rest
+		gear_beat_label.self_modulate = Color.WHITE
+		gear_beat_label.material = null
 		gear_beat_sprite = null
 
 # Starts the player turn, reveals the gear menu and starts allowing input

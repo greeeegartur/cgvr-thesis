@@ -125,8 +125,6 @@ follow_viewport_enabled = true
 
 [node name="TutorialText" parent="UI" unique_id=1873582270 instance=ExtResource("9_ls7or")]
 visible = false
-scale = Vector2(2.5, 2.5)
-transform = Transform2D(2.5, 0, 0, 2.5, 0, 0)
 
 [node name="HintNode" type="Node2D" parent="UI" unique_id=430952229]
 visible = false

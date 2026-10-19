@@ -27,6 +27,8 @@ var strength := 1.0
 var arrow_factor := 1.0
 var base_scale := Vector2.ONE
 var base_position := Vector2.ZERO
+var dip := FLASH_DIP # How far the opacity dips on the beat (0 = never dims)
+var flash_target # Optional node with set_flash(amount): flashes toward white on the beat instead of dimming
 var tint_amount := TINT_AMOUNT # 0 = no color change, only the opacity flash (menus and cards)
 var use_scale := true # False for text and art that must stay crisp: they hop in whole pixels instead
 var hop_pixels := 0.0 # Height of the whole-pixel hop at the peak of the beat (0 = no hop)
@@ -75,6 +77,8 @@ func stop():
 		visual.scale = base_scale
 		visual.position = base_position
 		visual.modulate = base_modulate
+	if flash_target:
+		flash_target.set_flash(0.0)
 	if material:
 		material.set_shader_parameter("outline_width", 0.0)
 	if is_instance_valid(arrow):
@@ -116,8 +120,10 @@ func _apply(phase: float):
 	if hop_pixels > 0.0:
 		visual.position.y = base_position.y - roundf(hop_pixels * envelope)
 	var tinted := base_modulate.lerp(TINT_COLOR, tint_amount * strength * envelope)
-	tinted.a = base_modulate.a * (1.0 - FLASH_DIP * strength * wave) # Opacity flash, weaker for the other targets
+	tinted.a = base_modulate.a * (1.0 - dip * strength * wave) # Opacity flash, weaker for the other targets
 	visual.modulate = tinted
+	if flash_target:
+		flash_target.set_flash(envelope)
 	
 	# Arrow bob: low at the start of the beat, highest in the middle
 	if arrow and is_instance_valid(arrow):

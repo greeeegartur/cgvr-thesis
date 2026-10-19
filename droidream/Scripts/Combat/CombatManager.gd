@@ -589,7 +589,7 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	camera.follow(player_visual, 60)
 	
 	# Shows crit hint text for the player + allows inputs for crit
-	tutorial_text.show_hint(TutorialText.HintType.CRIT)
+	tutorial_text.show_hint(TutorialText.HintType.CRIT, enemy_visual)
 	player_visual.set_input_enabled(true)
 	
 	# Communication with PlayerVisual to calculate hit damage (check for critical hits) and play attack animations
@@ -890,7 +890,7 @@ func _enemy_attack_single(enemy: CombatEntity):
 	
 	# Camera controls + tutorial text visible
 	camera.follow(visual, -60)
-	tutorial_text.show_hint(TutorialText.HintType.BLOCK)
+	tutorial_text.show_hint(TutorialText.HintType.BLOCK, player_visual)
 	await _play_enemy_attack_pattern(enemy, visual, pattern)
 
 # Handles support patterns respectively for each enemy, TO-DO: edit for separate enemies so anyone can pass check
@@ -1174,7 +1174,7 @@ func _ability_repair_sequence(ability: InventoryAbility):
 	await get_tree().create_timer(0.2).timeout
 	camera.ability_focus_on_player(player_visual, Vector2(1.4, 1.4), 3.5)
 	
-	tutorial_text.show_hint(TutorialText.HintType.REPAIR)
+	tutorial_text.show_hint(TutorialText.HintType.REPAIR, player_visual)
 	
 	# Repair game logic
 	while timer < duration:
@@ -1226,7 +1226,7 @@ func _ability_multi_tame_sequence(ability: InventoryAbility, target: CombatEntit
 	var minigame = minigame_scene.instantiate()
 	minigame_layer.add_child(minigame)
 	
-	tutorial_text.show_hint(TutorialText.HintType.MULTITAME)
+	tutorial_text.show_hint(TutorialText.HintType.MULTITAME, enemy_visuals[target])
 	minigame.play()
 	multiplier = await minigame.finished
 	minigame.queue_free()
@@ -1242,7 +1242,7 @@ func _ability_heat_up_sequence(ability: InventoryAbility):
 	
 	camera.follow(player_visual)
 	await get_tree().create_timer(0.2).timeout
-	tutorial_text.show_hint(TutorialText.HintType.HEATUP)
+	tutorial_text.show_hint(TutorialText.HintType.HEATUP, player_visual)
 	camera.ability_focus_on_player(player_visual, Vector2(1.3, 1.3), 5.0)
 
 	minigame.prompt_hit.connect(
@@ -1271,7 +1271,7 @@ func _ability_harden_sequence(ability: InventoryAbility):
 	var minigame_scene = preload("res://Scenes/PlayerActions/HardenMinigame.tscn")
 	var minigame = minigame_scene.instantiate()
 	minigame_layer.add_child(minigame)
-	tutorial_text.show_hint(TutorialText.HintType.HARDEN)
+	tutorial_text.show_hint(TutorialText.HintType.HARDEN, player_visual)
 	
 	minigame.play()
 	var defense_bonus: float = await minigame.finished
@@ -1404,7 +1404,7 @@ func _item_ball_sequence(item: InventoryItem, target: CombatEntity):
 	var meter_scene = preload("res://Scenes/PlayerActions/BallMinigame.tscn")
 	var meter = meter_scene.instantiate()
 	minigame_layer.add_child(meter)
-	tutorial_text.show_hint(TutorialText.HintType.BALL)
+	tutorial_text.show_hint(TutorialText.HintType.BALL, enemy_visuals[target])
 	
 	meter.play()
 	var result = await meter.finished

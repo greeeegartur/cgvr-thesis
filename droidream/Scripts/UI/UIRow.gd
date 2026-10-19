@@ -13,7 +13,9 @@ const SLIDE := 4.0 # How far a selected row slides right
 const RIGHT_PAD := 8.0 # Room after the content, so the bar always extends past the right text (even when popped)
 const NUDGE := 2.0 # How far a selected row moves right at the peak of the beat (pixels)
 const BOUNCE_DISTANCE := 5.0 # How far it jolts when the cursor arrives (pixels)
-const DIM := Color(0.6, 0.6, 0.6)
+const DIM := Color(0.55, 0.55, 0.55)
+const SELECTED_REST := Color(0.85, 0.85, 0.85) # Selected text rests a little below white and flashes up to it on the beat
+const FLASH_SHADER := preload("res://Scenes/UI/FlashWhite.gdshader")
 const BOUNCE_TIME := 0.16 # Jolt when the cursor arrives
 
 var content: HBoxContainer
@@ -21,6 +23,7 @@ var icon_rect: TextureRect
 var text_label: Label
 var right_label: Label
 var pip_box: HBoxContainer
+var flash_material: ShaderMaterial
 var selected := false
 var pulse_tween: Tween
 var slide_tween: Tween
@@ -59,6 +62,13 @@ func _init() -> void:
 	pip_box.add_theme_constant_override("separation", 1)
 	content.add_child(pip_box)
 	
+	# The whole row's content flashes through one shared material
+	flash_material = ShaderMaterial.new()
+	flash_material.shader = FLASH_SHADER
+	content.material = flash_material
+	for node in [icon_rect, text_label, right_label, pip_box]:
+		node.use_parent_material = true
+	
 	set_selected(false, false)
 
 func _make_label() -> Label:
@@ -92,6 +102,7 @@ func set_pips(pips: int, pips_dim := 0) -> void:
 		pip.self_modulate = PIP_COLOR * (0.3 if i < pips_dim else 1.0)
 		pip.modulate.a = 1.0
 		pip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		pip.use_parent_material = true
 		pip_box.add_child(pip)
 
 func set_right_text(text: String) -> void:
@@ -116,7 +127,7 @@ func set_selected(value: bool, animate := true) -> void:
 		slide_tween.kill()
 	
 	var target_x := MARKER_WIDTH + (SLIDE if value else 0.0)
-	var target_color := Color.WHITE if value else DIM
+	var target_color := SELECTED_REST if value else DIM
 	if animate:
 		slide_tween = create_tween().set_parallel()
 		slide_tween.tween_method(_set_slide_x, slide_x, target_x, 0.12)
@@ -126,6 +137,7 @@ func set_selected(value: bool, animate := true) -> void:
 		content.modulate = target_color
 	nudge_x = 0.0
 	_apply_x()
+	flash_material.set_shader_parameter("flash", 0.0)
 	
 	if value and is_inside_tree():
 		if animate:
@@ -161,9 +173,9 @@ func _stop_pulse() -> void:
 		pulse_tween.kill()
 		pulse_tween = null
 
-# One point of the beat (phase 0..1): a 1-2 px nudge and the opacity flash
+# One point of the beat (phase 0..1): a 1-2 px nudge and a flash toward white
 func _apply_pop(phase: float) -> void:
 	var envelope := SelectionPulse.beat_envelope(phase)
 	nudge_x = NUDGE * envelope
 	_apply_x()
-	content.modulate = Color(1, 1, 1, 1.0 - SelectionPulse.FLASH_DIP * (0.5 - 0.5 * cos(phase * TAU))) # Same opacity flash as the creatures
+	flash_material.set_shader_parameter("flash", envelope) # Flashes toward white instead of dimming

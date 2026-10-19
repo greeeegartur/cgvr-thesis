@@ -114,7 +114,9 @@ func _update_selection():
 			var pulse := SelectionPulse.new(self, container)
 			pulse.use_scale = false # Scaling blurs the art and text; the card hops in whole pixels instead
 			pulse.hop_pixels = HOP_PIXELS
-			pulse.tint_amount = 0.0 # Same opacity flash as the creatures, no color change
+			pulse.tint_amount = 0.0 # No color change and no dimming: the card flashes toward white instead
+			pulse.dip = 0.0
+			pulse.flash_target = container
 			pulse.start(PULSE_STRENGTH, 0.0)
 			pulse_tweens[i] = pulse
 		else:

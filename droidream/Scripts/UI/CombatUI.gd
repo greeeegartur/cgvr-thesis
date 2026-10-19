@@ -4,13 +4,15 @@ extends Node
 
 @onready var manager: CombatManager
 @onready var player_stats_hud := $PlayerStatsHUD
-@onready var power_row: Control = $PlayerStatsHUD/PowerRow
 @onready var power_label: Label = $PlayerStatsHUD/PowerRow/Label
-@onready var defense_row: Control = $PlayerStatsHUD/DefenseRow
 @onready var defense_label: Label = $PlayerStatsHUD/DefenseRow/Label
 @onready var bolts_label: Label = $PlayerStatsHUD/BoltsRow/Label
 @onready var abilities_row: HudSlotRow = $PlayerStatsHUD/AbilitiesRow
 @onready var items_row: HudSlotRow = $PlayerStatsHUD/ItemsRow
+
+const STAT_FONT_SIZE := 16
+const STAT_FONT_SMALL := 12 # Used when a stat text such as +0.25 would reach the slot rows
+const STAT_TEXT_MAX_WIDTH := 36.0 # Space between a stat icon and its slot row
 
 signal turn_order_toggled(enabled: bool)
 var turn_order_enabled := false
@@ -53,17 +55,20 @@ func _update_player_stats_hud():
 		shown_power = manager.player.attack_power
 		shown_defense = manager.player.defense
 	
-	# Only what the player gained (or lost for now) is shown, e.g. +2; nothing while there is no difference
-	_show_stat_gain(power_row, power_label, shown_power - PlayerData.BASE_ATTACK)
-	_show_stat_gain(defense_row, defense_label, shown_defense - PlayerData.BASE_DEFENSE)
+	# Only what the player gained (or lost for now) is shown, e.g. +2; +0 while there is no difference
+	_show_stat_gain(power_label, shown_power - PlayerData.BASE_ATTACK)
+	_show_stat_gain(defense_label, shown_defense - PlayerData.BASE_DEFENSE)
 	bolts_label.text = "x%d" % PlayerData.currency
 
-# Shows a stat's difference from its base as a signed number, or hides the whole row when there is none
-func _show_stat_gain(row: Control, label: Label, gain: float) -> void:
+# Shows a stat's difference from its base as a signed number; the text gets smaller if it would reach the slot rows
+func _show_stat_gain(label: Label, gain: float) -> void:
 	var rounded := Utils.quantize(gain)
-	row.visible = not is_zero_approx(rounded)
-	label.text = ("+" if rounded > 0.0 else "") + _format_quarter(rounded)
-	label.add_theme_color_override("font_color", Color.WHITE if rounded > 0.0 else Color("#ff8a80"))
+	label.text = ("+" if rounded >= 0.0 else "") + _format_quarter(rounded)
+	label.add_theme_color_override("font_color", Color("#ff8a80") if rounded < 0.0 else (Color.WHITE if rounded > 0.0 else Color(0.75, 0.75, 0.75)))
+	
+	var font := label.get_theme_font("font")
+	var fits := font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, STAT_FONT_SIZE).x <= STAT_TEXT_MAX_WIDTH
+	label.add_theme_font_size_override("font_size", STAT_FONT_SIZE if fits else STAT_FONT_SMALL)
 
 func _format_quarter(value: float) -> String:
 	var rounded = round(value * 4.0) / 4.0

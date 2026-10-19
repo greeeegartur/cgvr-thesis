@@ -10,7 +10,7 @@
 script = ExtResource("2_m67jr")
 enemy_id = "duck"
 name = "Great Duck"
-max_hp = 8.0
+max_hp = 7.5
 attack = 1
 trust_max = 2
 minigame_id = "duck_flap"

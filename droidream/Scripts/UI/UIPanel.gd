@@ -121,3 +121,8 @@ func _sync_highlight() -> void:
 	highlight.patch_margin_bottom = patch_margin_bottom
 	highlight.position = Vector2(-highlight_width, -highlight_width)
 	highlight.size = size + Vector2(highlight_width, highlight_width) * 2.0
+
+# Flashes the panel's bright parts and every child that uses its material toward white (0..1)
+func set_flash(amount: float) -> void:
+	if material:
+		(material as ShaderMaterial).set_shader_parameter("flash", amount)

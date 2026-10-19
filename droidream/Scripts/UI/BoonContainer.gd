@@ -22,6 +22,9 @@ var colors = {
 
 func _ready():
 	super()
+	# Share the panel's material so the selection flash reaches the icon and the text
+	for node in [icon, name_label, desc_label]:
+		node.use_parent_material = true
 	desc_label.bbcode_enabled = true
 	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
