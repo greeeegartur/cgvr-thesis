@@ -11,42 +11,42 @@ script = ExtResource("1_7xy2g")
 
 [node name="Gear1" type="Sprite2D" parent="."]
 z_index = -1
-position = Vector2(371, 62)
+position = Vector2(283, 62)
 scale = Vector2(0.8, 0.8)
 texture = ExtResource("2_0sjvs")
 
 [node name="Gear2" type="Sprite2D" parent="."]
 z_index = -1
-position = Vector2(371, 178.99997)
+position = Vector2(283, 179)
 scale = Vector2(0.8, 0.8)
 texture = ExtResource("2_0sjvs")
 
 [node name="Gear3" type="Sprite2D" parent="."]
 z_index = -1
-position = Vector2(371, 296)
+position = Vector2(283, 296)
 scale = Vector2(0.8, 0.8)
 texture = ExtResource("2_0sjvs")
 
 [node name="BoonContainer1" parent="." instance=ExtResource("3_7xy2g")]
 visible = false
 layout_mode = 0
-offset_left = 371.0
-offset_top = 22.0
+offset_left = 283.0
+offset_top = 14.0
 offset_right = 613.0
-offset_bottom = 102.0
+offset_bottom = 110.0
 
 [node name="BoonContainer2" parent="." instance=ExtResource("3_7xy2g")]
 visible = false
 layout_mode = 0
-offset_left = 371.0
-offset_top = 139.0
+offset_left = 283.0
+offset_top = 131.0
 offset_right = 613.0
-offset_bottom = 219.0
+offset_bottom = 227.0
 
 [node name="BoonContainer3" parent="." instance=ExtResource("3_7xy2g")]
 visible = false
 layout_mode = 0
-offset_left = 371.0
-offset_top = 256.0
+offset_left = 283.0
+offset_top = 248.0
 offset_right = 613.0
-offset_bottom = 336.0
+offset_bottom = 344.0

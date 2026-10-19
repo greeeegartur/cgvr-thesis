@@ -399,8 +399,6 @@ func _prepare_combat(enemy_ids, play_enemy_intro := true):
 		_set_enemy_visuals_visible(false)
 	
 	# PLAYER UI BUILDING
-	await player_turn_ui._build_abilities_ui()
-	await player_turn_ui._build_items_ui()
 	_reset_ability_cooldowns()
 
 func _play_enemy_intro():
@@ -426,8 +424,6 @@ func start_tutorial_combat(enemy_ids: Array) -> CombatEntity:
 	print("tutorial combat: before setup entities")
 	await _setup_entities(enemy_ids)
 	print("tutorial combat: after setup entities")
-	await player_turn_ui._build_abilities_ui()
-	await player_turn_ui._build_items_ui()
 	_reset_ability_cooldowns()
 	
 	locked_enemy_turn_order = _get_enemy_turn_order()
@@ -1660,7 +1656,6 @@ func _execute_item(target):
 		PlayerData.use_item(item_index, self)
 	ui.refresh_player_hud() # Item amount update
 	item_being_used = null
-	await player_turn_ui._build_items_ui()
 	
 	if combat_has_ended:
 		return

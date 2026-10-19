@@ -367,7 +367,7 @@ func dream_tutorial_phase():
 	await wait_for_accept()
 	
 	combat_manager.tutorial_unlock_player_turn_ui()
-	combat_manager.player_turn_ui.menu_indices[combat_manager.player_turn_ui.MENU_ATTACK] = 1
+	combat_manager.player_turn_ui.set_attack_index(1)
 	
 	var minigame = await combat_manager.tutorial_minigame_started
 	lock_input()
@@ -458,7 +458,7 @@ func move_ufo_to(pos: Vector2, duration := 0.75, restart_idle := true):
 
 func tutorial_wait_for_first_earth_hit():
 	combat_manager.tutorial_unlock_player_turn_ui()
-	combat_manager.player_turn_ui.menu_indices[combat_manager.player_turn_ui.MENU_ATTACK] = 1 # Earth, based on Sky/Earth/Water order
+	combat_manager.player_turn_ui.set_attack_index(1) # Earth, based on Sky/Earth/Water order
 	
 	hint_node.visible = true
 	hint_in()
@@ -514,7 +514,7 @@ func crit_tutorial_phase():
 	await wait_for_accept()
 	
 	combat_manager.tutorial_unlock_player_turn_ui()
-	combat_manager.player_turn_ui.menu_indices[combat_manager.player_turn_ui.MENU_ATTACK] = 1
+	combat_manager.player_turn_ui.set_attack_index(1)
 	
 	await overlay_say("Once you start %s, try %s right before making contact with the creature." % [
 		bb("taming", "taming"),

@@ -58,6 +58,7 @@ func show_boons(rolled_boons):
 	# Containers
 	for i in range(3):
 		await get_tree().create_timer(0.3).timeout
+		containers[i].slot_center_y = gears[i].position.y
 		containers[i].set_boon(boons[i])
 		containers[i].scale = Vector2.ZERO
 		containers[i].visible = true

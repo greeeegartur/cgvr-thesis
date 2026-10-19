@@ -6,23 +6,14 @@ extends CanvasLayer
 @onready var gear_menu := $GearMenu
 @onready var gear_sprite := $GearMenu/GearSprite
 @onready var gear_options_root := $GearMenu/Options
-@onready var attack_panel := $AttackTypeMenu/Panel
-@onready var attack_list := $AttackTypeMenu/Panel/VBox
-@onready var abilities_panel := $AbilitiesMenu/Panel
-@onready var abilities_list := $AbilitiesMenu/Panel/ScrollContainer/VBox
-@onready var abilities_scroll := $AbilitiesMenu/Panel/ScrollContainer
+@onready var attack_panel: UIPanel = $AttackTypeMenu/Panel
+@onready var attack_list: UIList = $AttackTypeMenu/Panel/List
+@onready var abilities_panel: UIPanel = $AbilitiesMenu/Panel
+@onready var abilities_list: UIList = $AbilitiesMenu/Panel/List
 @onready var ability_popup := $AbilitiesMenu/AbilityInfoContainer
-@onready var items_panel := $ItemsMenu/Panel
-@onready var items_list := $ItemsMenu/Panel/ScrollContainer/VBox
-@onready var items_scroll := $ItemsMenu/Panel/ScrollContainer
+@onready var items_panel: UIPanel = $ItemsMenu/Panel
+@onready var items_list: UIList = $ItemsMenu/Panel/List
 @onready var item_popup := $ItemsMenu/ItemInfoContainer
-# Count labels for tame UI
-@onready var sky_count = $AttackTypeMenu/Panel/Counts/SkyCount
-@onready var earth_count = $AttackTypeMenu/Panel/Counts/EarthCount
-@onready var water_count = $AttackTypeMenu/Panel/Counts/WaterCount
-
-@export var AbilityRowScene : PackedScene
-@export var ItemRowScene : PackedScene
 
 # Signals to use with CombatManager
 signal attack_type_selected(type)
@@ -52,9 +43,9 @@ const MENU_ITEMS := "items"
 
 # Attack options and base index
 const ATTACK_OPTIONS := [
-	{ "id": CombatTypes.EntityType.SKY, "label": "Sky" },
-	{ "id": CombatTypes.EntityType.EARTH, "label": "Earth" },
-	{ "id": CombatTypes.EntityType.WATER, "label": "Water" }
+	{ "id": CombatTypes.EntityType.SKY, "label": "Sky", "icon": preload("res://Graphics/Sprites/Items/sky_chip.png") },
+	{ "id": CombatTypes.EntityType.EARTH, "label": "Earth", "icon": preload("res://Graphics/Sprites/Items/earth_chip.png") },
+	{ "id": CombatTypes.EntityType.WATER, "label": "Water", "icon": preload("res://Graphics/Sprites/Items/water_chip.png") }
 ]
 
 # Default state
@@ -72,11 +63,6 @@ var option_slots := [ # Intended option positions in scene
 	Vector2(-50.769, -59.59) # Right
 ]
 
-var menu_indices := {
-	MENU_ATTACK: 0,
-	MENU_ABILITIES: 0,
-	MENU_ITEMS: 0
-}
 var target_return_menu := ""
 var refund_guess_on_target_cancel := false
 var pending_tame_type_for_ability := false
@@ -86,6 +72,10 @@ var gear_spin_tween: Tween
 
 func _ready():
 	set_process_unhandled_input(true)
+	
+	# The info boxes follow the selected row
+	abilities_list.selected_changed.connect(func(_index): _update_ability_info_popup())
+	items_list.selected_changed.connect(func(_index): _update_item_info_popup())
 
 # Starts the player turn, reveals the gear menu and starts allowing input
 func start_player_turn():
@@ -97,7 +87,6 @@ func start_player_turn():
 	target_return_menu = ""
 	refund_guess_on_target_cancel = false
 	
-	menu_indices[MENU_ATTACK] = 0
 	_show_gear_menu()
 
 # Applies next state based on current state input by player
@@ -138,11 +127,9 @@ func _handle_target_input(event):
 # Moves options in the ATTACK_TYPE_SELECT state based on player inputs
 func _handle_attack_type_input(event):
 	if event.is_action_pressed("ui_up"):
-		_move_menu_index(MENU_ATTACK, -1, attack_list.get_child_count())
-		_update_attack_type_visuals()
+		attack_list.move(-1)
 	elif event.is_action_pressed("ui_down"):
-		_move_menu_index(MENU_ATTACK, 1, attack_list.get_child_count())
-		_update_attack_type_visuals()
+		attack_list.move(1)
 	elif event.is_action_pressed("ui_accept"):
 		_confirm_attack_type()
 	elif event.is_action_pressed("ui_cancel"):
@@ -159,14 +146,11 @@ func _handle_abilities_input(event):
 		return
 	
 	if event.is_action_pressed("ui_up"):
-		_move_menu_index(MENU_ABILITIES, -1, abilities.size())
-		_update_abilities_visuals()
+		abilities_list.move(-1)
 	elif event.is_action_pressed("ui_down"):
-		_move_menu_index(MENU_ABILITIES, 1, abilities.size())
-		_update_abilities_visuals()
+		abilities_list.move(1)
 	elif event.is_action_pressed("ui_accept"):
-		var idx = menu_indices[MENU_ABILITIES]
-		var ability = abilities[idx]
+		var ability = abilities[abilities_list.selected_index]
 		
 		# Does not allow it to be used if the ability does not have a cooldown of 0
 		if ability.cooldown > 0:
@@ -178,7 +162,6 @@ func _handle_abilities_input(event):
 	elif event.is_action_pressed("ui_cancel"):
 		_cancel_to_gear(MENU_ABILITIES)
 
-# TO-DO: Items inputs
 func _handle_items_input(event):
 	var items = PlayerData.get_combat_items()
 	if items.is_empty():
@@ -187,15 +170,12 @@ func _handle_items_input(event):
 		return
 	
 	if event.is_action_pressed("ui_up"):
-		_move_menu_index(MENU_ITEMS, -1, items.size())
-		_update_items_visuals()
+		items_list.move(-1)
 	elif event.is_action_pressed("ui_down"):
-		_move_menu_index(MENU_ITEMS, 1, items.size())
-		_update_items_visuals()
+		items_list.move(1)
 	elif event.is_action_pressed("ui_accept"):
-		var idx = menu_indices[MENU_ITEMS]
 		item_popup.visible = false
-		emit_signal("item_selected", items[idx])
+		emit_signal("item_selected", items[items_list.selected_index])
 	elif event.is_action_pressed("ui_cancel"):
 		_cancel_to_gear(MENU_ITEMS)
 
@@ -230,7 +210,7 @@ func cancel_enemy_selection():
 
 # HELPERS
 # MENU NAVIGATION & PANEL METHODS
-func _get_panel(menu_name: String) -> Panel:
+func _get_panel(menu_name: String) -> UIPanel:
 	match menu_name:
 		MENU_ATTACK:
 			return attack_panel
@@ -240,35 +220,84 @@ func _get_panel(menu_name: String) -> Panel:
 			return items_panel
 	return null
 
+func _get_list(menu_name: String) -> UIList:
+	match menu_name:
+		MENU_ATTACK:
+			return attack_list
+		MENU_ABILITIES:
+			return abilities_list
+		MENU_ITEMS:
+			return items_list
+	return null
+
+# Builds the rows of a menu from the current game data and resizes its panel around them
+func _refresh_menu_rows(menu_name: String):
+	var list := _get_list(menu_name)
+	var entries: Array
+	match menu_name:
+		MENU_ATTACK:
+			entries = _attack_entries()
+		MENU_ABILITIES:
+			entries = _ability_entries()
+		MENU_ITEMS:
+			entries = _item_entries()
+	list.set_rows(entries)
+	
+	var panel := _get_panel(menu_name)
+	list.position = panel.content_origin()
+	panel.fit_to(list.size)
+
+# Row data for the attack types: chip icon, name and how many guesses are left
+func _attack_entries() -> Array:
+	var entries := []
+	for option in ATTACK_OPTIONS:
+		entries.append({ "icon": option.icon, "text": option.label, "right": "x%d" % PlayerData.guesses[option.id] })
+	return entries
+
+func _ability_entries() -> Array:
+	var entries := []
+	for ability in PlayerData.get_active_abilities():
+		entries.append({
+			"text": ability.data.display_name,
+			"pips": ability.data.cooldown_max,
+			"pips_dim": ability.cooldown
+		})
+	if entries.is_empty():
+		entries.append({ "text": "No abilities" })
+	return entries
+
+func _item_entries() -> Array:
+	var entries := []
+	for item in PlayerData.get_combat_items():
+		entries.append({ "icon": item.data.icon, "text": item.data.display_name, "right": "x%d" % item.amount })
+	if entries.is_empty():
+		entries.append({ "text": "No items" })
+	return entries
+
 func _open_menu(menu_name: String, reset_index := false):
 	var panel := _get_panel(menu_name)
 	if panel == null:
 		return
 	
+	var list := _get_list(menu_name)
 	if reset_index:
-		menu_indices[menu_name] = 0
-	
-	# Lets containers with children exist visually before refreshing list contents
-	panel.visible = true
-	panel.scale = Vector2.ZERO
-	panel.modulate.a = 0.0
-	await get_tree().process_frame
+		list.selected_index = 0
+		list.scroll_row = 0.0
 	
 	match menu_name:
 		MENU_ATTACK:
 			state = State.ATTACK_TYPE_SELECT
 		MENU_ABILITIES:
 			state = State.ABILITIES_SELECT
-			await _refresh_abilities_ui()
 		MENU_ITEMS:
 			state = State.ITEMS_SELECT
-			await _refresh_items_ui()
+	
+	_refresh_menu_rows(menu_name)
+	_update_popup(menu_name)
 	
 	panel.visible = true
 	panel.scale = Vector2.ZERO
 	panel.modulate.a = 0.0
-	
-	_refresh_menu_visuals(menu_name)
 	
 	var tween := create_tween()
 	tween.tween_property(panel, "scale", Vector2.ONE, 0.15)
@@ -291,20 +320,13 @@ func _close_menu(menu_name: String):
 	await tween.finished
 	panel.visible = false
 
-func _refresh_menu_visuals(menu_name: String):
+# Shows the info box of the selected row (only abilities and items have one)
+func _update_popup(menu_name: String):
 	match menu_name:
-		MENU_ATTACK:
-			_update_attack_type_visuals()
 		MENU_ABILITIES:
-			_update_abilities_visuals()
+			_update_ability_info_popup()
 		MENU_ITEMS:
-			_update_items_visuals()
-
-func _move_menu_index(menu_name: String, dir: int, count: int):
-	if count <= 0:
-		menu_indices[menu_name] = 0
-		return
-	menu_indices[menu_name] = wrapi(menu_indices[menu_name] + dir, 0, count)
+			_update_item_info_popup()
 
 # Emits signals to CombatManager methods which in turn moves enemy options and confirms them
 func _handle_enemy_select_input(event):
@@ -528,53 +550,29 @@ func _restore_gear_menu():
 		0.15
 	)
 
-# Updates the attack options visuals in the attack menu so they stay centered and get highlighted
-func _update_attack_type_visuals():
-	var selected_index = menu_indices[MENU_ATTACK]
-	var count := attack_list.get_child_count()
+# Preselects an attack type in the attack menu (used by the tutorial)
+func set_attack_index(index: int):
+	if attack_list.count() == 0:
+		_refresh_menu_rows(MENU_ATTACK)
+	attack_list.select(index, false)
 
-	for i in count:
-		var option := attack_list.get_child(i)
-		var selected = i == selected_index
+# Updates the guess counts shown in the attack menu
+func update_guess_display():
+	if attack_list.count() != ATTACK_OPTIONS.size():
+		return # The rows are built when the menu opens
+	for i in ATTACK_OPTIONS.size():
+		attack_list.rows[i].set_right_text("x%d" % PlayerData.guesses[ATTACK_OPTIONS[i].id])
 
-		var tween := create_tween()
-		tween.tween_property(option, "scale", Vector2.ONE * (1.2 if selected else 0.95), 0.12)
-		tween.parallel().tween_property(option, "modulate", Color.WHITE if selected else Color(0.6, 0.6, 0.6), 0.1)
-		tween.parallel().tween_property(option, "position:y", -10 if selected else 0, 0.12) # Other options move slightly away from the selected ones
-
-func _build_abilities_ui():
-	await _build_list_ui(
-		MENU_ABILITIES,
-		PlayerData.get_active_abilities(),
-		AbilityRowScene
-	)
-
-func _refresh_abilities_ui():
-	await _refresh_list_ui(
-		MENU_ABILITIES,
-		PlayerData.get_active_abilities()
-	)
-
-func _update_abilities_visuals():
-	_update_list_visuals(MENU_ABILITIES)
-	_update_ability_info_popup()
-
-func _build_items_ui():
-	await _build_list_ui(
-		MENU_ITEMS,
-		PlayerData.get_combat_items(),
-		ItemRowScene
-	)
-
-func _refresh_items_ui():
-	await _refresh_list_ui(
-		MENU_ITEMS,
-		PlayerData.get_combat_items()
-	)
-
-func _update_items_visuals():
-	_update_list_visuals(MENU_ITEMS)
-	_update_item_info_popup()
+# Places an info box next to the selected row of its list; its tail points at the row
+func _place_popup(popup: UIPanel, panel: UIPanel, list: UIList):
+	var row_center := panel.position.y + list.position.y + list.get_selected_row_y() + UIRow.ROW_HEIGHT / 2.0
+	var target_y := row_center - 16.5 # The tail sits 16.5 px below the top of the box
+	var was_visible: bool = popup.visible
+	popup.position.x = panel.position.x + panel.size.x + 4
+	if was_visible:
+		popup.move_to_y(target_y)
+	else:
+		popup.position.y = target_y
 
 func _update_item_info_popup():
 	var items = PlayerData.get_combat_items()
@@ -582,19 +580,8 @@ func _update_item_info_popup():
 		item_popup.visible = false
 		return
 	
-	var selected_index = menu_indices[MENU_ITEMS]
-	if selected_index < 0 or selected_index >= items.size():
-		item_popup.visible = false
-		return
-	
-	if selected_index >= items_list.get_child_count():
-		item_popup.visible = false
-		return
-	
-	var selected_item = items[selected_index]
-	var row = items_list.get_child(selected_index)
-	item_popup.setup_from_inventory_item(selected_item)
-	item_popup.move_to_row(row, Vector2(0, 115))
+	_place_popup(item_popup, items_panel, items_list)
+	item_popup.setup_from_inventory_item(items[items_list.selected_index])
 
 func _update_ability_info_popup():
 	var abilities = PlayerData.get_active_abilities()
@@ -602,30 +589,12 @@ func _update_ability_info_popup():
 		ability_popup.visible = false
 		return
 	
-	var selected_index = menu_indices[MENU_ABILITIES]
-	if selected_index < 0 or selected_index >= abilities.size():
-		ability_popup.visible = false
-		return
-	
-	if selected_index >= abilities_list.get_child_count():
-		ability_popup.visible = false
-		return
-	
-	var selected_ability = abilities[selected_index]
-	var row = abilities_list.get_child(selected_index)
-	ability_popup.setup_from_inventory_ability(selected_ability)
-	ability_popup.move_to_row(row, Vector2(0, 110))
-
-func update_guess_display():
-	var g = PlayerData.guesses
-	sky_count.text = "x%d" % g[CombatTypes.EntityType.SKY]
-	earth_count.text = "x%d" % g[CombatTypes.EntityType.EARTH]
-	water_count.text = "x%d" % g[CombatTypes.EntityType.WATER]
+	_place_popup(ability_popup, abilities_panel, abilities_list)
+	ability_popup.setup_from_inventory_ability(abilities[abilities_list.selected_index])
 
 # Selecting attack type and starting enemy select state
 func _confirm_attack_type():
-	var idx = menu_indices[MENU_ATTACK]
-	var chosen_type: CombatTypes.EntityType = ATTACK_OPTIONS[idx].id
+	var chosen_type: CombatTypes.EntityType = ATTACK_OPTIONS[attack_list.selected_index].id
 	
 	if not PlayerData.has_guess(chosen_type):
 		shake_panel()
@@ -650,7 +619,6 @@ func _cancel_ability_tame_select():
 	selecting_tame_for_ability = false
 	pending_tame_type_for_ability = false
 	refund_guess_on_target_cancel = true
-	menu_indices[MENU_ATTACK] = 0
 	emit_signal("cancel_ability_tame_select")
 
 	await _close_menu(MENU_ATTACK)
@@ -678,7 +646,7 @@ func shake_panel(strength: float = 1):
 # HELPERS
 # Finds the correct panel depending on the selected option
 func _correct_panel(selected_option: String):
-	var panel : Panel
+	var panel : UIPanel
 	if selected_option == "attack":
 		panel = attack_panel
 	if selected_option == "abilities":
@@ -702,7 +670,6 @@ func _start_self_targeting(from_menu := ""):
 func start_ability_tame_select():
 	selecting_tame_for_ability = true
 	pending_tame_type_for_ability = true
-	menu_indices[MENU_ATTACK] = 0
 	await _close_menu(MENU_ABILITIES)
 	await _open_menu(MENU_ATTACK, true)
 
@@ -722,138 +689,3 @@ func _reset_gear_layout():
 		var label = option.get_node("Label")
 		label.visible = selected
 		label.modulate.a = 1.0 if selected else 0.0
-
-# UNIVERSAL HELPERS
-# For ability/item children scaling
-func _get_list_row_scale(child_count: int, menu_name := "") -> float:
-	var base = 1.0
-	if child_count >= 6:
-		base = 0.72
-	elif child_count >= 5:
-		base = 0.80
-	elif child_count >= 4:
-		base = 0.85
-	
-	if menu_name == MENU_ITEMS:
-		base *= 0.95
-		
-	return base
-
-func _get_menu_list(menu_name: String) -> VBoxContainer:
-	match menu_name:
-		MENU_ABILITIES:
-			return abilities_list
-		MENU_ITEMS:
-			return items_list
-	return null
-
-func _get_menu_scroll(menu_name: String) -> ScrollContainer:
-	match menu_name:
-		MENU_ABILITIES:
-			return abilities_scroll
-		MENU_ITEMS:
-			return items_scroll
-	return null
-
-func _get_menu_row_scene(menu_name: String) -> PackedScene:
-	match menu_name:
-		MENU_ABILITIES:
-			return AbilityRowScene
-		MENU_ITEMS:
-			return ItemRowScene
-	return null
-
-func _build_list_ui(menu_name: String, entries: Array, row_scene: PackedScene):
-	var list := _get_menu_list(menu_name)
-	if list == null:
-		return
-	
-	for child in list.get_children():
-		child.queue_free()
-	
-	await get_tree().process_frame
-	await get_tree().process_frame
-	var row_scale := _get_list_row_scale(entries.size(), menu_name)
-	for entry in entries:
-		var row = row_scene.instantiate()
-		list.add_child(row)
-		if row.has_method("setup"):
-			row.setup(entry, row_scale)
-			
-	menu_indices[menu_name] = 0
-	
-	list.queue_sort()
-	await get_tree().process_frame
-	await get_tree().process_frame
-	await get_tree().process_frame
-
-	_update_list_visuals(menu_name)
-
-func _refresh_list_ui(menu_name: String, entries: Array):
-	var list := _get_menu_list(menu_name)
-	if list == null:
-		return
-	
-	var row_scale := _get_list_row_scale(entries.size(), menu_name)
-	var child_count := list.get_child_count()
-	var entry_count := entries.size()
-	var shared_count = min(child_count, entry_count)
-	
-	for i in range(shared_count):
-		var row = list.get_child(i)
-		if row.has_method("setup"):
-			row.setup(entries[i], row_scale)
-	
-	if entry_count < child_count:
-		for i in range(child_count - 1, entry_count - 1, -1):
-			list.get_child(i).queue_free()
-	elif entry_count > child_count:
-		var row_scene := _get_menu_row_scene(menu_name)
-		if row_scene == null:
-			return
-
-		for i in range(child_count, entry_count):
-			var row = row_scene.instantiate()
-			list.add_child(row)
-			if row.has_method("setup"):
-				row.setup(entries[i], row_scale)
-	
-	if entries.is_empty():
-		menu_indices[menu_name] = 0
-	else:
-		menu_indices[menu_name] = clamp(menu_indices[menu_name], 0, entries.size() - 1)
-	
-	list.queue_sort()
-	await get_tree().process_frame
-	await get_tree().process_frame
-	await get_tree().process_frame
-	_update_list_visuals(menu_name)
-
-func _update_list_visuals(menu_name: String):
-	var list := _get_menu_list(menu_name)
-	var scroll := _get_menu_scroll(menu_name)
-	if list == null:
-		return
-	
-	var selected_index = menu_indices[menu_name]
-	var count = list.get_child_count()
-	var base_scale := _get_list_row_scale(count, menu_name)
-	
-	for i in count:
-		var row = list.get_child(i)
-		var visual = row.get_node("VisualRoot")
-		var selected = i == selected_index
-		var target_scale := base_scale * (1.0 if selected else 0.82)
-		
-		var tween := create_tween()
-		tween.tween_property(visual, "scale", Vector2.ONE * target_scale, 0.12)
-		tween.parallel().tween_property(
-			visual,
-			"modulate",
-			Color.WHITE if selected else Color(0.6, 0.6, 0.6),
-			0.1
-		)
-	
-	if scroll and selected_index < count:
-		var row = list.get_child(selected_index)
-		scroll.ensure_control_visible(row)
