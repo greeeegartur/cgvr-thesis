@@ -8,6 +8,7 @@ enum Preset { DEFAULT, ABILITY, ITEM, TAME }
 const TEMPLATE := preload("res://Graphics/Sprites/UI/defaultMenuStyleBox.png")
 const TAIL_TEMPLATE := preload("res://Graphics/Sprites/UI/listInfoContainer.png")
 const SHADER := preload("res://Scenes/UI/UIPanel.gdshader")
+const OUTLINE_SHADER := preload("res://Scenes/UI/UIPanelOutline.gdshader")
 const NO_COLOR := Color(0, 0, 0, 0) # A source color the template does not have
 
 # Source colors of each template (the art itself is never edited)
@@ -30,7 +31,11 @@ const TAIL_TEMPLATE_COLORS := [Color8(141, 141, 141), Color8(104, 104, 104), NO_
 # Space between the panel edge and its content (the 9-slice margins plus a little breathing room)
 var content_padding := Vector4(12, 12, 12, 12) # left, top, right, bottom
 
+var highlight: NinePatchRect # Solid copy drawn slightly larger behind the panel
+var highlight_width := 2.0
+
 func _ready() -> void:
+	resized.connect(_sync_highlight)
 	_apply()
 
 # Applies template, margins and recolor material
@@ -66,6 +71,7 @@ func _apply() -> void:
 	mat.set_shader_parameter("dst_ring", colors.ring)
 	mat.set_shader_parameter("dst_dark", colors.mark_dark)
 	mat.set_shader_parameter("dst_light", colors.mark_light)
+	_sync_highlight()
 
 # The style in use: the custom style if set, otherwise the preset
 func get_style() -> UIPanelStyle:
@@ -87,3 +93,31 @@ func content_origin() -> Vector2:
 # Resizes the panel so that content of the given size fits inside it
 func fit_to(content_size: Vector2) -> void:
 	size = content_size + Vector2(content_padding.x + content_padding.z, content_padding.y + content_padding.w)
+
+# Shows or hides a highlight outline around the whole panel (used for the selected card)
+func set_highlight(on: bool, color := Color("#fff27a"), width := 2.0) -> void:
+	highlight_width = width
+	if on and highlight == null:
+		highlight = NinePatchRect.new()
+		highlight.show_behind_parent = true
+		highlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var mat := ShaderMaterial.new()
+		mat.shader = OUTLINE_SHADER
+		highlight.material = mat
+		add_child(highlight)
+	if highlight:
+		highlight.visible = on
+		(highlight.material as ShaderMaterial).set_shader_parameter("outline_color", color)
+		_sync_highlight()
+
+# Keeps the highlight copy the same art and margins as the panel, a few pixels larger
+func _sync_highlight() -> void:
+	if highlight == null:
+		return
+	highlight.texture = texture
+	highlight.patch_margin_left = patch_margin_left
+	highlight.patch_margin_top = patch_margin_top
+	highlight.patch_margin_right = patch_margin_right
+	highlight.patch_margin_bottom = patch_margin_bottom
+	highlight.position = Vector2(-highlight_width, -highlight_width)
+	highlight.size = size + Vector2(highlight_width, highlight_width) * 2.0

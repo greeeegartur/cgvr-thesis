@@ -1,7 +1,7 @@
 extends Control
 class_name UIRow
 
-# One selectable row for UI lists: optional icon, text, text on the right and cooldown pips; it has the shared selected look (marker, slide, bar, pop)
+# One selectable row for UI lists: optional icon, text, text on the right and cooldown pips; it slides, brightens and nudges when selected (the bar and marker belong to UIList's cursor)
 
 const FONT := preload("res://Graphics/Fonts/PixelOperator.ttf")
 const PIP_TEXTURE := preload("res://Graphics/Sprites/UI/axis_select.png")
@@ -11,18 +11,21 @@ const ROW_HEIGHT := 20
 const MARKER_WIDTH := 8 # Room for the marker on the left
 const SLIDE := 4.0 # How far a selected row slides right
 const RIGHT_PAD := 8.0 # Room after the content, so the bar always extends past the right text (even when popped)
-const POP := 0.05 # How much a selected row grows at the peak of the beat
+const NUDGE := 2.0 # How far a selected row moves right at the peak of the beat (pixels)
+const BOUNCE_DISTANCE := 5.0 # How far it jolts when the cursor arrives (pixels)
 const DIM := Color(0.6, 0.6, 0.6)
+const BOUNCE_TIME := 0.16 # Jolt when the cursor arrives
 
 var content: HBoxContainer
 var icon_rect: TextureRect
 var text_label: Label
 var right_label: Label
 var pip_box: HBoxContainer
-var bar_color := Color(1, 1, 1, 0.22)
 var selected := false
 var pulse_tween: Tween
 var slide_tween: Tween
+var slide_x := float(MARKER_WIDTH) # Resting x of the content (changes with selection)
+var nudge_x := 0.0 # Extra x from the bounce and the beat
 
 func _init() -> void:
 	custom_minimum_size.y = ROW_HEIGHT
@@ -108,9 +111,7 @@ func _notification(what: int) -> void:
 # Shows or hides the selected look; animate is false for the initial state
 func set_selected(value: bool, animate := true) -> void:
 	selected = value
-	if pulse_tween:
-		pulse_tween.kill()
-		pulse_tween = null
+	_stop_pulse()
 	if slide_tween:
 		slide_tween.kill()
 	
@@ -118,30 +119,51 @@ func set_selected(value: bool, animate := true) -> void:
 	var target_color := Color.WHITE if value else DIM
 	if animate:
 		slide_tween = create_tween().set_parallel()
-		slide_tween.tween_property(content, "position:x", target_x, 0.12)
+		slide_tween.tween_method(_set_slide_x, slide_x, target_x, 0.12)
 		slide_tween.tween_property(content, "modulate", target_color, 0.1)
-		slide_tween.tween_property(content, "scale", Vector2.ONE, 0.1)
 	else:
-		content.position.x = target_x
+		_set_slide_x(target_x)
 		content.modulate = target_color
-		content.scale = Vector2.ONE
+	nudge_x = 0.0
+	_apply_x()
 	
 	if value and is_inside_tree():
-		pulse_tween = create_tween().set_loops()
-		pulse_tween.tween_method(_apply_pop, 0.0, 1.0, SelectionPulse.BEAT)
-	queue_redraw()
+		if animate:
+			bounce()
+		else:
+			_start_pulse()
 
-# One point of the pop on the shared selection beat (phase 0..1)
+# Text is never scaled (it shimmers); the row moves in whole pixels instead and the beat also flashes its opacity
+func _set_slide_x(value: float) -> void:
+	slide_x = value
+	_apply_x()
+
+func _apply_x() -> void:
+	content.position.x = roundf(slide_x + nudge_x)
+
+# Jolts the row to the right and back (used when the cursor arrives), then goes on with the beat
+func bounce() -> void:
+	_stop_pulse()
+	var tween := create_tween()
+	tween.tween_method(func(t: float):
+		nudge_x = BOUNCE_DISTANCE * sin(t * PI) * (1.0 - t * 0.5)
+		_apply_x(), 0.0, 1.0, BOUNCE_TIME)
+	tween.finished.connect(func(): if selected: _start_pulse())
+	pulse_tween = tween
+
+func _start_pulse() -> void:
+	_stop_pulse()
+	pulse_tween = create_tween().set_loops()
+	pulse_tween.tween_method(_apply_pop, 0.0, 1.0, SelectionPulse.BEAT)
+
+func _stop_pulse() -> void:
+	if pulse_tween:
+		pulse_tween.kill()
+		pulse_tween = null
+
+# One point of the beat (phase 0..1): a 1-2 px nudge and the opacity flash
 func _apply_pop(phase: float) -> void:
-	var envelope := sin(phase / SelectionPulse.ATTACK_RATIO * PI * 0.5) if phase < SelectionPulse.ATTACK_RATIO \
-		else cos((phase - SelectionPulse.ATTACK_RATIO) / (1.0 - SelectionPulse.ATTACK_RATIO) * PI * 0.5)
-	content.scale = Vector2.ONE * (1.0 + POP * envelope)
-
-# Highlight bar and marker, drawn in whole pixels
-func _draw() -> void:
-	if not selected:
-		return
-	draw_rect(Rect2(0, 1, size.x, size.y - 2), bar_color)
-	var mid := roundi(size.y / 2.0)
-	for i in 4:
-		draw_rect(Rect2(1 + i, mid - 3 + i, 1, 7 - i * 2), Color.WHITE)
+	var envelope := SelectionPulse.beat_envelope(phase)
+	nudge_x = NUDGE * envelope
+	_apply_x()
+	content.modulate = Color(1, 1, 1, 1.0 - SelectionPulse.FLASH_DIP * (0.5 - 0.5 * cos(phase * TAU))) # Same opacity flash as the creatures

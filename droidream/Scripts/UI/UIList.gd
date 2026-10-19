@@ -7,12 +7,25 @@ signal selected_changed(index: int)
 signal confirmed(index: int)
 
 @export var max_visible_rows := 6 # More rows than this scroll
-@export var bar_color := Color(1, 1, 1, 0.22)
 
+const TRAVEL_TIME := 0.12
+
+var cursor: UICursor
+var cursor_row := 0.0 # Where the cursor is, in rows (it travels between rows)
+var cursor_tween: Tween
 var rows: Array[UIRow] = []
 var selected_index := 0
 var scroll_row := 0.0 # First visible row (rows move up by this)
 var scroll_tween: Tween
+
+func _init() -> void:
+	cursor = UICursor.new()
+	add_child(cursor)
+
+# Colors the highlight bar
+func set_bar_color(color: Color) -> void:
+	cursor.bar_color = color
+	cursor.queue_redraw()
 
 # Replaces all rows; each entry is a Dictionary with icon, text, right (optional) and pips, pips_dim (optional)
 func set_rows(entries: Array) -> void:
@@ -22,12 +35,12 @@ func set_rows(entries: Array) -> void:
 	
 	for entry in entries:
 		var row := UIRow.new()
-		row.bar_color = bar_color
 		row.setup(entry.get("icon"), entry.get("text", ""), entry.get("right", ""), entry.get("pips", 0), entry.get("pips_dim", 0))
 		add_child(row)
 		rows.append(row)
 	
 	selected_index = clampi(selected_index, 0, maxi(rows.size() - 1, 0))
+	cursor_row = selected_index
 	_layout()
 	_refresh_selection(false)
 
@@ -81,6 +94,9 @@ func _layout() -> void:
 	custom_minimum_size = wanted
 	size = wanted
 	clip_contents = rows.size() > max_visible_rows
+	cursor.size = Vector2(wanted.x, UIRow.ROW_HEIGHT)
+	cursor.visible = not rows.is_empty()
+	_place_cursor()
 	for i in rows.size():
 		rows[i].size = Vector2(wanted.x, UIRow.ROW_HEIGHT)
 		rows[i].position = Vector2(0, (i - scroll_row) * UIRow.ROW_HEIGHT)
@@ -89,6 +105,7 @@ func _layout() -> void:
 func _refresh_selection(animate: bool) -> void:
 	for i in rows.size():
 		rows[i].set_selected(i == selected_index, animate and rows[i].is_inside_tree())
+	_travel_cursor(animate)
 	
 	var target_scroll := scroll_row
 	if selected_index < scroll_row:
@@ -111,3 +128,22 @@ func _set_scroll(value: float) -> void:
 	scroll_row = value
 	for i in rows.size():
 		rows[i].position.y = (i - scroll_row) * UIRow.ROW_HEIGHT
+	_place_cursor()
+
+# Moves the cursor to the selected row (eased, with a small overshoot)
+func _travel_cursor(animate: bool) -> void:
+	if cursor_tween:
+		cursor_tween.kill()
+	if animate and is_inside_tree():
+		cursor_tween = create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		cursor_tween.tween_method(_set_cursor_row, cursor_row, float(selected_index), TRAVEL_TIME)
+	else:
+		_set_cursor_row(float(selected_index))
+
+func _set_cursor_row(value: float) -> void:
+	cursor_row = value
+	_place_cursor()
+
+# The cursor follows its row on screen, also while the list scrolls
+func _place_cursor() -> void:
+	cursor.position = Vector2(0, (cursor_row - scroll_row) * UIRow.ROW_HEIGHT)

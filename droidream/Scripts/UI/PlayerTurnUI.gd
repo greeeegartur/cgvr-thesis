@@ -69,13 +69,107 @@ var pending_tame_type_for_ability := false
 
 # Animation options
 var gear_spin_tween: Tween
+var gear_arrows: Array[UIArrow] = [] # Left and right arrows beside the selected option
+var gear_arrow_tween: Tween
+var gear_beat_tween: Tween
+var gear_beat_sprite: Sprite2D # Sprite of the selected option that bounces on the beat
+var gear_beat_label: Label # Its text hops with it
+var gear_beat_label_rest := 0.0
+var tame_title: Label # "Tame as..." above the tame type panel
+
+const GEAR_ARROW_GAP := 10.0 # Distance from the selected icon to each arrow
+const GEAR_ARROW_BOB := 3.0 # How far the arrows move outward on the beat
+const GEAR_BEAT_POP := 0.12
+const GEAR_BEAT_HOP := 3.0
+const TAME_TITLE_OVERLAP := 2.0 # How far the title's lower edge sinks toward the panel
 
 func _ready():
 	set_process_unhandled_input(true)
+	_create_gear_arrows()
+	_create_tame_title()
 	
 	# The info boxes follow the selected row
 	abilities_list.selected_changed.connect(func(_index): _update_ability_info_popup())
 	items_list.selected_changed.connect(func(_index): _update_item_info_popup())
+
+# Builds the two arrows beside the selected gear option (the selected option always sits in the top slot)
+func _create_gear_arrows():
+	for facing in [-1, 1]:
+		var arrow := UIArrow.new()
+		arrow.facing = facing
+		arrow.visible = false
+		add_child(arrow)
+		gear_arrows.append(arrow)
+
+# Builds the "Tame as…" title as a child of the tame type panel (it opens and closes with it), centered over the options
+func _create_tame_title():
+	tame_title = Label.new()
+	tame_title.text = "Tame as…"
+	tame_title.add_theme_font_override("font", load("res://Graphics/Fonts/PixelOperator-Bold.ttf"))
+	tame_title.add_theme_font_size_override("font_size", 24)
+	tame_title.add_theme_color_override("font_outline_color", Color.BLACK)
+	tame_title.add_theme_constant_override("outline_size", 5)
+	tame_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	attack_panel.add_child(tame_title)
+	attack_panel.resized.connect(_place_tame_title)
+	_place_tame_title()
+
+func _place_tame_title():
+	var title_size := tame_title.get_minimum_size()
+	tame_title.size = Vector2(attack_panel.size.x, title_size.y)
+	tame_title.position = Vector2(0, -title_size.y + TAME_TITLE_OVERLAP)
+
+# Shows or hides the arrows and the beat bounce of the option select screen
+func _set_gear_cursor(active: bool):
+	if gear_arrow_tween:
+		gear_arrow_tween.kill()
+		gear_arrow_tween = null
+	_stop_gear_beat()
+	for arrow in gear_arrows:
+		arrow.visible = active
+	if not active:
+		return
+	
+	# Arrows flank the top slot, in screen space (the gear menu is scaled, so they are not its children)
+	var top_slot: Vector2 = gear_menu.position + (option_slots[0] + Vector2(0, -5)) * 0.75
+	var icon_half := 16.0 * 1.3 * 0.75
+	var rests: Array[Vector2] = []
+	for i in gear_arrows.size():
+		var side := -1 if i == 0 else 1
+		rests.append(top_slot + Vector2(side * (icon_half + GEAR_ARROW_GAP), 0) - gear_arrows[i].size / 2.0)
+	gear_arrow_tween = create_tween().set_loops()
+	gear_arrow_tween.tween_method(func(phase: float):
+		var bob := GEAR_ARROW_BOB * SelectionPulse.beat_envelope(phase)
+		for i in gear_arrows.size():
+			gear_arrows[i].position = rests[i] + Vector2((-1 if i == 0 else 1) * bob, 0)
+	, 0.0, 1.0, SelectionPulse.BEAT)
+	_start_gear_beat()
+
+# The selected option's icon pops and hops on the shared beat
+func _start_gear_beat():
+	_stop_gear_beat()
+	var option: Node2D = _get_gear_option_node(gear_index)
+	gear_beat_sprite = option.get_child(0) as Sprite2D
+	gear_beat_label = option.get_node("Label") as Label
+	gear_beat_label_rest = gear_beat_label.position.y
+	gear_beat_tween = create_tween().set_loops()
+	gear_beat_tween.tween_method(func(phase: float):
+		var envelope := SelectionPulse.beat_envelope(phase)
+		gear_beat_sprite.scale = Vector2.ONE * (1.0 + GEAR_BEAT_POP * envelope)
+		var hop := roundf(GEAR_BEAT_HOP * envelope) # Whole pixels, so the text stays crisp
+		gear_beat_sprite.position.y = -hop
+		gear_beat_label.position.y = gear_beat_label_rest - hop
+	, 0.0, 1.0, SelectionPulse.BEAT)
+
+func _stop_gear_beat():
+	if gear_beat_tween:
+		gear_beat_tween.kill()
+		gear_beat_tween = null
+	if is_instance_valid(gear_beat_sprite):
+		gear_beat_sprite.scale = Vector2.ONE
+		gear_beat_sprite.position.y = 0.0
+		gear_beat_label.position.y = gear_beat_label_rest
+		gear_beat_sprite = null
 
 # Starts the player turn, reveals the gear menu and starts allowing input
 func start_player_turn():
@@ -244,6 +338,7 @@ func _refresh_menu_rows(menu_name: String):
 	list.set_rows(entries)
 	
 	var panel := _get_panel(menu_name)
+	list.set_bar_color(panel.get_style().ring.lerp(Color.WHITE, 0.6) * Color(1, 1, 1, 0.4))
 	list.position = panel.content_origin()
 	panel.fit_to(list.size)
 
@@ -369,6 +464,7 @@ func _move_gear(dir: int):
 	_animate_gear_change(gear_index, dir)
 	_update_gear_visuals()
 	_update_gear_positions(dir)
+	_start_gear_beat()
 
 # Animates the gear menu and its options with tweens
 func _animate_gear_change(to: int, dir: int):
@@ -409,8 +505,17 @@ func _show_gear_menu():
 	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 	_update_gear_visuals()
+	_set_gear_cursor(false)
+	_show_gear_cursor_later()
+
+# Shows the arrows once the gear menu has popped in (only if it is still waiting for the player's choice)
+func _show_gear_cursor_later():
+	await get_tree().create_timer(0.35).timeout
+	if state == State.OPTION_SELECT:
+		_set_gear_cursor(true)
 
 func hide_player_turn_ui():
+	_set_gear_cursor(false)
 	var tween = create_tween()
 	tween.tween_property(
 		gear_menu,
@@ -520,6 +625,7 @@ func _confirm_gear_option():
 		return
 	
 	state = State.LOCKED
+	_set_gear_cursor(false)
 	_start_action_transition()
 
 # Animation logic for preparing player options after OPTION_SELECT state
@@ -542,6 +648,7 @@ func _get_gear_option_node(index: int):
 
 # Tween animation for moving back to the option selection
 func _restore_gear_menu():
+	_set_gear_cursor(true)
 	var tween = create_tween()
 	tween.tween_property(
 		gear_menu,

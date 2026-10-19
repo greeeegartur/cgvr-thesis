@@ -3,6 +3,9 @@ class_name BoonSelectionScreen
 
 signal boon_selected
 
+const HOP_PIXELS := 3.0 # Height of the selected card's hop
+const PULSE_STRENGTH := 0.5 # Selection effect strength for a card (1.0 is a main creature target)
+
 @onready var containers = [
 	$BoonContainer1,
 	$BoonContainer2,
@@ -70,6 +73,7 @@ func show_boons(rolled_boons):
 			0.25
 		).set_trans(Tween.TRANS_BACK)
 	
+	await get_tree().create_timer(0.25).timeout # Lets the last card finish popping in before it starts pulsing
 	input_locked = false
 	_update_selection()
 
@@ -105,15 +109,18 @@ func _update_selection():
 			).set_trans(Tween.TRANS_LINEAR).as_relative()
 			gear_tweens[i] = spin
 			
-			# Container scale pulsing
-			var pulse := create_tween()
-			pulse.set_loops()
-			pulse.tween_property(container,"scale",Vector2(1.1,1.1),0.4)
-			pulse.tween_property(container,"scale",Vector2.ONE,0.4)
+			# Same selection effect as the creatures: bounce, tint flash and an outline around the card
+			container.set_highlight(true, Color.WHITE)
+			var pulse := SelectionPulse.new(self, container)
+			pulse.use_scale = false # Scaling blurs the art and text; the card hops in whole pixels instead
+			pulse.hop_pixels = HOP_PIXELS
+			pulse.tint_amount = 0.0 # Same opacity flash as the creatures, no color change
+			pulse.start(PULSE_STRENGTH, 0.0)
 			pulse_tweens[i] = pulse
 		else:
 			gear.modulate = Color(0.7,0.7,0.7)
 			container.scale = Vector2.ONE
+			container.set_highlight(false)
 			
 			# Return gear to slow spin
 			var slow := create_tween()
@@ -236,5 +243,6 @@ func _kill_gear_tween(i):
 
 func _kill_pulse_tween(i):
 	if pulse_tweens[i]:
-		pulse_tweens[i].kill()
+		pulse_tweens[i].stop()
 		pulse_tweens[i] = null
+

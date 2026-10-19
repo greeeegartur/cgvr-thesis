@@ -17,7 +17,7 @@ const ARROW_SCALE_HIGH := 1.2
 const OUTLINE_SHADER := preload("res://Scenes/VFX/TargetOutline.gdshader")
 
 var owner: Node
-var visual: Node2D # Node that pops and is tinted
+var visual # Node2D or Control that pops and is tinted (untyped: both have scale and modulate)
 var arrow: Sprite2D # Arrow that bobs in rhythm (can be null)
 var arrow_rest := Vector2.ZERO # Where the arrow sits when not pulsing
 var body: Sprite2D # Sprite that receives the outline
@@ -26,10 +26,14 @@ var tween: Tween
 var strength := 1.0
 var arrow_factor := 1.0
 var base_scale := Vector2.ONE
+var base_position := Vector2.ZERO
+var tint_amount := TINT_AMOUNT # 0 = no color change, only the opacity flash (menus and cards)
+var use_scale := true # False for text and art that must stay crisp: they hop in whole pixels instead
+var hop_pixels := 0.0 # Height of the whole-pixel hop at the peak of the beat (0 = no hop)
 var base_modulate := Color.WHITE
 
 # body gets the outline material (only if it has no material of its own)
-func _init(p_owner: Node, p_visual: Node2D, p_body: Sprite2D):
+func _init(p_owner: Node, p_visual, p_body: Sprite2D = null):
 	owner = p_owner
 	visual = p_visual
 	body = p_body
@@ -48,6 +52,7 @@ func start(p_strength: float, outline_width: float, p_arrow: Sprite2D = null, p_
 	if arrow:
 		arrow_rest = arrow.position
 	base_scale = visual.scale
+	base_position = visual.position
 	base_modulate = visual.modulate
 	if material:
 		material.set_shader_parameter("outline_width", outline_width)
@@ -68,6 +73,7 @@ func stop():
 		tween = null
 	if was_pulsing and is_instance_valid(visual):
 		visual.scale = base_scale
+		visual.position = base_position
 		visual.modulate = base_modulate
 	if material:
 		material.set_shader_parameter("outline_width", 0.0)
@@ -87,24 +93,29 @@ func _update_frame_rect():
 		coords.x * frame_width, coords.y * frame_height,
 		(coords.x + 1) * frame_width, (coords.y + 1) * frame_height))
 
+# Envelope of one beat (phase 0..1): snaps up quickly, then eases back down; shared by every selection effect
+static func beat_envelope(phase: float) -> float:
+	if phase < ATTACK_RATIO:
+		return sin(phase / ATTACK_RATIO * PI * 0.5)
+	return cos((phase - ATTACK_RATIO) / (1.0 - ATTACK_RATIO) * PI * 0.5)
+
 # Applies one point of the beat (phase 0..1)
 func _apply(phase: float):
 	if not is_instance_valid(visual):
 		return
 	
 	# Snap up quickly, then ease back down before the next beat
-	var envelope: float
-	if phase < ATTACK_RATIO:
-		envelope = sin(phase / ATTACK_RATIO * PI * 0.5)
-	else:
-		envelope = cos((phase - ATTACK_RATIO) / (1.0 - ATTACK_RATIO) * PI * 0.5)
+	var envelope := beat_envelope(phase)
 	
 	_update_frame_rect() # The sheet frame can change while pulsing (idle animation)
 	# Mid-beat wave: 0 at the start of the beat, 1 in the middle (same curve as the arrow bob)
 	var wave := 0.5 - 0.5 * cos(phase * TAU)
 	
-	visual.scale = base_scale * (1.0 + POP_SCALE * strength * envelope)
-	var tinted := base_modulate.lerp(TINT_COLOR, TINT_AMOUNT * strength * envelope)
+	if use_scale:
+		visual.scale = base_scale * (1.0 + POP_SCALE * strength * envelope)
+	if hop_pixels > 0.0:
+		visual.position.y = base_position.y - roundf(hop_pixels * envelope)
+	var tinted := base_modulate.lerp(TINT_COLOR, tint_amount * strength * envelope)
 	tinted.a = base_modulate.a * (1.0 - FLASH_DIP * strength * wave) # Opacity flash, weaker for the other targets
 	visual.modulate = tinted
 	

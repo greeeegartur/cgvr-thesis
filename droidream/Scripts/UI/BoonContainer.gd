@@ -56,4 +56,4 @@ func _fit_card() -> void:
 	size.y = maxf(MIN_HEIGHT, desc_label.position.y + desc_label.size.y + PAD)
 	pivot_offset = size / 2.0
 	icon.position = Vector2(PAD + 32, size.y / 2.0)
-	position.y = slot_center_y - size.y / 2.0
+	position.y = roundf(slot_center_y - size.y / 2.0)
