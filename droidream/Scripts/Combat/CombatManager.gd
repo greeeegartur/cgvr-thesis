@@ -114,6 +114,14 @@ const DUCK_TYPE_COLORS := {
 
 # Ability/passive/item specific variables
 # Heat Up effects
+const HIT_STOP_SCALE := 0.05 # Time scale during a hit-stop
+const HIT_STOP_NORMAL := 0.06
+const HIT_STOP_CRIT := 0.12
+const HIT_STOP_BLOCK := 0.10
+const HIT_STOP_HURT := 0.10
+var hit_stop_id := 0
+const WORLD_DIM_ALPHA := 0.5 # How dark the world gets during a dream (black over it)
+var dim_rect: ColorRect
 var betrayal_visual: Node2D = null # Multi-hit: the creature furthest on the tame side that was just turned on
 var betrayal_axis := 0.0
 var heat_up_pending_power_bonus := 0
@@ -688,7 +696,6 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		vfx.play_crit_feedback(enemy_visual)
 		# Freezing frame and shaking camera for good hit feel
 		camera.impact(CombatCamera.Impact.LARGE)
-		freeze_frame(0.14)
 		print("CRITICAL HIT!")
 	
 	var correct = _is_correct_guess(guess_type, enemy.type) # Checks if correct guess type
@@ -711,6 +718,7 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		enemy_visual.shake(critical)
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
 		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical) # Damage number, particles
+		_hit_impact(enemy_visual, HIT_STOP_CRIT if critical else HIT_STOP_NORMAL)
 		camera.impact(CombatCamera.Impact.MEDIUM)
 		
 		# Restores chip if matches conditions inside method
@@ -745,6 +753,7 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		enemy_visual.shake(critical)
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
 		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical)
+		_hit_impact(enemy_visual, HIT_STOP_CRIT if critical else HIT_STOP_NORMAL)
 		
 		# Restores chip if matches conditions inside method
 		_try_restore_chip(guess_type, critical)
@@ -810,6 +819,7 @@ func _start_minigame(enemy: CombatEntity, play_explosion := true):
 	# Taming visuals
 	if play_explosion:
 		vfx.play_subdue(enemy_visual)
+	var aura := TameAura.attach(enemy_visual, 0.5 if play_explosion else 0.2) # Neon light swirls up inside the creature
 	await player_visual.play_subdue()
 	enemy_visual.clear_minigame_highlight() # The highlight has done its job once the minigame starts
 	
@@ -823,6 +833,7 @@ func _start_minigame(enemy: CombatEntity, play_explosion := true):
 	minigame.set_anchors_preset(Control.PRESET_FULL_RECT)
 	minigame.size = get_viewport().size
 	minigame.position = Vector2.ZERO
+	var glow := MinigameGlow.attach(minigame) # Neon glow around the box until the minigame ends
 	
 	# Minigame's damage signal
 	minigame.damage_taken.connect(_on_minigame_damage_taken)
@@ -837,6 +848,10 @@ func _start_minigame(enemy: CombatEntity, play_explosion := true):
 	in_minigame = false
 	combat_paused = false
 	last_minigame_success = success
+	if aura:
+		aura.finish()
+	if glow:
+		glow.finish()
 	if tutorial_mode:
 		tutorial_minigame_finished.emit(success)
 	
@@ -861,6 +876,7 @@ func _start_minigame(enemy: CombatEntity, play_explosion := true):
 func _on_minigame_damage_taken(amount: float, pos: Vector2):
 	_change_player_hp(-Utils.quantize_min(amount))
 	vfx.play_overlay_effects("normal")
+	_hit_impact(player_visual, HIT_STOP_NORMAL)
 
 # Decides minigame outcome on minigame end
 func on_minigame_complete(enemy: CombatEntity, success: bool):
@@ -1054,7 +1070,7 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 		damage *= 0.5
 		player_visual.play_block_success()
 		camera.impact(CombatCamera.Impact.LARGE)
-		freeze_frame(0.11)
+		_hit_impact(player_visual, HIT_STOP_BLOCK)
 		if not enemy_crit:
 			vfx.play_overlay_effects("block", 0.2)
 		vfx.play_block_feedback(player_visual)
@@ -1073,7 +1089,7 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 		player_visual.play_block_fail()
 		vfx.play_overlay_effects("normal")
 		camera.impact(CombatCamera.Impact.SMALL)
-		freeze_frame(0.08)
+		_hit_impact(player_visual, HIT_STOP_HURT)
 		print("Failed block")
 
 	print("Player HP is: ", player.hp)
@@ -1341,6 +1357,7 @@ func _resolve_multi_tame_hit(target: CombatEntity, multiplier: float):
 			var visual = enemy_visuals[enemy]
 			visual.hop(2)
 			vfx.play_damage_vfx(visual, player.attack_power * multiplier, multiplier >= 1.5)
+			_hit_impact(visual, HIT_STOP_NORMAL)
 			vfx.play_multihit_feedback(visual)
 	
 	await vfx.bounce_and_fade_ball(ball, target_visual.global_position) # After ball disappears, axis shifts are applied
@@ -1562,10 +1579,22 @@ func _flush_betrayal():
 		_play_betrayal(betrayal_visual)
 	betrayal_visual = null
 
+# A real hit-stop: the game almost stops for a moment (real seconds, so it is not stretched by its own slowdown)
 func freeze_frame(time = 0.05):
-	Engine.time_scale = 0.5
-	await get_tree().create_timer(time, true).timeout
-	Engine.time_scale = 1.0
+	if PauseMenu.active:
+		return
+	hit_stop_id += 1
+	var id := hit_stop_id
+	Engine.time_scale = HIT_STOP_SCALE
+	await get_tree().create_timer(time, true, false, true).timeout
+	if id == hit_stop_id and not PauseMenu.active: # A newer hit-stop (or the pause menu) owns the time scale now
+		Engine.time_scale = 1.0
+
+# Hit-stop plus a stun jitter on whoever was hit
+func _hit_impact(victim_visual: Node2D, duration: float):
+	freeze_frame(duration)
+	if victim_visual.has_method("stun"):
+		victim_visual.stun(duration)
 
 # Getter for enemy attack position relative to player_visual position
 func _get_enemy_attack_position(enemy_visual: EnemyVisual) -> Vector2:
@@ -2320,6 +2349,7 @@ func _resolve_ball_hit(target: CombatEntity, intent: String, multiplier: float):
 			var visual = enemy_visuals[enemy]
 			visual.hop(2)
 			vfx.play_multihit_feedback(visual)
+			_hit_impact(visual, HIT_STOP_NORMAL)
 
 	await vfx.bounce_and_fade_ball(ball, target_visual.global_position)
 	for enemy in affected:
@@ -2457,15 +2487,22 @@ func tutorial_prepare_dummy_for_minigame():
 # ANIMATION METHODS
 # Smooth tween BG animation for minigame enter/exiting 
 func _world_gray_out(gray_out: bool):
-	var world_node = get_parent().get_node("World")
-	if gray_out:
-		var tween := create_tween()
-		tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-		tween.tween_property(world_node, "modulate:a", 0.6, 0.6)
-	else:
-		var tween := create_tween()
-		tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-		tween.tween_property(world_node, "modulate:a", 1.0, 0.6)
+	# The world (background, creatures and the Droid) lives in several nodes, so a black layer between it and the UI dims it all
+	if dim_rect == null:
+		var dim_layer := CanvasLayer.new()
+		dim_layer.layer = 1 # Same layer as the UI, but drawn before it
+		dim_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+		var parent := get_parent()
+		parent.add_child(dim_layer)
+		parent.move_child(dim_layer, parent.get_node("UI").get_index())
+		dim_rect = ColorRect.new()
+		dim_rect.color = Color(0, 0, 0, 0)
+		dim_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		dim_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+		dim_layer.add_child(dim_rect)
+	var tween := create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tween.tween_property(dim_rect, "color:a", WORLD_DIM_ALPHA if gray_out else 0.0, 0.5)
 
 func animate_enemy_entry():
 	for visual in enemy_visuals.values():

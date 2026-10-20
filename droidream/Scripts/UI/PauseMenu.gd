@@ -151,7 +151,7 @@ func _can_open() -> bool:
 	return true
 
 func open() -> void:
-	stored_time_scale = Engine.time_scale
+	stored_time_scale = Engine.time_scale if Engine.time_scale > 0.1 else 1.0 # A hit-stop that was running is dropped
 	Engine.time_scale = 0.0
 	active = true
 	

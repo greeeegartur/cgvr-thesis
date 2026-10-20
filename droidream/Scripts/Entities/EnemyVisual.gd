@@ -137,6 +137,17 @@ func shake(is_critical: bool):
 	)
 	tween.tween_property(visual, "position", original_pos, 0.1)
 
+# Stun jitter while a hit-stop lasts: a few whole pixels at 30 Hz in real time (off with the Camera shake setting)
+func stun(duration: float) -> void:
+	if not Settings.camera_shake or is_defeated:
+		return
+	var base := visual.position
+	var tween := create_tween()
+	tween.set_ignore_time_scale(true)
+	for i in int(duration * 30.0):
+		tween.tween_property(visual, "position", base + Vector2(randi_range(-2, 2), randi_range(-2, 2)), 1.0 / 30.0)
+	tween.tween_property(visual, "position", base, 0.0)
+
 # Hopping animation
 func hop(times := 1):
 	var orig := position

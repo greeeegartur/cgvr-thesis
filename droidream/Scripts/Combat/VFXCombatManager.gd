@@ -39,10 +39,12 @@ func play_damage_vfx(target_visual: Node2D, damage: float, is_critical: bool, is
 	var color = crit_flash_color if is_critical else normal_flash_color
 	color = block_flash_color if is_block else color
 	spawn_damage_number(target_visual, damage, is_critical)
-	emit_explosion(target_visual, color, false)
+	var strength := HitBurst.Strength.CRIT if is_critical else (HitBurst.Strength.BLOCK if is_block else HitBurst.Strength.NORMAL)
+	HitBurst.burst(particle_layer, target_visual.position, color, strength)
 
-func play_subdue(target_visual: Node2D, is_subdue:= true):
-	emit_explosion(target_visual, subdue_flash_color, is_subdue)
+# Taming starts: neon pixels spiral into the creature
+func play_subdue(target_visual: Node2D, _is_subdue := true):
+	TameSpiral.play(particle_layer, target_visual.position)
 
 # Spawns a damage number near an entity visual that took damage
 func spawn_damage_number(target_visual: Node2D, damage: float, is_critical: bool, is_heal := false):

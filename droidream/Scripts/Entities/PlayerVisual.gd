@@ -128,6 +128,30 @@ func play_block_press():
 	block_visual.play_press()
 
 # PlayerBlockVisual methods to call
+# Stun jitter while a hit-stop lasts: a few whole pixels at 30 Hz in real time (off with the Camera shake setting)
+func stun(duration: float) -> void:
+	if not Settings.camera_shake:
+		return
+	var base: Vector2 = $Visual.position
+	var tween := create_tween()
+	tween.set_ignore_time_scale(true)
+	for i in int(duration * 30.0):
+		tween.tween_property($Visual, "position", base + Vector2(randi_range(-2, 2), randi_range(-2, 2)), 1.0 / 30.0)
+	tween.tween_property($Visual, "position", base, 0.0)
+
+# Shoves the player away from the attacker and back home again (off with the Camera shake setting)
+var push_tween: Tween
+func push_back(distance: float) -> void:
+	if not Settings.camera_shake:
+		return
+	if push_tween:
+		push_tween.kill()
+	push_tween = create_tween() # Scaled time, so the shove plays out after the hit-stop
+	push_tween.tween_property(self, "global_position:x", home_position.x - distance, 0.06)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	push_tween.tween_property(self, "global_position:x", home_position.x, 0.25)\
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
 func play_block_success():
 	if in_ability_animation:
 		return
@@ -135,12 +159,14 @@ func play_block_success():
 	if anim.current_animation != "player_block":
 		anim.play("player_block")
 	block_visual.play_success()
+	push_back(12.0)
 
 func play_block_fail():
 	if in_ability_animation:
 		return
 	anim.play("player_hurt")
 	block_visual.play_fail()
+	push_back(18.0)
 	
 func play_defeat():
 	input_enabled = false
