@@ -18,7 +18,6 @@ enum State {
 # Base selection
 var state := State.INACTIVE
 var selection_index := 0 # The cards first, then the "Next" button
-var ufo_idle_tween: Tween
 
 @onready var ui := $StopUI
 @onready var ufo := $StopUI/TuhU
@@ -41,6 +40,7 @@ const CARDS_TOP := 104.0
 const DETAIL_TOP := 206.0
 const NEXT_SIZE := Vector2(122, 32)
 const NEXT_ARROW_SPACE := 14.0 # The arrow takes the right side, so the text is nudged left to look centered
+const ENDING_WIDTHS := [120.0, 150.0, 190.0, 230.0] # The ending's lines are longer than the shop's
 const LINE_TIME := 2.4 # Seconds a line of Tuh-U stays up
 
 var shop_layer: CanvasLayer # Screen-fixed layer above the dimmed world
@@ -272,49 +272,20 @@ func _take_ufo():
 func _return_ufo():
 	ufo.reparent(ui, false)
 	ufo.scale = ufo_scale
+	ufo.reset_pose()
 	ufo.position = UFO_HOME_POS
 
 func _animate_ufo_entry(target_y := 210.0):
-	ufo.position.y = -20
-	var tween := create_tween()
-	tween.tween_property(ufo, "position:y", target_y, 1.2)
-	tween.set_trans(Tween.TRANS_BACK)
-	tween.set_ease(Tween.EASE_OUT)
-	
-	await tween.finished
-	_start_ufo_idle()
+	await ufo.glide_in(target_y) # Swoops in, then floats
 
 func _start_ufo_idle():
-	_stop_ufo_idle()
-
-	ufo_idle_tween = create_tween()
-	ufo_idle_tween.set_loops()
-
-	ufo_idle_tween.tween_property(
-		ufo,
-		"position:y",
-		ufo.position.y + 10,
-		1.2
-	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-
-	ufo_idle_tween.tween_property(
-		ufo,
-		"position:y",
-		ufo.position.y,
-		1.2
-	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	ufo.set_hovering(true)
 
 func _stop_ufo_idle():
-	if ufo_idle_tween:
-		ufo_idle_tween.kill()
-		ufo_idle_tween = null
+	ufo.set_hovering(false)
 
 func _animate_ufo_exit():
-	var tween := create_tween()
-	tween.tween_property(ufo, "position:y", -20, 0.8)
-	tween.set_trans(Tween.TRANS_BACK)
-	tween.set_ease(Tween.EASE_IN)
-	await tween.finished
+	await ufo.glide_out()
 
 # Rolls the items and lays the cards out in a centered row
 func _spawn_cards():
@@ -448,9 +419,8 @@ func _spawn_inventory_full_feedback(shop_item: ShopCard, message: String):
 	feedback.play(message)
 
 # ENDING METHODS
+# Tuh-U's ending dialogue uses the same pixel bubble as the shop, above him and growing to the right, waiting for Confirm after each line
 func say(text: String, mood := "normal"):
-	speech_bubble.set_target(ufo)
-	
 	match mood:
 		"happy":
 			ufo.play_happy()
@@ -465,12 +435,14 @@ func say(text: String, mood := "normal"):
 		_:
 			ufo.play_normal()
 	
-	speech_bubble.show_bubble()
-	await speech_bubble.say_line(text)
+	var ufo_screen: Vector2 = ufo.get_global_transform_with_canvas().origin
+	shop_bubble.configure(ufo_screen + Vector2(-16, -36), true, ENDING_WIDTHS)
+	await shop_bubble.say_and_wait(text, ufo_screen + Vector2(0, -20))
 
 
 func end_say():
-	speech_bubble.hide_bubble()
+	shop_bubble.hide_bubble()
+	shop_bubble.configure(ShopBubble.ANCHOR) # Back to the shop's place
 
 
 func move_ufo_to(pos: Vector2, duration := 0.75, restart_idle := true):
@@ -494,15 +466,10 @@ func enter_demo_ending_stop():
 	
 	ui.visible = true
 	
-	# Hide normal shop UI.
-	shop_layer.visible = false
-	speech_bubble.mode = SpeechBubble.BubbleMode.CINEMATIC
-	
-	if not speech_bubble.is_node_ready():
-		await speech_bubble.ready
-	
-	speech_bubble.set_target(ufo)
-	speech_bubble.show_tail()
+	# Only the speech bubble of the shop layer is used (no cards, box or Next button)
+	shop_layer.visible = true
+	detail.visible = false
+	next_button.visible = false
 	
 	await _animate_ufo_entry()
 	await move_ufo_to(UFO_ENDING_POS, 0.8)
@@ -517,6 +484,8 @@ func enter_demo_ending_stop():
 	
 	state = State.INACTIVE
 	ui.visible = false
+	shop_layer.visible = false
+	detail.visible = true
 	
 	demo_ending_finished.emit()
 

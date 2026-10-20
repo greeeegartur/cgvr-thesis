@@ -1,7 +1,7 @@
 extends Node2D
 class_name ShopBubble
 
-# Tuh-U's speech bubble in the shop: a white pixel bubble with a black outline and a small tail, drawn in code and sized to the line; it keeps a gentle bob
+# Tuh-U's speech bubble (shop reactions and the demo ending): a white pixel bubble with a black outline and a small tail, drawn in code and sized to the line; it keeps a gentle bob
 
 const FONT := preload("res://Graphics/Fonts/PixelOperator.ttf")
 const ANCHOR := Vector2(545, 92) # The bubble's bottom-right corner: it grows up and to the left from here, in the free band above the items
@@ -17,12 +17,17 @@ var label: Label
 var box_size := Vector2.ZERO
 var tail_target := Vector2.ZERO # Where the tail points (local)
 var serial := 0 # A newer line cancels an older one
+var anchor := ANCHOR # The bubble's corner on the screen (bottom-right, or bottom-left when it grows to the right)
+var grow_right := false
+var widths: Array = WIDTHS
+var waiting := false # A line that waits for Confirm shows a small blinking arrow
 var bob_tween: Tween
 var pop_tween: Tween
 
 func _init() -> void:
-	position = ANCHOR
+	position = anchor
 	visible = false
+	set_process(false)
 	label = Label.new()
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.add_theme_font_override("font", FONT)
@@ -30,12 +35,24 @@ func _init() -> void:
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(label)
 
+# Where the bubble sits: anchor is its bottom corner; to_right grows it to the right of the anchor (the ending), otherwise to the left (the shop)
+func configure(at: Vector2, to_right := false, width_list: Array = WIDTHS) -> void:
+	anchor = at
+	grow_right = to_right
+	widths = width_list
+
 # Shows a line; target is where Tuh-U is (screen position), the tail points toward it
-func say(text: String, target: Vector2) -> void:
+func say(text: String, target: Vector2, allow_skip := false) -> void:
 	serial += 1
 	var mine := serial
+	waiting = false
 	_fit(text)
-	tail_target = target - ANCHOR
+	var screen := get_viewport().get_visible_rect().size
+	if grow_right: # Never past the screen edge, whatever the line made it
+		anchor.x = minf(anchor.x, screen.x - box_size.x - 6.0)
+	else:
+		anchor.x = maxf(anchor.x, box_size.x + 6.0)
+	tail_target = target - anchor
 	label.text = text
 	label.visible_characters = 0
 	queue_redraw()
@@ -44,10 +61,27 @@ func say(text: String, target: Vector2) -> void:
 	for i in total:
 		if mine != serial:
 			return
+		if allow_skip and Input.is_action_just_pressed("ui_accept"):
+			break
 		label.visible_characters = i + 1
 		await get_tree().create_timer(TYPE_SPEED).timeout
 	if mine == serial:
 		label.visible_characters = -1
+
+# A line that waits for Confirm before it returns (the ending's dialogue)
+func say_and_wait(text: String, target: Vector2) -> void:
+	await say(text, target, true)
+	var mine := serial
+	waiting = true
+	set_process(true)
+	await get_tree().process_frame # The press that skipped the typing does not count
+	while mine == serial:
+		await get_tree().process_frame
+		if not PauseMenu.active and Input.is_action_just_pressed("ui_accept"):
+			break
+	waiting = false
+	set_process(false)
+	queue_redraw()
 
 func hide_bubble() -> void:
 	serial += 1
@@ -75,15 +109,15 @@ func _measure(text: String, width: float, font_size: int) -> Vector2:
 # Picks the biggest readable text size and the smallest bubble width that holds the line
 func _fit(text: String) -> void:
 	var chosen_size: int = SIZES[SIZES.size() - 1]
-	var chosen_width: float = WIDTHS[WIDTHS.size() - 1]
+	var chosen_width: float = widths[widths.size() - 1]
 	var text_size := Vector2.ZERO
 	var found := false
 	for font_size in SIZES:
-		for width in WIDTHS:
+		for width in widths:
 			text_size = _measure(text, width - PADDING.x * 2.0, font_size)
 			var max_height: float = (font_size + LINE_SPACING) * 3.0 # Three lines is comfortable
 			var room: float = width - PADDING.x * 2.0
-			if text_size.x + 4.0 <= room and text_size.y <= max_height and text_size.y + PADDING.y * 2.0 + 2.0 <= ANCHOR.y - TOP_LIMIT: # The widest word needs a little slack too, or it gets cut
+			if text_size.x + 4.0 <= room and text_size.y <= max_height and text_size.y + PADDING.y * 2.0 + 2.0 <= anchor.y - TOP_LIMIT: # The widest word needs a little slack too, or it gets cut
 				chosen_size = font_size
 				chosen_width = width
 				found = true
@@ -96,7 +130,7 @@ func _fit(text: String) -> void:
 	label.add_theme_font_size_override("font_size", chosen_size)
 	label.size = Vector2(inner_width, text_size.y)
 	box_size = Vector2(inner_width + PADDING.x * 2.0, text_size.y + PADDING.y * 2.0)
-	label.position = -box_size + PADDING
+	label.position = (Vector2(PADDING.x, -box_size.y + PADDING.y) if grow_right else -box_size + PADDING)
 
 func _pop_in() -> void:
 	visible = true
@@ -109,18 +143,22 @@ func _pop_in() -> void:
 	pop_tween.tween_property(self, "scale", Vector2.ONE, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if bob_tween:
 		bob_tween.kill()
-	position = ANCHOR
+	position = anchor
 	bob_tween = create_tween().set_loops()
 	bob_tween.tween_method(_bob, 0.0, 1.0, 0.7)
 	bob_tween.tween_method(_bob, 1.0, 0.0, 0.7)
 
+func _process(_delta: float) -> void:
+	if waiting:
+		queue_redraw() # The arrow blinks
+
 func _bob(amount: float) -> void:
-	position.y = ANCHOR.y - roundf(amount * 2.0) # Whole pixels
+	position.y = anchor.y - roundf(amount * 2.0) # Whole pixels
 
 func _draw() -> void:
-	var rect := Rect2(-box_size, box_size)
+	var rect := Rect2(Vector2(0, -box_size.y), box_size) if grow_right else Rect2(-box_size, box_size)
 	# Tail first, so the bubble covers its base: a little wedge from the bottom-right toward Tuh-U
-	var base := Vector2(-16.0, 0.0)
+	var base := Vector2(16.0, 0.0) if grow_right else Vector2(-16.0, 0.0)
 	var direction := (tail_target - base).normalized()
 	var tip := (base + direction * TAIL_LENGTH).round()
 	for outline in [true, false]:
@@ -133,6 +171,10 @@ func _draw() -> void:
 		]), color)
 	_pixel_round_rect(rect.grow(2.0), Color.BLACK)
 	_pixel_round_rect(rect, Color.WHITE)
+	if waiting and int(Time.get_ticks_msec() / 350) % 2 == 0: # A small blinking arrow: press Confirm to go on
+		var corner := rect.end - Vector2(10, 9)
+		for i in 3:
+			draw_rect(Rect2(corner + Vector2(i, i), Vector2(5 - i * 2, 1)), Color.BLACK)
 
 # A rectangle with softened corners (whole pixels)
 func _pixel_round_rect(rect: Rect2, color: Color) -> void:

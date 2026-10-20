@@ -30,7 +30,7 @@ const DEFAULT := [
 	{ "text": "Hey, can you help me solve this? 3^3 + log10(10000) + (108 / 3)", "mood": "normal" },
 	{ "text": "I don't know who keeps making everything so dark.", "mood": "sad" },
 	{ "text": "These creatures sure are something, huh?", "mood": "happy" },
-	{ "text": "Beyond this jungle is the caverns system we're trying to get to.", "mood": "normal" }
+	{ "text": "The caverns system is still a ways to go!", "mood": "happy" }
 ]
 const BUY := [
 	{ "text": "Nice! Big thanks!", "mood": "happy" },
