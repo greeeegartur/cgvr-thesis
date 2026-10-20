@@ -53,6 +53,8 @@ static func show(scene: PackedScene, layer: Node, at: Vector2, tier: Tier, keep_
 static func _pick(tier: Tier) -> Array:
 	var pool: Array = POOLS[tier]
 	var choices := pool.filter(func(entry): return entry[0] != last_text.get(tier, ""))
+	if choices.is_empty():
+		choices = pool # A tier with one text repeats it
 	var entry: Array = choices.pick_random()
 	last_text[tier] = entry[0]
 	return entry

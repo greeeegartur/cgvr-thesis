@@ -30,6 +30,7 @@ var abilities: Array[InventoryAbility] = []
 var killed_creatures: Array[String] = []
 var tamed_creatures: Array[String] = []
 var karma := 0
+var tame_hints_shown := 0 # Tame sequences that showed the "Press Z at the right time!" hint in this run
 const KARMA_THRESHOLDS := [15, 25, 40, 50, 60, 75]
 
 signal stats_changed
@@ -50,6 +51,7 @@ func reset_run():
 	# Reset progression
 	currency = 0
 	karma = 0
+	tame_hints_shown = 0
 	killed_creatures.clear()
 	tamed_creatures.clear()
 	abilities.clear()

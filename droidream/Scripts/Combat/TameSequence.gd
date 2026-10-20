@@ -7,7 +7,8 @@ class_name TameSequence
 enum Result { PERFECT, GOOD, TRY, MISS }
 
 signal pressed # Every counted press (the Droid snaps into a pose)
-signal icon_judged(index: int, result: int, icon: TameIcon, count: int)
+signal last_icon_started # The last icon leaves its start point (the camera eases in)
+signal icon_judged(index: int, result: int, spot: Vector2, count: int) # The spot is kept even if the icon was cleared meanwhile
 
 # Timing (seconds, in game time, so the pause menu and the hit-stop stop the icons and the windows together)
 const HALF := 0.51 # Time from the start of an icon to its shadow: the moment to press
@@ -112,10 +113,12 @@ func play(enemy_visual: EnemyVisual, player_visual: Node2D, layer: Node2D, camer
 		icon.show_shadow(spots[i])
 		await _wait(SHADOW_IN + (FIRST_LEAD if i == 0 else LEAD))
 		
+		if i == count - 1:
+			last_icon_started.emit()
 		icon.begin_travel(_pick_start(icon.spot, enemy_visual, player_visual, camera), _pick_turn())
 		var result: int = await _run_icon(icon)
 		results.append(result)
-		icon_judged.emit(i, result, icon, count)
+		icon_judged.emit(i, result, spots[i], count)
 		
 		# The feedback plays, then the next shadow appears; the finished ones stay where they are until clear() at the end (no wait after the last one)
 		if i < count - 1:

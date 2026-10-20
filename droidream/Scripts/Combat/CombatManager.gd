@@ -54,7 +54,7 @@ var selected_attack_type : CombatTypes.EntityType # Currently selected attack ty
 var turn_order_toggle_enabled := false # UI variable for turn showing enemy visual turn orders
 var locked_enemy_turn_order: Array
 
-# Attack time trackers for player blocking and critical hits
+# Attack time trackers for player blocking
 var attack_time = 0.0
 var attack_timer_running = false
 
@@ -69,7 +69,6 @@ var enemy_attack_started_handlers: Dictionary = {}
 var enemy_attack_hit_handlers: Dictionary = {}
 var enemy_attack_finished_handlers: Dictionary = {}
 
-# Crit multipliers (for Recalibration effect)
 const HIT_RETURN_DELAY := 0.4 # After a hit that did not tame, before the Droid walks home
 var tame_sequence: TameSequence
 var sequence_chip_roll := false
@@ -117,6 +116,7 @@ const HIT_STOP_SCALE := 0.05 # Time scale during a hit-stop
 const HIT_STOP_NORMAL := 0.06
 const HIT_STOP_CRIT := 0.12
 const HIT_STOP_LANDING := 0.04 # A Perfect landing of a tame icon
+const TAME_HINT_SEQUENCES := 3 # The timing hint shows on the first sequences of a run (always in the tutorial)
 const HIT_STOP_BLOCK := 0.10
 const HIT_STOP_HURT := 0.10
 var hit_stop_id := 0
@@ -620,7 +620,12 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	# The icons: every press makes the Droid strike a pose; the results decide the multiplier and the chip roll
 	_connect_once(tame_sequence.pressed, player_visual.pose_on_press)
 	_connect_once(tame_sequence.icon_judged, _on_tame_icon_judged)
-	tutorial_text.show_hint(TutorialText.HintType.TAME_TIMING, enemy_visual)
+	_connect_once(tame_sequence.last_icon_started, _on_last_tame_icon_started)
+	if tutorial_mode or PlayerData.tame_hints_shown < TAME_HINT_SEQUENCES:
+		if not tutorial_mode:
+			PlayerData.tame_hints_shown += 1
+		_connect_once(tame_sequence.pressed, tutorial_text.hide_text) # The hint goes away with the first press
+		tutorial_text.show_hint(TutorialText.HintType.TAME_TIMING, enemy_visual)
 	var results: Array = await tame_sequence.play(enemy_visual, player_visual, vfx.particle_layer, camera)
 	tutorial_text.hide_text()
 	var multiplier := TameSequence.multiplier(results, PlayerData.has_ability("recalibration"))
@@ -656,13 +661,20 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	else:
 		_enemy_turn()
 
+# While the last icon travels the camera eases slowly toward the creature (the next frame_group or reset takes it back)
+func _on_last_tame_icon_started() -> void:
+	if Settings.camera_shake:
+		camera.anticipate(0.9)
+
 # Every judged icon gets its feedback: a Perfect locks in with a small star burst, a tiny hit-stop and a stun jitter, the others only show their text
-func _on_tame_icon_judged(_index: int, result: int, icon: TameIcon, _count: int) -> void:
+func _on_tame_icon_judged(_index: int, result: int, spot: Vector2, _count: int) -> void:
 	var enemy_visual: EnemyVisual = enemy_visuals[selected_enemy]
-	var at := icon.spot + Vector2(-48, -26)
+	var at := spot + Vector2(-48, -26)
 	match result:
 		TameSequence.Result.PERFECT:
-			StarBurst.play(vfx.particle_layer, icon.spot, StarBurst.Preset.LANDING)
+			if Settings.camera_shake:
+				camera.pop_zoom(0.04, 0.12) # A tiny pop
+			StarBurst.play(vfx.particle_layer, spot, StarBurst.Preset.LANDING)
 			vfx.play_tier_feedback(at, ActionFeedback.Tier.PERFECT)
 			_hit_impact(enemy_visual, HIT_STOP_LANDING)
 		TameSequence.Result.GOOD:
@@ -1143,7 +1155,7 @@ func _on_player_block_attempted():
 	# If all previous checks passed then block was triggered -> cooldown starts here
 	_start_block_cooldown()
 
-# Decides if action is player block or critical hit
+# Decides if the action press is a player block (taming reads Z in the tame sequence)
 func _on_player_action_pressed():
 	# Does not allow combat actions in minigames, only minigame centered logic handled by another script
 	if in_minigame:
@@ -1167,7 +1179,7 @@ func _start_block_cooldown():
 func _is_quick_tame(enemy: CombatEntity) -> bool:
 	return enemy.is_tamed() and enemy.turns_taken == 0
 
-# Chip restoring function for the player to gain back chips with crits; also acts as a softlock prevention method
+# Chip restoring for multi-tame to gain back chips with a random chance; also acts as a softlock prevention method
 func _try_restore_chip(used_type: CombatTypes.EntityType, critical: bool):
 	var total_chips = PlayerData._get_total_chips()
 	# 1. Player uses last chip, so that chip is always restored regardless of crit
@@ -1977,7 +1989,7 @@ func _get_free_enemy_slot() -> int:
 			return i
 	return -1
 
-# Restores the players chip when 1) landing a critical hit with 10% chance or 2) last chip used
+# Gives back one chip of the given type
 func _restore_chip(type: CombatTypes.EntityType):
 	match type:
 		CombatTypes.EntityType.SKY:

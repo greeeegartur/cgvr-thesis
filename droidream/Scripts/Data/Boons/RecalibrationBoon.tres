@@ -7,7 +7,7 @@
 script = ExtResource("1_7vx0x")
 id = "recalibration"
 name = "Recalibration"
-description = "Permanently increases the critical hit multiplier from 1.5x to 1.75x the usual tame power."
+description = "Perfect timing is easier to hit, and an all-perfect tame deals 1.75x instead of 1.5x."
 type = "Passive"
 icon = ExtResource("1_mjxrf")
 metadata/_custom_type_script = "uid://yjimuc2myefo"

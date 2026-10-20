@@ -1,7 +1,7 @@
 extends CanvasLayer
 class_name OptionsMenu
 
-# The Options container used by the title screen and the pause menu: audio sliders, camera shake and minigame countdown toggles, and the controls pages
+# The Options container used by the title screen and the pause menu: audio sliders, camera shake, minigame countdown and easier timing toggles, and the controls pages
 
 signal closed
 
@@ -142,6 +142,7 @@ func _main_entries() -> Array:
 		{ "text": "SFX", "pips": PIP_COUNT, "pips_dim": PIP_COUNT - Settings.sfx, "pips_dim_end": true },
 		{ "text": "Camera shake", "right": _on_off(Settings.camera_shake) },
 		{ "text": "Minigame countdown", "right": _on_off(Settings.minigame_countdown) },
+		{ "text": "Easier timing", "right": _on_off(Settings.easier_timing) },
 		{ "text": "Controls" },
 		{ "text": "Back" }
 	]
@@ -252,6 +253,8 @@ func _adjust(direction: int) -> void:
 			Settings.set_camera_shake(not Settings.camera_shake)
 		3:
 			Settings.set_minigame_countdown(not Settings.minigame_countdown)
+		4:
+			Settings.set_easier_timing(not Settings.easier_timing)
 		_:
 			return
 	list.update_rows(_main_entries())
@@ -260,11 +263,11 @@ func _on_confirmed(index: int) -> void:
 	match page:
 		Page.MAIN:
 			match index:
-				2, 3:
+				2, 3, 4:
 					_adjust(1)
-				4:
-					_show_controls()
 				5:
+					_show_controls()
+				6:
 					_back()
 		Page.CONTROLS:
 			match index:
@@ -295,7 +298,7 @@ func _back() -> void:
 			close()
 		Page.CONTROLS:
 			_show_main()
-			list.select(4, false)
+			list.select(5, false)
 		Page.CUSTOM:
 			_show_controls()
 			list.select(2, false)
