@@ -4,7 +4,7 @@ class_name ShopDialogue
 # Tuh-U's lines in the shop: how he greets you, and how he reacts when you buy or cannot afford something; every line has a mood face
 
 const FIRST_VISIT := [
-	{ "text": "Found some cool stuff! And I just might share..!", "mood": "happy" },
+	{ "text": "Found some cool stuff! And I just might share!", "mood": "happy" },
 	{ "text": "Nice! I'd do our signature handshake if I had hands.", "mood": "happy" },
 	{ "text": "That looked fun! ..Or at least I hope it was!", "mood": "happy" },
 	{ "text": "Wow-ow, Droid of the jungle! Droid of the jungle!", "mood": "happy" }

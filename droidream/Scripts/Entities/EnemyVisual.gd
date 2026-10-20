@@ -18,6 +18,8 @@ signal attack_finished
 
 # Target preview markers (created in code, so every creature scene gets them)
 const OUTLINE_SHADER := preload("res://Scenes/VFX/TargetOutline.gdshader")
+const METER_LABEL_HEIGHT := 12.0 # The meter's labels and tame balls stick out this far above its bar
+const ARROW_GAP := 4.0 # Space between them and the target arrow
 const SECONDARY_ARROW_SCALE := 0.6 # Secondary arrows are 60% of the main arrow
 const SECONDARY_STRENGTH := 0.3 # Secondary targets pop and tint much less than the main target
 const SECONDARY_OUTLINE_ALPHA := 0.55 # ...and have a fainter outline
@@ -217,6 +219,15 @@ func clear_minigame_highlight():
 
 # Builds the secondary arrow, the count label and the shared selection effect once
 func _setup_target_markers():
+	# The arrow is drawn in code and always hovers above the intent meter's tame balls, whatever height the meter sits at (the bob and the beat stay as they were)
+	var arrow_sprite: Sprite2D = target_arrow.get_node("Sprite2D")
+	arrow_sprite.texture = TargetArrowArt.texture()
+	arrow_sprite.scale = Vector2(2.4, 2.4)
+	var meter_center_x: float = axis_bar.position.x + axis_bar.bar.size.x * 0.5
+	var meter_top: float = axis_bar.position.y - METER_LABEL_HEIGHT # The Kill / Tame labels and the balls reach this high
+	var rest := Vector2(meter_center_x, meter_top - ARROW_GAP - arrow_sprite.texture.get_height() * arrow_sprite.scale.y * 0.5)
+	target_arrow.position = rest - Vector2(2, -80) # The scene's arrow sprite sits at (2, -80) in this node; its bob animation is relative to it
+	
 	# Secondary arrow: a copy of the main arrow; it is driven by the selection effect (60% of the main arrow's size)
 	secondary_arrow = target_arrow.duplicate()
 	secondary_arrow.name = "SecondaryArrow"

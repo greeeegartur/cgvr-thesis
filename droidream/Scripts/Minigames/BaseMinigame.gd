@@ -104,6 +104,7 @@ func animate_out():
 # Duration setting for minigames
 func set_duration(value: float):
 	max_duration = value
+	ControlTextures.swap_in(self) # Every minigame's _ready calls this first: the key pictures of the scheme in use
 
 # In Combat scene methods
 func _enter_tree():

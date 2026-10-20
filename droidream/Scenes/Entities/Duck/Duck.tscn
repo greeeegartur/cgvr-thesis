@@ -452,9 +452,9 @@ position = Vector2(0, 6)
 script = ExtResource("1_fvduc")
 
 [node name="EnemyAxisBar" parent="." unique_id=1967246209 instance=ExtResource("2_6raiu")]
-offset_left = -42.4
+offset_left = -41.4
 offset_top = -49.0
-offset_right = -42.4
+offset_right = -41.4
 offset_bottom = -49.0
 
 [node name="Visual" type="Node2D" parent="." unique_id=392927880]

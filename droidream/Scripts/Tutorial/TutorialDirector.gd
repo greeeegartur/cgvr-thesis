@@ -50,6 +50,7 @@ const UFO_POS_OUTRO := Vector2(150, 205)
 var dummy_enemy: CombatEntity
 
 func _ready():
+	ControlTextures.swap_in(get_tree().current_scene) # The key pictures of the scheme in use
 	await speech_bubble.ready
 	
 	PlayerData.set_guesses(0, 4, 0)

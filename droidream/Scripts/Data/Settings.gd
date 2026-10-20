@@ -25,8 +25,11 @@ var music := MAX_STEP
 var sfx := MAX_STEP
 var camera_shake := true
 var minigame_countdown := false
+var easier_timing := false # Wider windows for the tame timing icons
 var controls_scheme := "default" # "default", "wasd" or "custom"
 var custom_keys := {} # action -> physical keycode, for the custom scheme
+
+signal controls_changed # The control scheme or the keys changed: key pictures update
 
 var original_events := {} # The input map as the project defines it; these always stay bound (the failsafe)
 
@@ -47,6 +50,7 @@ func load_settings() -> void:
 	sfx = clampi(int(file.get_value("audio", "sfx", MAX_STEP)), 0, MAX_STEP)
 	camera_shake = bool(file.get_value("gameplay", "camera_shake", true))
 	minigame_countdown = bool(file.get_value("gameplay", "minigame_countdown", false))
+	easier_timing = bool(file.get_value("gameplay", "easier_timing", false))
 	controls_scheme = str(file.get_value("controls", "scheme", "default"))
 	if not controls_scheme in ["default", "wasd", "custom"]:
 		controls_scheme = "default"
@@ -59,6 +63,7 @@ func save_settings() -> void:
 	file.set_value("audio", "sfx", sfx)
 	file.set_value("gameplay", "camera_shake", camera_shake)
 	file.set_value("gameplay", "minigame_countdown", minigame_countdown)
+	file.set_value("gameplay", "easier_timing", easier_timing)
 	file.set_value("controls", "scheme", controls_scheme)
 	file.set_value("controls", "custom_keys", custom_keys)
 	file.save(FILE_PATH)
@@ -103,6 +108,10 @@ func set_camera_shake(value: bool) -> void:
 	save_settings()
 	changed.emit()
 
+func set_easier_timing(value: bool) -> void:
+	easier_timing = value
+	save_settings()
+
 func set_minigame_countdown(value: bool) -> void:
 	minigame_countdown = value
 	save_settings()
@@ -128,6 +137,7 @@ func set_scheme(scheme: String) -> void:
 			custom_keys[action] = DEFAULT_KEYS[action] # The custom list starts from the default keys
 	apply_controls()
 	save_settings()
+	_refresh_key_pictures()
 	changed.emit()
 
 # Gives an action a custom key; when another action already uses that key the two keys swap. Returns false for reserved keys
@@ -154,7 +164,13 @@ func reset_controls() -> void:
 	custom_keys.clear()
 	apply_controls()
 	save_settings()
+	_refresh_key_pictures()
 	changed.emit()
+
+# Key pictures everywhere (hints, the controls bar and the minigames' sprites) follow the scheme in use
+func _refresh_key_pictures() -> void:
+	controls_changed.emit()
+	ControlTextures.swap_in(get_tree().root)
 
 # Rebuilds the input map: the original keys always stay, the chosen scheme's keys are added on top
 func apply_controls() -> void:

@@ -3,16 +3,10 @@ class_name KeyIcon
 
 # A keyboard key picture from a two-frame sheet (up, pressed), cropped to its art so it sits well in a line of text
 
-const SHEETS := {
-	"Z": preload("res://Graphics/Sprites/UI/Z.png"),
-	"X": preload("res://Graphics/Sprites/UI/X.png"),
-	"C": preload("res://Graphics/Sprites/UI/C.png"),
-	"ARROWS": preload("res://Graphics/Sprites/UI/WASD.png")
-}
-
 var key_name := ""
 var frames: Array[AtlasTexture] = []
 var pressed := false
+var icon_scale_value := 1.0
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -20,7 +14,10 @@ func _init() -> void:
 # Loads the sheet of a key (Z, X, C or ARROWS) and crops both frames to the same art rectangle; icon_scale 1 or 2 keeps pixels crisp; other values are only for small icons
 func setup(key: String, icon_scale: float = 1.0) -> void:
 	key_name = key
-	var sheet: Texture2D = SHEETS[key]
+	icon_scale_value = icon_scale
+	if not Settings.controls_changed.is_connected(_refresh):
+		Settings.controls_changed.connect(_refresh) # The picture follows the control scheme
+	var sheet: Texture2D = ControlTextures.sheet(key)
 	var frame_height := sheet.get_height() / 2
 	var image := sheet.get_image()
 	var used := Rect2i()
@@ -39,6 +36,10 @@ func setup(key: String, icon_scale: float = 1.0) -> void:
 	custom_minimum_size = Vector2(used.size) * icon_scale
 	size = custom_minimum_size
 	queue_redraw()
+
+func _refresh() -> void:
+	if key_name != "":
+		setup(key_name, icon_scale_value)
 
 func set_pressed(value: bool) -> void:
 	if value != pressed:

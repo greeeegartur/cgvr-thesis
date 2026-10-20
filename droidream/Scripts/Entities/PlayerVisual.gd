@@ -5,9 +5,6 @@ extends Node2D
 class_name PlayerVisual
 
 # Attack and action signals
-signal attack_started
-signal attack_hit
-signal attack_finished
 signal action_pressed
 signal ability_entered
 signal ability_finished
@@ -64,14 +61,45 @@ func _ready():
 func set_input_enabled(enabled):
 	input_enabled = enabled
 
-# Attack methods for critical hit timing
-func play_attack():
+# Walks to the creature and waits there (the tame timing sequence runs on its own)
+func walk_to_target():
 	await _move_to_attack_position(attack_position)
-	attack_started.emit()
-	anim.play("player_attack")
+	anim.play("player_idle")
 
-func on_attack_hit():
-	attack_hit.emit()
+# POSES WHILE TAMING
+# Every press of the tame sequence snaps the Droid into a random pose (never the same twice in a row) at a random speed; the newest press overrides the last
+const TAME_POSES := ["player_ability_start", "player_ability_loop", "player_ability_end", "player_subdue"] # No item pose: it looks too much like the dream animation
+const POSE_SPEED := Vector2(0.9, 1.4)
+const POSE_MAX_TIME := 0.8 # A pose does not need to play fully: after this long (at its speed) the Droid is idle again
+var last_pose := ""
+var pose_serial := 0
+
+func pose_on_press() -> void:
+	if in_ability_animation:
+		return
+	var options := TAME_POSES.filter(func(name): return name != last_pose)
+	last_pose = options.pick_random()
+	var speed := randf_range(POSE_SPEED.x, POSE_SPEED.y)
+	pose_serial += 1
+	var mine := pose_serial
+	anim.play(last_pose, -1, speed) # The custom speed only applies to this play
+	var length := minf(anim.current_animation_length / speed, POSE_MAX_TIME)
+	await get_tree().create_timer(length).timeout
+	# Back to idle unless a newer press or another animation took over
+	if mine == pose_serial and anim.current_animation == last_pose:
+		anim.play("player_idle")
+
+# A small shrug after a sequence without a single press (no sound, no hurt animation)
+func play_shrug() -> void:
+	pose_serial += 1
+	anim.play("player_idle")
+	var base_scale: Vector2 = $Visual.scale
+	var base_rotation: float = $Visual.rotation
+	var tween := create_tween()
+	tween.tween_property($Visual, "scale", base_scale * Vector2(1.06, 0.92), 0.1)
+	tween.parallel().tween_property($Visual, "rotation", deg_to_rad(-4.0), 0.1)
+	tween.tween_property($Visual, "scale", base_scale, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property($Visual, "rotation", base_rotation, 0.2)
 
 # Movement methods for connecting patterns using tweens (same methods just in reverse, identical to EnemyVisual)
 func _move_to_attack_position(target: Vector2):
@@ -205,12 +233,11 @@ func _on_anim_finished(anim_name):
 	_handle_animation_finished(anim_name)
 
 func _handle_animation_finished(anim_name):
-	if anim_name == "player_attack":
-		await _move_to_home_position()
-		attack_finished.emit()
-	elif anim_name == "player_block" or anim_name == "player_hurt":
+	if anim_name == "player_block" or anim_name == "player_hurt":
 		anim.play("player_idle")
 	elif anim_name == "player_ability_start":
+		if not in_ability_animation: # A pose of the tame sequence does not start the ability loop
+			return
 		anim.play("player_ability_loop")
 		ability_entered.emit()
 	elif anim_name == "player_ability_end":

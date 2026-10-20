@@ -161,7 +161,7 @@ func _controls_entries() -> Array:
 
 func _show_custom(selected := 0) -> void:
 	page = Page.CUSTOM
-	_fill("Custom keys", "The arrows, Z, X and C always work too", _custom_entries(), selected, [["Z", "Change key"], ["X", "Back"]])
+	_fill("Custom keys", "The arrows, Z, X and C always work too\nTextures for these controls will show as default.", _custom_entries(), selected, [["Z", "Change key"], ["X", "Back"]])
 
 func _custom_entries() -> Array:
 	var entries := []

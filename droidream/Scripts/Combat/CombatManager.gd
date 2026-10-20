@@ -57,8 +57,6 @@ var locked_enemy_turn_order: Array
 # Attack time trackers for player blocking and critical hits
 var attack_time = 0.0
 var attack_timer_running = false
-var critical_window = Vector2.ZERO
-var last_attack_press_time = -1.0
 
 # Player block window variables for handling blocking logic
 var last_block_press_time = -1.0
@@ -72,8 +70,9 @@ var enemy_attack_hit_handlers: Dictionary = {}
 var enemy_attack_finished_handlers: Dictionary = {}
 
 # Crit multipliers (for Recalibration effect)
-const BASE_CRIT_MULTIPLIER := 1.5
-const RECALIBRATION_CRIT_MULTIPLIER := 1.75
+const HIT_RETURN_DELAY := 0.4 # After a hit that did not tame, before the Droid walks home
+var tame_sequence: TameSequence
+var sequence_chip_roll := false
 
 # Entity visual scenes to load for animations and UI
 var enemy_visuals: Dictionary = {} # Loads from CombatEntity and gives a dict of EnemyVisuals for enemies
@@ -178,6 +177,8 @@ const ICE_CUBE_HEAL_RATIO := 0.10
 # Prepares combat by loading entities (player and enemy(s)) and starting combat
 func _ready():
 	set_process_input(true)
+	tame_sequence = TameSequence.new()
+	add_child(tame_sequence)
 	await _setup_ui()
 	# Combat scene's process mode (pausing) for minigames
 	process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -324,7 +325,6 @@ func _reset_combat_state():
 	selected_enemy = null
 	current_target_reach = 0
 	attack_timer_running = false
-	last_attack_press_time = 0.0
 	heat_up_pending_power_bonus = 0
 	heat_up_active = false
 	heat_up_power_bonus = 0
@@ -589,7 +589,7 @@ func _end_combat(victory: bool):
 # ACTION FUNCTIONS
 # These functions progress the turn in some way
 
-# The player's attacking logic, takes the player's attack type as a parameter for damage calculation
+# The player's attacking logic: the Droid walks to the creature, the tame timing sequence runs (shadow icons, Z presses), then the damage is applied once
 func player_attack(attack_type: CombatTypes.EntityType):
 	tutorial_text.hide_text()
 	
@@ -605,95 +605,65 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	
 	print("Player attacks with: ", attack_type)
 	
-	# Setting player's attack position to target enemy (relative to enemy_visual position)
-	var enemy_visual = enemy_visuals[selected_enemy]
+	var target := selected_enemy
+	var enemy_visual = enemy_visuals[target]
 	player_visual.attack_position = _get_player_attack_position(enemy_visual)
 	
 	# Camera settings
 	camera.frame_group([player_visual, enemy_visual], 0.35, CombatCamera.ZOOM_ACTION.x, CombatCamera.ACTION_LOWER) # A little closer while taming, with the Droid and its target both in view
 	
-	# Shows crit hint text for the player + allows inputs for crit
-	tutorial_text.show_hint(TutorialText.HintType.CRIT, enemy_visual)
-	player_visual.set_input_enabled(true)
+	# The sequence reads Z itself, so the Droid's own action signal stays off
+	player_visual.set_input_enabled(false)
+	await player_visual.walk_to_target()
 	
-	# Communication with PlayerVisual to calculate hit damage (check for critical hits) and play attack animations
-	player_visual.attack_started.connect(
-		func():
-			# Opens the critical window for the player to hit the opponent for additional damage
-			_start_player_critical_window(),
-		CONNECT_ONE_SHOT
-	)
+	# The icons: every press makes the Droid strike a pose; the results decide the multiplier and the chip roll
+	_connect_once(tame_sequence.pressed, player_visual.pose_on_press)
+	tutorial_text.show_hint(TutorialText.HintType.TAME_TIMING, enemy_visual)
+	var results: Array = await tame_sequence.play(enemy_visual, player_visual, vfx.particle_layer, camera)
+	tutorial_text.hide_text()
+	var multiplier := TameSequence.multiplier(results, PlayerData.has_ability("recalibration"))
+	sequence_chip_roll = TameSequence.roll_chip(results)
+	last_attack_was_critical = results.count(TameSequence.Result.PERFECT) >= 2 # For the tutorial
+	print("Tame sequence: ", results, " multiplier ", multiplier)
+	if results.count(TameSequence.Result.MISS) == results.size():
+		player_visual.play_shrug() # A full fail is met with a small shrug, no screen effects
+	tame_sequence.clear() # The icons fade out while the damage and the feedback start at once
 	
-	player_visual.attack_hit.connect(
-		func():
-			# Hides hint text
-			tutorial_text.hide_text()
-			var minigame_started = await _apply_axis_shift(selected_enemy, attack_type) # Calculates the hit damage
-			if minigame_started:
-				if combat_has_ended:
-					return
-				
-				if _check_victory():
-					_end_combat(true)
-				else:
-					_enemy_turn(),
-		CONNECT_ONE_SHOT
-	)
+	var minigame_started = await _apply_axis_shift(target, attack_type, multiplier) # Calculates the hit damage
+	tame_sequence.clear()
+	if minigame_started:
+		if combat_has_ended:
+			return
+		if _check_victory():
+			_end_combat(true)
+		else:
+			_enemy_turn()
+		return
 	
-	# End of the turn
-	player_visual.attack_finished.connect(
-		func():
-			if in_minigame:
-				return
-			
-			if tutorial_mode:
-				tutorial_attack_resolved.emit(
-					last_attack_was_critical,
-					last_attack_started_minigame
-				)
-				player_visual.set_input_enabled(false)
-				return
-			
-			# Check if enemy defeated
-			if _check_victory():
-				_end_combat(true)
-			else:
-				# Else switch turn to enemy
-				_enemy_turn(),
-		CONNECT_ONE_SHOT
-	)
-	
-	await player_visual.play_attack()
-	
-	# Empty print for visual clarity in terminal while debugging
-	print("")
-
-# Opens the player critical hit window during player's atack
-func _start_player_critical_window():
-	last_attack_press_time = -1.0
-	critical_window = Vector2(1.80, 2.05) # TO-DO: tweak this for good hit feel
-	attack_time = 0.0
-	attack_timer_running = true
+	# No dream: a short beat, then the Droid walks home and the turn ends
+	await get_tree().create_timer(HIT_RETURN_DELAY).timeout
+	await player_visual.return_to_home()
+	if in_minigame:
+		return
+	if tutorial_mode:
+		tutorial_attack_resolved.emit(last_attack_was_critical, last_attack_started_minigame)
+		player_visual.set_input_enabled(false)
+		return
+	if _check_victory():
+		_end_combat(true)
+	else:
+		_enemy_turn()
 
 # Processes the player's hit to shift the enemy's axis bar in a specific direction (kill, left or tame, right)
-func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
+func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType, multiplier := 1.0):
 	var enemy_visual = enemy_visuals[enemy]
 	
-	# Only for enemies, so not necessary here
-	attack_timer_running = false
-	
-	# Base damage calculation based on if crit or not
-	var base = player.attack_power
-	
-	var critical = (
-		last_attack_press_time >= critical_window.x
-		and last_attack_press_time <= critical_window.y
-	)
-	last_attack_was_critical = critical # For tutorial
+	# The sequence's multiplier is applied once to the base; the shift is rounded once at the end
+	var base = player.attack_power * multiplier
+	var critical: bool = multiplier >= TameSequence.MULT_ALL_PERFECT # An all-perfect sequence gets the big impact
 	last_attack_started_minigame = false
 	
 	if critical:
-		base *= _get_crit_multiplier() # Either 1.5 or 1.75
 		# VFX effects 
 		vfx.play_overlay_effects("crit", 0.4)
 		vfx.play_crit_feedback(enemy_visual)
@@ -724,8 +694,8 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		_hit_impact(enemy_visual, HIT_STOP_CRIT if critical else HIT_STOP_NORMAL)
 		camera.impact(CombatCamera.Impact.MEDIUM)
 		
-		# Restores chip if matches conditions inside method
-		_try_restore_chip(guess_type, critical)
+		# Restores a chip when the sequence rolled one
+		_restore_chip_after_sequence(guess_type)
 		
 		print("Enemy gets %.2f tame progress, now axis line is %.2f and %.2f away from tame." % [value_shift, enemy.axis_value, enemy.max_hp - value_shift])
 		
@@ -758,8 +728,8 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical)
 		_hit_impact(enemy_visual, HIT_STOP_CRIT if critical else HIT_STOP_NORMAL)
 		
-		# Restores chip if matches conditions inside method
-		_try_restore_chip(guess_type, critical)
+		# Restores a chip when the sequence rolled one
+		_restore_chip_after_sequence(guess_type)
 		
 		# Checking if enemy has been defeated
 		_resolve_enemy_state(enemy)
@@ -1123,13 +1093,6 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	if player.hp <= 0:
 		_end_combat(false)
 
-# Listens for player attack presses for critical hit logic
-func _on_player_attack_pressed():
-	# Failsafe to check if the function is running by accident
-	if turn != "player":
-		return
-	last_attack_press_time = attack_time
-
 # Listens for player block during an enemy's attack
 func _on_player_block_attempted():
 	# Failsafe to check if the function is running by accident
@@ -1166,8 +1129,6 @@ func _on_player_action_pressed():
 		return
 	if turn == "enemy":
 		_on_player_block_attempted()
-	elif turn == "player":
-		_on_player_attack_pressed()
 
 # Starts the player's block cooldown during the enemy turn
 func _start_block_cooldown():
@@ -1197,6 +1158,13 @@ func _try_restore_chip(used_type: CombatTypes.EntityType, critical: bool):
 	if randf() <= 0.10:
 		_restore_chip(used_type)
 		player_visual.play_restore_chip()
+
+# After the tame sequence: the last chip is always restored; otherwise the sequence's roll decides (one chip at most)
+func _restore_chip_after_sequence(used_type: CombatTypes.EntityType):
+	if PlayerData._get_total_chips() == 0 or sequence_chip_roll:
+		_restore_chip(used_type)
+		player_visual.play_restore_chip()
+	sequence_chip_roll = false
 
 # ABILITY, PASSIVE & ITEM-SPECIFIC FUNCTIONS
 # These functions are inherently ACTION functions, but categorised because of their niche uses
@@ -1414,7 +1382,7 @@ func _passive_microbots():
 			]
 			var restored_type = available_types.pick_random()
 			_restore_chip(restored_type)
-			vfx.spawn_info(player_visual, "[color=#eff238]Chip restored![/color]\n%s" % CombatTypes.type_bbcode(restored_type))
+			vfx.spawn_info(player_visual, "[color=#e8e8e8]Chip restored![/color]\n%s" % CombatTypes.type_bbcode(restored_type))
 
 # Heals the player for a random amount between 20-50%
 func _item_beetle_juice_sequence(inventory_item: InventoryItem, target = null):
@@ -1444,7 +1412,7 @@ func _item_memory_chip_sequence(item: InventoryItem, target):
 	# Shows which chips were restored, colored by type (e.g. "Chips restored!" over "Sky + Earth")
 	vfx.spawn_info(
 		player_visual,
-		"[color=#cfcfcf]Chips restored![/color]\n%s" % " + ".join(restored_names)
+		"[color=#e8e8e8]Chips restored![/color]\n%s" % " + ".join(restored_names)
 	)
 
 # Grants even more block power for the player for 3 turns
@@ -2263,10 +2231,6 @@ func _apply_scratchy_frame_reflect(enemy: CombatEntity, amount: float):
 	enemy_visual.update_axis(enemy.axis_value, actual_shift)
 	enemy_visual.shake(false)
 	vfx.play_damage_vfx(enemy_visual, abs(actual_shift), false)
-
-# Checks if the player has the Recalibration passive or not, decides multiplier based on it (1.75 with, 1.5 without)
-func _get_crit_multiplier() -> float:
-	return RECALIBRATION_CRIT_MULTIPLIER if PlayerData.has_ability("recalibration") else BASE_CRIT_MULTIPLIER
 
 # Human At Heart passive ability effect method; counts enemies killed and heals the player + permanently increases power by 0.25
 func _apply_human_at_heart(killed_count: int):
