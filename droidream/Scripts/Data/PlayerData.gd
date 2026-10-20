@@ -39,6 +39,7 @@ func _ready():
 
 func reset_run():
 	MinigameCountdown.reset() # Every minigame counts down again in the new run
+	ShopDialogue.reset() # Tuh-U greets you like a first visit again
 	# Reset stats
 	max_hp = BASE_MAX_HP
 	hp = BASE_MAX_HP

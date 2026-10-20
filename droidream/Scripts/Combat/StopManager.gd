@@ -2,6 +2,8 @@ extends Node
 
 class_name StopManager
 
+# The shop between stages: Tuh-U drops in, three items are rolled onto big centered cards, the selected one is described in a box under them
+
 signal stop_finished
 signal demo_ending_finished
 
@@ -15,34 +17,82 @@ enum State {
 
 # Base selection
 var state := State.INACTIVE
-var selection_index := 0
-var next_pop_tween: Tween
+var selection_index := 0 # The cards first, then the "Next" button
 var ufo_idle_tween: Tween
 
 @onready var ui := $StopUI
 @onready var ufo := $StopUI/TuhU
-@onready var items_container := $StopUI/ItemsContainer
-@onready var next_button := $StopUI/NextArrow
-@onready var stop_text := $StopUI/StopText
-@onready var popup := $StopUI/ShopItemContainer
+@onready var combat_manager := $"../CombatManager"
 @onready var combat_ui := $"../UI/CombatUI"
 @onready var player_visual := $"../World/PlayerVisual"
 @onready var camera := $"../Camera2D"
 @onready var speech_bubble := $"../UI/SpeechBubble"
-@onready var item_scene = preload("res://Scenes/UI/ShopItem.tscn")
 @onready var HitFeedbackScene = preload("res://Scenes/VFX/HitFeedbackText.tscn")
 
-var popup_tween: Tween
-var popup_scale_tween: Tween
+const FONT_BOLD := preload("res://Graphics/Fonts/PixelOperator-Bold.ttf")
 const UFO_STOP_POS := Vector2(390, 210)
 const UFO_ENDING_POS := Vector2(170, 210)
+const UFO_SHOP_POS := Vector2(556, 164) # Right of the items, looking at the Droid on the left
+const UFO_HOME_POS := Vector2(463, -20) # Where Tuh-U waits above the screen
+const CARD_GAP := 8.0
+const SHOP_LEFT := 160.0 # Left edge of the items: away from the top HUD and the Droid, and Tuh-U sits about as far from the right edge as the Droid is from the left
+const DETAIL_WIDTH := 300.0 # Slim, so Tuh-U and his bubble fit beside it
+const CARDS_TOP := 104.0
+const DETAIL_TOP := 206.0
+const NEXT_SIZE := Vector2(122, 32)
+const NEXT_ARROW_SPACE := 14.0 # The arrow takes the right side, so the text is nudged left to look centered
+const LINE_TIME := 2.4 # Seconds a line of Tuh-U stays up
+
+var shop_layer: CanvasLayer # Screen-fixed layer above the dimmed world
+var card_row: Control
+var cards: Array[ShopCard] = []
+var detail: ShopDetailPanel
+var shop_bubble: ShopBubble
+var next_button: UIPanel
+var next_arrow: UIArrow
+var next_label: Label
+var next_tween: Tween
+var line_id := 0
+var ufo_scale := Vector2.ONE
 
 func _ready():
-	var base_y = popup.position.y - 10.0
-	var t = create_tween()
-	t.set_loops()
-	t.tween_property(popup, "position:y", base_y + 3, 1.2)
-	t.tween_property(popup, "position:y", base_y, 1.2)
+	_build_shop_ui()
+
+func _build_shop_ui():
+	shop_layer = CanvasLayer.new()
+	shop_layer.layer = 2 # Above the HUD and the world dim, below the pause menu
+	shop_layer.visible = false
+	add_child(shop_layer)
+	card_row = Control.new()
+	card_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shop_layer.add_child(card_row)
+	shop_bubble = ShopBubble.new()
+	detail = ShopDetailPanel.new()
+	detail.top_y = DETAIL_TOP
+	shop_layer.add_child(detail)
+	
+	next_button = UIPanel.new()
+	next_button.size = NEXT_SIZE
+	next_button.pivot_offset = NEXT_SIZE * 0.5
+	next_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	next_button.visible = false
+	shop_layer.add_child(next_button)
+	next_label = Label.new()
+	next_label.text = "Next"
+	next_label.add_theme_font_override("font", FONT_BOLD)
+	next_label.add_theme_font_size_override("font_size", 14)
+	next_label.add_theme_constant_override("outline_size", 4)
+	next_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	next_label.position = Vector2(-NEXT_ARROW_SPACE * 0.5, 0) # Centered between the left edge and the arrow
+	next_label.size = NEXT_SIZE
+	next_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	next_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	next_button.add_child(next_label)
+	next_arrow = UIArrow.new()
+	next_arrow.facing = 1
+	next_arrow.position = Vector2(NEXT_SIZE.x - 16, NEXT_SIZE.y * 0.5 - 5.5)
+	next_button.add_child(next_arrow)
+	shop_layer.add_child(shop_bubble) # Last, so it is drawn above the rest
 
 func _unhandled_input(event):
 	if state != State.ACTIVE:
@@ -56,61 +106,50 @@ func _unhandled_input(event):
 		_activate_selection()
 
 func _move_selection(direction: int):
-	var max_index := items_container.get_child_count()
-	selection_index = clamp(selection_index + direction, 0, max_index)
+	selection_index = clampi(selection_index + direction, 0, cards.size())
 	_update_selection_visuals()
 
 func _update_selection_visuals():
-	for i in items_container.get_child_count():
-		var item = items_container.get_child(i)
-		var selected = (i == selection_index)
-		item.set_selected(selected)
-		if selected:
-			item.start_pop()
-			_move_popup_to(item)
-		else:
-			item.stop_pop()
+	for i in cards.size():
+		cards[i].set_selected(i == selection_index)
 	
-	# Next button logic
-	var is_next := selection_index == items_container.get_child_count()
+	var is_next := selection_index == cards.size()
+	_set_next_selected(is_next)
 	if is_next:
-		_hide_popup()
+		detail.show_next()
 	else:
-		_show_popup()
-	_set_next_button_selected(is_next)
+		var card := cards[selection_index]
+		detail.show_entry(card.entry, card.quantity)
 
-func _move_popup_to(item: ShopItem):
-	popup.visible = true
-	popup.setup(item.item_data, item.quantity, _get_modified_price(item.item_data.cost))
-	var target_x = item.global_position.x - 72
-	
-	if popup_tween:
-		popup_tween.kill()
-	popup_tween = create_tween()
-	popup_tween.set_trans(Tween.TRANS_CUBIC)
-	popup_tween.set_ease(Tween.EASE_OUT)
-	popup_tween.tween_property(
-		popup,
-		"global_position:x",
-		target_x + 4,
-		0.18
-	)
-	popup_tween.tween_property(popup, "global_position:x", target_x, 0.08)
+func _set_next_selected(selected: bool):
+	if next_tween:
+		next_tween.kill()
+	next_tween = create_tween().set_parallel(true)
+	var shade := 1.0 if selected else 0.7
+	next_tween.tween_property(next_button, "scale", Vector2.ONE * (1.08 if selected else 1.0), 0.12)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	next_tween.tween_property(next_button, "modulate", Color(shade, shade, shade, 1.0), 0.12)
+	next_button.set_highlight(selected, Color.WHITE, 2.0) # Selected containers get a white outline
 
 func _activate_selection():
-	if selection_index < items_container.get_child_count():
-		var item_node = items_container.get_child(selection_index)
-		_attempt_purchase(item_node)
+	if selection_index < cards.size():
+		_attempt_purchase(cards[selection_index])
 	else:
 		await _exit_stop()
 
-func _attempt_purchase(shop_item: ShopItem):
-	var data := shop_item.item_data
+func _attempt_purchase(shop_item: ShopCard):
+	var data := shop_item.entry
 	var actual_cost := _get_modified_price(data.cost)
 	
-	# Does not allow purchase
-	if PlayerData.currency < actual_cost or shop_item.quantity <= 0:
+	# Sold out
+	if shop_item.quantity <= 0:
 		shop_item.shake()
+		return
+	
+	# Cannot afford it
+	if PlayerData.currency < actual_cost:
+		shop_item.shake()
+		_tuhu_says(ShopDialogue.deny())
 		return
 	
 	var added := false
@@ -169,52 +208,76 @@ func _attempt_purchase(shop_item: ShopItem):
 	# Purchase accepted
 	PlayerData.currency -= actual_cost
 	shop_item.confirm_purchase()
-	_play_purchase_feedback(shop_item)
 	_spawn_purchase_feedback(shop_item)
+	_tuhu_says(ShopDialogue.buy())
 	
-	shop_item.quantity -= 1
+	shop_item.set_quantity(shop_item.quantity - 1)
 	combat_ui.refresh_player_hud()
+	_refresh_prices()
 	_update_selection_visuals()
+
+# Prices turn red on the cards the player cannot afford (anymore)
+func _refresh_prices():
+	for card in cards:
+		var price := _get_modified_price(card.entry.cost)
+		card.set_price(price, PlayerData.currency >= price)
 
 func enter_stop():
 	state = State.ENTERING
 	ui.visible = true
-	popup.scale = Vector2.ZERO
-	popup.visible = true
+	shop_layer.visible = true
+	_take_ufo()
+	combat_manager._world_gray_out(true, true) # The Droid stays undimmed
 	
-	await _animate_ufo_entry()
-	await _spawn_items()
+	await _animate_ufo_entry(UFO_SHOP_POS.y)
+	await _spawn_cards()
 	await _show_next_button()
 	selection_index = 0
 	_update_selection_visuals()
 	
 	state = State.ACTIVE
 	set_process_input(true)
+	_tuhu_says(ShopDialogue.arrival())
 
 func _exit_stop():
 	state = State.EXITING
 	set_process_input(false)
-	
-	await _animate_items_out()
+	line_id += 1
+	combat_manager._world_gray_out(false, true) # The world lights up again while the shop leaves
+	_hide_line() # Tuh-U's bubble goes away
+	_animate_items_out()
+	detail.pop_out()
 	await _next_button_out()
 	await _animate_ufo_exit()
 	_stop_ufo_idle()
+	_return_ufo()
 	
 	# Resetting selection and UI for next stage
 	selection_index = 0
-	for child in items_container.get_children():
-		child.stop_pop()
-	next_button.scale = Vector2.ONE
+	shop_layer.visible = false
 	
 	state = State.INACTIVE
 	ui.visible = false
 	
 	stop_finished.emit()
 
-func _animate_ufo_entry():
+# Tuh-U moves to the screen-fixed layer for the shop (the world is dimmed behind it), facing the Droid on the left
+func _take_ufo():
+	ufo_scale = ufo.scale
+	ufo.reparent(shop_layer, false)
+	ufo.position = Vector2(UFO_SHOP_POS.x, -20)
+	ufo.flip_toward_right() # Faces the Droid on the left
+
+# ...and goes back to the stop UI where the demo ending expects him
+func _return_ufo():
+	ufo.reparent(ui, false)
+	ufo.scale = ufo_scale
+	ufo.position = UFO_HOME_POS
+
+func _animate_ufo_entry(target_y := 210.0):
 	ufo.position.y = -20
 	var tween := create_tween()
-	tween.tween_property(ufo, "position:y", 210, 1.2)
+	tween.tween_property(ufo, "position:y", target_y, 1.2)
 	tween.set_trans(Tween.TRANS_BACK)
 	tween.set_ease(Tween.EASE_OUT)
 	
@@ -253,123 +316,57 @@ func _animate_ufo_exit():
 	tween.set_ease(Tween.EASE_IN)
 	await tween.finished
 
-func _play_purchase_feedback(shop_item: ShopItem):
-	var tween := create_tween()
-	# Popup slamming
-	tween.tween_property(
-		popup,
-		"scale",
-		Vector2(0.85, 1.25),
-		0.08
-	)
-
-	# Flash
-	tween.parallel().tween_property(popup, "modulate", Color(1,1,1,2), 0.05)
-	tween.tween_property(popup, "modulate", Color.WHITE, 0.1)
+# Rolls the items and lays the cards out in a centered row
+func _spawn_cards():
+	var rolled_items: Array = _roll_shop_items()
+	var count: int = rolled_items.size()
+	var total: float = count * ShopCard.CARD_SIZE.x + maxi(count - 1, 0) * CARD_GAP
 	
-	# Bouncing
-	tween.tween_property(
-		popup,
-		"scale",
-		Vector2.ONE * 1.6,
-		0.18
-	).set_trans(Tween.TRANS_BACK)
-
-	# Item pop confirmation
-	tween.parallel().tween_property(
-		shop_item,
-		"scale",
-		Vector2(1.45, 1.45),
-		0.12
-	)
-	tween.tween_property(
-		shop_item,
-		"scale",
-		Vector2.ONE * 1.2,
-		0.12
-	)
-
-	await tween.finished
-
-func _spawn_items():
-	items_container.visible = true
+	# The detail box lines up with a full row of three cards, the Next button sits beside the row
+	var row_width: float = 3.0 * ShopCard.CARD_SIZE.x + 2.0 * CARD_GAP
+	var row_left: float = SHOP_LEFT
+	var start_x: float = row_left + (row_width - total) * 0.5 # A shorter row stays centered
+	detail.size = Vector2(DETAIL_WIDTH, ShopDetailPanel.MIN_HEIGHT)
+	detail.position.x = row_left + (row_width - DETAIL_WIDTH) * 0.5
+	next_button.position = Vector2(detail.position.x + DETAIL_WIDTH + 12.0, DETAIL_TOP + 6.0) # Beside the detail box
 	
-	var rolled_items = _roll_shop_items()
-	
-	for i in rolled_items.size():
-		var item_instance = item_scene.instantiate()
-		item_instance.position = Vector2(410 + (i * 53), 250)
-		items_container.add_child(item_instance)
+	for i in count:
+		var data: ShopEntry = rolled_items[i]
+		var card := ShopCard.new()
+		card_row.add_child(card)
+		card.position = Vector2(start_x + i * (ShopCard.CARD_SIZE.x + CARD_GAP), CARDS_TOP)
+		card.rest_position = card.position
 		
-		var data = rolled_items[i]
-		item_instance.setup(data)
-
 		# Generate stack size depending on given item (necessary for chips and maybe other items)
-		if data.max_stack > 1:
-			item_instance.quantity = randi_range(1, data.max_stack)
-		else:
-			item_instance.quantity = 1
-		
-		item_instance.scale = Vector2.ZERO
-		var tween := create_tween()
-		tween.tween_property(item_instance, "scale", Vector2.ONE, 0.2)
+		var stack := randi_range(1, data.max_stack) if data.max_stack > 1 else 1
+		var price := _get_modified_price(data.cost)
+		card.setup(data, stack, price, PlayerData.currency >= price)
+		card.set_selected(false)
+		card.pop_in(i * 0.08)
+		cards.append(card)
+	
+	await get_tree().create_timer(0.3 + count * 0.08).timeout
 
-func _animate_items_out() -> void:
-	var children := items_container.get_children()
-	
-	for i in children.size():
-		var item = children[i]
-		var tween := create_tween()
-		tween.tween_property(item, "scale", Vector2.ZERO, 0.2)
-		tween.parallel().tween_property(item, "modulate:a", 0.0, 0.2)
-	
-	await get_tree().create_timer(0.25).timeout
-	
-	for child in children:
-		child.queue_free()
+func _animate_items_out():
+	for i in cards.size():
+		cards[i].pop_out(i * 0.05)
+	await get_tree().create_timer(0.3).timeout
+	for card in cards:
+		card.queue_free()
+	cards.clear()
 
-# Also shows stop text
 func _show_next_button():
 	next_button.visible = true
 	next_button.scale = Vector2.ZERO
-	stop_text.visible = true
-	stop_text.scale = Vector2.ZERO
-	
 	var tween := create_tween()
-	tween.tween_property(next_button, "scale", Vector2.ONE, 0.2)
-	tween.parallel().tween_property(stop_text, "scale", Vector2.ONE, 0.2)
+	tween.tween_property(next_button, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	await tween.finished
 
 func _next_button_out():
 	var tween := create_tween()
 	tween.tween_property(next_button, "scale", Vector2.ZERO, 0.2)
-	tween.parallel().tween_property(stop_text, "scale", Vector2.ZERO, 0.2)
 	await tween.finished
-	
 	next_button.visible = false
-	stop_text.visible = false
-
-func _set_next_button_selected(selected: bool):
-	if selected:
-		_start_next_pop()
-	else:
-		_stop_next_pop()
-
-func _start_next_pop():
-	if next_pop_tween:
-		next_pop_tween.kill()
-	
-	next_pop_tween = create_tween()
-	next_pop_tween.set_loops()
-	next_pop_tween.tween_property(next_button, "scale", Vector2(1.2,1.2), 0.4)
-	next_pop_tween.tween_property(next_button, "scale", Vector2.ONE, 0.4)
-	next_pop_tween.set_trans(Tween.TRANS_LINEAR)
-	next_pop_tween.set_ease(Tween.EASE_IN)
-
-func _stop_next_pop():
-	if next_pop_tween:
-		next_pop_tween.kill()
-	next_button.scale = Vector2.ONE
 
 # Randomly picks 3 items to display in the shop from current unlocked items
 func _roll_shop_items():
@@ -408,49 +405,46 @@ func _roll_shop_items():
 	
 	return chosen
 
-func _hide_popup():
-	if popup_scale_tween:
-		popup_scale_tween.kill()
-	popup_scale_tween = create_tween()
-	popup_scale_tween.tween_property(
-		popup,
-		"scale",
-		Vector2.ZERO,
-		0.15
-	)
+# Tuh-U says a short line in his bubble without blocking the shop; a new line replaces the old one
+func _tuhu_says(line: Dictionary):
+	line_id += 1
+	var id := line_id
+	match line["mood"]:
+		"happy":
+			ufo.play_happy()
+		"sad":
+			ufo.play_sad()
+		_:
+			ufo.play_normal()
+	shop_bubble.say(line["text"], ufo.global_position + Vector2(0, -22))
+	await get_tree().create_timer(LINE_TIME + line["text"].length() * 0.02).timeout
+	if id == line_id and state == State.ACTIVE:
+		_hide_line()
 
-func _show_popup():
-	if popup_scale_tween:
-		popup_scale_tween.kill()
-	popup_scale_tween = create_tween()
-	popup_scale_tween.tween_property(
-		popup,
-		"scale",
-		Vector2.ONE * 1.6,
-		0.15
-	)
+func _hide_line():
+	shop_bubble.hide_bubble()
 
-func _spawn_purchase_feedback(shop_item: ShopItem):
+func _spawn_purchase_feedback(shop_item: ShopCard):
 	var texts = [
 		"[color=#17e84f][wave freq=12]Bought![/wave][/color]",
 		"[color=#eff238][wave freq=12]Acquired![/wave][/color]",
 		"[color=#3d9feb][shake rate=14]Got it![/shake][/color]"
 	]
 	var feedback := HitFeedbackScene.instantiate()
-	ui.add_child(feedback)
+	shop_layer.add_child(feedback)
 	
 	feedback.rotation_degrees = randf_range(-3,3)
-	feedback.global_position = shop_item.global_position + Vector2(0,-20)
+	feedback.global_position = shop_item.global_position + Vector2(ShopCard.CARD_SIZE.x * 0.5 - 20, -8)
 	feedback.play(texts.pick_random())
 
 func _get_modified_price(base_cost: int) -> int:
 	return base_cost + PlayerData.get_shop_price_increase()
 
-func _spawn_inventory_full_feedback(shop_item: ShopItem, message: String):
+func _spawn_inventory_full_feedback(shop_item: ShopCard, message: String):
 	var feedback := HitFeedbackScene.instantiate()
-	ui.add_child(feedback)
+	shop_layer.add_child(feedback)
 	feedback.rotation_degrees = randf_range(-3, 3)
-	feedback.global_position = shop_item.global_position + Vector2(0, -20)
+	feedback.global_position = shop_item.global_position + Vector2(ShopCard.CARD_SIZE.x * 0.5 - 30, -8)
 	feedback.play(message)
 
 # ENDING METHODS
@@ -501,14 +495,8 @@ func enter_demo_ending_stop():
 	ui.visible = true
 	
 	# Hide normal shop UI.
-	popup.visible = false
-	items_container.visible = false
-	next_button.visible = false
-	stop_text.visible = false
-	
-	# Clear any leftover shop items.
-	for child in items_container.get_children():
-		child.queue_free()
+	shop_layer.visible = false
+	speech_bubble.mode = SpeechBubble.BubbleMode.CINEMATIC
 	
 	if not speech_bubble.is_node_ready():
 		await speech_bubble.ready

@@ -93,14 +93,21 @@ func on_anim_finished(name: String):
 	attack_finished.emit()
 
 var meter_home_local := Vector2.ZERO
+var meter_pinned := false # Only a meter that was pinned for a lunge is put back (animations that do not lunge, like spawning, leave it alone)
 
 func _pin_meter() -> void:
+	if meter_pinned:
+		return
+	meter_pinned = true
 	meter_home_local = axis_bar.position
 	var pinned_at: Vector2 = axis_bar.global_position
 	axis_bar.top_level = true
 	axis_bar.global_position = pinned_at
 
 func _unpin_meter() -> void:
+	if not meter_pinned:
+		return
+	meter_pinned = false
 	axis_bar.top_level = false
 	axis_bar.position = meter_home_local
 

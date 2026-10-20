@@ -17,6 +17,7 @@ const VICTORY_ZOOM := Vector2(2.4, 2.4)
 const VICTORY_DROID_POSITION := Vector2(140, 215) # Where the Droid appears on screen during the rewards and the boon selection
 const ZOOM_LOWER := 28.0 # Pixels the view moves down per 1.0 of extra zoom
 const RESET_TIME := 0.9 # Going back to the normal frame is slow and eased, so the changes between screens feel smooth
+const ACTION_LOWER := 18.0 # Taming and blocking frames sit a little lower: more ground, less empty background
 const GROUP_PADDING := 90.0 # Space kept on each side of the outermost subjects
 const ANTICIPATE_ZOOM := 1.06 # Slow push toward an attacker during its wind-up
 const WIDE_LOWER := 30.0 # The wide frame sits lower, so parts can also come in from below the Droid
@@ -68,9 +69,13 @@ func _process(delta):
 	)
 	
 	# The closer the zoom, the lower the view sits, so the characters' feet stay on screen
+	var lower := (zoom.x - 1.0) * ZOOM_LOWER + y_bias
+	if not follow_group.is_empty():
+		# A framed group never shows more than the first full view did: the further out it zooms, the less it may sit lower
+		lower = minf(lower, get_viewport_rect().size.y * 0.5 * (1.0 - 1.0 / zoom.x))
 	global_position.y = lerp(
 		global_position.y,
-		default_position.y + (zoom.x - 1.0) * ZOOM_LOWER + y_bias,
+		default_position.y + lower,
 		delta * follow_speed
 	)
 
@@ -188,10 +193,11 @@ func ability_focus_on_player(target: Node2D, zoom_amount: Vector2, duration := 0
 	_ability_frame(target, zoom_amount, duration)
 
 # Frames several subjects together: follows their x center and zooms so they fit with some space around them (up to max_zoom)
-func frame_group(nodes: Array, duration := 0.35, max_zoom := 0.0) -> void:
+func frame_group(nodes: Array, duration := 0.35, max_zoom := 0.0, lower := 0.0) -> void:
 	follow_target = null
 	follow_group = nodes.filter(func(n): return is_instance_valid(n))
 	x_offset = 0.0
+	y_bias = lower
 	if follow_group.is_empty():
 		return
 	

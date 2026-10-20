@@ -121,6 +121,9 @@ const HIT_STOP_BLOCK := 0.10
 const HIT_STOP_HURT := 0.10
 var hit_stop_id := 0
 const WORLD_DIM_ALPHA := 0.5 # How dark the world gets during a dream (black over it)
+const SHOP_DIM_Z := 5 # Above the creatures (z 1 to 3), below the Droid during the shop
+var shop_dim_rect: ColorRect
+var player_base_z := 0
 var dim_rect: ColorRect
 var betrayal_visual: Node2D = null # Multi-hit: the creature furthest on the tame side that was just turned on
 var betrayal_axis := 0.0
@@ -463,7 +466,7 @@ func _start_turn_loop():
 	#PlayerData.add_ability(AbilityDb.get_ability("harden"))
 	#PlayerData.add_ability(AbilityDb.get_ability("heatup"))
 	#PlayerData.add_ability(AbilityDb.get_ability("repair"))
-	PlayerData.add_item(CombatItemDb.get_item("ball"), 2)
+	#PlayerData.add_item(CombatItemDb.get_item("ball"), 2)
 	#PlayerData.add_item(CombatItemDb.get_item("memory_chip"), 2)
 	#PlayerData.add_item(CombatItemDb.get_item("soft_branch"), 2)
 	#PlayerData.add_item(CombatItemDb.get_item("thick_jelly"), 2)
@@ -607,7 +610,7 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	player_visual.attack_position = _get_player_attack_position(enemy_visual)
 	
 	# Camera settings
-	camera.frame_group([player_visual, enemy_visual], 0.35, CombatCamera.ZOOM_ACTION.x) # A little closer while taming, with the Droid and its target both in view
+	camera.frame_group([player_visual, enemy_visual], 0.35, CombatCamera.ZOOM_ACTION.x, CombatCamera.ACTION_LOWER) # A little closer while taming, with the Droid and its target both in view
 	
 	# Shows crit hint text for the player + allows inputs for crit
 	tutorial_text.show_hint(TutorialText.HintType.CRIT, enemy_visual)
@@ -919,7 +922,7 @@ func _enemy_attack_single(enemy: CombatEntity):
 	
 	# Support patterns
 	if pattern.is_support:
-		camera.frame_group([visual], 0.35, CombatCamera.ZOOM_ACTION.x) # The supporting creature gets the focus too
+		camera.frame_group([visual], 0.35, CombatCamera.ZOOM_ACTION.x, CombatCamera.ACTION_LOWER) # The supporting creature gets the focus too
 		await _handle_support_pattern(enemy, pattern)
 		# Support patterns have no attack-finished handler, so the enemy's base layer is restored here (keeps the player above it)
 		if is_instance_valid(visual):
@@ -930,7 +933,7 @@ func _enemy_attack_single(enemy: CombatEntity):
 	visual.attack_position = _get_enemy_attack_position(visual)
 	
 	# Camera controls + tutorial text visible
-	camera.frame_group([player_visual, visual], 0.35, CombatCamera.ZOOM_ACTION.x) # A little closer while blocking, with the Droid and the attacker both in view
+	camera.frame_group([player_visual, visual], 0.35, CombatCamera.ZOOM_ACTION.x, CombatCamera.ACTION_LOWER) # A little closer while blocking, with the Droid and the attacker both in view
 	camera.anticipate() # Slow push toward the attacker during its wind-up
 	tutorial_text.show_hint(TutorialText.HintType.BLOCK, player_visual)
 	await _play_enemy_attack_pattern(enemy, visual, pattern)
@@ -1669,7 +1672,7 @@ func _set_selected_enemy(enemy: CombatEntity):
 	for e in affected:
 		if enemy_visuals.has(e):
 			framed.append(enemy_visuals[e])
-	camera.frame_group(framed)
+	camera.frame_group(framed, 0.35, 0.0, CombatCamera.ACTION_LOWER)
 
 # Hides every target preview marker on all creatures
 func _clear_target_markers():
@@ -2491,7 +2494,10 @@ func tutorial_prepare_dummy_for_minigame():
 
 # ANIMATION METHODS
 # Smooth tween BG animation for minigame enter/exiting 
-func _world_gray_out(gray_out: bool):
+func _world_gray_out(gray_out: bool, spare_player := false):
+	if spare_player:
+		_shop_dim(gray_out)
+		return
 	# The world (background, creatures and the Droid) lives in several nodes, so a black layer between it and the UI dims it all
 	if dim_rect == null:
 		var dim_layer := CanvasLayer.new()
@@ -2508,6 +2514,25 @@ func _world_gray_out(gray_out: bool):
 	var tween := create_tween()
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	tween.tween_property(dim_rect, "color:a", WORLD_DIM_ALPHA if gray_out else 0.0, 0.5)
+
+# The shop dims the background and the creatures but not the Droid: the dim sits in the world, between them and the Droid
+func _shop_dim(dim: bool):
+	if shop_dim_rect == null:
+		shop_dim_rect = ColorRect.new()
+		shop_dim_rect.color = Color(0, 0, 0, 0)
+		shop_dim_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		shop_dim_rect.position = Vector2(-2000, -2000)
+		shop_dim_rect.size = Vector2(4000, 4000)
+		shop_dim_rect.z_index = SHOP_DIM_Z
+		get_parent().get_node("World").add_child(shop_dim_rect)
+	if dim:
+		player_base_z = player_visual.z_index
+		player_visual.z_index = SHOP_DIM_Z + 1
+	var tween := create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tween.tween_property(shop_dim_rect, "color:a", WORLD_DIM_ALPHA if dim else 0.0, 0.5)
+	if not dim:
+		tween.finished.connect(func(): player_visual.z_index = player_base_z)
 
 func animate_enemy_entry():
 	for visual in enemy_visuals.values():
