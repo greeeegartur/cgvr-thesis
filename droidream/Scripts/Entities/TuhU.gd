@@ -108,7 +108,7 @@ func _setup_effects() -> void:
 	glow = Sprite2D.new()
 	glow.texture = texture
 	glow.position = particles_base + Vector2(0, 5)
-	glow.scale = Vector2(1.6, 0.7)
+	glow.scale = Vector2(1.0, 0.45)
 	glow.z_index = -2
 	var additive := CanvasItemMaterial.new()
 	additive.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
