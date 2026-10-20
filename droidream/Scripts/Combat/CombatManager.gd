@@ -114,6 +114,8 @@ const DUCK_TYPE_COLORS := {
 
 # Ability/passive/item specific variables
 # Heat Up effects
+var betrayal_visual: Node2D = null # Multi-hit: the creature furthest on the tame side that was just turned on
+var betrayal_axis := 0.0
 var heat_up_pending_power_bonus := 0
 var heat_up_active := false
 var heat_up_power_bonus := 0
@@ -455,6 +457,8 @@ func _start_turn_loop():
 	#PlayerData.add_ability(AbilityDb.get_ability("repair"))
 	PlayerData.add_item(CombatItemDb.get_item("ball"), 2)
 	#PlayerData.add_item(CombatItemDb.get_item("memory_chip"), 2)
+	#PlayerData.add_item(CombatItemDb.get_item("soft_branch"), 2)
+	#PlayerData.add_item(CombatItemDb.get_item("thick_jelly"), 2)
 	#PlayerData.add_item(CombatItemDb.get_item("beetlejuice"), 2)
 	_player_turn()
 
@@ -734,6 +738,9 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		enemy.set_axis(enemy.axis_value - value_shift)
 		var actual_shift = enemy.axis_value - before
 		
+		if before > 0.0: # The creature was on the tame side
+			_play_betrayal(enemy_visual)
+		
 		# Visual effects
 		enemy_visual.shake(critical)
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
@@ -778,6 +785,9 @@ func _apply_axis_shift_with_multiplier(enemy: CombatEntity, guess_type: CombatTy
 		var before = enemy.axis_value
 		enemy.set_axis(enemy.axis_value - value_shift)
 		var actual_shift = enemy.axis_value - before
+		
+		if before > 0.0:
+			_note_betrayal(enemy_visual, before)
 		
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
 		enemy_visual.shake(multiplier >= 1.5)
@@ -1227,6 +1237,7 @@ func _ability_repair_sequence(ability: InventoryAbility):
 	
 	_change_player_hp(heal_amount)
 	vfx.spawn_damage_number(player_visual, heal_amount, false, true)
+	vfx.play_buff_particles(player_visual, BuffParticles.Kind.HEAL)
 	
 	await camera.reset_camera()
 	await get_tree().create_timer(0.4).timeout
@@ -1312,6 +1323,7 @@ func _ability_harden_sequence(ability: InventoryAbility):
 	
 	vfx.spawn_info(player_visual, "[color=#3d9feb]Harden applied![/color]")
 	vfx.spawn_damage_number(player_visual, defense_bonus, false, true)
+	vfx.play_buff_particles(player_visual, BuffParticles.Kind.DEFENSE_UP)
 	await camera.reset_camera()
 	
 
@@ -1335,6 +1347,7 @@ func _resolve_multi_tame_hit(target: CombatEntity, multiplier: float):
 	
 	for enemy in affected:
 		_apply_axis_shift_with_multiplier(enemy, selected_ability_tame_type, multiplier)
+	_flush_betrayal()
 	await _resolve_pending_minigames()
 
 # Scratchy frame passive ability: damages the creature for the same amount of damage they dealt to the player (on one side of the axis)
@@ -1366,6 +1379,7 @@ func _passive_microbots():
 		var heal_amount = Utils.quantize_min(max(1.0, player.max_hp * MICROBOTS_HEAL_RATIO))
 		_change_player_hp(heal_amount)
 		vfx.spawn_damage_number(player_visual, heal_amount, false, true)
+		vfx.play_buff_particles(player_visual, BuffParticles.Kind.HEAL)
 		print("Microbots healed player damage by ", heal_amount, ", player now at ", player.hp)
 		
 		if randf() <= MICROBOTS_CHIP_RESTORE_CHANCE:
@@ -1385,6 +1399,7 @@ func _item_beetle_juice_sequence(inventory_item: InventoryItem, target = null):
 	_change_player_hp(heal_amount)
 	print("Healed for ", heal_amount)
 	vfx.spawn_damage_number(player_visual, heal_amount, false, true)
+	vfx.play_buff_particles(player_visual, BuffParticles.Kind.HEAL)
 
 # Restores 1 or 2 random chips for the player
 func _item_memory_chip_sequence(item: InventoryItem, target):
@@ -1413,6 +1428,7 @@ func _item_thick_jelly_sequence(item: InventoryItem, target):
 	thick_jelly_active = true
 	thick_jelly_turns_remaining = 4 # Actually 3 turns because of how combat reads effects
 	vfx.spawn_info(player_visual, "[color=#8be9fd]Jelly applied![/color]")
+	vfx.play_buff_particles(player_visual, BuffParticles.Kind.DEFENSE_UP)
 
 # Gives the player +1 power for 2 turns
 func _item_soft_branch_sequence(item: InventoryItem, target):
@@ -1423,6 +1439,7 @@ func _item_soft_branch_sequence(item: InventoryItem, target):
 	
 	vfx.spawn_info(player_visual, "[color=#eff238]Power up![/color]")
 	vfx.spawn_damage_number(player_visual, soft_branch_power_bonus, true)
+	vfx.play_buff_particles(player_visual, BuffParticles.Kind.POWER)
 
 # Throwable ball item that works like Multi-tame, but does not use chips to tame or kill: this is decided by the strength of the throw minigame
 func _item_ball_sequence(item: InventoryItem, target: CombatEntity):
@@ -1529,6 +1546,22 @@ func _reset_enemy_attack_timing():
 	block_on_cooldown = false
 
 # Freezes the scene for a given parameter of time to show impact
+# Betrayal! feedback: plays once per player hit that pushes a tame-side creature toward kill
+func _play_betrayal(visual: Node2D):
+	vfx.play_betrayal_feedback(visual)
+	freeze_frame(0.12)
+
+# Multi-hit: remembers the creature that was furthest on the tame side, played once by _flush_betrayal
+func _note_betrayal(visual: Node2D, axis_before: float):
+	if betrayal_visual == null or axis_before > betrayal_axis:
+		betrayal_visual = visual
+		betrayal_axis = axis_before
+
+func _flush_betrayal():
+	if betrayal_visual != null and is_instance_valid(betrayal_visual):
+		_play_betrayal(betrayal_visual)
+	betrayal_visual = null
+
 func freeze_frame(time = 0.05):
 	Engine.time_scale = 0.5
 	await get_tree().create_timer(time, true).timeout
@@ -2088,6 +2121,8 @@ func _update_turn_start_effects():
 		heat_up_pending_power_bonus = 0
 		heat_up_turns_remaining = 2
 		_sync_player_stats()
+		vfx.play_buff_particles(player_visual, BuffParticles.Kind.POWER)
+		vfx.play_buff_particles(player_visual, BuffParticles.Kind.DEFENSE_DOWN)
 		print("Heat Up active! +%d power, -%.1f defense for %d turns"
 			% [heat_up_power_bonus, HEAT_UP_DEFENSE_PENALTY, heat_up_turns_remaining])
 	
@@ -2143,6 +2178,7 @@ func _update_turn_start_effects():
 			var heal_amount := Utils.quantize_min(player.max_hp * ICE_CUBE_HEAL_RATIO)
 			_change_player_hp(heal_amount)
 			vfx.spawn_damage_number(player_visual, heal_amount, false, true)
+			vfx.play_buff_particles(player_visual, BuffParticles.Kind.HEAL)
 			ice_cube_turns_remaining -= 1
 		
 		if ice_cube_turns_remaining <= 0:
@@ -2211,6 +2247,8 @@ func _apply_human_at_heart(killed_count: int):
 	
 	_sync_player_stats()
 	vfx.spawn_damage_number(player_visual, total_heal, false, true)
+	vfx.play_buff_particles(player_visual, BuffParticles.Kind.HEAL)
+	vfx.play_buff_particles(player_visual, BuffParticles.Kind.POWER)
 	vfx.play_human_at_heart_feedback(player_visual, human_at_heart_trigger_counter)
 	human_at_heart_trigger_counter += 1
 
@@ -2288,6 +2326,7 @@ func _resolve_ball_hit(target: CombatEntity, intent: String, multiplier: float):
 		var guess_type = _get_ball_guess_type_for_enemy(enemy, intent)
 		await _apply_axis_shift_with_multiplier(enemy, guess_type, multiplier)
 
+	_flush_betrayal()
 	await _resolve_pending_minigames()
 
 # Returns the type that the ball will apply to a creature after the ball minigame

@@ -171,6 +171,20 @@ func play_perfect_feedback(target_visual: Node2D):
 	
 	emit_explosion(target_visual, crit_flash_color, true)
 
+# When the player turns on a creature they were taming: harsh text, red vignette (the caller adds the hit-stop)
+func play_betrayal_feedback(target_visual: Node2D):
+	if HitFeedbackScene:
+		var feedback := HitFeedbackScene.instantiate()
+		feedback_layer.add_child(feedback)
+		feedback.position = target_visual.position + Vector2(0, -30)
+		feedback.play_flair("[color=#b00d0d][shake rate=24 level=10]Betrayal![/shake][/color]", Color("#4d0000"), 30)
+	
+	play_vignette(Color("#7a0000"), 0.7, 0.05, 0.4)
+
+# Small one-shot particles around an entity for heals, power and defense changes
+func play_buff_particles(target_visual: Node2D, kind: BuffParticles.Kind):
+	BuffParticles.burst(particle_layer, target_visual.position, kind)
+
 func play_crit_feedback(target_visual):
 	var texts = [
 		"[color=#9a2ea3ff][wave freq=14]Awesome![/wave][/color]",

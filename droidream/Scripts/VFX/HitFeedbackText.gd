@@ -10,9 +10,9 @@ const INFO_LIFETIME := 1.4
 
 const FLAIR_LIFETIME := 1.15
 
-func play_flair(bbcode_text: String, glow_color := Color("#fff27a")):
+func play_flair(bbcode_text: String, glow_color := Color("#fff27a"), font_size := 22):
 	label.text = bbcode_text
-	label.add_theme_font_size_override("normal_font_size", 22)
+	label.add_theme_font_size_override("normal_font_size", font_size)
 	label.add_theme_constant_override("outline_size", 6)
 	rotation_degrees = randf_range(-4, 4)
 	label.modulate.a = 0.0
