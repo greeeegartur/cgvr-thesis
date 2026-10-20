@@ -43,7 +43,7 @@ func play_prompt():
 	while timer < lifetime and not finished:
 		await get_tree().process_frame
 		timer += get_process_delta_time()
-		if Input.is_action_just_pressed(prompt_action):
+		if not PauseMenu.active and Input.is_action_just_pressed(prompt_action):
 			await _on_success()
 			return
 	await _on_fail()

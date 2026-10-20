@@ -105,16 +105,22 @@ func _on_player_died():
 	await _play_death_sequence()
 
 func _play_death_sequence():
-	camera.follow(player_visual)
+	combat_ui.hide_player_stats_hud()
+	combat_manager.player_turn_ui.hide_player_turn_ui()
+	tutorial_text.hide_text()
+	player_visual.hide_hp()
+	camera.ability_push_in(player_visual, Vector2(1.5, 1.5), 1.6) # A slow push toward the Droid while it falls
 	
 	await player_visual.play_defeat()
-	await death_screen.show_death()
+	var summary := "Stage %d of 5  \u00b7  Tamed %d  \u00b7  Killed %d" % [area_manager.stage_index + 1, PlayerData.get_total_tamed_count(), PlayerData.get_total_killed_count()]
+	await death_screen.show_death(player_visual, summary)
 	
 	# Confirmation handled by death screen signals
 
 func _on_retry():
 	print()
 	print("Retrying!")
+	await _fade_into_black(0.6) # Through black instead of popping back
 	death_screen.hide()
 	
 	# Technical resets
@@ -131,9 +137,9 @@ func _on_retry():
 	# Combat reset
 	start_stage(true)
 
-# TO-DO
+# Quit on the game over screen: fades to black and shows the title screen
 func _on_back_to_title():
-	print("Back to title (not implemented yet)")
+	SceneTransition.go_to_title(get_tree())
 
 const REWARDS_DELAY := 0.8 # Seconds after the victory camera starts before the rewards appear
 

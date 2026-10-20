@@ -65,7 +65,7 @@ func _process(delta: float):
 	if speech_bubble.visible and speech_bubble.mode == SpeechBubble.BubbleMode.CINEMATIC:
 		idle_timer += delta
 		
-		if Input.is_action_just_pressed("ui_accept"):
+		if not PauseMenu.active and Input.is_action_just_pressed("ui_accept"):
 			idle_timer = -6.0
 			hint_out()
 			hint_node.visible = false
@@ -443,7 +443,7 @@ func overlay_say(text: String, mood := "normal"):
 	hint_in()
 
 func wait_for_accept():
-	while not Input.is_action_just_pressed("ui_accept"):
+	while PauseMenu.active or not Input.is_action_just_pressed("ui_accept"):
 		await get_tree().process_frame
 	
 	hint_out()

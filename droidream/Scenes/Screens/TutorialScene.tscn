@@ -20,6 +20,7 @@
 [ext_resource type="PackedScene" uid="uid://mnb3nvh3ofas" path="res://Scenes/VFX/HitFeedbackText.tscn" id="17_1uws4"]
 [ext_resource type="PackedScene" uid="uid://rab42iernju0" path="res://Scenes/PlayerActions/RepairObject.tscn" id="18_pijee"]
 [ext_resource type="PackedScene" uid="uid://bsjp4kq22yg6i" path="res://Scenes/PlayerActions/MultiTameBall.tscn" id="19_pea10"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/PauseMenu.tscn" id="99_pause"]
 
 [sub_resource type="Animation" id="Animation_pujgt"]
 resource_name = "press"
@@ -226,3 +227,5 @@ layer = 10
 [node name="TutorialOverlay" type="CanvasLayer" parent="." unique_id=70249202]
 layer = 12
 follow_viewport_enabled = true
+
+[node name="PauseMenu" parent="." instance=ExtResource("99_pause")]

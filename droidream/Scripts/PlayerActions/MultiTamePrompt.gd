@@ -38,7 +38,7 @@ func play_prompt() -> float:
 		await get_tree().process_frame
 		elapsed += get_process_delta_time()
 		
-		if Input.is_action_just_pressed("ui_accept"):
+		if not PauseMenu.active and Input.is_action_just_pressed("ui_accept"):
 			var t = clamp(elapsed / shrink_time, 0.0, 1.0)
 			var accuracy = 1.0 - abs(t - 1.0)
 			

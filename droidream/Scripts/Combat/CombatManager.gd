@@ -286,18 +286,23 @@ func _setup_ui():
 	
 	# PLAYER
 	# Player turn signals
-	player_turn_ui.attack_type_selected.connect(_on_attack_selected)
-	player_turn_ui.ability_selected.connect(_on_ability_selected)
-	player_turn_ui.item_selected.connect(_on_item_selected)
-	player_turn_ui.ability_tame_type_selected.connect(_on_ability_tame_type_selected)
-	player_turn_ui.cancel_ability_tame_select.connect(_on_cancel_ability_tame_select)
-	player_turn_ui.cycle_enemy.connect(cycle_target)
-	player_turn_ui.confirm_enemy.connect(_confirm_target_selection)
-	player_turn_ui.cancel_enemy.connect(_cancel_target_selection)
+	_connect_once(player_turn_ui.attack_type_selected, _on_attack_selected)
+	_connect_once(player_turn_ui.ability_selected, _on_ability_selected)
+	_connect_once(player_turn_ui.item_selected, _on_item_selected)
+	_connect_once(player_turn_ui.ability_tame_type_selected, _on_ability_tame_type_selected)
+	_connect_once(player_turn_ui.cancel_ability_tame_select, _on_cancel_ability_tame_select)
+	_connect_once(player_turn_ui.cycle_enemy, cycle_target)
+	_connect_once(player_turn_ui.confirm_enemy, _confirm_target_selection)
+	_connect_once(player_turn_ui.cancel_enemy, _cancel_target_selection)
 	
 	# TOP UI
 	# Turn order button signal
-	ui.turn_order_toggled.connect(_on_turn_order_toggled)
+	_connect_once(ui.turn_order_toggled, _on_turn_order_toggled)
+
+# Connects a signal only if it is not connected yet (the UI is set up again when the player retries)
+func _connect_once(signal_to_connect: Signal, target: Callable) -> void:
+	if not signal_to_connect.is_connected(target):
+		signal_to_connect.connect(target)
 
 # Resets combat for new round
 func _reset_combat_state():
@@ -1199,7 +1204,7 @@ func _ability_repair_sequence(ability: InventoryAbility):
 		for data in active_objects:
 			var expected_input = Utils.OPPOSITE_INPUT[data.dir]
 			
-			if Input.is_action_just_pressed(expected_input):
+			if not PauseMenu.active and Input.is_action_just_pressed(expected_input):
 				collected += 1
 				vfx.play_overlay_effects("block")
 				vfx.play_speedlines(vfx.get_vfx_color_from_string("block"))

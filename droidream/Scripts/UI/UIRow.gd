@@ -23,8 +23,13 @@ var icon_rect: TextureRect
 var text_label: Label
 var right_label: Label
 var pip_box: HBoxContainer
+var spacer: Control
+var row_height := ROW_HEIGHT # Taller rows for bigger text
+var font_size := FONT_SIZE
+var center_text := false # Centers the text in the row (short lists such as Retry / Quit)
 var flash_material: ShaderMaterial
 var selected := false
+var ignore_time_scale := false # True for menus that must keep animating while the game is frozen (the pause menu)
 var pulse_tween: Tween
 var slide_tween: Tween
 var slide_x := float(MARKER_WIDTH) # Resting x of the content (changes with selection)
@@ -50,7 +55,7 @@ func _init() -> void:
 	text_label = _make_label()
 	content.add_child(text_label)
 	
-	var spacer := Control.new()
+	spacer = Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	spacer.custom_minimum_size.x = 8
 	content.add_child(spacer)
@@ -83,6 +88,12 @@ func _make_label() -> Label:
 
 # Fills the row: pips is how many cooldown pips exist and pips_dim how many of them are still cooling down (drawn dark)
 func setup(icon: Texture2D, text: String, right_text := "", pips := 0, pips_dim := 0) -> void:
+	custom_minimum_size.y = row_height
+	text_label.add_theme_font_size_override("font_size", font_size)
+	right_label.add_theme_font_size_override("font_size", font_size)
+	text_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER if center_text else HORIZONTAL_ALIGNMENT_LEFT
+	text_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL if center_text else Control.SIZE_FILL
+	spacer.visible = not center_text
 	icon_rect.texture = icon
 	icon_rect.visible = icon != null
 	text_label.text = text
@@ -115,9 +126,23 @@ func get_wanted_width() -> float:
 
 # Stretches the content over the row so right text lines up at the end of the bar
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_RESIZED and content:
-		content.size = Vector2(size.x - MARKER_WIDTH - SLIDE - RIGHT_PAD, ROW_HEIGHT)
+	if what == NOTIFICATION_RESIZED:
+		_fit_content()
+
+# A row that was sized before it was in the tree has not been told about it yet
+func _ready() -> void:
+	_fit_content()
+
+func _fit_content() -> void:
+	if content:
+		content.size = Vector2(size.x - MARKER_WIDTH - SLIDE - RIGHT_PAD, row_height)
 		content.pivot_offset = content.size / 2.0
+
+# A tween that follows the row's time setting
+func _new_tween() -> Tween:
+	var tween := create_tween()
+	tween.set_ignore_time_scale(ignore_time_scale)
+	return tween
 
 # Shows or hides the selected look; animate is false for the initial state
 func set_selected(value: bool, animate := true) -> void:
@@ -129,7 +154,7 @@ func set_selected(value: bool, animate := true) -> void:
 	var target_x := MARKER_WIDTH + (SLIDE if value else 0.0)
 	var target_color := SELECTED_REST if value else DIM
 	if animate:
-		slide_tween = create_tween().set_parallel()
+		slide_tween = _new_tween().set_parallel()
 		slide_tween.tween_method(_set_slide_x, slide_x, target_x, 0.12)
 		slide_tween.tween_property(content, "modulate", target_color, 0.1)
 	else:
@@ -156,7 +181,7 @@ func _apply_x() -> void:
 # Jolts the row to the right and back (used when the cursor arrives), then goes on with the beat
 func bounce() -> void:
 	_stop_pulse()
-	var tween := create_tween()
+	var tween := _new_tween()
 	tween.tween_method(func(t: float):
 		nudge_x = BOUNCE_DISTANCE * sin(t * PI) * (1.0 - t * 0.5)
 		_apply_x(), 0.0, 1.0, BOUNCE_TIME)
@@ -165,7 +190,7 @@ func bounce() -> void:
 
 func _start_pulse() -> void:
 	_stop_pulse()
-	pulse_tween = create_tween().set_loops()
+	pulse_tween = _new_tween().set_loops()
 	pulse_tween.tween_method(_apply_pop, 0.0, 1.0, SelectionPulse.BEAT)
 
 func _stop_pulse() -> void:
