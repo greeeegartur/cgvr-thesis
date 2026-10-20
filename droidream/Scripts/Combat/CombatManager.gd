@@ -2386,6 +2386,7 @@ func _support_frog_heal(enemy: CombatEntity):
 	visual.update_axis(enemy.axis_value, actual_shift)
 	visual.shake(false)
 	vfx.spawn_damage_number(visual, abs(actual_shift), false, true)
+	vfx.play_buff_particles(visual, BuffParticles.Kind.HEAL)
 	
 	print("Frog healed toward center by %.2f. Axis is now %.2f" % [abs(actual_shift), enemy.axis_value])
 
