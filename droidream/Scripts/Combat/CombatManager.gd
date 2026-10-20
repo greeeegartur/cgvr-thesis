@@ -449,10 +449,10 @@ func _start_turn_loop():
 	# For checking if passives exist
 	#for ability in PlayerData.abilities:
 		#print(ability.data.id)
-	PlayerData.add_ability(AbilityDb.get_ability("multitame"))
-	PlayerData.add_ability(AbilityDb.get_ability("harden"))
-	PlayerData.add_ability(AbilityDb.get_ability("heatup"))
-	PlayerData.add_ability(AbilityDb.get_ability("repair"))
+	#PlayerData.add_ability(AbilityDb.get_ability("multitame"))
+	#PlayerData.add_ability(AbilityDb.get_ability("harden"))
+	#PlayerData.add_ability(AbilityDb.get_ability("heatup"))
+	#PlayerData.add_ability(AbilityDb.get_ability("repair"))
 	PlayerData.add_item(CombatItemDb.get_item("ball"), 2)
 	#PlayerData.add_item(CombatItemDb.get_item("memory_chip"), 2)
 	#PlayerData.add_item(CombatItemDb.get_item("beetlejuice"), 2)
@@ -555,7 +555,6 @@ func _end_combat(victory: bool):
 		tutorial_text.hide_text()
 		var rewards = _generate_rewards()
 		_reset_combat_state()
-		await get_tree().create_timer(0.1).timeout
 		combat_end.emit(victory, rewards)
 		# TO-DO Give rewards, XP based on if enemy is defeated/subdued
 		# Defeated = more currency, less items + karma (makes enemies harder, will look into how)
@@ -819,6 +818,9 @@ func _start_minigame(enemy: CombatEntity, play_explosion := true):
 	minigame.damage_taken.connect(_on_minigame_damage_taken)
 	if tutorial_mode:
 		tutorial_minigame_started.emit(minigame)
+	
+	if not tutorial_mode:
+		await MinigameCountdown.play(self, "dream_" + enemy.minigame_id) # The first time this dream appears in the run
 	
 	minigame.play()
 	var success = await minigame.completed
@@ -1185,6 +1187,7 @@ func _ability_repair_sequence(ability: InventoryAbility):
 	camera.ability_frame_wide(player_visual) # The whole play area stays visible so the player can see where parts come from
 	
 	tutorial_text.show_hint(TutorialText.HintType.REPAIR, player_visual)
+	await MinigameCountdown.play(self, "ability_repair")
 	
 	# Repair game logic
 	while timer < duration:
@@ -1240,6 +1243,7 @@ func _ability_multi_tame_sequence(ability: InventoryAbility, target: CombatEntit
 			minigame.anchors.append(enemy_visuals[e])
 	
 	tutorial_text.show_hint(TutorialText.HintType.MULTITAME, enemy_visuals[target])
+	await MinigameCountdown.play(self, "ability_multi_tame")
 	minigame.play()
 	multiplier = await minigame.finished
 	minigame.queue_free()
@@ -1267,6 +1271,7 @@ func _ability_heat_up_sequence(ability: InventoryAbility):
 		CONNECT_DEFERRED
 	)
 
+	await MinigameCountdown.play(self, "ability_heat_up")
 	minigame.play()
 	var power_bonus: int = await minigame.finished
 	tutorial_text.hide_text()
@@ -1291,6 +1296,7 @@ func _ability_harden_sequence(ability: InventoryAbility):
 	camera.ability_push_in(player_visual, Vector2(1.25, 1.25))
 	tutorial_text.show_hint(TutorialText.HintType.HARDEN, player_visual)
 	
+	await MinigameCountdown.play(self, "ability_harden")
 	minigame.play()
 	var defense_bonus: float = await minigame.finished
 	tutorial_text.hide_text()
@@ -1426,6 +1432,7 @@ func _item_ball_sequence(item: InventoryItem, target: CombatEntity):
 	minigame_layer.add_child(meter)
 	tutorial_text.show_hint(TutorialText.HintType.BALL, enemy_visuals[target])
 	
+	await MinigameCountdown.play(self, "item_ball")
 	meter.play()
 	var result = await meter.finished
 	tutorial_text.hide_text()

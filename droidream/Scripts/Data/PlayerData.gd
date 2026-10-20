@@ -38,6 +38,7 @@ func _ready():
 	reset_run()
 
 func reset_run():
+	MinigameCountdown.reset() # Every minigame counts down again in the new run
 	# Reset stats
 	max_hp = BASE_MAX_HP
 	hp = BASE_MAX_HP

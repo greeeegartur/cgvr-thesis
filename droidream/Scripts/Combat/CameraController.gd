@@ -110,6 +110,8 @@ var shake_offset := Vector2.ZERO
 var shake_tween: Tween
 
 func shake(intensity := 6.0, time := 0.15):
+	if not Settings.camera_shake:
+		return
 	if shake_tween:
 		shake_tween.kill()
 	shake_tween = create_tween()

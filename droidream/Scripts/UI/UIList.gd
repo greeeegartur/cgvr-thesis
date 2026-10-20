@@ -9,6 +9,7 @@ signal confirmed(index: int)
 @export var max_visible_rows := 6 # More rows than this scroll
 @export var row_height := UIRow.ROW_HEIGHT # Taller rows for bigger text
 @export var font_size := UIRow.FONT_SIZE
+@export var bold := false
 @export var min_width := 0.0 # Rows are at least this wide
 @export var center_text := false # Rows center their text
 @export var ignore_time_scale := false # True for menus that keep animating while the game is frozen (the pause menu)
@@ -44,7 +45,8 @@ func set_rows(entries: Array) -> void:
 		row.center_text = center_text
 		row.row_height = row_height
 		row.font_size = font_size
-		row.setup(entry.get("icon"), entry.get("text", ""), entry.get("right", ""), entry.get("pips", 0), entry.get("pips_dim", 0))
+		row.bold = bold
+		row.setup(entry.get("icon"), entry.get("text", ""), entry.get("right", ""), entry.get("pips", 0), entry.get("pips_dim", 0), entry.get("pips_dim_end", false))
 		add_child(row)
 		rows.append(row)
 	
@@ -60,7 +62,7 @@ func update_rows(entries: Array) -> void:
 		return
 	for i in rows.size():
 		var entry: Dictionary = entries[i]
-		rows[i].setup(entry.get("icon"), entry.get("text", ""), entry.get("right", ""), entry.get("pips", 0), entry.get("pips_dim", 0))
+		rows[i].setup(entry.get("icon"), entry.get("text", ""), entry.get("right", ""), entry.get("pips", 0), entry.get("pips_dim", 0), entry.get("pips_dim_end", false))
 	_layout()
 
 func count() -> int:

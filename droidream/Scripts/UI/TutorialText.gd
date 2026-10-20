@@ -15,7 +15,8 @@ enum HintType {
 	MULTITAME,
 	HEATUP,
 	HARDEN,
-	BALL
+	BALL,
+	TITLE
 }
 
 # Hint data: "text" is a list of BBCode strings and {"key": ...} icons shown in one line; "screen" places subject-less text on the screen;
@@ -31,6 +32,7 @@ const HINTS := {
 		"bar": [["ARROWS", "Move"], ["Z", "Confirm"]]
 	},
 	HintType.SHOP: { "bar": [["ARROWS", "Move"], ["Z", "Confirm"]] },
+	HintType.TITLE: { "bar": [["ARROWS", "Move"], ["Z", "Confirm"], ["X", "Back"]] },
 	HintType.CRIT: { "text": ["Press", {"key": "Z"}, "right before hitting to [color=#ffd93d][hint kind=wave]crit[/hint][/color]!"], "subject": Vector2(0, -120) },
 	HintType.BLOCK: { "text": ["Press", {"key": "Z"}, "before a hit to [color=#6bd0ff][hint kind=shake]block[/hint][/color]!"], "subject": Vector2(0, -72) },
 	HintType.REPAIR: { "text": ["Press", {"key": "ARROWS"}, "towards yourself to [color=#7dff8a][hint kind=wave]absorb[/hint][/color] parts!"], "subject": Vector2(0, -138) },

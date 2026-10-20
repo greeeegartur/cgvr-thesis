@@ -3,14 +3,13 @@ class_name PauseMenu
 
 # The pause menu: ESC freezes the game (game time stops, so every timer, tween and animation stops) and opens Resume / Options / Quit over a dimmed world
 
-enum State { CLOSED, MAIN, CONFIRM_QUIT, QUITTING }
+enum State { CLOSED, MAIN, CONFIRM_QUIT, OPTIONS, QUITTING }
 
 const DIM_SHADER := preload("res://Scenes/UI/PauseDim.gdshader")
 const FONT_BOLD := preload("res://Graphics/Fonts/PixelOperator-Bold.ttf")
 const OPEN_TIME := 0.2
 const MIN_WIDTH := 150.0
 const HINT_GAP := 16 # Between the key hints
-const OPTIONS_NOTE := "Options are coming soon!"
 
 static var active := false # True while the game is frozen by the pause menu; code that polls the keyboard for gameplay checks it
 
@@ -25,6 +24,7 @@ var list: UIList
 var hint: HBoxContainer # Key icons with one word each, at the bottom of the panel
 var hint_size := Vector2.ZERO
 var open_tween: Tween
+var options: OptionsMenu
 var note_tween: Tween
 
 func _ready() -> void:
@@ -32,6 +32,9 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	visible = false
 	_build()
+	options = OptionsMenu.new()
+	options.closed.connect(_on_options_closed)
+	add_child(options)
 
 # Builds the dim layer and the panel with its title, list and hint
 func _build() -> void:
@@ -97,6 +100,9 @@ func _make_label(size: int, bold: bool) -> Label:
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.echo:
 		return
+	
+	if state == State.OPTIONS:
+		return # The options container takes the input
 	
 	if event.is_action_pressed("pause"):
 		match state:
@@ -249,24 +255,20 @@ func _on_main_confirmed(index: int) -> void:
 		0:
 			close()
 		1:
-			_show_options_note()
+			_open_options()
 		2:
 			_show_confirm()
 
-# Options is a placeholder for now: a short note takes the place of the key hint for a moment
-func _show_options_note() -> void:
-	note.text = OPTIONS_NOTE
-	note.visible = true
-	note.modulate.a = 1.0
-	note.size = Vector2(hint.size.x, note.get_minimum_size().y)
-	note.position = hint.position + Vector2(0, (hint.size.y - note.size.y) / 2.0)
-	hint.modulate.a = 0.0
-	if note_tween:
-		note_tween.kill()
-	note_tween = create_tween().set_ignore_time_scale(true)
-	note_tween.tween_interval(1.4)
-	note_tween.tween_property(note, "modulate:a", 0.0, 0.3)
-	note_tween.tween_property(hint, "modulate:a", 1.0, 0.2)
+# Options opens its own container over the pause menu; the pause panel waits behind it
+func _open_options() -> void:
+	state = State.OPTIONS
+	panel.visible = false
+	options.open(false)
+
+func _on_options_closed() -> void:
+	panel.visible = true
+	_show_main()
+	list.select(1, false)
 
 func _on_confirm_quit(index: int) -> void:
 	if index == 0:

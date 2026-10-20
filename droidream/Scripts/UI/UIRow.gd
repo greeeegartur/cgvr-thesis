@@ -4,6 +4,7 @@ class_name UIRow
 # One selectable row for UI lists: optional icon, text, text on the right and cooldown pips; it slides, brightens and nudges when selected (the bar and marker belong to UIList's cursor)
 
 const FONT := preload("res://Graphics/Fonts/PixelOperator.ttf")
+const FONT_BOLD := preload("res://Graphics/Fonts/PixelOperator-Bold.ttf")
 const PIP_TEXTURE := preload("res://Graphics/Sprites/UI/axis_select.png")
 const PIP_COLOR := Color(0.859, 0.906, 0.451)
 const FONT_SIZE := 16
@@ -26,6 +27,7 @@ var pip_box: HBoxContainer
 var spacer: Control
 var row_height := ROW_HEIGHT # Taller rows for bigger text
 var font_size := FONT_SIZE
+var bold := false # Bold text with a thicker outline (the title menu)
 var center_text := false # Centers the text in the row (short lists such as Retry / Quit)
 var flash_material: ShaderMaterial
 var selected := false
@@ -87,9 +89,11 @@ func _make_label() -> Label:
 	return label
 
 # Fills the row: pips is how many cooldown pips exist and pips_dim how many of them are still cooling down (drawn dark)
-func setup(icon: Texture2D, text: String, right_text := "", pips := 0, pips_dim := 0) -> void:
+func setup(icon: Texture2D, text: String, right_text := "", pips := 0, pips_dim := 0, dim_from_end := false) -> void:
 	custom_minimum_size.y = row_height
 	text_label.add_theme_font_size_override("font_size", font_size)
+	text_label.add_theme_font_override("font", FONT_BOLD if bold else FONT)
+	text_label.add_theme_constant_override("outline_size", 8 if bold else 4)
 	right_label.add_theme_font_size_override("font_size", font_size)
 	text_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER if center_text else HORIZONTAL_ALIGNMENT_LEFT
 	text_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL if center_text else Control.SIZE_FILL
@@ -99,18 +103,21 @@ func setup(icon: Texture2D, text: String, right_text := "", pips := 0, pips_dim 
 	text_label.text = text
 	right_label.text = right_text
 	right_label.visible = right_text != ""
-	set_pips(pips, pips_dim)
+	set_pips(pips, pips_dim, dim_from_end)
 
 # Rebuilds the cooldown pips
-func set_pips(pips: int, pips_dim := 0) -> void:
+func set_pips(pips: int, pips_dim := 0, dim_from_end := false) -> void:
+	# Old pips leave at once (not at the end of the frame), so the row's size is right when it is measured
 	for child in pip_box.get_children():
+		pip_box.remove_child(child)
 		child.queue_free()
 	pip_box.visible = pips > 0
 	for i in pips:
+		var dimmed := (i >= pips - pips_dim) if dim_from_end else (i < pips_dim) # Cooldowns dim from the start, sliders from the end
 		var pip := TextureRect.new()
 		pip.texture = PIP_TEXTURE
 		pip.stretch_mode = TextureRect.STRETCH_KEEP
-		pip.self_modulate = PIP_COLOR * (0.3 if i < pips_dim else 1.0)
+		pip.self_modulate = PIP_COLOR * (0.3 if dimmed else 1.0)
 		pip.modulate.a = 1.0
 		pip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		pip.use_parent_material = true
