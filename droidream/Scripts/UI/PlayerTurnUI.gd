@@ -86,6 +86,11 @@ const GEAR_BEAT_POP := 0.12
 const GEAR_BEAT_HOP := 3.0
 const TAME_TITLE_OVERLAP := 2.0 # How far the title's lower edge sinks toward the panel
 
+# The menus are placed for the normal camera, so they follow the camera's transform and stay attached to the Droid while it moves and zooms
+func _process(_delta: float) -> void:
+	if visible:
+		transform = get_viewport().get_canvas_transform()
+
 func _ready():
 	set_process_unhandled_input(true)
 	_create_gear_arrows()

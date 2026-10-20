@@ -69,7 +69,7 @@ Four connected changes that all serve one goal: readable instructions in a turn-
 | Heat Up | Key prompts on a ring around the Droid, never under the text |
 | Harden | Sequence in a row above the Droid; instruction text above the row (no overlap) |
 | Multi-Tame | One ghost shape over each affected creature, popping in, clear and visible, with a bright outline when aligned |
-| Ball | Meter moves above the targeted creature (keeping its current size and look); the "fully one color" zone gets about 25% more time plus a grace window of about 80 ms before and after; refined hit/miss animation |
+| Ball | Meter is placed relative to the Droid, like the PlayerTurnUI (it follows the camera transform, so it stays attached to the Droid while the camera moves; it keeps its current size and look); the "fully one color" zone gets about 25% more time plus a grace window of about 80 ms before and after; refined hit/miss animation |
 | Attack text anchor | Block text above the Droid, crit text above the target, popping in during the wind-up and gone at contact |
 
 ### 3.5 Delivery
@@ -113,7 +113,7 @@ R4.1 Repair: `RepairObject` scene gets a 2x sprite, outline, pop-in, spin, trail
 R4.2 Heat Up: `HeatUpPrompt` positions come from a ring around the Droid in camera space; no overlaps with text.
 R4.3 Harden: key row anchored above the Droid; text anchored above the row.
 R4.4 Multi-Tame: one ghost shape per affected creature, anchored over each creature; aligned state has a bright outline and pop; result uses the shared feedback style.
-R4.5 Ball: meter anchored above the targeted creature; zone time +25%, grace window about 80 ms each side; hit/miss pop and flash.
+R4.5 Ball: meter anchored relative to the Droid through the camera transform (same approach as `PlayerTurnUI`); zone time +25%, grace window about 80 ms each side; hit/miss pop and flash.
 R4.6 Block and crit text anchors as in 3.4.
 
 ## 5. Edge cases

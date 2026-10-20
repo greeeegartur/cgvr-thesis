@@ -32,6 +32,8 @@ var player : CombatEntity
 var enemies: Array[CombatEntity] = [] # Initially empty, TO-DO: make this load area-specific
 var turn = "player" # Player always starts first, this variable is a failsafe check condition in case turn logic goes wrong
 var selected_enemy : CombatEntity
+const VICTORY_HOLD := 0.2 # Seconds the camera stays in the encounter after a Ball or Multi-Tame ends it
+var victory_delay := 0.0 # How long the camera stays in the encounter before the victory camera (set after a Ball or Multi-Tame)
 var current_target_reach := 0 # Creatures hit on each side of the main target by the action being targeted
 var target_index = 0
 var target_mode := TargetMode.NONE
@@ -470,6 +472,7 @@ func _player_turn():
 	
 	# Player turn base defaults, signal emit and guess display update
 	await camera.stop_follow() # Reseting from previous enemy turn (or defaulting it)
+	victory_delay = 0.0
 	player_turn_ui.start_player_turn()
 	player_turn_ui.update_guess_display()
 	player_turn_started.emit()
@@ -586,7 +589,7 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	player_visual.attack_position = _get_player_attack_position(enemy_visual)
 	
 	# Camera settings
-	camera.follow(player_visual, 60)
+	camera.frame_group([player_visual, enemy_visual], 0.35, CombatCamera.ZOOM_ACTION.x) # A little closer while taming, with the Droid and its target both in view
 	
 	# Shows crit hint text for the player + allows inputs for crit
 	tutorial_text.show_hint(TutorialText.HintType.CRIT, enemy_visual)
@@ -671,11 +674,10 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 	if critical:
 		base *= _get_crit_multiplier() # Either 1.5 or 1.75
 		# VFX effects 
-		camera.pop_zoom()
 		vfx.play_overlay_effects("crit", 0.4)
 		vfx.play_crit_feedback(enemy_visual)
 		# Freezing frame and shaking camera for good hit feel
-		camera.shake(10.0, 0.15)
+		camera.impact(CombatCamera.Impact.LARGE)
 		freeze_frame(0.14)
 		print("CRITICAL HIT!")
 	
@@ -699,7 +701,7 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		enemy_visual.shake(critical)
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
 		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical) # Damage number, particles
-		camera.shake(7.0, 0.1)
+		camera.impact(CombatCamera.Impact.MEDIUM)
 		
 		# Restores chip if matches conditions inside method
 		_try_restore_chip(guess_type, critical)
@@ -889,7 +891,8 @@ func _enemy_attack_single(enemy: CombatEntity):
 	visual.attack_position = _get_enemy_attack_position(visual)
 	
 	# Camera controls + tutorial text visible
-	camera.follow(visual, -60)
+	camera.frame_group([player_visual, visual], 0.35, CombatCamera.ZOOM_ACTION.x) # A little closer while blocking, with the Droid and the attacker both in view
+	camera.anticipate() # Slow push toward the attacker during its wind-up
 	tutorial_text.show_hint(TutorialText.HintType.BLOCK, player_visual)
 	await _play_enemy_attack_pattern(enemy, visual, pattern)
 
@@ -1015,7 +1018,7 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	
 	if enemy_crit:
 		damage *= 1.5
-		camera.pop_zoom()
+		camera.impact(CombatCamera.Impact.LARGE)
 		vfx.play_overlay_effects("crit", 0.35)
 		vfx.play_crit_feedback(player_visual)
 		print("Enemy CRITICAL HIT!")
@@ -1031,7 +1034,7 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	elif blocked:
 		damage *= 0.5
 		player_visual.play_block_success()
-		camera.shake(8.0, 0.15)
+		camera.impact(CombatCamera.Impact.LARGE)
 		freeze_frame(0.11)
 		if not enemy_crit:
 			vfx.play_overlay_effects("block", 0.2)
@@ -1050,7 +1053,7 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	else:
 		player_visual.play_block_fail()
 		vfx.play_overlay_effects("normal")
-		camera.shake(5.0, 0.12)
+		camera.impact(CombatCamera.Impact.SMALL)
 		freeze_frame(0.08)
 		print("Failed block")
 
@@ -1172,7 +1175,7 @@ func _ability_repair_sequence(ability: InventoryAbility):
 	# Camera focus
 	camera.follow(player_visual)
 	await get_tree().create_timer(0.2).timeout
-	camera.ability_focus_on_player(player_visual, Vector2(1.4, 1.4), 3.5)
+	camera.ability_frame_wide(player_visual) # The whole play area stays visible so the player can see where parts come from
 	
 	tutorial_text.show_hint(TutorialText.HintType.REPAIR, player_visual)
 	
@@ -1232,6 +1235,7 @@ func _ability_multi_tame_sequence(ability: InventoryAbility, target: CombatEntit
 	minigame.queue_free()
 	
 	await _resolve_multi_tame_hit(target, multiplier)
+	victory_delay = VICTORY_HOLD
 
 # Executes the heat up ability sequence
 # Here the player must press the correct keys that appear on screen at random locations; the more pressed, the more power buff the player gets
@@ -1243,7 +1247,7 @@ func _ability_heat_up_sequence(ability: InventoryAbility):
 	camera.follow(player_visual)
 	await get_tree().create_timer(0.2).timeout
 	tutorial_text.show_hint(TutorialText.HintType.HEATUP, player_visual)
-	camera.ability_focus_on_player(player_visual, Vector2(1.3, 1.3), 5.0)
+	camera.ability_push_in(player_visual)
 
 	minigame.prompt_hit.connect(
 		func(pos: Vector2):
@@ -1271,6 +1275,7 @@ func _ability_harden_sequence(ability: InventoryAbility):
 	var minigame_scene = preload("res://Scenes/PlayerActions/HardenMinigame.tscn")
 	var minigame = minigame_scene.instantiate()
 	minigame_layer.add_child(minigame)
+	camera.ability_push_in(player_visual, Vector2(1.25, 1.25))
 	tutorial_text.show_hint(TutorialText.HintType.HARDEN, player_visual)
 	
 	minigame.play()
@@ -1288,6 +1293,7 @@ func _ability_harden_sequence(ability: InventoryAbility):
 	
 	vfx.spawn_info(player_visual, "[color=#3d9feb]Harden applied![/color]")
 	vfx.spawn_damage_number(player_visual, defense_bonus, false, true)
+	await camera.reset_camera()
 	
 
 # Processes the hit from the Multi-tame ability after the action sequence has been processed
@@ -1415,6 +1421,7 @@ func _item_ball_sequence(item: InventoryItem, target: CombatEntity):
 	
 	await player_visual.play_item_use()
 	await _resolve_ball_hit(target, intent, multiplier)
+	victory_delay = VICTORY_HOLD
 
 # Heals 10% of player's max health for 3 turns
 func _item_ice_cube_sequence(item: InventoryItem, target):
@@ -1569,6 +1576,13 @@ func _set_selected_enemy(enemy: CombatEntity):
 		if e != enemy and enemy_visuals.has(e):
 			enemy_visuals[e].show_target_secondary()
 	enemy_visuals[enemy].show_target_main(maxi(affected.size(), 1))
+	
+	# Camera frames the Droid and every creature the action affects
+	var framed: Array = [player_visual]
+	for e in affected:
+		if enemy_visuals.has(e):
+			framed.append(enemy_visuals[e])
+	camera.frame_group(framed)
 
 # Hides every target preview marker on all creatures
 func _clear_target_markers():
@@ -1746,6 +1760,7 @@ func _cancel_target_selection():
 	
 	# Hides all target markers and defaults selected enemy and index
 	_clear_target_markers()
+	camera.stop_follow()
 	current_target_reach = 0
 	player_visual.hide_target_arrow()
 	

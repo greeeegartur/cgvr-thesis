@@ -23,7 +23,7 @@ enum HintType {
 const HINTS := {
 	HintType.PLAYER_TURN: { "bar": [["ARROWS", "Move"], ["Z", "Confirm"], ["X", "Cancel"], ["C", "Turn order"]] },
 	HintType.PLAYER_SELECT: {
-		"text": ["Select a [hint kind=wave]target[/hint]!"], "screen": Vector2(400, 26),
+		"text": ["Select a [hint kind=wave]target[/hint]!"], "screen": Vector2(400, 56),
 		"bar": [["ARROWS", "Move"], ["Z", "Confirm"], ["X", "Cancel"]]
 	},
 	HintType.BOON_SELECT: {
@@ -51,13 +51,13 @@ const KEY_ACTIONS := {
 const FONT := preload("res://Graphics/Fonts/PixelOperator.ttf")
 const FONT_BOLD := preload("res://Graphics/Fonts/PixelOperator-Bold.ttf")
 const FONT_SIZE := 24 # Instruction text is as big as the key icons next to it
-const BAR_FONT_SIZE := 20 # The controls bar is a reminder, so its words are smaller
+const BAR_FONT_SIZE := 16 # The controls bar is a reminder, so its words and keys are small
 const OUTLINE_SIZE := 6
 const TEXT_DROP := 3 # Space above each text piece so its letters sit on the middle line of the key icons
 const BAR_MARGIN := Vector2(10, 6) # Space between the controls bar and the bottom left corner
 # Key icon sizes (whole numbers so pixels stay crisp): big enough to read at a glance, the arrow cluster is already tall
 const MESSAGE_ICON_SCALE := { "Z": 2, "X": 2, "C": 2, "ARROWS": 1 }
-const BAR_ICON_SCALE := { "Z": 2, "X": 2, "C": 2, "ARROWS": 1 }
+const BAR_ICON_SCALE := { "Z": 1.7, "X": 1.7, "C": 1.7, "ARROWS": 0.85 }
 const SCREEN_MARGIN := 8.0
 const POP_TIME := 0.25
 const POP_DROP := 10.0 # How far above its place the text starts when it pops in
@@ -188,11 +188,11 @@ func _build_line(pieces: Array, icon_list: Array[KeyIcon]) -> Control:
 # Builds the controls bar: key icon + one word per pair
 func _build_bar(pairs: Array) -> Control:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 22)
+	row.add_theme_constant_override("separation", 16)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for pair in pairs:
 		var item := HBoxContainer.new()
-		item.add_theme_constant_override("separation", 6)
+		item.add_theme_constant_override("separation", 5)
 		item.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var icon := KeyIcon.new()
 		icon.setup(pair[0], BAR_ICON_SCALE[pair[0]])

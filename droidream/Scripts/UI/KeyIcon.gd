@@ -17,8 +17,8 @@ var pressed := false
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-# Loads the sheet of a key (Z, X, C or ARROWS) and crops both frames to the same art rectangle; icon_scale is a whole number so pixels stay crisp
-func setup(key: String, icon_scale := 1) -> void:
+# Loads the sheet of a key (Z, X, C or ARROWS) and crops both frames to the same art rectangle; icon_scale 1 or 2 keeps pixels crisp; other values are only for small icons
+func setup(key: String, icon_scale: float = 1.0) -> void:
 	key_name = key
 	var sheet: Texture2D = SHEETS[key]
 	var frame_height := sheet.get_height() / 2
@@ -36,7 +36,7 @@ func setup(key: String, icon_scale := 1) -> void:
 		atlas.atlas = sheet
 		atlas.region = Rect2(used.position.x, used.position.y + i * frame_height, used.size.x, used.size.y)
 		frames.append(atlas)
-	custom_minimum_size = used.size * icon_scale
+	custom_minimum_size = Vector2(used.size) * icon_scale
 	size = custom_minimum_size
 	queue_redraw()
 

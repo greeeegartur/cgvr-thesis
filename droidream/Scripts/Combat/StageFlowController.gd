@@ -135,13 +135,19 @@ func _on_retry():
 func _on_back_to_title():
 	print("Back to title (not implemented yet)")
 
+const REWARDS_DELAY := 0.8 # Seconds after the victory camera starts before the rewards appear
+
 func _play_victory_sequence(rewards: Dictionary):
 	# Combat end
 	combat_manager._pause_combat() # 1. Pausing combat
 	combat_ui.hide_player_stats_hud()
+	# After a Ball or Multi-Tame the camera stays in the encounter for a moment, so the result can land
+	await get_tree().create_timer(combat_manager.victory_delay).timeout
+	combat_manager.victory_delay = 0.0
 	
 	# TO-DO: await player_visual.play_victory() # 2. Showing player visual victory animation
 	camera.victory_focus_on_player(player_visual) # 3. Camera zooms in and focuses on player for victory screen
+	await get_tree().create_timer(REWARDS_DELAY).timeout # The camera is already on its way when the rewards pop up
 	rewards_screen.show_rewards(rewards) # 4. Rewards menu pops up
 	
 	# Confirmation
