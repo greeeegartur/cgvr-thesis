@@ -19,6 +19,22 @@ const FILL_HEIGHT := 1200.0 # How far the art is extended downward
 const STRETCH_HEIGHT := 48.0 # How far the last row of see-through layers is stretched (enough for fast camera moves)
 const FILL_SAMPLE_ROWS := 8 # Rows at the bottom of the art that give the fill color
 
+# How much of the original contrast each layer keeps (1.0 = unchanged): far layers are calmer, so the characters stand out
+@export var layer_contrast := {
+	"Layer11_Sky": 0.65,
+	"Layer10_Clouds": 0.65,
+	"Layer09_Mountains": 0.65,
+	"Layer08_TreesFar": 0.75,
+	"Layer07_TreesMid": 0.75,
+	"Layer06_PlantsFar": 0.82,
+	"Layer05_TreesClose": 0.85,
+	"Layer04_PlantsClose": 0.88,
+	"Layer03_Ground": 0.95,
+	"Layer02_BaseObjects": 0.95,
+	"Layer01_Foreground": 0.95
+}
+const GRADE_SHADER := preload("res://Scenes/Combat/BackgroundGrade.gdshader")
+
 # Cloud variables
 @export var cloud_speed := 4.0
 @export var reset_x := -40.0
@@ -38,6 +54,7 @@ func _ready():
 		if child is ParallaxLayer and layer_scales.has(child.name):
 			child.motion_scale = Vector2(layer_scales[child.name], 1.0)
 		_tile_layer(child)
+		_grade_layer(child)
 	_extend_layers_down()
 
 # Repeats a layer sideways with its texture width, so the camera can never leave the art (zoomed out, following the far side...)
@@ -88,6 +105,7 @@ func _extend_layers_down() -> void:
 		fill.color = Color(color_sum.r / alpha_sum, color_sum.g / alpha_sum, color_sum.b / alpha_sum)
 		fill.position = Vector2(-width / 2.0, height / 2.0)
 		fill.size = Vector2(width, FILL_HEIGHT)
+		fill.use_parent_material = true # The fill gets the same contrast as its layer
 		sprite.add_child(fill)
 
 # For layers that are see-through at the bottom (the foreground plants): the last row is stretched down, so the elements that touch the edge keep going
@@ -101,4 +119,17 @@ func _stretch_bottom_row(sprite: Sprite2D) -> void:
 	stretch.region_rect = Rect2(0, height - 1, width, 1)
 	stretch.scale = Vector2(1, STRETCH_HEIGHT)
 	stretch.position = Vector2(0, height / 2.0 + STRETCH_HEIGHT / 2.0)
+	stretch.use_parent_material = true
 	sprite.add_child(stretch)
+
+# Gives every sprite of a layer the contrast of that layer (the clouds have two sprites of their own)
+func _grade_layer(layer: Node) -> void:
+	if not layer is ParallaxLayer or not layer_contrast.has(layer.name):
+		return
+	var material := ShaderMaterial.new()
+	material.shader = GRADE_SHADER
+	material.set_shader_parameter("contrast", layer_contrast[layer.name])
+	for path in ["Sprite2D", "CloudsDrift/CloudsA", "CloudsDrift/CloudsB"]:
+		var sprite := layer.get_node_or_null(path) as Sprite2D
+		if sprite:
+			sprite.material = material
