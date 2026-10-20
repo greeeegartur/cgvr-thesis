@@ -916,6 +916,7 @@ func _enemy_attack_single(enemy: CombatEntity):
 	
 	# Support patterns
 	if pattern.is_support:
+		camera.frame_group([visual], 0.35, CombatCamera.ZOOM_ACTION.x) # The supporting creature gets the focus too
 		await _handle_support_pattern(enemy, pattern)
 		# Support patterns have no attack-finished handler, so the enemy's base layer is restored here (keeps the player above it)
 		if is_instance_valid(visual):

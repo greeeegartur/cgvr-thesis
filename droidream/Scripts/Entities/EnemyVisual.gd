@@ -44,6 +44,7 @@ var is_defeated := false # Checks if visual can play any other animations
 # Enemy moves to position, attacks, returns back to original position
 func play_attack(animation_name: String):
 	attack_animation_name = animation_name
+	_pin_meter() # The meter stays above the home slot during the lunge, so it never slides over the neighbors' meters or the Droid's UI
 	await _move_to_attack_position(attack_position)
 	attack_started.emit()
 	anim.play(animation_name)
@@ -88,7 +89,20 @@ func on_anim_finished(name: String):
 	if name == attack_animation_name or name == support_animation_name:
 		anim.play("idle")
 	await _move_to_home_position()
+	_unpin_meter()
 	attack_finished.emit()
+
+var meter_home_local := Vector2.ZERO
+
+func _pin_meter() -> void:
+	meter_home_local = axis_bar.position
+	var pinned_at: Vector2 = axis_bar.global_position
+	axis_bar.top_level = true
+	axis_bar.global_position = pinned_at
+
+func _unpin_meter() -> void:
+	axis_bar.top_level = false
+	axis_bar.position = meter_home_local
 
 # Movement methods for connecting patterns using tweens (same methods just in reverse)
 func _move_to_attack_position(target: Vector2):

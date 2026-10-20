@@ -386,10 +386,10 @@ z_index = 1
 script = ExtResource("1_a4a18")
 
 [node name="EnemyAxisBar" parent="." instance=ExtResource("2_iwn4t")]
-offset_left = -39.0
-offset_top = -56.0
-offset_right = -39.0
-offset_bottom = -56.0
+offset_left = -42.4
+offset_top = -57.0
+offset_right = -42.4
+offset_bottom = -57.0
 
 [node name="Visual" type="Node2D" parent="."]
 z_index = 1
