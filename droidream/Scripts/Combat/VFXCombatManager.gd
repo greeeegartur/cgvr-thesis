@@ -34,12 +34,21 @@ func _ready():
 	camera.process_mode = Node.PROCESS_MODE_ALWAYS
 	vignette.modulate = crit_flash_color
 
-# VFX method package for hits (both normal and critical)
-func play_damage_vfx(target_visual: Node2D, damage: float, is_critical: bool, is_block = false):
+# VFX method package for hits; the multiplier of a tame sequence picks the burst and number tier (below 1: small, 1.25 and up: strong, all perfect: critical)
+func play_damage_vfx(target_visual: Node2D, damage: float, is_critical: bool, is_block = false, multiplier := 1.0, tame_side := false):
 	var color = crit_flash_color if is_critical else normal_flash_color
 	color = block_flash_color if is_block else color
-	spawn_damage_number(target_visual, damage, is_critical)
-	var strength := HitBurst.Strength.CRIT if is_critical else (HitBurst.Strength.BLOCK if is_block else HitBurst.Strength.NORMAL)
+	var tier := DamageNumber.Tier.STRONG if multiplier >= TameSequence.MULT_ANY_PERFECT and not is_critical else DamageNumber.Tier.NORMAL
+	spawn_damage_number(target_visual, damage, is_critical, false, tier, tame_side)
+	var strength := HitBurst.Strength.NORMAL
+	if is_critical:
+		strength = HitBurst.Strength.CRIT
+	elif is_block:
+		strength = HitBurst.Strength.BLOCK
+	elif multiplier < 1.0:
+		strength = HitBurst.Strength.SMALL
+	elif tier == DamageNumber.Tier.STRONG:
+		strength = HitBurst.Strength.STRONG
 	HitBurst.burst(particle_layer, target_visual.position, color, strength)
 
 # A killed creature bursts into red stars (waits a moment so the hit that killed it lands first)
@@ -60,7 +69,7 @@ func play_subdue(target_visual: Node2D, _is_subdue := true):
 	TameSpiral.play(particle_layer, target_visual.position)
 
 # Spawns a damage number near an entity visual that took damage
-func spawn_damage_number(target_visual: Node2D, damage: float, is_critical: bool, is_heal := false):
+func spawn_damage_number(target_visual: Node2D, damage: float, is_critical: bool, is_heal := false, tier := DamageNumber.Tier.NORMAL, tame_side := false):
 	if not DamageNumberScene:
 		print("No DamageNumber scene set in VFXCombatManager")
 		return
@@ -68,10 +77,10 @@ func spawn_damage_number(target_visual: Node2D, damage: float, is_critical: bool
 	# Adding damage number to scene
 	var num := DamageNumberScene.instantiate()
 	damage_layer.add_child(num)
-	# Rendering damage number in screen space
-	num.position = target_visual.position
+	# Kept inside the camera and clear of other numbers
+	num.position = DamageNumber.placed(damage_layer, target_visual.position)
 
-	num.play(damage, is_critical, is_heal)
+	num.play(damage, is_critical, is_heal, tier, tame_side)
 
 # Explosion VFX for hits and subduing
 func emit_explosion(target_visual: Node2D, color: Color, is_subdue := false):
@@ -163,7 +172,7 @@ func spawn_feedback(target_visual: Node2D, text: String):
 	
 	var feedback := HitFeedbackScene.instantiate()
 	feedback_layer.add_child(feedback)
-	feedback.position = target_visual.position + Vector2(randf_range(-18, 18), randf_range(-8, 8))
+	feedback.position = ActionFeedback.place(feedback_layer, target_visual.position + Vector2(randf_range(-18, 18), randf_range(-8, 8)), ActionFeedback.FEEDBACK_BOX, 40.0, 14.0)
 	feedback.play(text)
 
 # Item, ability and reveal texts: smaller and longer than combat feedback so they are easy to read
@@ -173,16 +182,16 @@ func spawn_info(target_visual: Node2D, text: String):
 	
 	var feedback := HitFeedbackScene.instantiate()
 	feedback_layer.add_child(feedback)
-	feedback.position = target_visual.position + Vector2(0, -20)
+	feedback.position = ActionFeedback.place(feedback_layer, target_visual.position + Vector2(0, -20), ActionFeedback.FEEDBACK_BOX, 24.0, 14.0)
 	feedback.play_info(text)
+
+# One of the tier texts (Perfect, Good, Try, Miss, Block...) at a world position, kept inside the camera
+func play_tier_feedback(at: Vector2, tier: ActionFeedback.Tier) -> void:
+	ActionFeedback.show(HitFeedbackScene, feedback_layer, at, tier)
 
 # When taming a creature before its first turn
 func play_perfect_feedback(target_visual: Node2D):
-	if HitFeedbackScene:
-		var feedback := HitFeedbackScene.instantiate()
-		feedback_layer.add_child(feedback)
-		feedback.position = target_visual.position + Vector2(0, -30)
-		feedback.play_flair("[color=#fff27a][wave amp=18 freq=8]Perfect![/wave][/color]")
+	play_tier_feedback(target_visual.position + Vector2(0, -30), ActionFeedback.Tier.TAME)
 	
 	emit_explosion(target_visual, crit_flash_color, true)
 
@@ -201,19 +210,10 @@ func play_buff_particles(target_visual: Node2D, kind: BuffParticles.Kind):
 	BuffParticles.burst(particle_layer, target_visual.position, kind)
 
 func play_crit_feedback(target_visual):
-	var texts = [
-		"[color=#9a2ea3ff][wave freq=14]Awesome![/wave][/color]",
-		"[color=#3d9feb][shake rate=18]Great![/shake][/color]",
-	    "[color=#eff238][wave freq=14]Nice![/wave][/color]"
-	]
-	spawn_feedback(target_visual, texts.pick_random())
+	play_tier_feedback(target_visual.position + Vector2(0, -20), ActionFeedback.Tier.PERFECT)
 
 func play_block_feedback(target_visual):
-	var texts = [
-		"[color=#17e84f][wave freq=14]Blocked![/wave][/color]",
-	    "[color=#06d63e][shake rate=18]Negated![/shake][/color]"
-	]
-	spawn_feedback(target_visual, texts.pick_random())
+	play_tier_feedback(target_visual.position + Vector2(0, -20), ActionFeedback.Tier.BLOCK)
 
 func play_multihit_feedback(target_visual):
 	var texts = [

@@ -396,17 +396,8 @@ func _hide_line():
 	shop_bubble.hide_bubble()
 
 func _spawn_purchase_feedback(shop_item: ShopCard):
-	var texts = [
-		"[color=#17e84f][wave freq=12]Bought![/wave][/color]",
-		"[color=#eff238][wave freq=12]Acquired![/wave][/color]",
-		"[color=#3d9feb][shake rate=14]Got it![/shake][/color]"
-	]
-	var feedback := HitFeedbackScene.instantiate()
-	shop_layer.add_child(feedback)
-	
-	feedback.rotation_degrees = randf_range(-3,3)
-	feedback.global_position = shop_item.global_position + Vector2(ShopCard.CARD_SIZE.x * 0.5 - 20, -8)
-	feedback.play(texts.pick_random())
+	var at := shop_item.global_position + Vector2(ShopCard.CARD_SIZE.x * 0.5 - 20, -8)
+	ActionFeedback.show(HitFeedbackScene, shop_layer, at, ActionFeedback.Tier.PURCHASE, false)
 
 func _get_modified_price(base_cost: int) -> int:
 	return base_cost + PlayerData.get_shop_price_increase()

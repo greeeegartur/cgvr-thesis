@@ -116,6 +116,7 @@ const DUCK_TYPE_COLORS := {
 const HIT_STOP_SCALE := 0.05 # Time scale during a hit-stop
 const HIT_STOP_NORMAL := 0.06
 const HIT_STOP_CRIT := 0.12
+const HIT_STOP_LANDING := 0.04 # A Perfect landing of a tame icon
 const HIT_STOP_BLOCK := 0.10
 const HIT_STOP_HURT := 0.10
 var hit_stop_id := 0
@@ -618,6 +619,7 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	
 	# The icons: every press makes the Droid strike a pose; the results decide the multiplier and the chip roll
 	_connect_once(tame_sequence.pressed, player_visual.pose_on_press)
+	_connect_once(tame_sequence.icon_judged, _on_tame_icon_judged)
 	tutorial_text.show_hint(TutorialText.HintType.TAME_TIMING, enemy_visual)
 	var results: Array = await tame_sequence.play(enemy_visual, player_visual, vfx.particle_layer, camera)
 	tutorial_text.hide_text()
@@ -653,6 +655,22 @@ func player_attack(attack_type: CombatTypes.EntityType):
 		_end_combat(true)
 	else:
 		_enemy_turn()
+
+# Every judged icon gets its feedback: a Perfect locks in with a small star burst, a tiny hit-stop and a stun jitter, the others only show their text
+func _on_tame_icon_judged(_index: int, result: int, icon: TameIcon, _count: int) -> void:
+	var enemy_visual: EnemyVisual = enemy_visuals[selected_enemy]
+	var at := icon.spot + Vector2(-48, -26)
+	match result:
+		TameSequence.Result.PERFECT:
+			StarBurst.play(vfx.particle_layer, icon.spot, StarBurst.Preset.LANDING)
+			vfx.play_tier_feedback(at, ActionFeedback.Tier.PERFECT)
+			_hit_impact(enemy_visual, HIT_STOP_LANDING)
+		TameSequence.Result.GOOD:
+			vfx.play_tier_feedback(at, ActionFeedback.Tier.GOOD)
+		TameSequence.Result.TRY:
+			vfx.play_tier_feedback(at, ActionFeedback.Tier.TRY)
+		_:
+			vfx.play_tier_feedback(at, ActionFeedback.Tier.MISS)
 
 # Processes the player's hit to shift the enemy's axis bar in a specific direction (kill, left or tame, right)
 func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType, multiplier := 1.0):
@@ -690,9 +708,11 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType, 
 		# Visual effects
 		enemy_visual.shake(critical)
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
-		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical) # Damage number, particles
-		_hit_impact(enemy_visual, HIT_STOP_CRIT if critical else HIT_STOP_NORMAL)
-		camera.impact(CombatCamera.Impact.MEDIUM)
+		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical, false, multiplier, true) # Damage number, particles
+		if critical:
+			_hit_impact(enemy_visual, HIT_STOP_CRIT) # The Perfect landings already gave the small hit-stops
+		if multiplier >= TameSequence.MULT_TRIED:
+			camera.impact(CombatCamera.Impact.MEDIUM)
 		
 		# Restores a chip when the sequence rolled one
 		_restore_chip_after_sequence(guess_type)
@@ -725,8 +745,9 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType, 
 		# Visual effects
 		enemy_visual.shake(critical)
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
-		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical)
-		_hit_impact(enemy_visual, HIT_STOP_CRIT if critical else HIT_STOP_NORMAL)
+		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical, false, multiplier)
+		if critical:
+			_hit_impact(enemy_visual, HIT_STOP_CRIT)
 		
 		# Restores a chip when the sequence rolled one
 		_restore_chip_after_sequence(guess_type)

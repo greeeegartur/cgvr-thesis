@@ -91,7 +91,26 @@ func play_info(bbcode_text: String):
 	await tween.finished
 	queue_free()
 
-func play(bbcode_text: String):
+# A muted text that sinks a little and fades, for a missed icon
+func play_miss(bbcode_text: String):
+	label.text = bbcode_text
+	label.add_theme_font_size_override("normal_font_size", 16)
+	label.add_theme_constant_override("outline_size", 4)
+	rotation_degrees = randf_range(-3, 3)
+	label.modulate.a = 0.0
+	scale = Vector2(1.1, 1.1)
+	
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(label, "modulate:a", 1.0, 0.08)
+	tween.tween_property(self, "scale", Vector2(0.9, 0.9), 0.5)
+	tween.tween_property(self, "position:y", position.y + 14, 0.8)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 0.3).set_delay(0.5)
+	await tween.finished
+	queue_free()
+
+# The standard pop; strength scales its size (a Try is smaller than a Good)
+func play(bbcode_text: String, strength := 1.0):
 	label.text = bbcode_text
 	rotation_degrees = randf_range(-4, 4)
 	label.modulate.a = 0.0
@@ -111,7 +130,7 @@ func play(bbcode_text: String):
 	tween.tween_property(
 		self,
 		"scale",
-		Vector2.ONE * 1.35,
+		Vector2.ONE * 1.35 * strength,
 		lifetime
 	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	
