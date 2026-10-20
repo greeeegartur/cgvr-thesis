@@ -42,6 +42,19 @@ func play_damage_vfx(target_visual: Node2D, damage: float, is_critical: bool, is
 	var strength := HitBurst.Strength.CRIT if is_critical else (HitBurst.Strength.BLOCK if is_block else HitBurst.Strength.NORMAL)
 	HitBurst.burst(particle_layer, target_visual.position, color, strength)
 
+# A killed creature bursts into red stars (waits a moment so the hit that killed it lands first)
+func play_kill_burst(target_visual: Node2D):
+	StarBurst.play(particle_layer, target_visual.position, StarBurst.Preset.KILL, Color(0, 0, 0, 0), 0.12)
+
+# The end of a dream: stars, sparkles and rings for a success, a dull ring and falling sparks for a failure
+func play_tame_payoff(target_visual: Node2D, success: bool):
+	if success:
+		StarBurst.play(particle_layer, target_visual.position, StarBurst.Preset.TAME)
+		play_vignette(subdue_flash_color, 0.35, 0.1, 0.5)
+		play_speedlines(subdue_flash_color, 0.4, 0.08, 0.35)
+	else:
+		StarBurst.play(particle_layer, target_visual.position, StarBurst.Preset.TAME_FAIL)
+
 # Taming starts: neon pixels spiral into the creature
 func play_subdue(target_visual: Node2D, _is_subdue := true):
 	TameSpiral.play(particle_layer, target_visual.position)

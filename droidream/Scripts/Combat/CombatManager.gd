@@ -890,6 +890,8 @@ func on_minigame_complete(enemy: CombatEntity, success: bool):
 		enemy.trust += 1
 		enemy_visual.update_axis(enemy.axis_value)
 		enemy_visual.update_axis_trust() 
+		vfx.play_tame_payoff(enemy_visual, true)
+		enemy_visual.hop(1)
 		print("Minigame success! Trust: %d / %d" % [enemy.trust, enemy.trust_max])
 		#if enemy.is_tamed():
 			#await player_visual.return_to_home()
@@ -901,6 +903,7 @@ func on_minigame_complete(enemy: CombatEntity, success: bool):
 		var restore_ratio := randf_range(0.2, 0.35)
 		enemy.set_axis(enemy.axis_max * restore_ratio)
 		enemy_visual.update_axis(enemy.axis_value)
+		vfx.play_tame_payoff(enemy_visual, false)
 		print("Minigame failed. Enemy axis restored to %.1f" % enemy.axis_value)
 		#if not minigame_queue_ongoing and not combat_has_ended:
 			#_enemy_turn()
@@ -1867,6 +1870,7 @@ func _resolve_enemy_state(enemy: CombatEntity):
 
 	if enemy.is_killed():
 		visual.z_index = 1
+		vfx.play_kill_burst(visual)
 		await visual.play_defeat(false)
 	elif enemy.is_tamed():
 		visual.z_index = 1
