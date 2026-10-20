@@ -39,10 +39,25 @@ func play_damage_vfx(target_visual: Node2D, damage: float, is_critical: bool, is
 	var color = crit_flash_color if is_critical else normal_flash_color
 	color = block_flash_color if is_block else color
 	spawn_damage_number(target_visual, damage, is_critical)
-	emit_explosion(target_visual, color, false)
+	var strength := HitBurst.Strength.CRIT if is_critical else (HitBurst.Strength.BLOCK if is_block else HitBurst.Strength.NORMAL)
+	HitBurst.burst(particle_layer, target_visual.position, color, strength)
 
-func play_subdue(target_visual: Node2D, is_subdue:= true):
-	emit_explosion(target_visual, subdue_flash_color, is_subdue)
+# A killed creature bursts into red stars (waits a moment so the hit that killed it lands first)
+func play_kill_burst(target_visual: Node2D):
+	StarBurst.play(particle_layer, target_visual.position, StarBurst.Preset.KILL, Color(0, 0, 0, 0), 0.12)
+
+# The end of a dream: stars, sparkles and rings for a success, a dull ring and falling sparks for a failure
+func play_tame_payoff(target_visual: Node2D, success: bool):
+	if success:
+		StarBurst.play(particle_layer, target_visual.position, StarBurst.Preset.TAME)
+		play_vignette(subdue_flash_color, 0.35, 0.1, 0.5)
+		play_speedlines(subdue_flash_color, 0.4, 0.08, 0.35)
+	else:
+		StarBurst.play(particle_layer, target_visual.position, StarBurst.Preset.TAME_FAIL)
+
+# Taming starts: neon pixels spiral into the creature
+func play_subdue(target_visual: Node2D, _is_subdue := true):
+	TameSpiral.play(particle_layer, target_visual.position)
 
 # Spawns a damage number near an entity visual that took damage
 func spawn_damage_number(target_visual: Node2D, damage: float, is_critical: bool, is_heal := false):
@@ -151,6 +166,40 @@ func spawn_feedback(target_visual: Node2D, text: String):
 	feedback.position = target_visual.position + Vector2(randf_range(-18, 18), randf_range(-8, 8))
 	feedback.play(text)
 
+# Item, ability and reveal texts: smaller and longer than combat feedback so they are easy to read
+func spawn_info(target_visual: Node2D, text: String):
+	if not HitFeedbackScene:
+		return
+	
+	var feedback := HitFeedbackScene.instantiate()
+	feedback_layer.add_child(feedback)
+	feedback.position = target_visual.position + Vector2(0, -20)
+	feedback.play_info(text)
+
+# When taming a creature before its first turn
+func play_perfect_feedback(target_visual: Node2D):
+	if HitFeedbackScene:
+		var feedback := HitFeedbackScene.instantiate()
+		feedback_layer.add_child(feedback)
+		feedback.position = target_visual.position + Vector2(0, -30)
+		feedback.play_flair("[color=#fff27a][wave amp=18 freq=8]Perfect![/wave][/color]")
+	
+	emit_explosion(target_visual, crit_flash_color, true)
+
+# When the player turns on a creature they were taming: harsh text, red vignette (the caller adds the hit-stop)
+func play_betrayal_feedback(target_visual: Node2D):
+	if HitFeedbackScene:
+		var feedback := HitFeedbackScene.instantiate()
+		feedback_layer.add_child(feedback)
+		feedback.position = target_visual.position + Vector2(0, -30)
+		feedback.play_flair("[color=#b00d0d][shake rate=24 level=10]Betrayal![/shake][/color]", Color("#4d0000"), 30)
+	
+	play_vignette(Color("#7a0000"), 0.7, 0.05, 0.4)
+
+# Small one-shot particles around an entity for heals, power and defense changes
+func play_buff_particles(target_visual: Node2D, kind: BuffParticles.Kind):
+	BuffParticles.burst(particle_layer, target_visual.position, kind)
+
 func play_crit_feedback(target_visual):
 	var texts = [
 		"[color=#9a2ea3ff][wave freq=14]Awesome![/wave][/color]",
@@ -184,19 +233,11 @@ func play_human_at_heart_feedback(target_visual, amount_of_times_triggered):
 	}
 	spawn_feedback(target_visual, texts.get(amount_of_times_triggered, texts[4]))
 
-# Used in the repair ability game
+# Used in the repair ability game: the part flies in from the edge of the play area (it handles its own pop-in, trail and chevron)
 func _spawn_repair_object(target, dir: String) -> Node2D:
-	var obj = RepairObjectScene.instantiate() # TO-DO replace with scene
-	var offset = Utils.DIR_MAP[dir] * 30
-	obj.global_position = target.global_position + offset
-	obj.scale = Vector2.ZERO
+	var obj: RepairObject = RepairObjectScene.instantiate()
 	get_parent().add_child(obj)
-	
-	# Object spawn tween
-	var tween = create_tween()
-	tween.tween_property(obj, "scale", Vector2.ONE, 0.2)\
-		.set_trans(Tween.TRANS_BACK)
-	
+	obj.launch(target, dir)
 	return obj
 
 # Used in the repair ability game
@@ -210,6 +251,7 @@ func _absorb_object(target, obj: Node2D):
 	).set_trans(Tween.TRANS_CUBIC)
 	
 	tween.parallel().tween_property(obj, "scale", Vector2.ZERO, 0.25)
+	tween.parallel().tween_property(obj, "rotation", obj.rotation + PI * 0.5, 0.25)
 	
 	await tween.finished
 	obj.queue_free()

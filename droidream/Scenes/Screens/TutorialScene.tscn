@@ -8,7 +8,6 @@
 [ext_resource type="Script" uid="uid://dcdpqt4rgapox" path="res://Scripts/UI/CombatUI.gd" id="5_jbvax"]
 [ext_resource type="PackedScene" uid="uid://6f0q2xbuuu16" path="res://Scenes/UI/PlayerTurnUI.tscn" id="6_hp5wx"]
 [ext_resource type="Script" uid="uid://dqcuun735xvqm" path="res://Scripts/Combat/CameraController.gd" id="6_map6f"]
-[ext_resource type="PackedScene" uid="uid://dcb28riflpghv" path="res://Scenes/UI/InventoryHudIcon.tscn" id="7_hrv55"]
 [ext_resource type="PackedScene" uid="uid://bilcw1d1fyc74" path="res://Scenes/UI/PlayerStatsHUD.tscn" id="8_h4w16"]
 [ext_resource type="PackedScene" uid="uid://cdsa8xop7dyes" path="res://Scenes/UI/SpeechBubble.tscn" id="8_u2gab"]
 [ext_resource type="PackedScene" uid="uid://b8tix1tnrjrpr" path="res://Scenes/UI/TutorialText.tscn" id="9_ls7or"]
@@ -21,6 +20,7 @@
 [ext_resource type="PackedScene" uid="uid://mnb3nvh3ofas" path="res://Scenes/VFX/HitFeedbackText.tscn" id="17_1uws4"]
 [ext_resource type="PackedScene" uid="uid://rab42iernju0" path="res://Scenes/PlayerActions/RepairObject.tscn" id="18_pijee"]
 [ext_resource type="PackedScene" uid="uid://bsjp4kq22yg6i" path="res://Scenes/PlayerActions/MultiTameBall.tscn" id="19_pea10"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/PauseMenu.tscn" id="99_pause"]
 
 [sub_resource type="Animation" id="Animation_pujgt"]
 resource_name = "press"
@@ -111,7 +111,6 @@ position = Vector2(563, 283)
 
 [node name="TuhU" parent="World" unique_id=983720807 instance=ExtResource("5_33lju")]
 position = Vector2(166, 227.00002)
-scale = Vector2(0.9, 0.9)
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1372294674]
 
@@ -127,8 +126,6 @@ follow_viewport_enabled = true
 
 [node name="TutorialText" parent="UI" unique_id=1873582270 instance=ExtResource("9_ls7or")]
 visible = false
-scale = Vector2(2.5, 2.5)
-transform = Transform2D(2.5, 0, 0, 2.5, 0, 0)
 
 [node name="HintNode" type="Node2D" parent="UI" unique_id=430952229]
 visible = false
@@ -158,7 +155,6 @@ libraries/ = SubResource("AnimationLibrary_xkm2r")
 
 [node name="CombatUI" type="Node" parent="UI" unique_id=1742265900]
 script = ExtResource("5_jbvax")
-InventoryHudIconScene = ExtResource("7_hrv55")
 
 [node name="PlayerTurnUi" parent="UI/CombatUI" unique_id=1985090969 instance=ExtResource("6_hp5wx")]
 
@@ -231,3 +227,5 @@ layer = 10
 [node name="TutorialOverlay" type="CanvasLayer" parent="." unique_id=70249202]
 layer = 12
 follow_viewport_enabled = true
+
+[node name="PauseMenu" parent="." instance=ExtResource("99_pause")]

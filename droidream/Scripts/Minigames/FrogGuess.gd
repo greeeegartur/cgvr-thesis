@@ -28,7 +28,7 @@ const REVEAL_SCALE := 2.0
 const POSITION_ATTEMPTS := 16
 
 func _ready():
-	set_duration(10.0) # real time is 8
+	set_duration(8.5)
 	
 	progress_bar.max_value = max_duration
 	progress_bar.value = max_duration

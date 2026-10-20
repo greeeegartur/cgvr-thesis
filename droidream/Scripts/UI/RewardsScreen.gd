@@ -16,20 +16,28 @@ signal confirmed
 var gear_spin_tween: Tween
 var scene_scale = Vector2(0.9, 0.9)
 var skipping := false
+var revealing := false # True while rows are still appearing
+var rows: Array[RewardRow] = []
+
+const ROW_FINAL_SCALE := 1.0 # Scale rows keep after their pop (reduced for all rows if they would not fit in the container)
+const ROW_GAP := 4.0 # Empty space between two rows, small so the list reads as one block
 
 func _unhandled_input(event):
 	if not visible:
 		return
 	if event.is_action_pressed("ui_accept"):
-		for r in rewards_container.get_children():
-			if r.animating:
-				r.skipped = true
-				return
+		# First press finishes the whole reveal, the next press confirms
+		if revealing:
+			skipping = true
+			for row in rows:
+				row.finish_instantly()
+			return
 		confirmed.emit()
 
 # Spawns and shows rewards menu
 func show_rewards(rewards:Dictionary):
 	skipping = false
+	rows.clear()
 	visible = true
 	panel.visible = true
 	panel.scale = Vector2(0.0, 0.65)
@@ -70,16 +78,65 @@ func _play_rewards(rewards: Dictionary):
 			"amount": item_reward.amount
 		})
 	
+	# All slots are reserved first (rows stay invisible) so the list never shifts while rows appear
+	var new_rows: Array[RewardRow] = []
 	for reward in list:
-		var row = reward_row_scene.instantiate()
-		rewards_container.add_child(row)
-		row.setup(reward.icon, reward.name, reward.amount)
-		await get_tree().create_timer(0.04).timeout
+		new_rows.append(_add_row(reward))
+	_fit_rows(new_rows) # Shared row size, one tight slot per row from the top of the container
+	
+	revealing = true
+	for row in new_rows:
+		if not skipping:
+			await get_tree().create_timer(0.04).timeout
 		
+		row.skipped = skipping
 		await row.animate_in()
 		await row.play_count()
+	revealing = false
 	
 	await confirmed
+
+# Adds a row inside a plain Control slot: containers reset their children's scale on every re-sort, a slot does not
+# Each slot is only as tall as its row (set in _fit_rows), so the list starts at the top of the container
+func _add_row(reward: Dictionary) -> RewardRow:
+	var slot := Control.new()
+	rewards_container.add_child(slot)
+	
+	var row: RewardRow = reward_row_scene.instantiate()
+	slot.add_child(row)
+	row.setup(reward.icon, reward.name, reward.amount)
+	
+	rows.append(row)
+	return row
+
+# Gives all rows the same final scale (the widest row must fit the width and all rows must fit the height),
+# sizes each slot to its row plus a small gap and centers the row horizontally in it
+func _fit_rows(new_rows: Array[RewardRow]):
+	if new_rows.is_empty():
+		return
+	
+	var widest := 1.0
+	var tallest := 1.0
+	for row in new_rows:
+		var row_min := row.get_combined_minimum_size()
+		widest = max(widest, row_min.x)
+		tallest = max(tallest, row_min.y)
+	
+	var container_width: float = rewards_container.size.x
+	var container_height: float = rewards_container.size.y
+	var width_fit := container_width / widest
+	var height_fit := container_height / (new_rows.size() * (tallest + ROW_GAP))
+	var final_scale: float = min(ROW_FINAL_SCALE, min(width_fit, height_fit))
+	
+	for row in new_rows:
+		var row_size: Vector2 = row.get_combined_minimum_size()
+		row.final_scale = final_scale
+		row.size = row_size
+		row.pivot_offset = row_size / 2.0 # Scales around its center
+		
+		var slot: Control = row.get_parent()
+		slot.custom_minimum_size = Vector2(0, ceilf(row_size.y * final_scale) + ROW_GAP)
+		row.set_anchors_and_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_KEEP_SIZE)
 
 # Hides rewards menu after input has been made
 func hide_rewards():
@@ -102,6 +159,7 @@ func hide_rewards():
 	
 	panel.visible = false
 	visible = false
+	rows.clear()
 	for c in rewards_container.get_children():
 		c.queue_free()
 

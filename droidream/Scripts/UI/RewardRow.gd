@@ -11,10 +11,15 @@ var name_text := ""
 
 var animating := false
 
-func setup(texture:Texture2D, name:String, amount:int):
+# Scale the row keeps after its pop animations (set by RewardsScreen so rows always fit in the container)
+var final_scale := 1.4
+var active_tween: Tween
+
+func setup(texture:Texture2D, name:String, amount:int, p_final_scale := 1.4):
 	icon.texture = texture
 	name_text = name
 	target_amount = amount
+	final_scale = p_final_scale
 	name_label.text = name
 	amount_label.text = "x0"
 	
@@ -24,35 +29,59 @@ func setup(texture:Texture2D, name:String, amount:int):
 func play_count():
 	for i in range(target_amount + 1):
 		if skipped:
-			amount_label.text = "x%d" % target_amount
-			animating = false
+			_show_final()
 			return
 		
 		amount_label.text = "x%d" % i
 		await get_tree().create_timer(0.035).timeout
 	
+	if skipped:
+		_show_final()
+		return
+	
 	animating = false
 	
-	var tween = create_tween()
-	tween.tween_property(self, "scale", Vector2.ONE * 1.55, 0.06)
-	tween.tween_property(self, "scale", Vector2.ONE * 1.4, 0.1)
+	# Pop when the count lands, settles on the final scale
+	active_tween = create_tween()
+	active_tween.tween_property(self, "scale", Vector2.ONE * (final_scale + 0.15), 0.06)
+	active_tween.tween_property(self, "scale", Vector2.ONE * final_scale, 0.1)
+	await active_tween.finished
 
 func animate_in():
 	animating = true
 	
-	var tween := create_tween()
-	tween.parallel().tween_property(self, "modulate:a", 1.0, 0.16)
-	tween.parallel().tween_property(
+	# Rows created after a skip appear at their final state right away
+	if skipped:
+		_show_final()
+		return
+	
+	active_tween = create_tween()
+	active_tween.parallel().tween_property(self, "modulate:a", 1.0, 0.16)
+	active_tween.parallel().tween_property(
 		self,
 		"scale",
 		Vector2(0.75, 1.25),
 		0.22
 	)
-	tween.tween_property(
+	active_tween.tween_property(
 		self,
 		"scale",
-		Vector2.ONE * 1.4,
+		Vector2.ONE * final_scale,
 		0.25
 	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	
-	await tween.finished
+	await active_tween.finished
+
+# Fast-forwards the running animation to its end (the awaiting coroutines continue normally)
+func finish_instantly():
+	skipped = true
+	if active_tween and active_tween.is_valid() and active_tween.is_running():
+		active_tween.custom_step(100.0)
+	_show_final()
+
+# Final look: fully visible, final scale, full count
+func _show_final():
+	modulate.a = 1.0
+	scale = Vector2.ONE * final_scale
+	amount_label.text = "x%d" % target_amount
+	animating = false

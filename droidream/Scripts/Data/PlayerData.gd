@@ -38,6 +38,7 @@ func _ready():
 	reset_run()
 
 func reset_run():
+	MinigameCountdown.reset() # Every minigame counts down again in the new run
 	# Reset stats
 	max_hp = BASE_MAX_HP
 	hp = BASE_MAX_HP
@@ -76,8 +77,8 @@ func add_defense(amount):
 	stats_changed.emit()
 
 func add_hp(amount):
-	max_hp += amount
-	hp += amount
+	max_hp = Utils.quantize(max_hp + amount)
+	hp = Utils.quantize(hp + amount)
 	stats_changed.emit()
 
 func _get_total_chips():

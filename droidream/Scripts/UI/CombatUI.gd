@@ -2,16 +2,17 @@ extends Node
 
 # This script acts as the frontend manager for the backend CombatManager script
 
-@export var InventoryHudIconScene: PackedScene
 @onready var manager: CombatManager
 @onready var player_stats_hud := $PlayerStatsHUD
 @onready var power_label: Label = $PlayerStatsHUD/PowerRow/Label
 @onready var defense_label: Label = $PlayerStatsHUD/DefenseRow/Label
 @onready var bolts_label: Label = $PlayerStatsHUD/BoltsRow/Label
-@onready var abilities_label: Label = $PlayerStatsHUD/AbilitiesLabel
-@onready var abilities_row: HBoxContainer = $PlayerStatsHUD/AbilitiesRow
-@onready var items_label: Label = $PlayerStatsHUD/ItemsLabel
-@onready var items_row: HBoxContainer = $PlayerStatsHUD/ItemsRow
+@onready var abilities_row: HudSlotRow = $PlayerStatsHUD/AbilitiesRow
+@onready var items_row: HudSlotRow = $PlayerStatsHUD/ItemsRow
+
+const STAT_FONT_SIZE := 16
+const STAT_FONT_SMALL := 12 # Used when a stat text such as +0.25 would reach the slot rows
+const STAT_TEXT_MAX_WIDTH := 36.0 # Space between a stat icon and its slot row
 
 signal turn_order_toggled(enabled: bool)
 var turn_order_enabled := false
@@ -54,15 +55,26 @@ func _update_player_stats_hud():
 		shown_power = manager.player.attack_power
 		shown_defense = manager.player.defense
 	
-	power_label.text = "%s" % _format_quarter(shown_power)
-	defense_label.text = "%s" % _format_quarter(shown_defense)
+	# Only what the player gained (or lost for now) is shown, e.g. +2; +0 while there is no difference
+	_show_stat_gain(power_label, shown_power - PlayerData.BASE_ATTACK)
+	_show_stat_gain(defense_label, shown_defense - PlayerData.BASE_DEFENSE)
 	bolts_label.text = "x%d" % PlayerData.currency
+
+# Shows a stat's difference from its base as a signed number; the text gets smaller if it would reach the slot rows
+func _show_stat_gain(label: Label, gain: float) -> void:
+	var rounded := Utils.quantize(gain)
+	label.text = ("+" if rounded >= 0.0 else "") + _format_quarter(rounded)
+	label.add_theme_color_override("font_color", Color("#ff8a80") if rounded < 0.0 else (Color.WHITE if rounded > 0.0 else Color(0.75, 0.75, 0.75)))
+	
+	var font := label.get_theme_font("font")
+	var fits := font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, STAT_FONT_SIZE).x <= STAT_TEXT_MAX_WIDTH
+	label.add_theme_font_size_override("font_size", STAT_FONT_SIZE if fits else STAT_FONT_SMALL)
 
 func _format_quarter(value: float) -> String:
 	var rounded = round(value * 4.0) / 4.0
 	if is_equal_approx(rounded, round(rounded)):
 		return str(int(round(rounded)))
-	return "%.2f" % rounded
+	return String.num(rounded, 2)
 
 func hide_player_stats_hud():
 	if not is_node_ready():
@@ -105,30 +117,17 @@ func _update_inventory_hud():
 	_update_abilities_hud()
 	_update_items_hud()
 
+# Fills the ability slots (passives use their item icon)
 func _update_abilities_hud():
-	for child in abilities_row.get_children():
-		child.queue_free()
-	
-	var abilities = PlayerData.abilities
-	abilities_label.text = "Abilities: (%d/6)" % abilities.size()
-	
-	for ability in abilities:
-		var icon = InventoryHudIconScene.instantiate()
-		abilities_row.add_child(icon)
-		if ability.is_active() and ability.data.icon:
-			icon.setup(ability.data.icon, 1, false)
-		else: # Passive
-			icon.setup(ItemDb.get_item(ability.data.id).icon, 1, false)
+	var entries := []
+	for ability in PlayerData.abilities:
+		var icon: Texture2D = ability.data.icon if ability.is_active() and ability.data.icon else ItemDb.get_item(ability.data.id).icon
+		entries.append({ "id": ability.data.id, "name": ability.data.display_name, "icon": icon, "count": 1 })
+	abilities_row.set_entries(entries)
 
+# Fills the item slots with their stack counts
 func _update_items_hud():
-	for child in items_row.get_children():
-		child.queue_free()
-	
-	var items = PlayerData.items
-	items_label.text = "Items: (%d/6)" % items.size()
-	
-	for item in items:
-		var icon = InventoryHudIconScene.instantiate()
-		items_row.add_child(icon)
-		if item.data.icon:
-			icon.setup(item.data.icon, item.amount, true)
+	var entries := []
+	for item in PlayerData.items:
+		entries.append({ "id": item.data.id, "name": item.data.display_name, "icon": item.data.icon, "count": item.amount })
+	items_row.set_entries(entries)

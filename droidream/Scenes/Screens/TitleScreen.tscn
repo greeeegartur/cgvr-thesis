@@ -240,43 +240,6 @@ texture = ExtResource("12_o6bmn")
 libraries/ = SubResource("AnimationLibrary_swiah")
 autoplay = &"idle"
 
-[node name="Options" type="Node2D" parent="." unique_id=1261396799]
-position = Vector2(320, 180)
-
-[node name="PlayLabel" type="Label" parent="Options" unique_id=168079286]
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -308.0
-offset_top = -58.0
-offset_right = -60.0
-offset_bottom = 6.0
-grow_horizontal = 2
-pivot_offset = Vector2(124, 32)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 8
-theme_override_fonts/font = ExtResource("13_qu6cc")
-theme_override_font_sizes/font_size = 36
-text = "Play"
-horizontal_alignment = 1
-
-[node name="QuitLabel" type="Label" parent="Options" unique_id=2111056483]
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -308.0
-offset_top = 1.0
-offset_right = -60.0
-offset_bottom = 65.0
-grow_horizontal = 2
-pivot_offset = Vector2(124, 32)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 8
-theme_override_fonts/font = ExtResource("13_qu6cc")
-theme_override_font_sizes/font_size = 36
-text = "Quit"
-horizontal_alignment = 1
-
 [node name="Black" type="ColorRect" parent="." unique_id=1640636065]
 visible = false
 z_index = 1
@@ -284,44 +247,3 @@ offset_right = 641.0
 offset_bottom = 361.0
 color = Color(0, 0, 0, 1)
 
-[node name="RightArrow" type="Sprite2D" parent="." unique_id=817259135]
-position = Vector2(179, 201)
-rotation = 1.5707964
-scale = Vector2(0.8, 0.8)
-texture = ExtResource("15_swiah")
-
-[node name="LeftArrow" type="Sprite2D" parent="." unique_id=466883211]
-position = Vector2(93.00006, 201)
-rotation = -1.5707964
-scale = Vector2(0.8, 0.8)
-texture = ExtResource("15_swiah")
-
-[node name="ControlsHint" type="Node2D" parent="." unique_id=413623788]
-position = Vector2(-15, 333)
-
-[node name="WASD" type="Sprite2D" parent="ControlsHint" unique_id=758726324]
-position = Vector2(70.66669, 12.666671)
-texture = ExtResource("16_75epk")
-vframes = 2
-
-[node name="ZIcon" type="Sprite2D" parent="ControlsHint" unique_id=1965708077]
-position = Vector2(160.33035, 17.49998)
-texture = ExtResource("17_3ah5x")
-vframes = 2
-
-[node name="Label" type="Label" parent="ControlsHint" unique_id=2002000684]
-custom_minimum_size = Vector2(180, 35)
-offset_left = 18.888895
-offset_right = 518.8889
-offset_bottom = 35.0
-theme_override_colors/font_outline_color = Color(0.15686275, 0.15686275, 0.15686275, 1)
-theme_override_constants/outline_size = 3
-theme_override_fonts/font = ExtResource("13_qu6cc")
-text = "Move           / Confirm    "
-vertical_alignment = 1
-autowrap_mode = 2
-metadata/_edit_use_anchors_ = true
-
-[node name="AnimationPlayer" type="AnimationPlayer" parent="ControlsHint" unique_id=511043244]
-libraries/ = SubResource("AnimationLibrary_3ah5x")
-autoplay = &"idle"

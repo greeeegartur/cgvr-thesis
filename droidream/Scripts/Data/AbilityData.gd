@@ -16,6 +16,7 @@ enum UseMode {
 @export var icon: Texture2D
 @export var cooldown_max := 1
 @export var target_type: TargetType
+@export var target_reach := 0 # Creatures also hit on each side of the main target (0 = only the target)
 @export var use_mode: UseMode = UseMode.STANDARD
 
 var execute: Callable

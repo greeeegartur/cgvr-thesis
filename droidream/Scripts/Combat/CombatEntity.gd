@@ -24,6 +24,7 @@ var karma := 0
 # Specific enemy variables
 var spawned := false
 var can_spawn := true
+var turns_taken := 0 # Turns this creature has taken in combat, used for the quick tame reward bonus
 
 
 # Loads enemy info for entity via enemy_id string
@@ -44,6 +45,7 @@ func load_from_enemy_id(enemy_id: String) -> void:
 	visual_scene = data.visual_scene
 	spawned = false
 	can_spawn = true
+	turns_taken = 0
 
 
 # Loads player data from PlayerData object
@@ -54,6 +56,10 @@ func load_from_player() -> void:
 	attack_power = PlayerData.attack
 	defense = PlayerData.defense
 	karma = PlayerData.karma
+
+# Single entry point for changing the intent axis: quantized to quarters, kept on the bar, snapped to an end when one step away
+func set_axis(value: float) -> void:
+	axis_value = Utils.snap_axis(value, axis_max)
 
 # Methods for checking enemy defeat conditions and axis ratio
 func is_killed() -> bool:

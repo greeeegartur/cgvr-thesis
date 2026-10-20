@@ -5,6 +5,10 @@ signal finished(defense_bonus: float)
 signal prompt_hit(position: Vector2)
 
 @onready var sequence_row := $SequenceRow
+
+const ROW_HEIGHT_ABOVE := 90.0 # World pixels from the Droid to the row
+
+var anchor: Node2D # The Droid: the key row sits above it
 @export var duration := 5.0
 
 const ACTIONS := ["ui_up", "ui_down", "ui_left", "ui_right"]
@@ -19,6 +23,7 @@ var _current_stage := 0
 var _current_input_index := 0
 var _completed_stages := 0
 var _running := false
+var _feedback_tweens := {} # Slot -> its running feedback tween (stopped when the next segment starts)
 
 func play():
 	_build_stages()
@@ -48,6 +53,15 @@ func _build_stages():
 
 func _show_stage(stage_index: int):
 	var seq: Array = _stages[stage_index]
+	
+	# Every key starts the segment in its default look; a feedback that is still running from the last key must not paint it afterwards
+	for tween in _feedback_tweens.values():
+		if tween:
+			tween.kill()
+	_feedback_tweens.clear()
+	for slot in sequence_row.get_children():
+		slot.modulate = Color.WHITE
+		slot.scale = Vector2.ONE
 	for i in range(sequence_row.get_child_count()):
 		var slot: TextureRect = sequence_row.get_child(i)
 		if i < seq.size():
@@ -95,6 +109,7 @@ func _process_action(action: String):
 
 func _play_correct_feedback(slot: TextureRect):
 	var tween := create_tween()
+	_feedback_tweens[slot] = tween
 	tween.tween_property(slot, "scale", Vector2.ONE * 1.2, 0.06)
 	tween.parallel().tween_property(slot, "modulate", Color(0.7, 1.0, 0.7), 0.06)
 	tween.tween_property(slot, "scale", Vector2.ONE, 0.08)
@@ -128,3 +143,21 @@ func _stages_to_bonus(completed: int) -> float:
 			return 0.5
 		_:
 			return 0.25
+
+# Keeps the key row centered above the Droid (through the camera, which may still be moving), so it never sits under the instruction text
+func _process(_delta: float) -> void:
+	if anchor == null or not is_instance_valid(anchor):
+		return
+	var canvas := get_viewport().get_canvas_transform()
+	var top: Vector2 = canvas * anchor.global_position + canvas.basis_xform(Vector2(0, -ROW_HEIGHT_ABOVE))
+	
+	# Center of the visible keys, measured on screen
+	var keys := Rect2()
+	var first := true
+	for slot in sequence_row.get_children():
+		if slot.visible:
+			keys = slot.get_global_rect() if first else keys.merge(slot.get_global_rect())
+			first = false
+	if first:
+		return
+	sequence_row.global_position += Vector2(top.x - keys.get_center().x, top.y - keys.end.y)

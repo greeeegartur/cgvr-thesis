@@ -1,45 +1,41 @@
-extends Control
+extends UIPanel
 class_name ItemInfoContainer
 
-@onready var desc = $Description
+# Info box next to the item list: the item description on a cyan panel with a tail
 
-func _ready():
+const TEXT_WIDTH := 180.0 # Width of the description; the panel grows in height to fit the text
+
+@onready var desc: RichTextLabel = $Description
+
+func _ready() -> void:
+	super()
 	desc.bbcode_enabled = true
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	visible = false
 
-func setup_from_inventory_item(item: InventoryItem):
+# Sets the description text and resizes the panel around it
+func _show_text(text: String) -> void:
+	visible = true
+	desc.text = text
+	desc.position = content_origin()
+	desc.size = Vector2(TEXT_WIDTH, 0)
+	_fit_panel()
+
+func _fit_panel() -> void:
+	await get_tree().process_frame
+	desc.size = Vector2(TEXT_WIDTH, 0)
+	fit_to(Vector2(TEXT_WIDTH, desc.get_content_height()))
+
+# Slides to the given y (canvas position) so the tail points at the selected row
+func move_to_y(y: float) -> void:
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_CUBIC)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "position:y", y, 0.14)
+
+func setup_from_inventory_item(item: InventoryItem) -> void:
 	if item == null:
 		visible = false
 		return
 	
-	visible = true
-	desc.text = item.data.description
-	
-	call_deferred("_fit_texts")
-
-func _fit_texts():
-	await get_tree().process_frame
-	await _fit_label(desc, 12, 8)
-
-func _fit_label(label: RichTextLabel, max_size: int, min_size: int):
-	var current_size := max_size
-	
-	while current_size >= min_size:
-		label.add_theme_font_size_override("normal_font_size", current_size)
-		await get_tree().process_frame
-		
-		if not _is_overflowing(label):
-			return
-		
-		current_size -= 1
-
-func _is_overflowing(label: RichTextLabel) -> bool:
-	return label.get_content_height() > label.size.y
-
-func move_to_row(row: Control, extra_offset := Vector2.ZERO):
-	var target_pos := Vector2(position.x, row.position.y) + extra_offset
-	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_CUBIC)
-	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "position:y", target_pos.y, 0.14)
+	_show_text(item.data.description)

@@ -12,12 +12,17 @@ signal resolved(score: float)
 @export var target_scale := Vector2.ONE
 var score := 0.25
 
+const OUTLINE_SHADER := preload("res://Scenes/VFX/TargetOutline.gdshader")
+
 func setup():
 	var shape_tex = shape_textures.pick_random()
 	ghost.texture = shape_tex
 	shape.texture = shape_tex
 	
-	ghost.modulate = Color(1, 1, 1, 0.35)
+	# Outlines keep both shapes clear against any background
+	ghost.material = _outline_material(Color(1, 1, 1, 0.9))
+	shape.material = _outline_material(Color(1, 1, 1, 0.6))
+	ghost.modulate = Color(1, 1, 1, 0.45)
 	shape.modulate = Color.WHITE
 	shape.scale = start_scale
 	ghost.scale = target_scale
@@ -33,7 +38,7 @@ func play_prompt() -> float:
 		await get_tree().process_frame
 		elapsed += get_process_delta_time()
 		
-		if Input.is_action_just_pressed("ui_accept"):
+		if not PauseMenu.active and Input.is_action_just_pressed("ui_accept"):
 			var t = clamp(elapsed / shrink_time, 0.0, 1.0)
 			var accuracy = 1.0 - abs(t - 1.0)
 			
@@ -56,6 +61,10 @@ func play_prompt() -> float:
 
 func _play_hit_feedback(accuracy: float):
 	var pop_scale := 1.35 if accuracy >= 0.92 else 1.05
+	# A well aligned shape lights up with a bright yellow outline
+	if accuracy >= 0.86:
+		(shape.material as ShaderMaterial).set_shader_parameter("outline_color", Color("#ffe066"))
+		(ghost.material as ShaderMaterial).set_shader_parameter("outline_color", Color("#ffe066"))
 	var tween := create_tween()
 	tween.tween_property(shape, "scale", Vector2.ONE * pop_scale, 0.05)
 	tween.tween_property(shape, "scale", Vector2.ONE, 0.08)
@@ -66,3 +75,10 @@ func _play_miss_feedback():
 	tween.tween_property(self, "modulate:a", 0.35, 0.08)
 	tween.tween_property(self, "modulate:a", 1.0, 0.08)
 	await tween.finished
+
+func _outline_material(color: Color) -> ShaderMaterial:
+	var material := ShaderMaterial.new()
+	material.shader = OUTLINE_SHADER
+	material.set_shader_parameter("outline_width", 1.0)
+	material.set_shader_parameter("outline_color", color)
+	return material

@@ -15,7 +15,7 @@ size_flags_horizontal = 3
 script = ExtResource("1_7a1ei")
 
 [node name="Icon" type="TextureRect" parent="."]
-custom_minimum_size = Vector2(16, 16)
+custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
 texture = ExtResource("1_wxq25")
 stretch_mode = 4
@@ -26,20 +26,21 @@ size_flags_horizontal = 4
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("2_7a1ei")
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 25
 text = "Bolts"
-vertical_alignment = 2
+vertical_alignment = 1
 
 [node name="Spacer" type="Control" parent="."]
-custom_minimum_size = Vector2(5, 0)
+custom_minimum_size = Vector2(8, 0)
 layout_mode = 2
 
 [node name="Amount" type="Label" parent="."]
 layout_mode = 2
 size_flags_horizontal = 4
+theme_override_colors/font_color = Color(1, 0.949, 0.478, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("2_7a1ei")
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 25
 text = "x2"
 vertical_alignment = 1

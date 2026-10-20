@@ -166,7 +166,7 @@ func wait_for_confirm():
 	
 	while true:
 		await get_tree().process_frame
-		if Input.is_action_just_pressed("ui_accept"):
+		if not PauseMenu.active and Input.is_action_just_pressed("ui_accept"):
 			break
 
 # Text fitting methods

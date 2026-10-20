@@ -19,6 +19,7 @@ var in_ability_animation := false
 var input_enabled = true
 
 # Node variables
+var selection_pulse: SelectionPulse
 @onready var anim := $Visual/Sprite2D/AnimationPlayer
 @onready var text_anim := $Visual/RichTextLabel/TextAnimationPlayer
 @onready var text := $Visual/RichTextLabel
@@ -46,6 +47,7 @@ var attack_position : Vector2 # The position where the player's pattern will con
 var hp_tween: Tween
 
 func _ready():
+	selection_pulse = SelectionPulse.new(self, $Visual, $Visual/Sprite2D)
 	set_home_position()
 	anim.animation_finished.connect(_on_anim_finished)
 	
@@ -118,18 +120,53 @@ func play_restore_chip():
 	text_anim.play("restored")
 	
 
-# PlayerBlockVisual methods to call
-func play_block_success():
+# Plays the block pose on every block button press, regardless of timing or cooldown
+func play_block_press():
 	if in_ability_animation:
 		return
 	anim.play("player_block")
+	block_visual.play_press()
+
+# PlayerBlockVisual methods to call
+# Stun jitter while a hit-stop lasts: a few whole pixels at 30 Hz in real time (off with the Camera shake setting)
+func stun(duration: float) -> void:
+	if not Settings.camera_shake:
+		return
+	var base: Vector2 = $Visual.position
+	var tween := create_tween()
+	tween.set_ignore_time_scale(true)
+	for i in int(duration * 30.0):
+		tween.tween_property($Visual, "position", base + Vector2(randi_range(-2, 2), randi_range(-2, 2)), 1.0 / 30.0)
+	tween.tween_property($Visual, "position", base, 0.0)
+
+# Shoves the player away from the attacker and back home again (off with the Camera shake setting)
+var push_tween: Tween
+func push_back(distance: float) -> void:
+	if not Settings.camera_shake:
+		return
+	if push_tween:
+		push_tween.kill()
+	push_tween = create_tween() # Scaled time, so the shove plays out after the hit-stop
+	push_tween.tween_property(self, "global_position:x", home_position.x - distance, 0.06)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	push_tween.tween_property(self, "global_position:x", home_position.x, 0.25)\
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+func play_block_success():
+	if in_ability_animation:
+		return
+	# Does not restart the pose if the press already started it
+	if anim.current_animation != "player_block":
+		anim.play("player_block")
 	block_visual.play_success()
+	push_back(12.0)
 
 func play_block_fail():
 	if in_ability_animation:
 		return
 	anim.play("player_hurt")
 	block_visual.play_fail()
+	push_back(18.0)
 	
 func play_defeat():
 	input_enabled = false
@@ -190,9 +227,10 @@ func set_block_cooldown(active: bool):
 
 # Updates UI for player stats with helper functions (identical to EnemyVisual.gd)
 func update_hp(current: float, max_hp: float):
-	var rounded_current = round_quarter(current)
-	var rounded_max = round_quarter(max_hp)
-	var ratio = clamp(rounded_current / rounded_max, 0.0, 1.0)
+	# HP is already stored in quarters, so it is shown as it is
+	var rounded_current = current
+	var rounded_max = max_hp
+	var ratio := 0.0
 	if rounded_max > 0.0:
 		ratio = clamp(rounded_current / rounded_max, 0.0, 1.0)
 	
@@ -221,20 +259,19 @@ func show_hp():
 	tween.tween_property(hp_icon, "modulate:a", 1.0, 1)
 	await tween.finished
 
+# The player's selection uses the same effect as creatures: pop, tint, outline and arrow bob on one beat
 func show_target_arrow():
 	target_arrow.visible = true
-	target_arrow_anim.play("idle")
+	target_arrow_anim.stop()
+	selection_pulse.start(1.0, 1.5, target_arrow.get_node("Sprite2D"))
 
 func hide_target_arrow():
+	selection_pulse.stop()
 	target_arrow.visible = false
-	target_arrow_anim.play("RESET")
 
 # HELPERS
-func round_quarter(value: float) -> float:
-	return round(value * 4.0) / 4.0
-
 func format_quarter_number(value: float) -> String:
-	value = round_quarter(value)
+	value = Utils.quantize(value)
 	
 	if is_equal_approx(value, round(value)):
 		return str(int(round(value)))

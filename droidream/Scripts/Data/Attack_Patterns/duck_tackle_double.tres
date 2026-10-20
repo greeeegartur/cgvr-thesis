@@ -4,9 +4,9 @@
 
 [resource]
 script = ExtResource("1_kyeop")
-pattern_id = "duck_tackle_5"
-animation_name = "duck_tackle_5"
-total_duration = 3.5
+pattern_id = "duck_tackle_double"
+animation_name = "duck_tackle_double"
+total_duration = 4.5
 hits = Array[Dictionary]([{
 "block_window": Vector2(1.52, 1.87),
 "damage_multiplier": 0.5,

@@ -27,7 +27,8 @@ exclamation_emote = ExtResource("9_0l31n")
 question_emote = ExtResource("3_q2xk0")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-scale = Vector2(0.8, 0.8)
+position = Vector2(0, -1.2)
+scale = Vector2(1.6, 1.6)
 texture = ExtResource("1_dahwj")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Sprite2D"]

@@ -32,6 +32,9 @@ var player : CombatEntity
 var enemies: Array[CombatEntity] = [] # Initially empty, TO-DO: make this load area-specific
 var turn = "player" # Player always starts first, this variable is a failsafe check condition in case turn logic goes wrong
 var selected_enemy : CombatEntity
+const VICTORY_HOLD := 0.2 # Seconds the camera stays in the encounter after a Ball or Multi-Tame ends it
+var victory_delay := 0.0 # How long the camera stays in the encounter before the victory camera (set after a Ball or Multi-Tame)
+var current_target_reach := 0 # Creatures hit on each side of the main target by the action being targeted
 var target_index = 0
 var target_mode := TargetMode.NONE
 enum TargetMode {
@@ -62,6 +65,8 @@ var last_block_press_time = -1.0
 var current_block_window = Vector2.ZERO
 var block_on_cooldown = false
 const BLOCK_COOLDOWN = 0.45
+const BLOCK_INPUT_LOCKOUT_MSEC := 250 # Cooldown in-between blocks
+var last_block_input_msec := -1000
 var enemy_attack_started_handlers: Dictionary = {}
 var enemy_attack_hit_handlers: Dictionary = {}
 var enemy_attack_finished_handlers: Dictionary = {}
@@ -95,6 +100,10 @@ var last_attack_was_critical := false
 var last_attack_started_minigame := false
 var last_minigame_success := false
 
+# Quick tame reward bonus (creature tamed before its first turn)
+const QUICK_TAME_MAX_BONUS_CURRENCY := 3
+const QUICK_TAME_BONUS_ITEMS := 1
+
 # Creature-specific variables and constants
 const DUCK_TYPE_REVEAL_DURATION := 1.45
 const DUCK_TYPE_COLORS := {
@@ -105,6 +114,16 @@ const DUCK_TYPE_COLORS := {
 
 # Ability/passive/item specific variables
 # Heat Up effects
+const HIT_STOP_SCALE := 0.05 # Time scale during a hit-stop
+const HIT_STOP_NORMAL := 0.06
+const HIT_STOP_CRIT := 0.12
+const HIT_STOP_BLOCK := 0.10
+const HIT_STOP_HURT := 0.10
+var hit_stop_id := 0
+const WORLD_DIM_ALPHA := 0.5 # How dark the world gets during a dream (black over it)
+var dim_rect: ColorRect
+var betrayal_visual: Node2D = null # Multi-hit: the creature furthest on the tame side that was just turned on
+var betrayal_axis := 0.0
 var heat_up_pending_power_bonus := 0
 var heat_up_active := false
 var heat_up_power_bonus := 0
@@ -256,6 +275,7 @@ func _spawn_enemy(enemy_id: String, slot_index: int, spawner: CombatEntity):
 	visual.move_speed = EnemyDatabase.get_move_speed(enemy_id)
 	visual.z_index = 1
 	enemy_visuals[entity] = visual
+	_check_slot_order()
 	
 	await visual.ready
 	visual.setup_axis(entity.axis_max, entity.trust_max)
@@ -276,24 +296,30 @@ func _setup_ui():
 	
 	# PLAYER
 	# Player turn signals
-	player_turn_ui.attack_type_selected.connect(_on_attack_selected)
-	player_turn_ui.ability_selected.connect(_on_ability_selected)
-	player_turn_ui.item_selected.connect(_on_item_selected)
-	player_turn_ui.ability_tame_type_selected.connect(_on_ability_tame_type_selected)
-	player_turn_ui.cancel_ability_tame_select.connect(_on_cancel_ability_tame_select)
-	player_turn_ui.cycle_enemy.connect(cycle_target)
-	player_turn_ui.confirm_enemy.connect(_confirm_target_selection)
-	player_turn_ui.cancel_enemy.connect(_cancel_target_selection)
+	_connect_once(player_turn_ui.attack_type_selected, _on_attack_selected)
+	_connect_once(player_turn_ui.ability_selected, _on_ability_selected)
+	_connect_once(player_turn_ui.item_selected, _on_item_selected)
+	_connect_once(player_turn_ui.ability_tame_type_selected, _on_ability_tame_type_selected)
+	_connect_once(player_turn_ui.cancel_ability_tame_select, _on_cancel_ability_tame_select)
+	_connect_once(player_turn_ui.cycle_enemy, cycle_target)
+	_connect_once(player_turn_ui.confirm_enemy, _confirm_target_selection)
+	_connect_once(player_turn_ui.cancel_enemy, _cancel_target_selection)
 	
 	# TOP UI
 	# Turn order button signal
-	ui.turn_order_toggled.connect(_on_turn_order_toggled)
+	_connect_once(ui.turn_order_toggled, _on_turn_order_toggled)
+
+# Connects a signal only if it is not connected yet (the UI is set up again when the player retries)
+func _connect_once(signal_to_connect: Signal, target: Callable) -> void:
+	if not signal_to_connect.is_connected(target):
+		signal_to_connect.connect(target)
 
 # Resets combat for new round
 func _reset_combat_state():
 	# Variables reset
 	turn = ""
 	selected_enemy = null
+	current_target_reach = 0
 	attack_timer_running = false
 	last_attack_press_time = 0.0
 	heat_up_pending_power_bonus = 0
@@ -390,8 +416,6 @@ func _prepare_combat(enemy_ids, play_enemy_intro := true):
 		_set_enemy_visuals_visible(false)
 	
 	# PLAYER UI BUILDING
-	await player_turn_ui._build_abilities_ui()
-	await player_turn_ui._build_items_ui()
 	_reset_ability_cooldowns()
 
 func _play_enemy_intro():
@@ -417,8 +441,6 @@ func start_tutorial_combat(enemy_ids: Array) -> CombatEntity:
 	print("tutorial combat: before setup entities")
 	await _setup_entities(enemy_ids)
 	print("tutorial combat: after setup entities")
-	await player_turn_ui._build_abilities_ui()
-	await player_turn_ui._build_items_ui()
 	_reset_ability_cooldowns()
 	
 	locked_enemy_turn_order = _get_enemy_turn_order()
@@ -438,9 +460,13 @@ func _start_turn_loop():
 	#for ability in PlayerData.abilities:
 		#print(ability.data.id)
 	#PlayerData.add_ability(AbilityDb.get_ability("multitame"))
+	#PlayerData.add_ability(AbilityDb.get_ability("harden"))
+	#PlayerData.add_ability(AbilityDb.get_ability("heatup"))
 	#PlayerData.add_ability(AbilityDb.get_ability("repair"))
-	#PlayerData.add_item(CombatItemDb.get_item("ball"), 2)
-	#PlayerData.add_item(CombatItemDb.get_item("ice_cube"), 2)
+	PlayerData.add_item(CombatItemDb.get_item("ball"), 2)
+	#PlayerData.add_item(CombatItemDb.get_item("memory_chip"), 2)
+	#PlayerData.add_item(CombatItemDb.get_item("soft_branch"), 2)
+	#PlayerData.add_item(CombatItemDb.get_item("thick_jelly"), 2)
 	#PlayerData.add_item(CombatItemDb.get_item("beetlejuice"), 2)
 	_player_turn()
 
@@ -465,6 +491,7 @@ func _player_turn():
 	
 	# Player turn base defaults, signal emit and guess display update
 	await camera.stop_follow() # Reseting from previous enemy turn (or defaulting it)
+	victory_delay = 0.0
 	player_turn_ui.start_player_turn()
 	player_turn_ui.update_guess_display()
 	player_turn_started.emit()
@@ -540,7 +567,6 @@ func _end_combat(victory: bool):
 		tutorial_text.hide_text()
 		var rewards = _generate_rewards()
 		_reset_combat_state()
-		await get_tree().create_timer(0.1).timeout
 		combat_end.emit(victory, rewards)
 		# TO-DO Give rewards, XP based on if enemy is defeated/subdued
 		# Defeated = more currency, less items + karma (makes enemies harder, will look into how)
@@ -581,10 +607,10 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	player_visual.attack_position = _get_player_attack_position(enemy_visual)
 	
 	# Camera settings
-	camera.follow(player_visual, 60)
+	camera.frame_group([player_visual, enemy_visual], 0.35, CombatCamera.ZOOM_ACTION.x) # A little closer while taming, with the Droid and its target both in view
 	
 	# Shows crit hint text for the player + allows inputs for crit
-	tutorial_text.show_hint(TutorialText.HintType.CRIT)
+	tutorial_text.show_hint(TutorialText.HintType.CRIT, enemy_visual)
 	player_visual.set_input_enabled(true)
 	
 	# Communication with PlayerVisual to calculate hit damage (check for critical hits) and play attack animations
@@ -666,12 +692,10 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 	if critical:
 		base *= _get_crit_multiplier() # Either 1.5 or 1.75
 		# VFX effects 
-		camera.pop_zoom()
 		vfx.play_overlay_effects("crit", 0.4)
 		vfx.play_crit_feedback(enemy_visual)
 		# Freezing frame and shaking camera for good hit feel
-		camera.shake(10.0, 0.15)
-		freeze_frame(0.14)
+		camera.impact(CombatCamera.Impact.LARGE)
 		print("CRITICAL HIT!")
 	
 	var correct = _is_correct_guess(guess_type, enemy.type) # Checks if correct guess type
@@ -685,17 +709,17 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 			resistance = lerp(1.5, 2.5, abs(enemy.axis_ratio()))
 		
 		# Damage calculation
-		var value_shift = round_quarter(base / resistance) # Just base if previous change did not apply
+		var value_shift = Utils.quantize_min(base / resistance) # Just base if previous change did not apply
 		var before = enemy.axis_value
-		enemy.axis_value += value_shift
-		enemy.axis_value = round_quarter(min(enemy.axis_value, enemy.axis_max)) # Ensures the bar does not go beyond axis bar limits (to look good)
+		enemy.set_axis(enemy.axis_value + value_shift) # Quantized, kept on the bar and snapped to tame when one step away
 		var actual_shift = enemy.axis_value - before
 		
 		# Visual effects
 		enemy_visual.shake(critical)
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
 		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical) # Damage number, particles
-		camera.shake(7.0, 0.1)
+		_hit_impact(enemy_visual, HIT_STOP_CRIT if critical else HIT_STOP_NORMAL)
+		camera.impact(CombatCamera.Impact.MEDIUM)
 		
 		# Restores chip if matches conditions inside method
 		_try_restore_chip(guess_type, critical)
@@ -717,16 +741,19 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		var kill_multiplier := 0.5 + pow(off_guard, 2.5) * 2.35
 		
 		# Damage calculation
-		var value_shift = round_quarter(base * kill_multiplier) # Kill multiplier will just be 0.5 if off_guard is 0
+		var value_shift = Utils.quantize_min(base * kill_multiplier) # Kill multiplier will just be 0.5 if off_guard is 0
 		var before = enemy.axis_value
-		enemy.axis_value -= value_shift
-		enemy.axis_value = round_quarter(max(enemy.axis_value, -enemy.axis_max)) # Ensures the bar does not go beyond axis bar limits (to look good)
+		enemy.set_axis(enemy.axis_value - value_shift)
 		var actual_shift = enemy.axis_value - before
+		
+		if before > 0.0: # The creature was on the tame side
+			_play_betrayal(enemy_visual)
 		
 		# Visual effects
 		enemy_visual.shake(critical)
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
 		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical)
+		_hit_impact(enemy_visual, HIT_STOP_CRIT if critical else HIT_STOP_NORMAL)
 		
 		# Restores chip if matches conditions inside method
 		_try_restore_chip(guess_type, critical)
@@ -748,10 +775,9 @@ func _apply_axis_shift_with_multiplier(enemy: CombatEntity, guess_type: CombatTy
 		if enemy.axis_value < 0:
 			resistance = lerp(1.5, 2.5, abs(enemy.axis_ratio()))
 		
-		var value_shift = round_quarter(base / resistance)
+		var value_shift = Utils.quantize_min(base / resistance)
 		var before = enemy.axis_value
-		enemy.axis_value += value_shift
-		enemy.axis_value = round_quarter(min(enemy.axis_value, enemy.axis_max))
+		enemy.set_axis(enemy.axis_value + value_shift)
 		var actual_shift = enemy.axis_value - before
 		
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
@@ -764,11 +790,13 @@ func _apply_axis_shift_with_multiplier(enemy: CombatEntity, guess_type: CombatTy
 	else:
 		var off_guard = max(0.0, enemy.axis_ratio())
 		var kill_multiplier := 0.5 + pow(off_guard, 2.5) * 2.25
-		var value_shift = round_quarter(base * kill_multiplier)
+		var value_shift = Utils.quantize_min(base * kill_multiplier)
 		var before = enemy.axis_value
-		enemy.axis_value -= value_shift
-		enemy.axis_value = round_quarter(max(enemy.axis_value, -enemy.axis_max))
+		enemy.set_axis(enemy.axis_value - value_shift)
 		var actual_shift = enemy.axis_value - before
+		
+		if before > 0.0:
+			_note_betrayal(enemy_visual, before)
 		
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
 		enemy_visual.shake(multiplier >= 1.5)
@@ -778,7 +806,8 @@ func _apply_axis_shift_with_multiplier(enemy: CombatEntity, guess_type: CombatTy
 		await _resolve_enemy_state(enemy)
 
 # Logic for starting enemy's minigame in combat
-func _start_minigame(enemy: CombatEntity):
+# play_explosion is false when the explosion VFX was already played for a group of creatures (consecutive minigames)
+func _start_minigame(enemy: CombatEntity, play_explosion := true):
 	if not EnemyDatabase.MINIGAME_SCENES.has(enemy.minigame_id):
 		push_error("Missing minigame: " + enemy.minigame_id)
 		return
@@ -788,8 +817,11 @@ func _start_minigame(enemy: CombatEntity):
 	in_minigame = true
 	
 	# Taming visuals
-	vfx.play_subdue(enemy_visual)
+	if play_explosion:
+		vfx.play_subdue(enemy_visual)
+	var aura := TameAura.attach(enemy_visual, 0.5 if play_explosion else 0.2) # Neon light swirls up inside the creature
 	await player_visual.play_subdue()
+	enemy_visual.clear_minigame_highlight() # The highlight has done its job once the minigame starts
 	
 	# Minigame scene instantiation
 	var minigame = EnemyDatabase.MINIGAME_SCENES[enemy.minigame_id].instantiate()
@@ -801,17 +833,25 @@ func _start_minigame(enemy: CombatEntity):
 	minigame.set_anchors_preset(Control.PRESET_FULL_RECT)
 	minigame.size = get_viewport().size
 	minigame.position = Vector2.ZERO
+	var glow := MinigameGlow.attach(minigame) # Neon glow around the box until the minigame ends
 	
 	# Minigame's damage signal
 	minigame.damage_taken.connect(_on_minigame_damage_taken)
 	if tutorial_mode:
 		tutorial_minigame_started.emit(minigame)
 	
+	if not tutorial_mode:
+		await MinigameCountdown.play(self, "dream_" + enemy.minigame_id) # The first time this dream appears in the run
+	
 	minigame.play()
 	var success = await minigame.completed
 	in_minigame = false
 	combat_paused = false
 	last_minigame_success = success
+	if aura:
+		aura.finish()
+	if glow:
+		glow.finish()
 	if tutorial_mode:
 		tutorial_minigame_finished.emit(success)
 	
@@ -834,20 +874,24 @@ func _start_minigame(enemy: CombatEntity):
 
 # Connects BaseMinigame signal to give player damage based on minigame
 func _on_minigame_damage_taken(amount: float, pos: Vector2):
-	_change_player_hp(-amount)
+	_change_player_hp(-Utils.quantize_min(amount))
 	vfx.play_overlay_effects("normal")
+	_hit_impact(player_visual, HIT_STOP_NORMAL)
 
 # Decides minigame outcome on minigame end
 func on_minigame_complete(enemy: CombatEntity, success: bool):
 	# Getting enemy visual
 	var enemy_visual = enemy_visuals[enemy]
+	enemy_visual.clear_minigame_highlight()
 	
 	if success:
 		var restore_ratio := randf_range(0.2, 0.35)
-		enemy.axis_value = round_quarter(enemy.axis_max * restore_ratio)
+		enemy.set_axis(enemy.axis_max * restore_ratio)
 		enemy.trust += 1
 		enemy_visual.update_axis(enemy.axis_value)
 		enemy_visual.update_axis_trust() 
+		vfx.play_tame_payoff(enemy_visual, true)
+		enemy_visual.hop(1)
 		print("Minigame success! Trust: %d / %d" % [enemy.trust, enemy.trust_max])
 		#if enemy.is_tamed():
 			#await player_visual.return_to_home()
@@ -857,14 +901,17 @@ func on_minigame_complete(enemy: CombatEntity, success: bool):
 	else:
 		# Restore enemy's defense by a random amount from 20-35%, rounds it somewhat though
 		var restore_ratio := randf_range(0.2, 0.35)
-		enemy.axis_value = round_quarter(enemy.axis_max * restore_ratio)
+		enemy.set_axis(enemy.axis_max * restore_ratio)
 		enemy_visual.update_axis(enemy.axis_value)
+		vfx.play_tame_payoff(enemy_visual, false)
 		print("Minigame failed. Enemy axis restored to %.1f" % enemy.axis_value)
 		#if not minigame_queue_ongoing and not combat_has_ended:
 			#_enemy_turn()
 
 # Performs a single enemy's attack pattern based on existing logic
 func _enemy_attack_single(enemy: CombatEntity):
+	enemy.turns_taken += 1
+	
 	# Setting enemy attack
 	var visual = enemy_visuals[enemy]
 	visual.z_index = 3
@@ -872,15 +919,20 @@ func _enemy_attack_single(enemy: CombatEntity):
 	
 	# Support patterns
 	if pattern.is_support:
+		camera.frame_group([visual], 0.35, CombatCamera.ZOOM_ACTION.x) # The supporting creature gets the focus too
 		await _handle_support_pattern(enemy, pattern)
+		# Support patterns have no attack-finished handler, so the enemy's base layer is restored here (keeps the player above it)
+		if is_instance_valid(visual):
+			visual.z_index = 1
 		return
 	
 	# Setting attack position for enemy (relative to player)
 	visual.attack_position = _get_enemy_attack_position(visual)
 	
 	# Camera controls + tutorial text visible
-	camera.follow(visual, -60)
-	tutorial_text.show_hint(TutorialText.HintType.BLOCK)
+	camera.frame_group([player_visual, visual], 0.35, CombatCamera.ZOOM_ACTION.x) # A little closer while blocking, with the Droid and the attacker both in view
+	camera.anticipate() # Slow push toward the attacker during its wind-up
+	tutorial_text.show_hint(TutorialText.HintType.BLOCK, player_visual)
 	await _play_enemy_attack_pattern(enemy, visual, pattern)
 
 # Handles support patterns respectively for each enemy, TO-DO: edit for separate enemies so anyone can pass check
@@ -1005,7 +1057,7 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	
 	if enemy_crit:
 		damage *= 1.5
-		camera.pop_zoom()
+		camera.impact(CombatCamera.Impact.LARGE)
 		vfx.play_overlay_effects("crit", 0.35)
 		vfx.play_crit_feedback(player_visual)
 		print("Enemy CRITICAL HIT!")
@@ -1021,8 +1073,8 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	elif blocked:
 		damage *= 0.5
 		player_visual.play_block_success()
-		camera.shake(8.0, 0.15)
-		freeze_frame(0.11)
+		camera.impact(CombatCamera.Impact.LARGE)
+		_hit_impact(player_visual, HIT_STOP_BLOCK)
 		if not enemy_crit:
 			vfx.play_overlay_effects("block", 0.2)
 		vfx.play_block_feedback(player_visual)
@@ -1040,12 +1092,12 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	else:
 		player_visual.play_block_fail()
 		vfx.play_overlay_effects("normal")
-		camera.shake(5.0, 0.12)
-		freeze_frame(0.08)
+		camera.impact(CombatCamera.Impact.SMALL)
+		_hit_impact(player_visual, HIT_STOP_HURT)
 		print("Failed block")
 
 	print("Player HP is: ", player.hp)
-	damage = max(0.0, damage - player.defense)
+	damage = Utils.hit_damage(damage, player.defense) # Rounded once at the end, at least one step for any hit that deals damage
 	print("Damage is: ", damage)
 	_change_player_hp(-damage)
 
@@ -1080,6 +1132,15 @@ func _on_player_block_attempted():
 	# Failsafe to check if the function is running by accident
 	if turn != "enemy":
 		return
+	
+	# Ignores presses made right after the previous one
+	var now := Time.get_ticks_msec()
+	if now - last_block_input_msec < BLOCK_INPUT_LOCKOUT_MSEC:
+		return
+	last_block_input_msec = now
+	
+	# The block pose always plays on a press, even if the press does not count
+	player_visual.play_block_press()
 	
 	# Checks if block is currently on cooldown
 	if block_on_cooldown:
@@ -1117,6 +1178,10 @@ func _start_block_cooldown():
 	block_on_cooldown = false
 	player_visual.set_block_cooldown(false)
 
+# A quick tame is a creature tamed before it got to take a single turn
+func _is_quick_tame(enemy: CombatEntity) -> bool:
+	return enemy.is_tamed() and enemy.turns_taken == 0
+
 # Chip restoring function for the player to gain back chips with crits; also acts as a softlock prevention method
 func _try_restore_chip(used_type: CombatTypes.EntityType, critical: bool):
 	var total_chips = PlayerData._get_total_chips()
@@ -1149,9 +1214,10 @@ func _ability_repair_sequence(ability: InventoryAbility):
 	# Camera focus
 	camera.follow(player_visual)
 	await get_tree().create_timer(0.2).timeout
-	camera.ability_focus_on_player(player_visual, Vector2(1.4, 1.4), 3.5)
+	camera.ability_frame_wide(player_visual) # The whole play area stays visible so the player can see where parts come from
 	
-	tutorial_text.show_hint(TutorialText.HintType.REPAIR)
+	tutorial_text.show_hint(TutorialText.HintType.REPAIR, player_visual)
+	await MinigameCountdown.play(self, "ability_repair")
 	
 	# Repair game logic
 	while timer < duration:
@@ -1171,7 +1237,7 @@ func _ability_repair_sequence(ability: InventoryAbility):
 		for data in active_objects:
 			var expected_input = Utils.OPPOSITE_INPUT[data.dir]
 			
-			if Input.is_action_just_pressed(expected_input):
+			if not PauseMenu.active and Input.is_action_just_pressed(expected_input):
 				collected += 1
 				vfx.play_overlay_effects("block")
 				vfx.play_speedlines(vfx.get_vfx_color_from_string("block"))
@@ -1187,10 +1253,11 @@ func _ability_repair_sequence(ability: InventoryAbility):
 	# Healing logic after game
 	collected = min(collected, max_collect)
 	var heal_ratio = collected * 0.1
-	var heal_amount = player.max_hp * heal_ratio
+	var heal_amount = Utils.quantize_min(player.max_hp * heal_ratio)
 	
 	_change_player_hp(heal_amount)
 	vfx.spawn_damage_number(player_visual, heal_amount, false, true)
+	vfx.play_buff_particles(player_visual, BuffParticles.Kind.HEAL)
 	
 	await camera.reset_camera()
 	await get_tree().create_timer(0.4).timeout
@@ -1202,32 +1269,40 @@ func _ability_multi_tame_sequence(ability: InventoryAbility, target: CombatEntit
 	var minigame_scene = preload("res://Scenes/PlayerActions/MultiTameScene.tscn")
 	var minigame = minigame_scene.instantiate()
 	minigame_layer.add_child(minigame)
+	for e in _get_action_targets(target, current_target_reach):
+		if enemy_visuals.has(e):
+			minigame.anchors.append(enemy_visuals[e])
 	
-	tutorial_text.show_hint(TutorialText.HintType.MULTITAME)
+	tutorial_text.show_hint(TutorialText.HintType.MULTITAME, enemy_visuals[target])
+	await MinigameCountdown.play(self, "ability_multi_tame")
 	minigame.play()
 	multiplier = await minigame.finished
 	minigame.queue_free()
 	
 	await _resolve_multi_tame_hit(target, multiplier)
+	victory_delay = VICTORY_HOLD
 
 # Executes the heat up ability sequence
 # Here the player must press the correct keys that appear on screen at random locations; the more pressed, the more power buff the player gets
 func _ability_heat_up_sequence(ability: InventoryAbility):
 	var minigame_scene = preload("res://Scenes/PlayerActions/HeatUpMinigame.tscn")
 	var minigame = minigame_scene.instantiate()
+	minigame.anchor = player_visual
 	minigame_layer.add_child(minigame)
 	
 	camera.follow(player_visual)
 	await get_tree().create_timer(0.2).timeout
-	tutorial_text.show_hint(TutorialText.HintType.HEATUP)
-	camera.ability_focus_on_player(player_visual, Vector2(1.3, 1.3), 5.0)
+	tutorial_text.show_hint(TutorialText.HintType.HEATUP, player_visual)
+	camera.ability_push_in(player_visual)
 
 	minigame.prompt_hit.connect(
 		func(pos: Vector2):
-			vfx.emit_explosion_from_vector(pos, "block"),
-		CONNECT_ONE_SHOT | CONNECT_DEFERRED
+			# The key position is on screen, the particles live in the world
+			vfx.emit_explosion_from_vector(get_viewport().get_canvas_transform().affine_inverse() * pos, "block"), # An explosion on every key that is hit
+		CONNECT_DEFERRED
 	)
 
+	await MinigameCountdown.play(self, "ability_heat_up")
 	minigame.play()
 	var power_bonus: int = await minigame.finished
 	tutorial_text.hide_text()
@@ -1236,7 +1311,7 @@ func _ability_heat_up_sequence(ability: InventoryAbility):
 		minigame.queue_free()
 	
 	heat_up_pending_power_bonus = power_bonus
-	vfx.spawn_feedback(player_visual, "[color=#e72237ff][wave freq=14]Heated up![/wave][/color]")
+	vfx.spawn_info(player_visual, "[color=#e72237]Heated up![/color]")
 	vfx.spawn_damage_number(player_visual, power_bonus, true) # Power VFX
 	vfx.spawn_damage_number(player_visual, HEAT_UP_DEFENSE_PENALTY, false, true) # Defense VFX
 	await camera.reset_camera()
@@ -1247,9 +1322,12 @@ func _ability_heat_up_sequence(ability: InventoryAbility):
 func _ability_harden_sequence(ability: InventoryAbility):
 	var minigame_scene = preload("res://Scenes/PlayerActions/HardenMinigame.tscn")
 	var minigame = minigame_scene.instantiate()
+	minigame.anchor = player_visual
 	minigame_layer.add_child(minigame)
-	tutorial_text.show_hint(TutorialText.HintType.HARDEN)
+	camera.ability_push_in(player_visual, Vector2(1.25, 1.25))
+	tutorial_text.show_hint(TutorialText.HintType.HARDEN, player_visual)
 	
+	await MinigameCountdown.play(self, "ability_harden")
 	minigame.play()
 	var defense_bonus: float = await minigame.finished
 	tutorial_text.hide_text()
@@ -1263,13 +1341,15 @@ func _ability_harden_sequence(ability: InventoryAbility):
 	harden_turns_remaining = 1
 	_sync_player_stats()
 	
-	vfx.spawn_feedback(player_visual, "[color=#3d9feb][wave freq=14]Harden applied![/wave][/color]")
+	vfx.spawn_info(player_visual, "[color=#3d9feb]Harden applied![/color]")
 	vfx.spawn_damage_number(player_visual, defense_bonus, false, true)
+	vfx.play_buff_particles(player_visual, BuffParticles.Kind.DEFENSE_UP)
+	await camera.reset_camera()
 	
 
 # Processes the hit from the Multi-tame ability after the action sequence has been processed
 func _resolve_multi_tame_hit(target: CombatEntity, multiplier: float):
-	var affected = _get_multi_tame_targets(target) # All adjacent targets (including the target itself)
+	var affected = _get_action_targets(target, current_target_reach) # All adjacent targets (including the target itself)
 	if affected.is_empty():
 		return
 	
@@ -1281,12 +1361,14 @@ func _resolve_multi_tame_hit(target: CombatEntity, multiplier: float):
 			var visual = enemy_visuals[enemy]
 			visual.hop(2)
 			vfx.play_damage_vfx(visual, player.attack_power * multiplier, multiplier >= 1.5)
+			_hit_impact(visual, HIT_STOP_NORMAL)
 			vfx.play_multihit_feedback(visual)
 	
 	await vfx.bounce_and_fade_ball(ball, target_visual.global_position) # After ball disappears, axis shifts are applied
 	
 	for enemy in affected:
 		_apply_axis_shift_with_multiplier(enemy, selected_ability_tame_type, multiplier)
+	_flush_betrayal()
 	await _resolve_pending_minigames()
 
 # Scratchy frame passive ability: damages the creature for the same amount of damage they dealt to the player (on one side of the axis)
@@ -1315,9 +1397,10 @@ func _passive_microbots():
 	if microbots_turn_counter >= 2:
 		microbots_turn_counter = 0
 	
-		var heal_amount = max(1.0, player.max_hp * MICROBOTS_HEAL_RATIO)
+		var heal_amount = Utils.quantize_min(max(1.0, player.max_hp * MICROBOTS_HEAL_RATIO))
 		_change_player_hp(heal_amount)
 		vfx.spawn_damage_number(player_visual, heal_amount, false, true)
+		vfx.play_buff_particles(player_visual, BuffParticles.Kind.HEAL)
 		print("Microbots healed player damage by ", heal_amount, ", player now at ", player.hp)
 		
 		if randf() <= MICROBOTS_CHIP_RESTORE_CHANCE:
@@ -1328,20 +1411,21 @@ func _passive_microbots():
 			]
 			var restored_type = available_types.pick_random()
 			_restore_chip(restored_type)
-			vfx.spawn_feedback(player_visual, "[color=#eff238][wave freq=14]%s restored![/wave][/color]" % CombatTypes.guess_type_to_string(restored_type))
+			vfx.spawn_info(player_visual, "[color=#eff238]Chip restored![/color]\n%s" % CombatTypes.type_bbcode(restored_type))
 
 # Heals the player for a random amount between 20-50%
 func _item_beetle_juice_sequence(inventory_item: InventoryItem, target = null):
 	var heal_ratio := randf_range(0.20, 0.50)
-	var heal_amount := round_quarter(player.max_hp * heal_ratio)
+	var heal_amount := Utils.quantize_min(player.max_hp * heal_ratio)
 	_change_player_hp(heal_amount)
 	print("Healed for ", heal_amount)
 	vfx.spawn_damage_number(player_visual, heal_amount, false, true)
+	vfx.play_buff_particles(player_visual, BuffParticles.Kind.HEAL)
 
 # Restores 1 or 2 random chips for the player
 func _item_memory_chip_sequence(item: InventoryItem, target):
 	var restore_count := randi_range(1, 2)
-	var restored_type
+	var restored_names: Array[String] = [] # Type names already colored as bbcode
 	var possible_types = [
 		CombatTypes.EntityType.SKY,
 		CombatTypes.EntityType.EARTH,
@@ -1350,19 +1434,22 @@ func _item_memory_chip_sequence(item: InventoryItem, target):
 	
 	possible_types.shuffle()
 	for i in range(min(restore_count, possible_types.size())):
-		restored_type = possible_types[i]
+		var restored_type = possible_types[i]
 		_restore_chip(restored_type)
+		restored_names.append(CombatTypes.type_bbcode(restored_type))
 	
-	vfx.spawn_feedback(
+	# Shows which chips were restored, colored by type (e.g. "Chips restored!" over "Sky + Earth")
+	vfx.spawn_info(
 		player_visual,
-		"[color=#eff238][wave freq=14]Restored![/wave][/color]"
+		"[color=#cfcfcf]Chips restored![/color]\n%s" % " + ".join(restored_names)
 	)
 
 # Grants even more block power for the player for 3 turns
 func _item_thick_jelly_sequence(item: InventoryItem, target):
 	thick_jelly_active = true
 	thick_jelly_turns_remaining = 4 # Actually 3 turns because of how combat reads effects
-	vfx.spawn_feedback(player_visual, "[color=#8be9fd][wave freq=14]Jelly applied![/wave][/color]")
+	vfx.spawn_info(player_visual, "[color=#8be9fd]Jelly applied![/color]")
+	vfx.play_buff_particles(player_visual, BuffParticles.Kind.DEFENSE_UP)
 
 # Gives the player +1 power for 2 turns
 func _item_soft_branch_sequence(item: InventoryItem, target):
@@ -1371,16 +1458,19 @@ func _item_soft_branch_sequence(item: InventoryItem, target):
 	soft_branch_turns_remaining = 3 # Because of how combat reads effects, actually 2
 	_sync_player_stats()
 	
-	vfx.spawn_feedback(player_visual, "[color=#eff238][wave freq=14]Power up![/wave][/color]")
+	vfx.spawn_info(player_visual, "[color=#eff238]Power up![/color]")
 	vfx.spawn_damage_number(player_visual, soft_branch_power_bonus, true)
+	vfx.play_buff_particles(player_visual, BuffParticles.Kind.POWER)
 
 # Throwable ball item that works like Multi-tame, but does not use chips to tame or kill: this is decided by the strength of the throw minigame
 func _item_ball_sequence(item: InventoryItem, target: CombatEntity):
 	var meter_scene = preload("res://Scenes/PlayerActions/BallMinigame.tscn")
 	var meter = meter_scene.instantiate()
+	meter.anchor = player_visual
 	minigame_layer.add_child(meter)
-	tutorial_text.show_hint(TutorialText.HintType.BALL)
+	tutorial_text.show_hint(TutorialText.HintType.BALL, enemy_visuals[target])
 	
+	await MinigameCountdown.play(self, "item_ball")
 	meter.play()
 	var result = await meter.finished
 	tutorial_text.hide_text()
@@ -1390,12 +1480,13 @@ func _item_ball_sequence(item: InventoryItem, target: CombatEntity):
 	
 	await player_visual.play_item_use()
 	await _resolve_ball_hit(target, intent, multiplier)
+	victory_delay = VICTORY_HOLD
 
 # Heals 10% of player's max health for 3 turns
 func _item_ice_cube_sequence(item: InventoryItem, target):
 	ice_cube_active = true
 	ice_cube_turns_remaining = 4
-	vfx.spawn_feedback(player_visual, "[color=#8be9fd][wave freq=14]Cooling[/wave][/color]")
+	vfx.spawn_info(player_visual, "[color=#8be9fd]Cooling[/color]")
 
 # Hypnotizes enemies into a random axis value, never fully tames any enemies
 func _item_hypno_bone_sequence(item: InventoryItem, target):
@@ -1409,12 +1500,11 @@ func _item_hypno_bone_sequence(item: InventoryItem, target):
 			continue
 		
 		var old_value = enemy.axis_value
-		var min_value = -enemy.axis_max + 0.25
-		var max_value = enemy.axis_max - 0.25
+		var min_value = -enemy.axis_max + Utils.AXIS_SAFE_MARGIN
+		var max_value = enemy.axis_max - Utils.AXIS_SAFE_MARGIN
 		var new_value := randf_range(min_value, max_value)
-		new_value = round_quarter(new_value)
 		
-		enemy.axis_value = new_value
+		enemy.set_axis(new_value) # Quantized; stays clear of the snap distance
 		var actual_shift = enemy.axis_value - old_value
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
 		enemy_visual.shake(false)
@@ -1434,6 +1524,19 @@ func _get_alive_enemies() -> Array:
 	return enemies.filter(func(e):
 		return !e.is_killed() and !e.is_tamed()
 	)
+
+# Debug check: the enemies list must stay in slot order, because target neighbors and cycling rely on it
+func _check_slot_order():
+	if not OS.is_debug_build():
+		return
+	for i in enemies.size():
+		if i >= enemy_positions.size():
+			continue
+		var visual = enemy_visuals.get(enemies[i])
+		if visual == null:
+			continue
+		if not visual.home_position.is_equal_approx(enemy_positions[i].global_position):
+			push_warning("Enemy list is out of slot order at index %d" % i)
 
 # Gets the enemy turn order at the start of enemy turn
 # This is decided by 1) which enemy has higher axis value (is more tamed) or (if some or all enemies have same axis value) 2) by position to player
@@ -1464,10 +1567,38 @@ func _reset_enemy_attack_timing():
 	block_on_cooldown = false
 
 # Freezes the scene for a given parameter of time to show impact
+# Betrayal! feedback: plays once per player hit that pushes a tame-side creature toward kill
+func _play_betrayal(visual: Node2D):
+	vfx.play_betrayal_feedback(visual)
+	freeze_frame(0.12)
+
+# Multi-hit: remembers the creature that was furthest on the tame side, played once by _flush_betrayal
+func _note_betrayal(visual: Node2D, axis_before: float):
+	if betrayal_visual == null or axis_before > betrayal_axis:
+		betrayal_visual = visual
+		betrayal_axis = axis_before
+
+func _flush_betrayal():
+	if betrayal_visual != null and is_instance_valid(betrayal_visual):
+		_play_betrayal(betrayal_visual)
+	betrayal_visual = null
+
+# A real hit-stop: the game almost stops for a moment (real seconds, so it is not stretched by its own slowdown)
 func freeze_frame(time = 0.05):
-	Engine.time_scale = 0.5
-	await get_tree().create_timer(time, true).timeout
-	Engine.time_scale = 1.0
+	if PauseMenu.active:
+		return
+	hit_stop_id += 1
+	var id := hit_stop_id
+	Engine.time_scale = HIT_STOP_SCALE
+	await get_tree().create_timer(time, true, false, true).timeout
+	if id == hit_stop_id and not PauseMenu.active: # A newer hit-stop (or the pause menu) owns the time scale now
+		Engine.time_scale = 1.0
+
+# Hit-stop plus a stun jitter on whoever was hit
+func _hit_impact(victim_visual: Node2D, duration: float):
+	freeze_frame(duration)
+	if victim_visual.has_method("stun"):
+		victim_visual.stun(duration)
 
 # Getter for enemy attack position relative to player_visual position
 func _get_enemy_attack_position(enemy_visual: EnemyVisual) -> Vector2:
@@ -1488,6 +1619,10 @@ func start_target_selection():
 		return
 	
 	tutorial_text.show_hint(TutorialText.HintType.PLAYER_SELECT)
+	
+	# Remembers how wide the action reaches, so the preview and the hit use the same targets
+	current_target_reach = _get_current_target_reach()
+	_check_slot_order()
 	
 	# Targeting always starts at index 0 out of alive enemies
 	target_index = 0
@@ -1519,13 +1654,36 @@ func cycle_target(dir: int):
 
 # Setter for selected_enemy -> listens to UI and sets the currently selected enemy (and keeps it after selection is confirmed)
 func _set_selected_enemy(enemy: CombatEntity):
-	# Hides all enemy arrows
-	for e in enemy_visuals.keys():
-		enemy_visuals[e].hide_target_arrow()
-	
-	# Shows only one selected enemy arrow
+	_clear_target_markers()
 	selected_enemy = enemy
-	enemy_visuals[enemy].show_target_arrow()
+	
+	# Other creatures the action will hit get the small markers, the main target gets the big arrow and the count
+	var affected := _get_action_targets(enemy, current_target_reach)
+	for e in affected:
+		if e != enemy and enemy_visuals.has(e):
+			enemy_visuals[e].show_target_secondary()
+	enemy_visuals[enemy].show_target_main(maxi(affected.size(), 1))
+	
+	# Camera frames the Droid and every creature the action affects
+	var framed: Array = [player_visual]
+	for e in affected:
+		if enemy_visuals.has(e):
+			framed.append(enemy_visuals[e])
+	camera.frame_group(framed)
+
+# Hides every target preview marker on all creatures
+func _clear_target_markers():
+	for v in enemy_visuals.values():
+		if is_instance_valid(v):
+			v.clear_target_markers()
+
+# Reach of the ability or item being targeted (0 for plain attacks)
+func _get_current_target_reach() -> int:
+	if ability_being_used:
+		return ability_being_used.data.target_reach
+	if item_being_used:
+		return item_being_used.data.target_reach
+	return 0
 
 # Finalizing target selection after _set_selected_enemy (hiding enemy_visual's target arrow) and starting player attack
 func _confirm_target_selection():
@@ -1542,7 +1700,7 @@ func _confirm_target_selection():
 	match target_mode:
 		TargetMode.ENEMY: # Player is targeting creature(s)
 			if selected_enemy:
-				enemy_visuals[selected_enemy].hide_target_arrow()
+				_clear_target_markers()
 				if item_being_used:
 					_execute_item(selected_enemy)
 					return
@@ -1599,7 +1757,6 @@ func _execute_item(target):
 		PlayerData.use_item(item_index, self)
 	ui.refresh_player_hud() # Item amount update
 	item_being_used = null
-	await player_turn_ui._build_items_ui()
 	
 	if combat_has_ended:
 		return
@@ -1688,9 +1845,10 @@ func _cancel_target_selection():
 	selected_enemy = null
 	target_index = 0
 	
-	# Hides all enemy arrows and defaults selected enemy and index
-	for v in enemy_visuals.values():
-		v.hide_target_arrow()
+	# Hides all target markers and defaults selected enemy and index
+	_clear_target_markers()
+	camera.stop_follow()
+	current_target_reach = 0
 	player_visual.hide_target_arrow()
 	
 	_update_enemy_turn_order_display()
@@ -1712,9 +1870,12 @@ func _resolve_enemy_state(enemy: CombatEntity):
 
 	if enemy.is_killed():
 		visual.z_index = 1
+		vfx.play_kill_burst(visual)
 		await visual.play_defeat(false)
 	elif enemy.is_tamed():
 		visual.z_index = 1
+		if _is_quick_tame(enemy):
+			vfx.play_perfect_feedback(visual)
 		await visual.play_defeat(true)
 
 # Sets camera follow state for the turn with the turn variable
@@ -1759,10 +1920,6 @@ func _clear_enemy_turn_order_visuals():
 	for v in enemy_visuals.values():
 		v.hide_turn_order()
 
-# Rounds damage number by quarters, so no damage will ever be something like "2.584", but rather just "2.5"
-func round_quarter(value: float) -> float:
-	return round(value * 4.0) / 4.0
-
 func _generate_rewards():
 	var total_currency = 0
 	var killed_count := 0
@@ -1795,6 +1952,10 @@ func _generate_rewards():
 		# Enamor chance to double a tamed creature's rewards
 		if enamor_chance:
 			gained_currency *= 2
+		
+		# Quick tame bonus: taming a creature before its first turn gives up to +3 bolts
+		if _is_quick_tame(enemy):
+			gained_currency += randi_range(1, QUICK_TAME_MAX_BONUS_CURRENCY)
 		
 		total_currency += gained_currency
 
@@ -1914,14 +2075,16 @@ func _reset_ability_cooldowns():
 		ability.cooldown = 0
 		ability.just_used = false
 
-# Gets and returns targets for Multi-tame (including adjacent ones)
-func _get_multi_tame_targets(main_target: CombatEntity) -> Array[CombatEntity]:
+# The creatures an action hits: the main target and the living creatures up to reach steps beside it in the list
+# The list is in slot order (screen order); a defeated creature leaves a gap that is not skipped
+# Used by both the target preview and the hit itself, so they always match
+func _get_action_targets(main_target: CombatEntity, reach: int) -> Array[CombatEntity]:
 	var result: Array[CombatEntity] = []
 	var idx := enemies.find(main_target)
 	if idx == -1:
 		return result
 	
-	for i in range(idx - 1, idx + 2):
+	for i in range(idx - reach, idx + reach + 1):
 		if i < 0 or i >= enemies.size():
 			continue
 	
@@ -1941,12 +2104,34 @@ func _resolve_pending_minigames():
 		if enemy.is_minigame_ready() and not enemy.is_tamed() and not enemy.is_killed():
 			ready.append(enemy)
 	
-	for enemy in ready:
+	# When several creatures were tamed at once, all of their explosions go off before entering the dreams
+	var group_explosion := ready.size() > 1
+	if group_explosion:
+		for enemy in ready:
+			if enemy_visuals.has(enemy):
+				vfx.play_subdue(enemy_visuals[enemy])
+	
+	for i in ready.size():
+		var enemy: CombatEntity = ready[i]
 		if enemy.is_killed() or enemy.is_tamed():
 			continue
 		if not enemy.is_minigame_ready():
 			continue
-		await _start_minigame(enemy)
+		
+		if group_explosion:
+			# Creatures still waiting (not the completed ones) get their explosion again, then the next one is highlighted
+			if i > 0:
+				for j in range(i, ready.size()):
+					var waiting: CombatEntity = ready[j]
+					if not waiting.is_killed() and not waiting.is_tamed() and enemy_visuals.has(waiting):
+						vfx.play_subdue(enemy_visuals[waiting])
+			if enemy_visuals.has(enemy):
+				await enemy_visuals[enemy].play_minigame_highlight()
+		
+		await _start_minigame(enemy, not group_explosion)
+		
+		if enemy_visuals.has(enemy):
+			enemy_visuals[enemy].clear_minigame_highlight()
 		
 		if combat_has_ended:
 			minigame_queue_ongoing = false
@@ -1970,6 +2155,8 @@ func _update_turn_start_effects():
 		heat_up_pending_power_bonus = 0
 		heat_up_turns_remaining = 2
 		_sync_player_stats()
+		vfx.play_buff_particles(player_visual, BuffParticles.Kind.POWER)
+		vfx.play_buff_particles(player_visual, BuffParticles.Kind.DEFENSE_DOWN)
 		print("Heat Up active! +%d power, -%.1f defense for %d turns"
 			% [heat_up_power_bonus, HEAT_UP_DEFENSE_PENALTY, heat_up_turns_remaining])
 	
@@ -1980,7 +2167,7 @@ func _update_turn_start_effects():
 			print("Heat Up continues. %d turn left." % heat_up_turns_remaining)
 		else:
 			print("Heat Up ended.")
-			vfx.spawn_feedback(player_visual, "[color=#3d9feb][wave freq=14]Cooled down[/wave][/color]")
+			vfx.spawn_info(player_visual, "[color=#3d9feb]Cooled down[/color]")
 			heat_up_active = false
 			heat_up_power_bonus = 0
 			heat_up_turns_remaining = 0
@@ -1995,7 +2182,7 @@ func _update_turn_start_effects():
 			harden_active = false
 			harden_defense_bonus = 0.0
 			harden_turns_remaining = 0
-			vfx.spawn_feedback(player_visual, "[color=#e72237ff][wave freq=14]Harden ended[/wave][/color]")
+			vfx.spawn_info(player_visual, "[color=#e72237]Harden ended[/color]")
 			_sync_player_stats()
 	
 		# Thick Jelly: grants temporary stronger blocks
@@ -2005,7 +2192,7 @@ func _update_turn_start_effects():
 		
 		if thick_jelly_turns_remaining <= 0:
 			thick_jelly_active = false
-			vfx.spawn_feedback(player_visual, "[color=#e72237ff][wave freq=14]Jelly used up[/wave][/color]")
+			vfx.spawn_info(player_visual, "[color=#e72237]Jelly used up[/color]")
 			_sync_player_stats()
 	
 	# Soft Branch: temporary +1 power for 2 turns
@@ -2016,24 +2203,25 @@ func _update_turn_start_effects():
 		if soft_branch_turns_remaining <= 0:
 			soft_branch_active = false
 			soft_branch_power_bonus = 0.0
-			vfx.spawn_feedback(player_visual, "[color=#e72237ff][wave freq=14]Branch broke[/wave][/color]")
+			vfx.spawn_info(player_visual, "[color=#e72237]Branch broke[/color]")
 			_sync_player_stats()
 	
 	# Ice Cube: heals 10% max HP every turn for 3 turns
 	if ice_cube_active:
 		if ice_cube_turns_remaining > 0:
-			var heal_amount := round_quarter(player.max_hp * ICE_CUBE_HEAL_RATIO)
+			var heal_amount := Utils.quantize_min(player.max_hp * ICE_CUBE_HEAL_RATIO)
 			_change_player_hp(heal_amount)
 			vfx.spawn_damage_number(player_visual, heal_amount, false, true)
+			vfx.play_buff_particles(player_visual, BuffParticles.Kind.HEAL)
 			ice_cube_turns_remaining -= 1
 		
 		if ice_cube_turns_remaining <= 0:
 			ice_cube_active = false
-			vfx.spawn_feedback(player_visual, "[color=#8be9fd][wave freq=14]Ice melted[/wave][/color]")
+			vfx.spawn_info(player_visual, "[color=#8be9fd]Ice melted[/color]")
 
 # Player HP changing methods for better interaction with PlayerData
 func _set_player_hp(value: float):
-	player.hp = clamp(value, 0.0, player.max_hp)
+	player.hp = clampf(Utils.quantize(value), 0.0, player.max_hp) # HP always sits on the quarter grid
 	PlayerData.hp = player.hp
 	player_visual.update_hp(player.hp, player.max_hp)
 
@@ -2042,7 +2230,7 @@ func _change_player_hp(amount: float):
 
 # The amount of damage reflected back at the enemy with Scratchy Frame passive ability
 func _get_scratchy_frame_reflect_amount(enemy: CombatEntity, incoming_damage: float) -> float:
-	var margin := 0.25
+	var margin := Utils.AXIS_SAFE_MARGIN # Reflect never reaches the snap distance, so it cannot tame or kill
 	if enemy.axis_value > 0.0: # When enemy is on the tame side
 		var max_allowed := (enemy.axis_max - margin) - enemy.axis_value
 		return max(0.0, min(incoming_damage, max_allowed))
@@ -2061,13 +2249,10 @@ func _apply_scratchy_frame_reflect(enemy: CombatEntity, amount: float):
 	
 	var before := enemy.axis_value
 	if enemy.axis_value > 0.0: # When on the tame side
-		enemy.axis_value += amount
-		enemy.axis_value = min(enemy.axis_value, enemy.axis_max - 0.25) # Prevents taming/killing with this ability
+		enemy.set_axis(min(enemy.axis_value + amount, enemy.axis_max - Utils.AXIS_SAFE_MARGIN)) # Prevents taming/killing with this ability
 	else: # When on the kill side
-		enemy.axis_value -= amount
-		enemy.axis_value = max(enemy.axis_value, -enemy.axis_max + 0.25)
-	
-	enemy.axis_value = round_quarter(enemy.axis_value) # Applies damage
+		enemy.set_axis(max(enemy.axis_value - amount, -enemy.axis_max + Utils.AXIS_SAFE_MARGIN))
+
 	var actual_shift = enemy.axis_value - before
 	if is_zero_approx(actual_shift): # Does not update past damage where there is 0.25 HP left to an intent
 		return
@@ -2087,15 +2272,17 @@ func _apply_human_at_heart(killed_count: int):
 	if not PlayerData.has_ability("human_at_heart"):
 		return
 	
-	var total_heal := PlayerData.max_hp * HUMAN_AT_HEART_HEAL_RATIO * killed_count
+	var total_heal := Utils.quantize_min(PlayerData.max_hp * HUMAN_AT_HEART_HEAL_RATIO * killed_count)
 	var total_power_gain := HUMAN_AT_HEART_POWER_GAIN * killed_count
 	PlayerData.attack += total_power_gain
-	PlayerData.hp = min(PlayerData.hp + total_heal, PlayerData.max_hp)
+	PlayerData.hp = min(Utils.quantize(PlayerData.hp + total_heal), PlayerData.max_hp)
 	print("Human At Heart: Healed for: ", total_heal)
 	print("Human At Heart: Power increased by: ", total_power_gain)
 	
 	_sync_player_stats()
 	vfx.spawn_damage_number(player_visual, total_heal, false, true)
+	vfx.play_buff_particles(player_visual, BuffParticles.Kind.HEAL)
+	vfx.play_buff_particles(player_visual, BuffParticles.Kind.POWER)
 	vfx.play_human_at_heart_feedback(player_visual, human_at_heart_trigger_counter)
 	human_at_heart_trigger_counter += 1
 
@@ -2146,15 +2333,17 @@ func _roll_tamed_enemy_drops() -> Array:
 		if item_data == null:
 			continue
 		
-		var added := PlayerData.add_item(item_data, amount)
+		# Quick tame bonus: +1 of the dropped item
+		var drop_amount: int = amount + (QUICK_TAME_BONUS_ITEMS if _is_quick_tame(enemy) else 0)
+		var added := PlayerData.add_item(item_data, drop_amount)
 		if added:
-			_add_reward_item(item_rewards, item_data, amount)
+			_add_reward_item(item_rewards, item_data, drop_amount)
 	
 	return item_rewards
 
 # Handles the ball item's hit logic: intent-specific, so even if two different types of creatures are hit, they will both move towards kill/tame at the same time
 func _resolve_ball_hit(target: CombatEntity, intent: String, multiplier: float):
-	var affected = _get_multi_tame_targets(target)
+	var affected = _get_action_targets(target, current_target_reach)
 	if affected.is_empty():
 		return
 
@@ -2165,12 +2354,14 @@ func _resolve_ball_hit(target: CombatEntity, intent: String, multiplier: float):
 			var visual = enemy_visuals[enemy]
 			visual.hop(2)
 			vfx.play_multihit_feedback(visual)
+			_hit_impact(visual, HIT_STOP_NORMAL)
 
 	await vfx.bounce_and_fade_ball(ball, target_visual.global_position)
 	for enemy in affected:
 		var guess_type = _get_ball_guess_type_for_enemy(enemy, intent)
 		await _apply_axis_shift_with_multiplier(enemy, guess_type, multiplier)
 
+	_flush_betrayal()
 	await _resolve_pending_minigames()
 
 # Returns the type that the ball will apply to a creature after the ball minigame
@@ -2211,19 +2402,17 @@ func _support_frog_heal(enemy: CombatEntity):
 	if visual == null:
 		return
 	
-	var heal_amount := round_quarter(randf_range(1.0, 3.0))
+	var heal_amount := Utils.quantize_min(randf_range(1.0, 3.0))
 	var before := enemy.axis_value
 	
 	# Heal toward the center (0 axis)
 	if enemy.axis_value < 0.0:
-		enemy.axis_value = min(enemy.axis_value + heal_amount, 0.0)
+		enemy.set_axis(min(enemy.axis_value + heal_amount, 0.0))
 	elif enemy.axis_value > 0.0:
-		enemy.axis_value = max(enemy.axis_value - heal_amount, 0.0)
+		enemy.set_axis(max(enemy.axis_value - heal_amount, 0.0))
 	else:
 		# Already centered, so there's nothing to heal
 		return
-	
-	enemy.axis_value = round_quarter(enemy.axis_value)
 	var actual_shift := enemy.axis_value - before
 	
 	if is_zero_approx(actual_shift):
@@ -2232,6 +2421,7 @@ func _support_frog_heal(enemy: CombatEntity):
 	visual.update_axis(enemy.axis_value, actual_shift)
 	visual.shake(false)
 	vfx.spawn_damage_number(visual, abs(actual_shift), false, true)
+	vfx.play_buff_particles(visual, BuffParticles.Kind.HEAL)
 	
 	print("Frog healed toward center by %.2f. Axis is now %.2f" % [abs(actual_shift), enemy.axis_value])
 
@@ -2253,13 +2443,7 @@ func _reveal_duck_type(enemy: CombatEntity):
 		return
 	
 	var color: Color = DUCK_TYPE_COLORS.get(enemy.type, Color.WHITE)
-	match enemy.type:
-		CombatTypes.EntityType.SKY:
-			vfx.spawn_feedback(visual, "[color=f7ff3c]Sky[/color]")
-		CombatTypes.EntityType.EARTH:
-			vfx.spawn_feedback(visual, "[color=8b5a2b]Earth[/color]")
-		CombatTypes.EntityType.WATER:
-			vfx.spawn_feedback(visual, "[color=4da6ff]Water[/color]")
+	vfx.spawn_info(visual, "%s" % CombatTypes.type_bbcode(enemy.type))
 	await _flash_enemy_type_color(visual, color, DUCK_TYPE_REVEAL_DURATION)
 
 func tutorial_begin_player_turn_locked():
@@ -2300,7 +2484,7 @@ func tutorial_prepare_dummy_for_minigame():
 	if dummy == null:
 		return
 	
-	dummy.axis_value = max(0.0, dummy.axis_max - 1.0)
+	dummy.set_axis(max(0.0, dummy.axis_max - 1.0))
 	var visual = enemy_visuals.get(dummy)
 	if visual:
 		visual.update_axis(dummy.axis_value)
@@ -2308,15 +2492,22 @@ func tutorial_prepare_dummy_for_minigame():
 # ANIMATION METHODS
 # Smooth tween BG animation for minigame enter/exiting 
 func _world_gray_out(gray_out: bool):
-	var world_node = get_parent().get_node("World")
-	if gray_out:
-		var tween := create_tween()
-		tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-		tween.tween_property(world_node, "modulate:a", 0.6, 0.6)
-	else:
-		var tween := create_tween()
-		tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-		tween.tween_property(world_node, "modulate:a", 1.0, 0.6)
+	# The world (background, creatures and the Droid) lives in several nodes, so a black layer between it and the UI dims it all
+	if dim_rect == null:
+		var dim_layer := CanvasLayer.new()
+		dim_layer.layer = 1 # Same layer as the UI, but drawn before it
+		dim_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+		var parent := get_parent()
+		parent.add_child(dim_layer)
+		parent.move_child(dim_layer, parent.get_node("UI").get_index())
+		dim_rect = ColorRect.new()
+		dim_rect.color = Color(0, 0, 0, 0)
+		dim_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		dim_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+		dim_layer.add_child(dim_rect)
+	var tween := create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tween.tween_property(dim_rect, "color:a", WORLD_DIM_ALPHA if gray_out else 0.0, 0.5)
 
 func animate_enemy_entry():
 	for visual in enemy_visuals.values():
