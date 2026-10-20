@@ -2,6 +2,7 @@ extends Control
 class_name HeatUpPrompt
 
 signal resolved(success: bool)
+signal hit(screen_position: Vector2) # The moment the right key is pressed, with the center of the key on screen
 
 @onready var sprite := $Sprite2D
 @export var lifetime := 0.9
@@ -51,6 +52,7 @@ func _on_success():
 	if finished:
 		return
 	finished = true
+	hit.emit(global_position) # The key is drawn around its origin
 	
 	var tween := create_tween()
 	tween.tween_property(self, "scale", Vector2.ONE * 4.3, 0.06)

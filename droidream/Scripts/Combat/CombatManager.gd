@@ -444,10 +444,12 @@ func _start_turn_loop():
 	# For checking if passives exist
 	#for ability in PlayerData.abilities:
 		#print(ability.data.id)
-	#PlayerData.add_ability(AbilityDb.get_ability("multitame"))
-	#PlayerData.add_ability(AbilityDb.get_ability("repair"))
+	PlayerData.add_ability(AbilityDb.get_ability("multitame"))
+	PlayerData.add_ability(AbilityDb.get_ability("harden"))
+	PlayerData.add_ability(AbilityDb.get_ability("heatup"))
+	PlayerData.add_ability(AbilityDb.get_ability("repair"))
 	PlayerData.add_item(CombatItemDb.get_item("ball"), 2)
-	PlayerData.add_item(CombatItemDb.get_item("memory_chip"), 2)
+	#PlayerData.add_item(CombatItemDb.get_item("memory_chip"), 2)
 	#PlayerData.add_item(CombatItemDb.get_item("beetlejuice"), 2)
 	_player_turn()
 
@@ -1228,6 +1230,9 @@ func _ability_multi_tame_sequence(ability: InventoryAbility, target: CombatEntit
 	var minigame_scene = preload("res://Scenes/PlayerActions/MultiTameScene.tscn")
 	var minigame = minigame_scene.instantiate()
 	minigame_layer.add_child(minigame)
+	for e in _get_action_targets(target, current_target_reach):
+		if enemy_visuals.has(e):
+			minigame.anchors.append(enemy_visuals[e])
 	
 	tutorial_text.show_hint(TutorialText.HintType.MULTITAME, enemy_visuals[target])
 	minigame.play()
@@ -1242,6 +1247,7 @@ func _ability_multi_tame_sequence(ability: InventoryAbility, target: CombatEntit
 func _ability_heat_up_sequence(ability: InventoryAbility):
 	var minigame_scene = preload("res://Scenes/PlayerActions/HeatUpMinigame.tscn")
 	var minigame = minigame_scene.instantiate()
+	minigame.anchor = player_visual
 	minigame_layer.add_child(minigame)
 	
 	camera.follow(player_visual)
@@ -1251,8 +1257,9 @@ func _ability_heat_up_sequence(ability: InventoryAbility):
 
 	minigame.prompt_hit.connect(
 		func(pos: Vector2):
-			vfx.emit_explosion_from_vector(pos, "block"),
-		CONNECT_ONE_SHOT | CONNECT_DEFERRED
+			# The key position is on screen, the particles live in the world
+			vfx.emit_explosion_from_vector(get_viewport().get_canvas_transform().affine_inverse() * pos, "block"), # An explosion on every key that is hit
+		CONNECT_DEFERRED
 	)
 
 	minigame.play()
@@ -1274,6 +1281,7 @@ func _ability_heat_up_sequence(ability: InventoryAbility):
 func _ability_harden_sequence(ability: InventoryAbility):
 	var minigame_scene = preload("res://Scenes/PlayerActions/HardenMinigame.tscn")
 	var minigame = minigame_scene.instantiate()
+	minigame.anchor = player_visual
 	minigame_layer.add_child(minigame)
 	camera.ability_push_in(player_visual, Vector2(1.25, 1.25))
 	tutorial_text.show_hint(TutorialText.HintType.HARDEN, player_visual)
@@ -1409,6 +1417,7 @@ func _item_soft_branch_sequence(item: InventoryItem, target):
 func _item_ball_sequence(item: InventoryItem, target: CombatEntity):
 	var meter_scene = preload("res://Scenes/PlayerActions/BallMinigame.tscn")
 	var meter = meter_scene.instantiate()
+	meter.anchor = player_visual
 	minigame_layer.add_child(meter)
 	tutorial_text.show_hint(TutorialText.HintType.BALL, enemy_visuals[target])
 	

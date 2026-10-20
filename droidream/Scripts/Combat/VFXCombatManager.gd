@@ -204,19 +204,11 @@ func play_human_at_heart_feedback(target_visual, amount_of_times_triggered):
 	}
 	spawn_feedback(target_visual, texts.get(amount_of_times_triggered, texts[4]))
 
-# Used in the repair ability game
+# Used in the repair ability game: the part flies in from the edge of the play area (it handles its own pop-in, trail and chevron)
 func _spawn_repair_object(target, dir: String) -> Node2D:
-	var obj = RepairObjectScene.instantiate() # TO-DO replace with scene
-	var offset = Utils.DIR_MAP[dir] * 30
-	obj.global_position = target.global_position + offset
-	obj.scale = Vector2.ZERO
+	var obj: RepairObject = RepairObjectScene.instantiate()
 	get_parent().add_child(obj)
-	
-	# Object spawn tween
-	var tween = create_tween()
-	tween.tween_property(obj, "scale", Vector2.ONE, 0.2)\
-		.set_trans(Tween.TRANS_BACK)
-	
+	obj.launch(target, dir)
 	return obj
 
 # Used in the repair ability game
@@ -230,6 +222,7 @@ func _absorb_object(target, obj: Node2D):
 	).set_trans(Tween.TRANS_CUBIC)
 	
 	tween.parallel().tween_property(obj, "scale", Vector2.ZERO, 0.25)
+	tween.parallel().tween_property(obj, "rotation", obj.rotation + PI * 0.5, 0.25)
 	
 	await tween.finished
 	obj.queue_free()

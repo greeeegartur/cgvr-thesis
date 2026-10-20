@@ -19,7 +19,8 @@ const ZOOM_LOWER := 28.0 # Pixels the view moves down per 1.0 of extra zoom
 const RESET_TIME := 0.9 # Going back to the normal frame is slow and eased, so the changes between screens feel smooth
 const GROUP_PADDING := 90.0 # Space kept on each side of the outermost subjects
 const ANTICIPATE_ZOOM := 1.06 # Slow push toward an attacker during its wind-up
-const WIDE_ZOOM := Vector2(1.05, 1.05) # Ability frame that shows the whole play area (Repair)
+const WIDE_LOWER := 30.0 # The wide frame sits lower, so parts can also come in from below the Droid
+const WIDE_ZOOM := Vector2(1.15, 1.15) # Ability frame that shows the whole play area (Repair)
 
 # Camera zoom variables
 @export var zoom_normal = Vector2(1.0, 1.0)
@@ -36,6 +37,7 @@ var zoom_tween: Tween
 # Camera's position variables
 var default_position: Vector2
 var follow_target: Node2D = null
+var y_bias := 0.0 # Extra pixels the view sits lower (wide ability frames need room under the Droid)
 var focus_zoom := Vector2(1.23, 1.23) # Zoom of the current follow
 var follow_group: Array = [] # Subjects framed together (their x center is followed)
 var override = false
@@ -68,7 +70,7 @@ func _process(delta):
 	# The closer the zoom, the lower the view sits, so the characters' feet stay on screen
 	global_position.y = lerp(
 		global_position.y,
-		default_position.y + (zoom.x - 1.0) * ZOOM_LOWER,
+		default_position.y + (zoom.x - 1.0) * ZOOM_LOWER + y_bias,
 		delta * follow_speed
 	)
 
@@ -77,6 +79,7 @@ func _process(delta):
 func follow(node: Node2D, offset := 0.0, zoom_amount := Vector2.ZERO):
 	follow_target = node
 	follow_group.clear()
+	y_bias = 0.0
 	x_offset = offset
 	focus_zoom = zoom_focus if zoom_amount == Vector2.ZERO else zoom_amount
 	# Focuses on entity
@@ -91,6 +94,7 @@ func follow(node: Node2D, offset := 0.0, zoom_amount := Vector2.ZERO):
 func stop_follow():
 	follow_target = null
 	follow_group.clear()
+	y_bias = 0.0
 	# Resets zoom
 	if zoom_tween:
 		zoom_tween.kill()
@@ -163,6 +167,7 @@ func victory_focus_on_player(target: Node2D) -> void:
 func reset_camera():
 	follow_target = null
 	follow_group.clear()
+	y_bias = 0.0
 	override = true
 	
 	if zoom_tween:
@@ -230,6 +235,7 @@ func anticipate(duration := 0.7) -> void:
 # Wide ability frame on the player: the whole play area stays visible (Repair)
 func ability_frame_wide(target: Node2D, duration := 0.4) -> void:
 	_ability_frame(target, WIDE_ZOOM, duration)
+	y_bias = WIDE_LOWER
 
 # Gentle push-in on the player for abilities that happen on them (Heat Up, Harden)
 func ability_push_in(target: Node2D, zoom_amount := Vector2(1.3, 1.3), duration := 0.4) -> void:

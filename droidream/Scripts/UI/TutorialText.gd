@@ -33,11 +33,11 @@ const HINTS := {
 	HintType.SHOP: { "bar": [["ARROWS", "Move"], ["Z", "Confirm"]] },
 	HintType.CRIT: { "text": ["Press", {"key": "Z"}, "right before hitting to [color=#ffd93d][hint kind=wave]crit[/hint][/color]!"], "subject": Vector2(0, -120) },
 	HintType.BLOCK: { "text": ["Press", {"key": "Z"}, "before a hit to [color=#6bd0ff][hint kind=shake]block[/hint][/color]!"], "subject": Vector2(0, -72) },
-	HintType.REPAIR: { "text": ["Press", {"key": "ARROWS"}, "towards yourself to [color=#7dff8a][hint kind=wave]absorb[/hint][/color] parts!"], "subject": Vector2(0, -72) },
-	HintType.MULTITAME: { "text": ["Press", {"key": "Z"}, "when the shapes are [color=#ffd93d][hint kind=wave]aligned[/hint][/color]!"], "subject": Vector2(0, -120) },
-	HintType.HEATUP: { "text": ["Press the [color=#ff6b6b][hint kind=wave]keys[/hint][/color] to power up!"], "subject": Vector2(0, -72) },
-	HintType.HARDEN: { "text": ["Press keys in the correct [color=#6bd0ff][hint kind=wave]order[/hint][/color] for greater defense!"], "subject": Vector2(0, -72) },
-	HintType.BALL: { "text": ["Press", {"key": "Z"}, "when the meter is fully [color=#ffd93d][hint kind=wave]one color[/hint][/color]!"], "subject": Vector2(0, -120) }
+	HintType.REPAIR: { "text": ["Press", {"key": "ARROWS"}, "towards yourself to [color=#7dff8a][hint kind=wave]absorb[/hint][/color] parts!"], "subject": Vector2(0, -138) },
+	HintType.MULTITAME: { "text": ["Press", {"key": "Z"}, "when the shapes are [color=#ffd93d][hint kind=wave]aligned[/hint][/color]!"], "subject": Vector2(0, -200) },
+	HintType.HEATUP: { "text": ["Press the [color=#ff6b6b][hint kind=wave]keys[/hint][/color] to power up!"], "subject": Vector2(0, -175) },
+	HintType.HARDEN: { "text": ["Press keys in the correct [color=#6bd0ff][hint kind=wave]order[/hint][/color] for greater defense!"], "subject": Vector2(0, -135) },
+	HintType.BALL: { "text": ["Press", {"key": "Z"}, "when the meter is fully [color=#ffd93d][hint kind=wave]one color[/hint][/color]!"], "screen": Vector2(500, 56) }
 }
 
 # Keys on the controls bar and the input actions that flash them when pressed
@@ -59,6 +59,7 @@ const BAR_MARGIN := Vector2(10, 6) # Space between the controls bar and the bott
 const MESSAGE_ICON_SCALE := { "Z": 2, "X": 2, "C": 2, "ARROWS": 1 }
 const BAR_ICON_SCALE := { "Z": 1.7, "X": 1.7, "C": 1.7, "ARROWS": 0.85 }
 const SCREEN_MARGIN := 8.0
+const HUD_KEEP_CLEAR := Rect2(0, 0, 290, 90) # The top-left HUD: text about a subject is pushed below it
 const POP_TIME := 0.25
 const POP_DROP := 10.0 # How far above its place the text starts when it pops in
 const FLOAT_PIXELS := 2.0 # How far the text rises on the beat
@@ -92,7 +93,7 @@ func show_hint(type: HintType, p_anchor: Node2D = null) -> void:
 	var data: Dictionary = HINTS[type]
 	_retire_nodes()
 	
-	anchor = p_anchor
+	anchor = p_anchor if data.has("subject") else null # Subject-less hints sit at their screen position
 	anchor_offset = data.get("subject", Vector2.ZERO)
 	screen_position = data.get("screen", Vector2.ZERO)
 	use_top_left = data.has("top_left")
@@ -152,6 +153,8 @@ func _place_message(beat: float) -> void:
 	var screen := get_viewport().get_visible_rect().size
 	top_left.x = clampf(top_left.x, SCREEN_MARGIN, screen.x - size.x - SCREEN_MARGIN)
 	top_left.y = clampf(top_left.y, SCREEN_MARGIN, screen.y - size.y - SCREEN_MARGIN)
+	if anchor and Rect2(top_left, size).intersects(HUD_KEEP_CLEAR):
+		top_left.y = HUD_KEEP_CLEAR.end.y + 2.0
 	
 	var pop := 1.0 - clampf(shown_time / POP_TIME, 0.0, 1.0)
 	var drop := roundf(POP_DROP * pop * pop) # Eases in with a quick settle (whole pixels)
