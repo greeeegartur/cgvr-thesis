@@ -144,6 +144,8 @@ func set_quantity(stack: int) -> void:
 		count_label.add_theme_color_override("font_color", UNAFFORDABLE_COLOR)
 		count_label.position = Vector2(plate_pos.x, plate_pos.y + (PLATE_SIZE.y - 16.0) * 0.5)
 		count_label.size = Vector2(PLATE_SIZE.x, 16)
+		count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER # Centered on the icon
+		count_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		icon.modulate.a = 0.35
 		return
 	icon.modulate.a = 1.0

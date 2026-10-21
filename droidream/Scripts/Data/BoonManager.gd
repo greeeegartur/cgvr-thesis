@@ -9,7 +9,7 @@ var always_available_ids := [
 		"hp",
 		"power",
 		"defense",
-		"free_chips"
+		"chips"
 	]
 
 # Sets up all boons for use
@@ -68,46 +68,39 @@ func _ready():
 	human_at_heart.effect = func():
 		PlayerData.add_ability(AbilityDb.get_ability("human_at_heart"))
 	
-	available_boons = [hp, power, defense, chips, repair, multi_tame, heat_up, harden, scratchy_frame, microbots, recalibration, reflexive_sensors, human_at_heart]
+	var enamor = preload("res://Scripts/Data/Boons/EnamorBoon.tres")
+	enamor.effect = func():
+		PlayerData.add_ability(AbilityDb.get_ability("enamor"))
+	
+	available_boons = [hp, power, defense, chips, repair, multi_tame, heat_up, harden, scratchy_frame, microbots, recalibration, reflexive_sensors, human_at_heart, enamor]
 
-# Rolls random boons
+# Rolls 3 different boons: the stat boons are always valid (except Defense once it is at its cap), ability boons only while they are not owned and a slot is free
 func roll_boons() -> Array[BoonData]:
 	var pool: Array[BoonData] = []
-	var fallback_pool: Array[BoonData] = []
+	var stat_pool: Array[BoonData] = []
 	var abilities_full := PlayerData.has_max_abilities()
 	
 	for boon in available_boons:
-		var is_always_available := boon.id in always_available_ids
-		var is_ability_boon := not is_always_available
-		
-		# Always-available boons are your fallback options
-		if is_always_available:
-			fallback_pool.append(boon)
-		
-		# Skip ability/passive boons if player already has them
-		if is_ability_boon and PlayerData.has_ability(boon.id):
-			continue
-		
-		# Skip ability/passive boons if ability slots are full
-		if is_ability_boon and abilities_full:
-			continue
-		
-		pool.append(boon)
+		if boon.id in always_available_ids:
+			if boon.id == "defense" and PlayerData.has_max_defense():
+				continue
+			stat_pool.append(boon)
+			pool.append(boon)
+		elif not abilities_full and not PlayerData.has_ability(boon.id):
+			pool.append(boon)
 	
 	pool.shuffle()
-	
 	var result: Array[BoonData] = pool.slice(0, 3)
 	
-	# Fills missing slots with fallback boons
+	# Fills missing slots with stat boons (HP, Power and Chips are always there, so this never stays short)
 	if result.size() < 3:
-		fallback_pool.shuffle()
-		
-		for boon in fallback_pool:
+		stat_pool.shuffle()
+		for boon in stat_pool:
 			if result.size() >= 3:
 				break
-			if result.has(boon):
-				continue
-			
-			result.append(boon)
+			if not result.has(boon):
+				result.append(boon)
+	if result.size() < 3:
+		push_error("Boon roll found only %d valid boons." % result.size())
 	
 	return result

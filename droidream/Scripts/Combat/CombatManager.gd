@@ -91,8 +91,11 @@ var minigame_queue_ongoing := false
 signal tutorial_attack_resolved(critical: bool, minigame_started: bool)
 signal tutorial_minigame_started(minigame)
 signal tutorial_minigame_finished(success: bool)
+signal tutorial_minigame_released # The new tutorial lets a dream start after its explanation
 
 var tutorial_mode := false
+var tutorial_hold_minigame := false # While true a tutorial dream waits for tutorial_minigame_released before it counts down and starts
+var last_enemy_hit_blocked := false # Whether the last enemy hit was blocked (the tutorial reads it)
 var tutorial_inputs_locked := false
 var last_attack_was_critical := false
 var last_attack_started_minigame := false
@@ -843,10 +846,13 @@ func _start_minigame(enemy: CombatEntity, play_explosion := true):
 	
 	# Minigame's damage signal
 	minigame.damage_taken.connect(_on_minigame_damage_taken)
+	await minigame.animate_in() # The box appears now and stays through the explanation, the countdown and the minigame (play() does not animate it in again)
 	if tutorial_mode:
 		tutorial_minigame_started.emit(minigame)
 	
-	if not tutorial_mode:
+	if tutorial_hold_minigame:
+		await tutorial_minigame_released
+	if not tutorial_mode or tutorial_hold_minigame:
 		await MinigameCountdown.play(self, "dream_" + enemy.minigame_id) # The first time this dream appears in the run
 	
 	minigame.play()
@@ -1052,6 +1058,7 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 		and last_block_press_time <= window_end
 	)
 	
+	last_enemy_hit_blocked = blocked
 	var base_damage = enemy.attack_power
 	var hit_mult = hit.damage_multiplier
 	var damage = max(0.0, base_damage * hit_mult)
@@ -2328,7 +2335,7 @@ func _roll_tamed_enemy_drops() -> Array:
 		if drop_pool.is_empty():
 			continue
 		
-		var picked_id: String = drop_pool.pick_random()
+		var picked_id := _pick_drop_id(drop_pool)
 		var item_data: ItemData = CombatItemDb.get_item(picked_id)
 		if item_data == null:
 			continue
@@ -2340,6 +2347,15 @@ func _roll_tamed_enemy_drops() -> Array:
 			_add_reward_item(item_rewards, item_data, drop_amount)
 	
 	return item_rewards
+
+# Picks one id of a creature's drop pool by item rarity (a rare Ball drops less often than a common Soft Branch)
+func _pick_drop_id(drop_ids: Array) -> String:
+	var entries: Array = []
+	for id in drop_ids:
+		if ItemDb.items.has(id):
+			entries.append(ItemDb.get_item(id))
+	var picked := ItemDb.pick_weighted(entries, 1)
+	return picked[0].id if not picked.is_empty() else drop_ids.pick_random()
 
 # Handles the ball item's hit logic: intent-specific, so even if two different types of creatures are hit, they will both move towards kill/tame at the same time
 func _resolve_ball_hit(target: CombatEntity, intent: String, multiplier: float):

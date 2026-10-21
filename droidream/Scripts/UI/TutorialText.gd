@@ -10,6 +10,7 @@ enum HintType {
 	BOON_SELECT,
 	SHOP,
 	TAME_TIMING,
+	SELECT_Z,
 	BLOCK,
 	REPAIR,
 	MULTITAME,
@@ -34,6 +35,7 @@ const HINTS := {
 	HintType.SHOP: { "bar": [["ARROWS", "Move"], ["Z", "Confirm"]] },
 	HintType.TITLE: { "bar": [["ARROWS", "Move"], ["Z", "Confirm"], ["X", "Back"]] },
 	HintType.TAME_TIMING: { "text": ["Press", {"key": "Z"}, "at the [color=#ffd93d][hint kind=wave]right time[/hint][/color]!"], "subject": Vector2(0, -120) },
+	HintType.SELECT_Z: { "text": ["Press", {"key": "Z"}, "to [color=#ffd93d][hint kind=wave]select[/hint][/color]!"], "screen": Vector2(330, 56), "bar": [["ARROWS", "Move"], ["Z", "Confirm"], ["X", "Cancel"]] },
 	HintType.BLOCK: { "text": ["Press", {"key": "Z"}, "before a hit to [color=#6bd0ff][hint kind=shake]block[/hint][/color]!"], "subject": Vector2(0, -72) },
 	HintType.REPAIR: { "text": ["Press", {"key": "ARROWS"}, "towards yourself to [color=#7dff8a][hint kind=wave]absorb[/hint][/color] parts!"], "subject": Vector2(0, -138) },
 	HintType.MULTITAME: { "text": ["Press", {"key": "Z"}, "when the shapes are [color=#ffd93d][hint kind=wave]aligned[/hint][/color]!"], "subject": Vector2(0, -200) },
@@ -58,8 +60,8 @@ const OUTLINE_SIZE := 6
 const TEXT_DROP := 3 # Space above each text piece so its letters sit on the middle line of the key icons
 const BAR_MARGIN := Vector2(10, 6) # Space between the controls bar and the bottom left corner
 # Key icon sizes (whole numbers so pixels stay crisp): big enough to read at a glance, the arrow cluster is already tall
-const MESSAGE_ICON_SCALE := { "Z": 2, "X": 2, "C": 2, "ARROWS": 1 }
-const BAR_ICON_SCALE := { "Z": 1.7, "X": 1.7, "C": 1.7, "ARROWS": 0.85 }
+const MESSAGE_ICON_SCALE := { "Z": 2, "X": 2, "C": 2, "ARROWS": 1, "SPACE": 2 }
+const BAR_ICON_SCALE := { "Z": 1.7, "X": 1.7, "C": 1.7, "ARROWS": 0.85, "SPACE": 1.7 }
 const SCREEN_MARGIN := 8.0
 const HUD_KEEP_CLEAR := Rect2(0, 0, 290, 90) # The top-left HUD: text about a subject is pushed below it
 const POP_TIME := 0.25
@@ -82,6 +84,8 @@ var shown_time := 0.0
 var fade := 0.0 # 0..1 overall opacity, moves toward fade_target
 var fade_target := 0.0
 var flash_until := {} # Key name -> time its pressed look ends
+var pinned: Control # A controls bar kept in the bottom right corner whatever hint is showing (the tutorial's "Skip tutorial")
+var pinned_icons: Array[KeyIcon] = []
 
 func _ready() -> void:
 	set_process(true)
@@ -122,7 +126,31 @@ func hide_text() -> void:
 func _process(delta: float) -> void:
 	_update(delta)
 
+# Keeps a small controls bar in the bottom right corner, next to whatever hint is showing (pairs are [key, word] like a bar hint)
+func pin_hint(pairs: Array) -> void:
+	unpin_hint()
+	pinned = _build_bar(pairs, pinned_icons)
+	add_child(pinned)
+	_place_pinned()
+
+func unpin_hint() -> void:
+	if is_instance_valid(pinned):
+		pinned.queue_free()
+	pinned = null
+	pinned_icons.clear()
+
+func _place_pinned() -> void:
+	if not is_instance_valid(pinned):
+		return
+	var pinned_size := pinned.get_combined_minimum_size()
+	var screen := get_viewport().get_visible_rect().size
+	pinned.position = Vector2(screen.x - pinned_size.x - BAR_MARGIN.x, screen.y - pinned_size.y - BAR_MARGIN.y)
+	for icon in pinned_icons:
+		if icon.key_name == "SPACE":
+			icon.set_pressed(Input.is_physical_key_pressed(KEY_SPACE))
+
 func _update(delta: float) -> void:
+	_place_pinned()
 	shown_time += delta
 	fade = move_toward(fade, fade_target, delta / (POP_TIME if fade_target > fade else FADE_TIME))
 	if fade <= 0.0 and fade_target <= 0.0:
@@ -191,7 +219,7 @@ func _build_line(pieces: Array, icon_list: Array[KeyIcon]) -> Control:
 	return line
 
 # Builds the controls bar: key icon + one word per pair
-func _build_bar(pairs: Array) -> Control:
+func _build_bar(pairs: Array, icon_list: Array[KeyIcon] = bar_icons) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -203,7 +231,7 @@ func _build_bar(pairs: Array) -> Control:
 		icon.setup(pair[0], BAR_ICON_SCALE[pair[0]])
 		icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		item.add_child(icon)
-		bar_icons.append(icon)
+		icon_list.append(icon)
 		item.add_child(_make_label(pair[1], BAR_FONT_SIZE))
 		row.add_child(item)
 	return row

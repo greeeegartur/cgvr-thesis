@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://b3hccjt07sqqj"]
 
 [ext_resource type="Script" uid="uid://b3u2bq3dgrvtu" path="res://Scripts/Combat/CombatManager.gd" id="1_jbvax"]
-[ext_resource type="Script" uid="uid://hu3le3k7d1o5" path="res://Scripts/Tutorial/TutorialDirector.gd" id="2_hp5wx"]
+[ext_resource type="Script" uid="uid://3nowrif5dovu" path="res://Scripts/Tutorial/TutorialDirectorNew.gd" id="2_hp5wx"]
 [ext_resource type="PackedScene" uid="uid://wgkbwlbxucav" path="res://Scenes/Entities/PlayerVisual.tscn" id="3_hp5wx"]
 [ext_resource type="PackedScene" uid="uid://c8emryl3wnon2" path="res://Scenes/Combat/CombatBackground.tscn" id="3_pujgt"]
 [ext_resource type="PackedScene" uid="uid://xdci2nsbs7fv" path="res://Scenes/Entities/UFO_Tuh-U/TuhU.tscn" id="5_33lju"]
@@ -228,4 +228,4 @@ layer = 10
 layer = 12
 follow_viewport_enabled = true
 
-[node name="PauseMenu" parent="." instance=ExtResource("99_pause")]
+[node name="PauseMenu" parent="." unique_id=1619374455 instance=ExtResource("99_pause")]

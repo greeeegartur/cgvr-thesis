@@ -13,6 +13,7 @@ const BASE_GUESSES := {
 }
 const MAX_ITEM_TYPES := 6
 const MAX_ABILITY_SLOTS := 6
+const MAX_DEFENSE := 0.75 # Permanent defense from boons stops here (the Harden bonus is temporary and stacks on top)
 
 # Actual adjustable player variables (can change for the player)
 var max_hp : float
@@ -76,7 +77,7 @@ func add_power(amount):
 	stats_changed.emit()
 
 func add_defense(amount):
-	defense += amount
+	defense = minf(defense + amount, MAX_DEFENSE)
 	stats_changed.emit()
 
 func add_hp(amount):
@@ -261,6 +262,9 @@ func get_ending_type() -> String:
 	if killed > 0 and tamed > 0:
 		return "neutral"
 	return "?" # Should not happen
+
+func has_max_defense() -> bool:
+	return defense >= MAX_DEFENSE
 
 func has_max_abilities() -> bool:
 	return abilities.size() >= MAX_ABILITY_SLOTS

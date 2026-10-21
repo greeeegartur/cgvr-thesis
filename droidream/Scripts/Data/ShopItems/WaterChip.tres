@@ -11,4 +11,5 @@ description = "Gain +1 use of [color=#4da6ff]Water[/color] in encounters!"
 type = 2
 icon = ExtResource("1_yoyre")
 max_stack = 3
+rarity = 0
 metadata/_custom_type_script = "uid://b56nw6bpevr7t"

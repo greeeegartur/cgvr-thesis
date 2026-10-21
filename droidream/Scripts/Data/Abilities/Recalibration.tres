@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="PassiveData" load_steps=2 format=3 uid="uid://df0k4i7aq8ncm"]
+[gd_resource type="Resource" script_class="PassiveData" format=3 uid="uid://df0k4i7aq8ncm"]
 
 [ext_resource type="Script" uid="uid://dqqq30gwb44lh" path="res://Scripts/Data/PassiveData.gd" id="1_2qy2q"]
 

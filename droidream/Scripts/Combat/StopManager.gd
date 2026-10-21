@@ -291,6 +291,8 @@ func _animate_ufo_exit():
 func _spawn_cards():
 	var rolled_items: Array = _roll_shop_items()
 	var count: int = rolled_items.size()
+	if count < 3:
+		push_warning("The shop rolled only %d cards." % count) # Should not happen: chips fill missing cards
 	var total: float = count * ShopCard.CARD_SIZE.x + maxi(count - 1, 0) * CARD_GAP
 	
 	# The detail box lines up with a full row of three cards, the Next button sits beside the row
@@ -339,42 +341,29 @@ func _next_button_out():
 	await tween.finished
 	next_button.visible = false
 
-# Randomly picks 3 items to display in the shop from current unlocked items
+# Picks 3 different cards by rarity from the entries the player can actually take; chips fill in if fewer are valid
 func _roll_shop_items():
-	var pool = ItemDb.get_unlocked_items().duplicate()
-	var chosen: Array[ShopEntry] = []
+	var valid: Array = ItemDb.get_unlocked_items().filter(_can_take)
+	var chosen: Array[ShopEntry] = ItemDb.pick_weighted(valid, 3)
 	
-	while chosen.size() < 3 and pool.size() > 0:
-		var item = pool.pick_random()
-		pool.erase(item)
-		
-		# Duplicate check for abilities
-		if item.type == ShopEntry.ItemType.ABILITY and item.ability_data:
-			if PlayerData.has_ability(item.ability_data.id):
-				continue
-			if PlayerData.has_max_abilities():
-				continue
-		
-		# And same for passives
-		if item.type == ShopEntry.ItemType.PASSIVE and item.passive_data:
-			if PlayerData.has_ability(item.passive_data.id):
-				continue
-			if PlayerData.has_max_abilities():
-				continue
-		
-		# Also same check for items
-		if item.type == ShopEntry.ItemType.ITEM and item.item_data:
-			# Skip if player cannot add one
-			if not PlayerData.can_add_item(item.item_data, 1):
-				continue
-		
-		# Does not allow the same item to be in the shop twice, i.e "Repair" ability and "Repair" ability
-		if chosen.any(func(i): return i.id == item.id):
-			continue
-		
-		chosen.append(item)
+	for id in ItemDb.FILLER_IDS:
+		if chosen.size() >= 3:
+			break
+		var filler: ShopEntry = ItemDb.get_item(id)
+		if not chosen.has(filler):
+			chosen.append(filler)
 	
 	return chosen
+
+# Whether the player can take a shop entry right now (no owned abilities, no full slots or stacks)
+func _can_take(item: ShopEntry) -> bool:
+	if item.type == ShopEntry.ItemType.ABILITY and item.ability_data:
+		return not PlayerData.has_ability(item.ability_data.id) and not PlayerData.has_max_abilities()
+	if item.type == ShopEntry.ItemType.PASSIVE and item.passive_data:
+		return not PlayerData.has_ability(item.passive_data.id) and not PlayerData.has_max_abilities()
+	if item.type == ShopEntry.ItemType.ITEM and item.item_data:
+		return PlayerData.can_add_item(item.item_data, 1)
+	return true
 
 # Tuh-U says a short line in his bubble without blocking the shop; a new line replaces the old one
 func _tuhu_says(line: Dictionary):

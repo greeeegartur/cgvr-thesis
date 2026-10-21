@@ -11,7 +11,7 @@ var icon_scale_value := 1.0
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-# Loads the sheet of a key (Z, X, C or ARROWS) and crops both frames to the same art rectangle; icon_scale 1 or 2 keeps pixels crisp; other values are only for small icons
+# Loads the sheet of a key (Z, X, C, ARROWS or SPACE) and crops both frames to the same art rectangle; icon_scale 1 or 2 keeps pixels crisp; other values are only for small icons
 func setup(key: String, icon_scale: float = 1.0) -> void:
 	key_name = key
 	icon_scale_value = icon_scale

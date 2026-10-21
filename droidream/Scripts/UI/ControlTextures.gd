@@ -29,10 +29,16 @@ const SHEET_LAYOUT := { # frame size, where the key sits in a frame, for the sin
 const CLUSTER_FRAME := Vector2i(39, 26)
 const CLUSTER_KEYS := { "W": Vector2i(13, 0), "A": Vector2i(0, 12), "S": Vector2i(13, 12), "D": Vector2i(26, 12) } # Same places as the arrow keys
 
+const SPACE_WIDTH := 28 # The Space bar: a letter key without its letter, widened
+
 static var cache := {}
 
 # The two-frame sheet (up, pressed) of a key (Z, X, C or ARROWS) for the scheme in use
 static func sheet(key: String) -> Texture2D:
+	if key == "SPACE": # The same in every control scheme
+		if not cache.has(key):
+			cache[key] = _build_space()
+		return cache[key]
 	if Settings.controls_scheme != "wasd":
 		return DEFAULTS[key]
 	if not cache.has(key):
@@ -66,6 +72,27 @@ static func _build(key: String) -> Texture2D:
 	image.blit_rect(_tile(letter, false), Rect2i(Vector2i.ZERO, KEY_SIZE), origin)
 	image.blit_rect(_tile(letter, true), Rect2i(Vector2i.ZERO, KEY_SIZE), origin + Vector2i(0, frame.y + 1)) # Pressed: one pixel lower
 	return ImageTexture.create_from_image(image)
+
+# The Space bar from the same keyboard sheet: a letter key with its letter painted over by the inset color, stretched in the middle (both frames, up and pressed)
+static func _build_space() -> Texture2D:
+	var image := Image.create(SPACE_WIDTH, KEY_SIZE.y * 2, false, Image.FORMAT_RGBA8)
+	image.blit_rect(_space_tile(false), Rect2i(0, 0, SPACE_WIDTH, KEY_SIZE.y), Vector2i.ZERO)
+	image.blit_rect(_space_tile(true), Rect2i(0, 0, SPACE_WIDTH, KEY_SIZE.y), Vector2i(0, KEY_SIZE.y + 1))
+	return ImageTexture.create_from_image(image)
+
+static func _space_tile(pressed: bool) -> Image:
+	var tile := _tile("A", pressed)
+	var inset := tile.get_pixel(3, 4) # The recessed area the letter sits on
+	for y in range(2, 7):
+		for x in range(4, 10):
+			if tile.get_pixel(x, y).get_luminance() > 0.55: # The letter is the only light thing in there
+				tile.set_pixel(x, y, inset)
+	var wide := Image.create(SPACE_WIDTH, KEY_SIZE.y, false, Image.FORMAT_RGBA8)
+	wide.blit_rect(tile, Rect2i(0, 0, 5, KEY_SIZE.y), Vector2i.ZERO) # The left edge
+	for x in range(5, SPACE_WIDTH - 5):
+		wide.blit_rect(tile, Rect2i(6, 0, 1, KEY_SIZE.y), Vector2i(x, 0)) # The middle, one column repeated
+	wide.blit_rect(tile, Rect2i(8, 0, 5, KEY_SIZE.y), Vector2i(SPACE_WIDTH - 5, 0)) # The right edge
+	return wide
 
 static func _build_cluster() -> Texture2D:
 	var image := Image.create(CLUSTER_FRAME.x, CLUSTER_FRAME.y * 2, false, Image.FORMAT_RGBA8)

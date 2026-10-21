@@ -23,6 +23,11 @@ var stats_hud_tween: Tween
 func _ready():
 	#player_stats_hud.visible = true
 	#player_stats_hud.modulate.a = 1.0
+	add_child(HudTooltip.new())
+	HudTooltip.gate = _tooltips_allowed
+	_make_hoverable($PlayerStatsHUD/PowerRow, _power_tip)
+	_make_hoverable($PlayerStatsHUD/DefenseRow, _defense_tip)
+	_make_hoverable($PlayerStatsHUD/BoltsRow, _bolts_tip)
 	refresh_player_hud()
 
 func setup(combat_manager: CombatManager):
@@ -39,6 +44,67 @@ func _unhandled_input(event):
 	if event.is_action_pressed("toggle_turn_order"):
 		_toggle_turn_order()
 		return
+
+# HOVER TOOLTIPS
+# A stat row shows its description while the mouse rests on it
+func _make_hoverable(row: Control, tip: Callable) -> void:
+	row.mouse_filter = Control.MOUSE_FILTER_STOP
+	for child in row.find_children("*", "Control", true, false):
+		child.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.mouse_entered.connect(func(): HudTooltip.show_tip(row, tip))
+	row.mouse_exited.connect(func(): HudTooltip.hide_tip(row))
+	_fit_to_children.call_deferred(row)
+
+# A row made of loose children (icon and text) gets the area they cover, so the mouse can find it
+func _fit_to_children(row: Control) -> void:
+	if row is BoxContainer:
+		return
+	var area := Rect2()
+	for child in row.get_children():
+		if child is Control:
+			area = area.merge(Rect2(child.position, child.size)) if area.has_area() else Rect2(child.position, child.size)
+	row.size = area.end
+
+func _power_tip() -> Array:
+	var power := manager.player.attack_power if manager != null and manager.player != null else PlayerData.attack
+	return ["Taming power", "Your tames are %sx as effective - normal tame is currently %s." % [String.num(power / PlayerData.BASE_ATTACK, 1), _format_quarter(power)]]
+
+func _defense_tip() -> Array:
+	var defense := manager.player.defense if manager != null and manager.player != null else PlayerData.defense
+	return ["Defense", "Blocks %s damage from creature hits." % _format_quarter(maxf(defense, 0.0)), "Maxed out" if PlayerData.has_max_defense() else ""]
+
+func _bolts_tip() -> Array:
+	return ["Bolts", "Spend them at the shop.", "You have %d" % PlayerData.currency]
+
+# The tooltips work while the player chooses their turn and in the shop, not during enemy turns, the tame sequence or minigames
+func _tooltips_allowed() -> bool:
+	if manager == null:
+		return false
+	var stop := get_node_or_null("../../StopManager")
+	if stop != null and stop.state == StopManager.State.ACTIVE:
+		return true
+	return manager.turn == "player" and not manager.in_minigame and manager.player_turn_ui.is_choosing()
+
+func _hp_tip() -> Array:
+	if manager == null or manager.player == null:
+		return []
+	return ["Health", "When it reaches 0 the run ends.", "%s / %s" % [_format_quarter(manager.player.hp), _format_quarter(manager.player.max_hp)]]
+
+# The Droid's heart lives in the world, so the mouse is checked against it each frame
+func _process(_delta: float) -> void:
+	if manager == null or manager.player_visual == null:
+		return
+	var heart: Control = manager.player_visual.hp_progress
+	if heart == null or not heart.is_visible_in_tree():
+		return
+	var viewport := get_viewport()
+	var world_mouse := viewport.get_canvas_transform().affine_inverse() * viewport.get_mouse_position()
+	var local := heart.get_global_transform().affine_inverse() * world_mouse
+	var over := Rect2(Vector2.ZERO, heart.size).has_point(local)
+	if over and (HudTooltip.instance == null or HudTooltip.instance.source != heart):
+		HudTooltip.show_tip(heart, _hp_tip)
+	elif not over:
+		HudTooltip.hide_tip(heart)
 
 func _toggle_turn_order():
 	turn_order_enabled = !turn_order_enabled
@@ -122,12 +188,13 @@ func _update_abilities_hud():
 	var entries := []
 	for ability in PlayerData.abilities:
 		var icon: Texture2D = ability.data.icon if ability.is_active() and ability.data.icon else ItemDb.get_item(ability.data.id).icon
-		entries.append({ "id": ability.data.id, "name": ability.data.display_name, "icon": icon, "count": 1 })
+		var detail := "Ability  -  cooldown %d" % ability.data.cooldown_max if ability.is_active() else "Passive"
+		entries.append({ "id": ability.data.id, "name": ability.data.display_name, "icon": icon, "count": 1, "desc": ability.data.description, "detail": detail })
 	abilities_row.set_entries(entries)
 
 # Fills the item slots with their stack counts
 func _update_items_hud():
 	var entries := []
 	for item in PlayerData.items:
-		entries.append({ "id": item.data.id, "name": item.data.display_name, "icon": item.data.icon, "count": item.amount })
+		entries.append({ "id": item.data.id, "name": item.data.display_name, "icon": item.data.icon, "count": item.amount, "desc": item.data.description, "detail": "x%d of %d" % [item.amount, item.data.max_stack] })
 	items_row.set_entries(entries)
