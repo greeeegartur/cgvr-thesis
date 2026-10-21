@@ -30,7 +30,8 @@ var selection_index := 0 # The cards first, then the "Next" button
 
 const FONT_BOLD := preload("res://Graphics/Fonts/PixelOperator-Bold.ttf")
 const UFO_STOP_POS := Vector2(390, 210)
-const UFO_ENDING_POS := Vector2(170, 210)
+const UFO_ENDING_POS := Vector2(170, 210) # Beside the Droid, looking at it
+const UFO_ENDING_CENTER_Y := 150.0 # Height where he steps toward the player (the middle of the screen) to break the fourth wall
 const UFO_SHOP_POS := Vector2(556, 164) # Right of the items, looking at the Droid on the left
 const UFO_HOME_POS := Vector2(463, -20) # Where Tuh-U waits above the screen
 const CARD_GAP := 8.0
@@ -41,6 +42,7 @@ const DETAIL_TOP := 206.0
 const NEXT_SIZE := Vector2(62, 32)
 const NEXT_ARROW_SPACE := 14.0 # The arrow takes the right side, so the text is nudged left to look centered
 const ENDING_WIDTHS := [120.0, 150.0, 190.0, 230.0] # The ending's lines are longer than the shop's
+const CARDS_AFTER_ENTRY := 0.6 # Seconds into Tuh-U's glide when the cards start to appear
 const LINE_TIME := 2.4 # Seconds a line of Tuh-U stays up
 
 var shop_layer: CanvasLayer # Screen-fixed layer above the dimmed world
@@ -69,6 +71,7 @@ func _build_shop_ui():
 	shop_bubble = ShopBubble.new()
 	detail = ShopDetailPanel.new()
 	detail.top_y = DETAIL_TOP
+	detail.modulate.a = 0.0 # Hidden until the first card is selected, so it does not sit at the top left while the shop opens
 	shop_layer.add_child(detail)
 	
 	next_button = UIPanel.new()
@@ -229,7 +232,9 @@ func enter_stop():
 	_take_ufo()
 	combat_manager._world_gray_out(true, true) # The Droid stays undimmed
 	
-	await _animate_ufo_entry(UFO_SHOP_POS.y)
+	# The cards start rolling in while Tuh-U is still gliding down (not waited for: he settles by the time the cards are in)
+	_animate_ufo_entry(UFO_SHOP_POS.y)
+	await get_tree().create_timer(CARDS_AFTER_ENTRY).timeout
 	await _spawn_cards()
 	await _show_next_button()
 	selection_index = 0
@@ -245,9 +250,10 @@ func _exit_stop():
 	line_id += 1
 	combat_manager._world_gray_out(false, true) # The world lights up again while the shop leaves
 	_hide_line() # Tuh-U's bubble goes away
-	_animate_items_out()
+	_animate_items_out() # The cards drop and fade with the box and the button, then Tuh-U lifts away
 	detail.pop_out()
 	await _next_button_out()
+	await get_tree().create_timer(ScreenMotion.EXIT_STAGGER * 2.0).timeout
 	await _animate_ufo_exit()
 	_stop_ufo_idle()
 	_return_ufo()
@@ -315,29 +321,31 @@ func _spawn_cards():
 		var price := _get_modified_price(data.cost)
 		card.setup(data, stack, price, PlayerData.currency >= price)
 		card.set_selected(false)
-		card.pop_in(i * 0.08)
+		card.pop_in(i * ScreenMotion.STAGGER)
 		cards.append(card)
 	
-	await get_tree().create_timer(0.3 + count * 0.08).timeout
+	await get_tree().create_timer(ScreenMotion.ENTER_TIME * 0.7 + count * ScreenMotion.STAGGER).timeout # Waits for the cards to be mostly in
 
 func _animate_items_out():
 	for i in cards.size():
-		cards[i].pop_out(i * 0.05)
-	await get_tree().create_timer(0.3).timeout
-	for card in cards:
-		card.queue_free()
+		cards[i].pop_out(i * ScreenMotion.EXIT_STAGGER)
+	var done_in := ScreenMotion.EXIT_TIME + cards.size() * ScreenMotion.EXIT_STAGGER
+	var leaving := cards.duplicate()
 	cards.clear()
+	await get_tree().create_timer(done_in).timeout
+	for card in leaving:
+		card.queue_free()
 
 func _show_next_button():
 	next_button.visible = true
 	next_button.scale = Vector2.ZERO
 	var tween := create_tween()
-	tween.tween_property(next_button, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(next_button, "scale", Vector2.ONE, ScreenMotion.ENTER_TIME * 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	await tween.finished
 
 func _next_button_out():
 	var tween := create_tween()
-	tween.tween_property(next_button, "scale", Vector2.ZERO, 0.2)
+	tween.tween_property(next_button, "scale", Vector2.ZERO, ScreenMotion.EXIT_TIME)
 	await tween.finished
 	next_button.visible = false
 
@@ -400,7 +408,7 @@ func _spawn_inventory_full_feedback(shop_item: ShopCard, message: String):
 
 # ENDING METHODS
 # Tuh-U's ending dialogue uses the same pixel bubble as the shop, above him and growing to the right, waiting for Confirm after each line
-func say(text: String, mood := "normal"):
+func say(text: String, mood := "normal", hops := false):
 	match mood:
 		"happy":
 			ufo.play_happy()
@@ -412,8 +420,13 @@ func say(text: String, mood := "normal"):
 			ufo.play_look_down()
 		"up":
 			ufo.play_look_up()
+		"front":
+			ufo.play_normal() # Looking at the player
 		_:
-			ufo.play_normal()
+			ufo.play_look_right() # The sideways-looking face, mirrored by his facing: his eyes are on the Droid
+	_stop_ufo_idle() # He holds still while he talks, so the tail of the bubble keeps pointing at him
+	if hops:
+		ufo.hop() # Not waited for, it plays under the line
 	
 	var ufo_screen: Vector2 = ufo.get_global_transform_with_canvas().origin
 	shop_bubble.configure(ufo_screen + Vector2(-16, -36), true, ENDING_WIDTHS)
@@ -421,7 +434,7 @@ func say(text: String, mood := "normal"):
 
 
 func end_say():
-	shop_bubble.hide_bubble()
+	await shop_bubble.hide_bubble()
 	shop_bubble.configure(ShopBubble.ANCHOR) # Back to the shop's place
 
 
@@ -451,16 +464,19 @@ func enter_demo_ending_stop():
 	detail.visible = false
 	next_button.visible = false
 	
+	camera.follow(player_visual) # The camera is already on its way to the Droid while Tuh-U arrives
 	await _animate_ufo_entry()
+	ufo.flip_toward_left() # Faces the Droid from now on
 	await move_ufo_to(UFO_ENDING_POS, 0.8)
 	
 	await _play_demo_ending_dialogue()
 	
 	set_process_input(false)
 	
-	end_say()
+	await end_say()
 	await get_tree().create_timer(0.25).timeout
-	await move_ufo_to(UFO_STOP_POS, 0.5)
+	_stop_ufo_idle()
+	await _animate_ufo_exit() # He leaves upward like he does in the shop
 	
 	state = State.INACTIVE
 	ui.visible = false
@@ -469,18 +485,25 @@ func enter_demo_ending_stop():
 	
 	demo_ending_finished.emit()
 
+# The staging follows the tutorial: the bubble leaves before he moves, he looks at the Droid when he talks about it and at the player when he breaks the fourth wall
 func _play_demo_ending_dialogue():
-	camera.follow(player_visual)
 	player_visual.hide_hp()
-	await get_tree().create_timer(0.35).timeout
+	await camera.wait_until_settled() # The first line waits for the camera to finish focusing on the Droid
+	await get_tree().create_timer(0.3).timeout
 	
-	await say("Hey, we made it to the end of the jungle!", "happy")
-	await say("You're sure to become an excellent caretaker! There's no doubt in my mind!", "happy")
+	await say("Hey, we made it to the [b]end of the jungle[/b]!", "happy", true)
+	await say("You're sure to become an [b]excellent caretaker[/b]! There's no doubt in my mind!", "happy", true)
+	
+	# Away from the Droid and toward the player for the bad news
+	await _ending_move(Vector2(camera.get_screen_center_position().x, UFO_ENDING_CENTER_Y), false) # The camera follows the Droid, so the middle of the screen is found from it
 	await say("Unfortunately I have to break the fourth wall with some bad news.", "sad")
-	await say("You've reached the end of the demo made for this thesis.", "normal")
+	await say("You've reached the end of the [b]demo[/b].", "front")
 	await say("There's kinda nothing beyond this point other than unfinished assets.", "right")
-	await say("Feel free to try playing through the jungle again though! The experience is different each time!", "happy")
+	await say("Feel free to try playing through the jungle again though! The experience is different each time!", "happy", true)
 	
+	# Back to the Droid for its result
+	await end_say()
+	await _ending_move(UFO_ENDING_POS, true)
 	await player_visual.bubble_emote("worry")
 	await get_tree().create_timer(0.25).timeout
 	
@@ -497,12 +520,20 @@ func _play_demo_ending_dialogue():
 			await say("Honestly, I'm not sure how to evaluate you.", "normal") # Should not happen
 	
 	await say("I'm sending you back to the title screen now.", "normal")
-	end_say()
+	await end_say()
+
+# Moves Tuh-U once the bubble is gone and turns him toward the Droid (on the left) or the player
+func _ending_move(pos: Vector2, toward_droid: bool) -> void:
+	await end_say()
+	if toward_droid:
+		ufo.flip_toward_left()
+	await move_ufo_to(pos, 0.7)
+	await get_tree().create_timer(0.15).timeout
 
 func _play_pacifist_demo_dialogue():
-	await say("You managed to tame every creature in the jungle! You've done incredibly well!", "happy")
+	await say("You managed to tame [b]every creature[/b] in the jungle! You've done incredibly well!", "happy", true)
 	await say("I'm sure it must've been difficult, managing so many resources and whatnot.", "normal")
-	await say("You really are a true creature caretaker! I'm so proud!", "happy")
+	await say("You really are a true creature caretaker! I'm so proud!", "happy", true)
 
 
 func _play_neutral_demo_dialogue():

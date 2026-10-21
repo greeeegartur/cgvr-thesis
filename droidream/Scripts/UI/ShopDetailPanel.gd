@@ -101,8 +101,8 @@ func pop_out() -> void:
 		tween.kill()
 	pivot_offset = size * 0.5
 	tween = create_tween().set_parallel(true)
-	tween.tween_property(self, "scale", Vector2(1.0, 0.0), 0.2)
-	tween.tween_property(self, "modulate:a", 0.0, 0.2)
+	tween.tween_property(self, "scale", Vector2(1.0, 0.0), ScreenMotion.EXIT_TIME)
+	tween.tween_property(self, "modulate:a", 0.0, ScreenMotion.EXIT_TIME)
 
 func _pop() -> void:
 	if tween:

@@ -143,11 +143,6 @@ func _unhandled_input(event):
 		action_pressed.emit()
 		# action_pressed emit here
 
-func play_restore_chip():
-	text.visible = true
-	text_anim.play("restored")
-	
-
 # Plays the block pose on every block button press, regardless of timing or cooldown
 func play_block_press():
 	if in_ability_animation:
@@ -272,18 +267,18 @@ func update_hp(current: float, max_hp: float):
 	hp_label.text = format_quarter_number(rounded_current)
 	_fit_hp_label()
 
-func hide_hp():
+func hide_hp(duration := 1.0):
 	var tween = create_tween()
-	tween.tween_property(hp_icon, "modulate:a", 0.0, 1)
+	tween.tween_property(hp_icon, "modulate:a", 0.0, duration)
 	await tween.finished
 	
 	hp_icon.visible = false
 
-func show_hp():
+func show_hp(duration := 1.0):
 	hp_icon.visible = true
 	
 	var tween = create_tween()
-	tween.tween_property(hp_icon, "modulate:a", 1.0, 1)
+	tween.tween_property(hp_icon, "modulate:a", 1.0, duration)
 	await tween.finished
 
 # The player's selection uses the same effect as creatures: pop, tint, outline and arrow bob on one beat

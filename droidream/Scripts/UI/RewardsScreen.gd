@@ -40,24 +40,19 @@ func show_rewards(rewards:Dictionary):
 	rows.clear()
 	visible = true
 	panel.visible = true
-	panel.scale = Vector2(0.0, 0.65)
+	panel.scale = Vector2(0.0, 0.6)
+	panel.modulate.a = 0.0
+	rewards_container.modulate.a = 1.0
 	
 	_start_gear_spin()
 	
-	# Stretch/scaling animation
-	var tween := create_tween()
-	tween.tween_property(
-		panel,
-		"scale",
-		Vector2(0.75,1.0),
-		0.2
-	)
-	tween.tween_property(
-		panel,
-		"scale",
-		scene_scale,
-		0.3
-	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	# Stretch: the panel widens first and settles in height a moment later, both easing out into the final scale in one go
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(panel, "scale:x", scene_scale.x, ScreenMotion.ENTER_TIME + 0.1)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(panel, "scale:y", scene_scale.y, ScreenMotion.ENTER_TIME + 0.1).set_delay(0.05)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(panel, "modulate:a", 1.0, ScreenMotion.ENTER_TIME * 0.5)
 	await tween.finished
 	
 	await _play_rewards(rewards)
@@ -138,25 +133,21 @@ func _fit_rows(new_rows: Array[RewardRow]):
 		slot.custom_minimum_size = Vector2(0, ceilf(row_size.y * final_scale) + ROW_GAP)
 		row.set_anchors_and_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_KEEP_SIZE)
 
-# Hides rewards menu after input has been made
+# Hides rewards menu after input has been made: the rows fade first, then the panel squashes away (the reverse of its entrance)
 func hide_rewards():
-	_stop_gear_spin()
+	var rows_tween := create_tween()
+	rows_tween.tween_property(rewards_container, "modulate:a", 0.0, ScreenMotion.EXIT_TIME * 0.6)
+	await rows_tween.finished
 	
-	var tween := create_tween()
-	tween.tween_property(
-		panel,
-		"scale",
-		Vector2(0.75, 1.0),
-		0.25
-	)
-	tween.parallel().tween_property(
-		panel,
-		"scale",
-		Vector2(0.0, 0.65),
-		0.3
-	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(panel, "scale:x", 0.0, ScreenMotion.EXIT_TIME)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tween.tween_property(panel, "scale:y", 0.6, ScreenMotion.EXIT_TIME)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	tween.tween_property(panel, "modulate:a", 0.0, ScreenMotion.EXIT_TIME).set_delay(ScreenMotion.EXIT_TIME * 0.4)
 	await tween.finished
 	
+	_stop_gear_spin()
 	panel.visible = false
 	visible = false
 	rows.clear()

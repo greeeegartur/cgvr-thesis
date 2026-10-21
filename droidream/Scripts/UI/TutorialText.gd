@@ -41,7 +41,7 @@ const HINTS := {
 	HintType.MULTITAME: { "text": ["Press", {"key": "Z"}, "when the shapes are [color=#ffd93d][hint kind=wave]aligned[/hint][/color]!"], "subject": Vector2(0, -200) },
 	HintType.HEATUP: { "text": ["Press the [color=#ff6b6b][hint kind=wave]keys[/hint][/color] to power up!"], "subject": Vector2(0, -175) },
 	HintType.HARDEN: { "text": ["Press keys in the correct [color=#6bd0ff][hint kind=wave]order[/hint][/color] for greater defense!"], "subject": Vector2(0, -135) },
-	HintType.BALL: { "text": ["Press", {"key": "Z"}, "when the meter is fully [color=#ffd93d][hint kind=wave]one color[/hint][/color]!"], "screen": Vector2(500, 56) }
+	HintType.BALL: { "text": ["Press", {"key": "Z"}, "when the meter is fully [color=#ffd93d][hint kind=wave]one color[/hint][/color]!"], "screen": Vector2(500, 74) }
 }
 
 # Keys on the controls bar and the input actions that flash them when pressed
@@ -64,6 +64,7 @@ const MESSAGE_ICON_SCALE := { "Z": 2, "X": 2, "C": 2, "ARROWS": 1, "SPACE": 2 }
 const BAR_ICON_SCALE := { "Z": 1.7, "X": 1.7, "C": 1.7, "ARROWS": 0.85, "SPACE": 1.7 }
 const SCREEN_MARGIN := 8.0
 const HUD_KEEP_CLEAR := Rect2(0, 0, 290, 90) # The top-left HUD: text about a subject is pushed below it
+const HUD_KEEP_CLEAR_RIGHT := Rect2(560, 0, 80, 38) # The encounter counter and the bolts in the top right
 const POP_TIME := 0.25
 const POP_DROP := 10.0 # How far above its place the text starts when it pops in
 const FLOAT_PIXELS := 2.0 # How far the text rises on the beat
@@ -185,6 +186,8 @@ func _place_message(beat: float) -> void:
 	top_left.y = clampf(top_left.y, SCREEN_MARGIN, screen.y - size.y - SCREEN_MARGIN)
 	if anchor and Rect2(top_left, size).intersects(HUD_KEEP_CLEAR):
 		top_left.y = HUD_KEEP_CLEAR.end.y + 2.0
+	elif anchor and Rect2(top_left, size).intersects(HUD_KEEP_CLEAR_RIGHT):
+		top_left.y = HUD_KEEP_CLEAR_RIGHT.end.y + 2.0
 	
 	var pop := 1.0 - clampf(shown_time / POP_TIME, 0.0, 1.0)
 	var drop := roundf(POP_DROP * pop * pop) # Eases in with a quick settle (whole pixels)

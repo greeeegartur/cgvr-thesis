@@ -43,9 +43,11 @@ func start_stage(reset := false):
 	print("Entering stage: ", area_manager.stage_index)
 	print(enemies)
 	
+	combat_ui.show_encounter(area_manager.stage_index, not reset)
 	if _should_play_area_intro():
 		await _start_stage_with_intro(enemies, reset)
 	else:
+		player_visual.show_hp(ScreenMotion.HP_FADE_TIME) # Comes back with the next encounter
 		combat_manager._start_combat(enemies)
 
 # INTRO METHODS
@@ -147,11 +149,14 @@ func _play_victory_sequence(rewards: Dictionary):
 	# Combat end
 	combat_manager._pause_combat() # 1. Pausing combat
 	combat_ui.hide_player_stats_hud()
+	player_visual.hide_hp(ScreenMotion.HP_FADE_TIME)
 	# After a Ball or Multi-Tame the camera stays in the encounter for a moment, so the result can land
 	if combat_manager.victory_delay > 0.0:
 		await get_tree().create_timer(combat_manager.victory_delay).timeout
 	combat_manager.victory_delay = 0.0
 	
+	combat_manager.fade_out_defeated() # The creatures fade away while the camera starts moving, the world dims behind the Droid
+	combat_manager._world_gray_out(true, true)
 	# TO-DO: await player_visual.play_victory() # 2. Showing player visual victory animation
 	camera.victory_focus_on_player(player_visual) # 3. Camera zooms in and focuses on player for victory screen
 	await get_tree().create_timer(REWARDS_DELAY).timeout # The camera is already on its way when the rewards pop up
@@ -160,7 +165,6 @@ func _play_victory_sequence(rewards: Dictionary):
 	# Confirmation
 	await rewards_screen.confirmed # 5. Waits until rewards are confirmed
 	await rewards_screen.hide_rewards() # 6. Hides victory screen menu
-	await get_tree().create_timer(0.15).timeout
 	await _show_boons() # 7. Boon selection
 	player_visual.update_hp(PlayerData.hp, PlayerData.max_hp) # UI updates
 	combat_ui.refresh_player_hud()
@@ -212,6 +216,7 @@ func _is_demo_final_stage() -> bool:
 	return area_manager.area_index == 0 and area_manager.stage_index == 4
 
 func _enter_demo_ending_stop():
+	combat_manager._world_gray_out(false, true) # The dim of the rewards and boons goes
 	tutorial_text.hide_text()
 	combat_ui.hide_player_stats_hud()
 	combat_manager._pause_combat()

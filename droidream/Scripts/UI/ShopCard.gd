@@ -212,13 +212,17 @@ func pop_in(delay: float) -> void:
 	scale = Vector2.ZERO
 	modulate.a = 0.0
 	var tween := create_tween().set_parallel(true)
-	tween.tween_property(self, "scale", Vector2.ONE, 0.22).set_delay(delay)\
+	tween.tween_property(self, "scale", Vector2.ONE, ScreenMotion.ENTER_TIME).set_delay(delay)\
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "modulate:a", 1.0, 0.12).set_delay(delay)
+	tween.tween_property(self, "modulate:a", 1.0, ScreenMotion.ENTER_TIME * 0.5).set_delay(delay)
 
 func pop_out(delay: float) -> void:
 	if move_tween:
 		move_tween.kill()
+	pivot_offset = CARD_SIZE * 0.5
 	var tween := create_tween().set_parallel(true)
-	tween.tween_property(self, "scale", Vector2.ZERO, 0.2).set_delay(delay)
-	tween.tween_property(self, "modulate:a", 0.0, 0.2).set_delay(delay)
+	tween.tween_property(self, "position:y", ScreenMotion.DROP_PIXELS, ScreenMotion.EXIT_TIME).set_delay(delay).as_relative()\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	tween.tween_property(self, "scale", Vector2(0.9, 0.9), ScreenMotion.EXIT_TIME).set_delay(delay)
+	tween.tween_property(self, "modulate:a", 0.0, ScreenMotion.EXIT_TIME).set_delay(delay)
+

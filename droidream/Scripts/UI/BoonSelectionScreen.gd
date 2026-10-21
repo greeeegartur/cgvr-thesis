@@ -19,6 +19,7 @@ const PULSE_STRENGTH := 0.5 # Selection effect strength for a card (1.0 is a mai
 ]
 var gear_tweens := []
 var pulse_tweens := []
+var gear_rest_y := []
 
 var boons: Array
 var selected := 0
@@ -28,52 +29,46 @@ var input_locked := true
 func _ready():
 	gear_tweens.resize(3)
 	pulse_tweens.resize(3)
+	for gear in gears:
+		gear_rest_y.append(gear.position.y)
 
 func show_boons(rolled_boons):
 	visible = true
 	boons = rolled_boons
 	selected = 0
+	input_locked = true
 	
 	# Resetting from possible previous instances
-	for c in containers:
-		c.visible = false
-		c.modulate.a = 1.0
-	for g in gears:
-		g.visible = false
-		g.modulate = Color(0.7,0.7,0.7)
-		g.rotation = 0
-	
-	# Gears 
-	for gear in gears:
-		gear.scale = Vector2(1.6,1.6)
-		gear.visible = true
-		var tween = create_tween()
-		tween.tween_property(
-			gear,
-			"scale",
-			Vector2.ONE,
-			0.35
-		).set_trans(Tween.TRANS_BACK)
-	
-	_start_gear_spin()
-	await get_tree().create_timer(0.4).timeout
-	
-	# Containers
 	for i in range(3):
-		await get_tree().create_timer(0.3).timeout
+		containers[i].visible = false
+		containers[i].modulate = Color.WHITE
+		gears[i].modulate = Color(0.7, 0.7, 0.7, 0.0)
+		gears[i].rotation = 0
+		gears[i].position.y = gear_rest_y[i]
+		gears[i].scale = Vector2(1.5, 1.5)
+		gears[i].visible = true
+	_start_gear_spin()
+	
+	# Each gear pops in first, its card follows right after; everything is one staggered tween so nothing waits on timers
+	for i in range(3):
+		var delay: float = i * ScreenMotion.STAGGER
+		var gear_tween := create_tween().set_parallel(true)
+		gear_tween.tween_property(gears[i], "scale", Vector2.ONE, ScreenMotion.ENTER_TIME).set_delay(delay)\
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		gear_tween.tween_property(gears[i], "modulate:a", 1.0, ScreenMotion.ENTER_TIME * 0.6).set_delay(delay)
+		
 		containers[i].slot_center_y = gears[i].position.y
 		containers[i].set_boon(boons[i])
 		containers[i].scale = Vector2.ZERO
-		containers[i].visible = true
-		var tween = create_tween()
-		tween.tween_property(
-			containers[i],
-			"scale",
-			Vector2.ONE,
-			0.25
-		).set_trans(Tween.TRANS_BACK)
+		containers[i].modulate.a = 0.0
+		var card_delay: float = delay + ScreenMotion.STAGGER * 1.5
+		get_tree().create_timer(card_delay).timeout.connect(func(): containers[i].visible = true)
+		var card_tween := create_tween().set_parallel(true)
+		card_tween.tween_property(containers[i], "scale", Vector2.ONE, ScreenMotion.ENTER_TIME).set_delay(card_delay)\
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		card_tween.tween_property(containers[i], "modulate:a", 1.0, ScreenMotion.ENTER_TIME * 0.5).set_delay(card_delay)
 	
-	await get_tree().create_timer(0.25).timeout # Lets the last card finish popping in before it starts pulsing
+	await get_tree().create_timer(ScreenMotion.STAGGER * 3.5 + ScreenMotion.ENTER_TIME).timeout # Lets the last card finish popping in before it starts pulsing
 	input_locked = false
 	_update_selection()
 
@@ -154,12 +149,19 @@ func _play_selection_animation(index):
 		_kill_pulse_tween(i)
 	var chosen_container = containers[index]
 	var chosen_gear = gears[index]
-	# Hiding other containers slightly
+	# The other cards sink and fade, one after the other
+	var order := 0
 	for i in range(3):
 		if i != index:
-			var fade := create_tween()
-			fade.tween_property(containers[i], "modulate:a", 0.0, 0.15)
-			fade.parallel().tween_property(gears[i], "modulate:a", 0.0, 0.15)
+			var fade := create_tween().set_parallel(true)
+			var delay: float = order * ScreenMotion.EXIT_STAGGER
+			fade.tween_property(containers[i], "modulate:a", 0.0, ScreenMotion.EXIT_TIME).set_delay(delay)
+			fade.tween_property(containers[i], "position:y", ScreenMotion.DROP_PIXELS, ScreenMotion.EXIT_TIME).set_delay(delay).as_relative()\
+				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+			fade.tween_property(gears[i], "modulate:a", 0.0, ScreenMotion.EXIT_TIME).set_delay(delay)
+			fade.tween_property(gears[i], "position:y", ScreenMotion.DROP_PIXELS, ScreenMotion.EXIT_TIME).set_delay(delay).as_relative()\
+				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+			order += 1
 
 	# Confirmation animation
 	var tween := create_tween()

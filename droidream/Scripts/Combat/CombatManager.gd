@@ -75,6 +75,7 @@ var sequence_chip_roll := false
 
 # Entity visual scenes to load for animations and UI
 var enemy_visuals: Dictionary = {} # Loads from CombatEntity and gives a dict of EnemyVisuals for enemies
+var leaving_visuals: Array = [] # Visuals of the finished encounter, kept until they fade out (see fade_out_defeated)
 var player_visual : PlayerVisual
 
 # Minigame and combat-specific variables
@@ -123,9 +124,12 @@ const TAME_HINT_SEQUENCES := 3 # The timing hint shows on the first sequences of
 const HIT_STOP_BLOCK := 0.10
 const HIT_STOP_HURT := 0.10
 var hit_stop_id := 0
+const ITEM_ZOOM := Vector2(1.25, 1.25) # How close the camera gets to the Droid while an item is used
+const ITEM_EFFECT_HOLD := 1.5 # Seconds combat holds after an item's effect, so its texts and particles can be seen
 const WORLD_DIM_ALPHA := 0.5 # How dark the world gets during a dream (black over it)
 const SHOP_DIM_Z := 5 # Above the creatures (z 1 to 3), below the Droid during the shop
 var shop_dim_rect: ColorRect
+var shop_dimmed := false
 var player_base_z := 0
 var dim_rect: ColorRect
 var betrayal_visual: Node2D = null # Multi-hit: the creature furthest on the tame side that was just turned on
@@ -323,7 +327,8 @@ func _connect_once(signal_to_connect: Signal, target: Callable) -> void:
 		signal_to_connect.connect(target)
 
 # Resets combat for new round
-func _reset_combat_state():
+# keep_visuals leaves the creatures standing after a victory, so they can fade out instead of vanishing
+func _reset_combat_state(keep_visuals := false):
 	# Variables reset
 	turn = ""
 	selected_enemy = null
@@ -349,8 +354,14 @@ func _reset_combat_state():
 	enemy_attack_finished_handlers.clear()
 	
 	# Freeing old enemy visuals and entities
-	for visual in enemy_visuals.values():
+	for visual in leaving_visuals:
 		if is_instance_valid(visual):
+			visual.queue_free()
+	leaving_visuals.clear()
+	for visual in enemy_visuals.values():
+		if keep_visuals:
+			leaving_visuals.append(visual)
+		elif is_instance_valid(visual):
 			visual.queue_free()
 	for enemy in enemies:
 		if is_instance_valid(enemy):
@@ -358,6 +369,17 @@ func _reset_combat_state():
 	
 	enemies.clear()
 	enemy_visuals.clear()
+
+# The creatures of the finished encounter fade away (the ones already gone have nothing to fade) and are freed
+func fade_out_defeated(duration := 0.3) -> void:
+	var fading := leaving_visuals.filter(func(v): return is_instance_valid(v) and v.visible)
+	leaving_visuals.clear()
+	for visual in fading:
+		var tween: Tween = visual.create_tween()
+		tween.tween_property(visual, "modulate:a", 0.0, duration)
+		tween.tween_callback(visual.queue_free)
+	if not fading.is_empty():
+		await get_tree().create_timer(duration).timeout
 
 # Absolute reset for after death (reset to very first stage)
 func _force_full_reset():
@@ -573,7 +595,7 @@ func _end_combat(victory: bool):
 		print("All enemies defeated or subdued.")
 		tutorial_text.hide_text()
 		var rewards = _generate_rewards()
-		_reset_combat_state()
+		_reset_combat_state(true)
 		combat_end.emit(victory, rewards)
 		# TO-DO Give rewards, XP based on if enemy is defeated/subdued
 		# Defeated = more currency, less items + karma (makes enemies harder, will look into how)
@@ -847,6 +869,8 @@ func _start_minigame(enemy: CombatEntity, play_explosion := true):
 	# Minigame's damage signal
 	minigame.damage_taken.connect(_on_minigame_damage_taken)
 	await minigame.animate_in() # The box appears now and stays through the explanation, the countdown and the minigame (play() does not animate it in again)
+	if glow:
+		glow.bloom() # The box is fully there, the glow blooms from behind it
 	if tutorial_mode:
 		tutorial_minigame_started.emit(minigame)
 	
@@ -1192,18 +1216,18 @@ func _try_restore_chip(used_type: CombatTypes.EntityType, critical: bool):
 	# 1. Player uses last chip, so that chip is always restored regardless of crit
 	if total_chips == 0:
 		_restore_chip(used_type)
-		player_visual.play_restore_chip()
+		_show_chip_restored(used_type)
 		return
 	# 2. Random crit chance
 	if randf() <= 0.10:
 		_restore_chip(used_type)
-		player_visual.play_restore_chip()
+		_show_chip_restored(used_type)
 
 # After the tame sequence: the last chip is always restored; otherwise the sequence's roll decides (one chip at most)
 func _restore_chip_after_sequence(used_type: CombatTypes.EntityType):
 	if PlayerData._get_total_chips() == 0 or sequence_chip_roll:
 		_restore_chip(used_type)
-		player_visual.play_restore_chip()
+		_show_chip_restored(used_type)
 	sequence_chip_roll = false
 
 # ABILITY, PASSIVE & ITEM-SPECIFIC FUNCTIONS
@@ -1422,7 +1446,7 @@ func _passive_microbots():
 			]
 			var restored_type = available_types.pick_random()
 			_restore_chip(restored_type)
-			vfx.spawn_info(player_visual, "[color=#e8e8e8]Chip restored![/color]\n%s" % CombatTypes.type_bbcode(restored_type))
+			_show_chip_restored(restored_type)
 
 # Heals the player for a random amount between 20-50%
 func _item_beetle_juice_sequence(inventory_item: InventoryItem, target = null):
@@ -1760,8 +1784,15 @@ func _execute_item(target):
 	if item.data.id == "ball":
 		await item.data.use_effect.call(self, item, target)
 	else:
+		# The camera stays on the Droid so the effect can be seen, and combat holds a moment afterwards (the Hypno Bone changes the creatures, so it stays wide)
+		var focus_player: bool = item.data.id != "hypno_bone"
+		if focus_player:
+			camera.ability_push_in(player_visual, ITEM_ZOOM)
 		await player_visual.play_item_use()
 		await item.data.use_effect.call(self, item, target)
+		await get_tree().create_timer(ITEM_EFFECT_HOLD).timeout
+		if focus_player:
+			await camera.reset_camera()
 	
 	var item_index := PlayerData.items.find(item)
 	if item_index != -1:
@@ -1995,6 +2026,10 @@ func _get_free_enemy_slot() -> int:
 		if not alive_in_slot:
 			return i
 	return -1
+
+# The info text over the Droid when a chip comes back, with the chip's type colored
+func _show_chip_restored(type: CombatTypes.EntityType):
+	vfx.spawn_info(player_visual, "[color=#e8e8e8]Chip restored![/color]\n%s" % CombatTypes.type_bbcode(type))
 
 # Gives back one chip of the given type
 func _restore_chip(type: CombatTypes.EntityType):
@@ -2538,12 +2573,13 @@ func _shop_dim(dim: bool):
 		shop_dim_rect.size = Vector2(4000, 4000)
 		shop_dim_rect.z_index = SHOP_DIM_Z
 		get_parent().get_node("World").add_child(shop_dim_rect)
-	if dim:
+	if dim and not shop_dimmed: # The dim stays on from the rewards through the shop, so the Droid's normal z is only taken once
 		player_base_z = player_visual.z_index
 		player_visual.z_index = SHOP_DIM_Z + 1
+	shop_dimmed = dim
 	var tween := create_tween()
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	tween.tween_property(shop_dim_rect, "color:a", WORLD_DIM_ALPHA if dim else 0.0, 0.5)
+	tween.tween_property(shop_dim_rect, "color:a", WORLD_DIM_ALPHA if dim else 0.0, ScreenMotion.DIM_TIME)
 	if not dim:
 		tween.finished.connect(func(): player_visual.z_index = player_base_z)
 

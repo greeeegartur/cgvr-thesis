@@ -21,17 +21,17 @@ const FILL_SAMPLE_ROWS := 8 # Rows at the bottom of the art that give the fill c
 
 # How much of the original contrast each layer keeps (1.0 = unchanged): far layers are calmer, so the characters stand out
 @export var layer_contrast := {
-	"Layer11_Sky": 0.70,
-	"Layer10_Clouds": 0.70,
-	"Layer09_Mountains": 0.70,
-	"Layer08_TreesFar": 0.80,
-	"Layer07_TreesMid": 0.80,
-	"Layer06_PlantsFar": 0.87,
-	"Layer05_TreesClose": 0.90,
-	"Layer04_PlantsClose": 0.93,
-	"Layer03_Ground": 1.00,
-	"Layer02_BaseObjects": 1.00,
-	"Layer01_Foreground": 1.00
+	"Layer11_Sky": 0.67,
+	"Layer10_Clouds": 0.67,
+	"Layer09_Mountains": 0.67,
+	"Layer08_TreesFar": 0.77,
+	"Layer07_TreesMid": 0.77,
+	"Layer06_PlantsFar": 0.84,
+	"Layer05_TreesClose": 0.87,
+	"Layer04_PlantsClose": 0.90,
+	"Layer03_Ground": 0.97,
+	"Layer02_BaseObjects": 0.97,
+	"Layer01_Foreground": 0.97
 }
 const GRADE_SHADER := preload("res://Scenes/Combat/BackgroundGrade.gdshader")
 

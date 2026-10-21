@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://Scripts/UI/HudSlotRow.gd" id="5_row"]
 [ext_resource type="Texture2D" uid="uid://dwxh5x6vwpat8" path="res://Graphics/Sprites/UI/abilitiesIcon.png" id="6_abil"]
 [ext_resource type="Texture2D" uid="uid://dn6qn615b2785" path="res://Graphics/Sprites/UI/itemsIcon.png" id="7_items"]
+[ext_resource type="Script" path="res://Scripts/UI/EncounterCounter.gd" id="8_enc"]
 
 [node name="PlayerStatsHUD" type="Control"]
 layout_mode = 3
@@ -67,9 +68,9 @@ text = "+2"
 [node name="BoltsRow" type="HBoxContainer" parent="."]
 layout_mode = 0
 offset_left = 591.0
-offset_top = 4.0
+offset_top = 15.0
 offset_right = 652.0
-offset_bottom = 21.0
+offset_bottom = 32.0
 
 [node name="Icon" type="TextureRect" parent="BoltsRow"]
 layout_mode = 2
@@ -103,3 +104,11 @@ script = ExtResource("5_row")
 preset = 2
 header_icon = ExtResource("7_items")
 popup_color = Color(0.82, 0.96, 1, 1)
+
+[node name="EncounterRow" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 0
+offset_left = 566.0
+offset_top = 2.0
+script = ExtResource("8_enc")

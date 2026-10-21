@@ -95,6 +95,26 @@ func follow(node: Node2D, offset := 0.0, zoom_amount := Vector2.ZERO):
 		.set_trans(Tween.TRANS_LINEAR)\
 		.set_ease(Tween.EASE_IN)
 
+# Waits until the camera has caught up with what it follows (position and zoom), at most max_time seconds
+func wait_until_settled(max_time := 3.0) -> void:
+	var waited := 0.0
+	while waited < max_time and not _is_settled():
+		await get_tree().process_frame
+		waited += get_process_delta_time()
+
+func _is_settled() -> bool:
+	if override:
+		return false
+	var target := default_position
+	if follow_target:
+		target.x = follow_target.global_position.x + x_offset
+	elif not follow_group.is_empty():
+		target.x = _group_center_x()
+	var lower := (zoom.x - 1.0) * ZOOM_LOWER + y_bias
+	target.y = default_position.y + lower
+	var zoom_goal := focus_zoom if follow_target else zoom
+	return global_position.distance_to(target) < 1.0 and zoom.distance_to(zoom_goal) < 0.01
+
 # Stops following entity
 func stop_follow():
 	follow_target = null

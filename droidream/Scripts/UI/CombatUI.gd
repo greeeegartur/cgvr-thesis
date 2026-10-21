@@ -9,6 +9,7 @@ extends Node
 @onready var bolts_label: Label = $PlayerStatsHUD/BoltsRow/Label
 @onready var abilities_row: HudSlotRow = $PlayerStatsHUD/AbilitiesRow
 @onready var items_row: HudSlotRow = $PlayerStatsHUD/ItemsRow
+@onready var encounter_counter: EncounterCounter = $PlayerStatsHUD/EncounterRow
 
 const STAT_FONT_SIZE := 16
 const STAT_FONT_SMALL := 12 # Used when a stat text such as +0.25 would reach the slot rows
@@ -170,6 +171,11 @@ func show_player_stats_hud():
 	stats_hud_tween = create_tween()
 	stats_hud_tween.tween_property(player_stats_hud, "modulate:a", 1.0, 0.18)
 	await stats_hud_tween.finished
+
+# Shows which encounter of the run the player is on (the tutorial never calls this, so it has no counter)
+func show_encounter(index: int, animate := true) -> void:
+	encounter_counter.visible = true
+	encounter_counter.set_progress(index, animate)
 
 func _combat_end(_victory := true, _rewards := {}):
 	_update_player_stats_hud()
