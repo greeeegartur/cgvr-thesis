@@ -12,6 +12,7 @@ enum BubbleMode {
 var mode := BubbleMode.CINEMATIC
 
 @onready var root := $BubbleRoot
+@onready var bubble: Sprite2D = $BubbleRoot/Bubble
 @onready var anim := $AnimationPlayer
 @onready var label := $BubbleRoot/RichTextLabel
 @onready var tail := $BubbleRoot/Tail
@@ -26,11 +27,21 @@ signal dialogue_finished
 var target_node : Node2D
 var is_typing := false
 var skip_requested := false
+var line_serial := 0 # A newer line cancels the typing of an older one
+var fit_max := 15 # Text size range a line is fitted into: the biggest size that fits is used
+var fit_min := 11
+const GROW_STEPS := [1.0, 1.5, 2.0] # Whole multiples of the pixel art, so a long line makes the bubble bigger without ragged pixels
+var base_label_position := Vector2.ZERO
+var base_label_size := Vector2.ZERO
+var base_bubble_scale := Vector2.ONE
 
 func set_target(node: Node2D):
 	target_node = node
 
 func _ready():
+	base_label_position = label.position
+	base_label_size = label.size
+	base_bubble_scale = bubble.scale
 	label.bbcode_enabled = true
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	visible = false
@@ -81,6 +92,9 @@ func update_position():
 	var left_pos := target_node.global_position + Vector2(-bubble_size.x - 40, -100)
 	var right_pos := target_node.global_position + Vector2(40, -100)
 
+	# Only the sides decide where it fits; the height is clamped below (Tuh-U can be at the top of the screen)
+	left_pos.y = clampf(left_pos.y, cam_rect.position.y, cam_rect.end.y - bubble_size.y)
+	right_pos.y = clampf(right_pos.y, cam_rect.position.y, cam_rect.end.y - bubble_size.y)
 	var left_rect := Rect2(left_pos, bubble_size)
 	var right_rect := Rect2(right_pos, bubble_size)
 
@@ -106,6 +120,7 @@ func update_position():
 
 func show_bubble():
 	visible = true
+	anim.play("idle") # The bubble keeps its bobbing animation
 	
 	root.scale = Vector2(0.7, 0.7)
 	root.modulate.a = 0.0
@@ -128,23 +143,31 @@ func hide_bubble():
 
 
 func say_line(bbcode_text: String, speed := 0.03) -> void:
+	line_serial += 1
+	var serial := line_serial
 	label.visible_characters = 0
 	await set_text_and_fit(bbcode_text)
+	if serial != line_serial:
+		return
 
 	is_typing = true
 	skip_requested = false
 
-	await type_text(speed)
+	await type_text(speed, serial)
+	if serial != line_serial:
+		return
 	is_typing = false
 
 	await wait_for_confirm()
 
 
-func type_text(speed := 0.02):
+func type_text(speed := 0.02, serial := line_serial):
 	var plain_text = label.get_parsed_text()
 	var total = plain_text.length()
 	
 	for i in range(total):
+		if serial != line_serial:
+			return
 		if skip_requested:
 			label.visible_characters = -1
 			return
@@ -172,25 +195,31 @@ func wait_for_confirm():
 # Text fitting methods
 func set_text_and_fit(text: String):
 	label.text = text
-	label.add_theme_font_size_override("normal_font_size", 14)
+	label.add_theme_font_size_override("normal_font_size", fit_max)
 	
 	await get_tree().process_frame
 	
 	await _adjust_font_to_fit()
 
+# Fits a line: the biggest readable size that fits; a line that is too long for the smallest size makes the bubble itself bigger
 func _adjust_font_to_fit():
-	var max_size = 14
-	var min_size = 11
-	var current_size = max_size
-	
-	while current_size >= min_size:
-		label.add_theme_font_size_override("normal_font_size", current_size)
-		await get_tree().process_frame
-		
-		if not _is_overflowing():
-			return
-		
-		current_size -= 1
+	for grow in GROW_STEPS:
+		_apply_bubble_size(grow)
+		var current_size := fit_max
+		while current_size >= fit_min:
+			label.add_theme_font_size_override("normal_font_size", current_size)
+			await get_tree().process_frame
+			
+			if not _is_overflowing():
+				return
+			
+			current_size -= 1
+
+# The bubble and its text area grow together (the text keeps its pixel size)
+func _apply_bubble_size(grow: float):
+	bubble.scale = base_bubble_scale * grow
+	label.position = base_label_position * grow
+	label.size = base_label_size * grow
 
 func _is_overflowing():
 	return label.get_content_height() > label.get_size().y

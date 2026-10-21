@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://buy3a8wt3qe8f"]
+[gd_scene format=3 uid="uid://buy3a8wt3qe8f"]
 
 [ext_resource type="Texture2D" uid="uid://dqqukw2jmv5vm" path="res://Scenes/Entities/Beetle/beetle.png" id="1_8bngv"]
 [ext_resource type="Script" uid="uid://cx4ejov60luxh" path="res://Scripts/Entities/EnemyVisual.gd" id="1_edmr7"]
@@ -207,45 +207,41 @@ _data = {
 &"subdue": SubResource("Animation_0uxmy")
 }
 
-[node name="EnemyVisual" type="Node2D"]
+[node name="EnemyVisual" type="Node2D" unique_id=704724827]
 z_index = 1
 script = ExtResource("1_edmr7")
 
-[node name="EnemyAxisBar" parent="." instance=ExtResource("5_hei77")]
+[node name="EnemyAxisBar" parent="." unique_id=1910260031 instance=ExtResource("5_hei77")]
 offset_left = -41.6
 offset_top = -38.2
 offset_right = -41.6
 offset_bottom = -38.2
 
-[node name="Visual" type="Node2D" parent="."]
+[node name="Visual" type="Node2D" parent="." unique_id=1331702701]
 z_index = 1
 
-[node name="Sprite2D" type="Sprite2D" parent="Visual"]
-position = Vector2(0, -1.2)
+[node name="Sprite2D" type="Sprite2D" parent="Visual" unique_id=795451962]
+position = Vector2(-3.9999995, -0.2000003)
 scale = Vector2(1.6, 1.6)
 texture = ExtResource("1_8bngv")
 vframes = 2
 
-[node name="TargetArrow" type="Node2D" parent="."]
+[node name="TargetArrow" type="Node2D" parent="." unique_id=502907887]
 visible = false
 
-[node name="Sprite2D" type="Sprite2D" parent="TargetArrow"]
+[node name="Sprite2D" type="Sprite2D" parent="TargetArrow" unique_id=1127417294]
 position = Vector2(2, -82.2)
 scale = Vector2(1.2, 1.2)
 texture = ExtResource("5_m0kqe")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="TargetArrow"]
-libraries = {
-&"": SubResource("AnimationLibrary_hei77")
-}
+[node name="AnimationPlayer" type="AnimationPlayer" parent="TargetArrow" unique_id=1375151743]
+libraries/ = SubResource("AnimationLibrary_hei77")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_5wbek")
-}
-autoplay = "idle"
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=366591177]
+libraries/ = SubResource("AnimationLibrary_5wbek")
+autoplay = &"idle"
 
-[node name="TurnOrder" type="Label" parent="."]
+[node name="TurnOrder" type="Label" parent="." unique_id=1074282905]
 visible = false
 offset_left = 12.0
 offset_top = -80.2

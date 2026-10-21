@@ -14,4 +14,5 @@ icon = ExtResource("1_yuu43")
 cost = 3
 max_stack = 3
 item_data = ExtResource("2_coeo7")
+rarity = 0
 metadata/_custom_type_script = "uid://b56nw6bpevr7t"

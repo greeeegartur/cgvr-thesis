@@ -10,15 +10,22 @@ const END_SCALE := 0.45
 const FONT_SIZE := 64
 
 static var seen := {} # Minigames that already counted down in this run
+static var known := {} # Minigames the player already played in the tutorial: they never count down again while the game stays open, in any run
 
-# Forgets what was seen (a new run, Retry)
-static func reset() -> void:
+# Forgets what was seen (a new run, Retry); what the tutorial taught stays known unless forget_known is true (the tutorial itself starts that way)
+static func reset(forget_known := false) -> void:
 	seen.clear()
+	if forget_known:
+		known.clear()
+
+# Counts a minigame as already met (the tutorial's beetle dream)
+static func mark_known(key: String) -> void:
+	known[key] = true
 
 # Counts down before the minigame with the given key, the first time only; returns at once when it is off or already seen.
 # host is any node in the scene (the countdown runs in game time, so pausing stops it)
 static func play(host: Node, key: String) -> void:
-	if not Settings.minigame_countdown or seen.has(key):
+	if not Settings.minigame_countdown or seen.has(key) or known.has(key):
 		return
 	seen[key] = true
 	

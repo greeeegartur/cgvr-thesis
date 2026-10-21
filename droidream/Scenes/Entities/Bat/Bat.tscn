@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://be0hjdwqjyhpi"]
+[gd_scene format=3 uid="uid://be0hjdwqjyhpi"]
 
 [ext_resource type="Script" uid="uid://cx4ejov60luxh" path="res://Scripts/Entities/EnemyVisual.gd" id="1_a4a18"]
 [ext_resource type="PackedScene" uid="uid://ngw3am72av6" path="res://Scenes/Entities/EnemyAxisBar.tscn" id="2_iwn4t"]
@@ -326,6 +326,23 @@ tracks/1/keys = {
 "values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
 }
 
+[sub_resource type="Animation" id="Animation_qg26n"]
+resource_name = "idle"
+length = 0.7
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.35),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [0, 1]
+}
+
 [sub_resource type="Animation" id="Animation_7naox"]
 resource_name = "subdue"
 length = 0.4
@@ -354,23 +371,6 @@ tracks/1/keys = {
 "values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
 }
 
-[sub_resource type="Animation" id="Animation_qg26n"]
-resource_name = "idle"
-length = 0.7
-loop_mode = 1
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath(".:frame")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.35),
-"transitions": PackedFloat32Array(1, 1),
-"update": 1,
-"values": [0, 1]
-}
-
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_ej3yk"]
 _data = {
 &"RESET": SubResource("Animation_7l13l"),
@@ -381,46 +381,42 @@ _data = {
 &"subdue": SubResource("Animation_7naox")
 }
 
-[node name="EnemyVisual" type="Node2D"]
+[node name="EnemyVisual" type="Node2D" unique_id=521180786]
 z_index = 1
 script = ExtResource("1_a4a18")
 
-[node name="EnemyAxisBar" parent="." instance=ExtResource("2_iwn4t")]
+[node name="EnemyAxisBar" parent="." unique_id=467165124 instance=ExtResource("2_iwn4t")]
 offset_left = -42.4
 offset_top = -57.0
 offset_right = -42.4
 offset_bottom = -57.0
 
-[node name="Visual" type="Node2D" parent="."]
+[node name="Visual" type="Node2D" parent="." unique_id=1060145092]
 z_index = 1
 position = Vector2(0, -12)
 
-[node name="Sprite2D" type="Sprite2D" parent="Visual"]
-position = Vector2(-6.0000005, 0)
+[node name="Sprite2D" type="Sprite2D" parent="Visual" unique_id=761842142]
+position = Vector2(-11, -2)
 scale = Vector2(1.6, 1.6)
 texture = ExtResource("3_ovd4s")
 vframes = 2
 
-[node name="TargetArrow" type="Node2D" parent="."]
+[node name="TargetArrow" type="Node2D" parent="." unique_id=455834010]
 visible = false
 
-[node name="Sprite2D" type="Sprite2D" parent="TargetArrow"]
+[node name="Sprite2D" type="Sprite2D" parent="TargetArrow" unique_id=1364830066]
 position = Vector2(2, -80)
 texture = ExtResource("4_1dtjn")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="TargetArrow"]
-libraries = {
-&"": SubResource("AnimationLibrary_hei77")
-}
+[node name="AnimationPlayer" type="AnimationPlayer" parent="TargetArrow" unique_id=1397493441]
+libraries/ = SubResource("AnimationLibrary_hei77")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1322733926]
 root_node = NodePath("../Visual/Sprite2D")
-libraries = {
-&"": SubResource("AnimationLibrary_ej3yk")
-}
-autoplay = "idle"
+libraries/ = SubResource("AnimationLibrary_ej3yk")
+autoplay = &"idle"
 
-[node name="TurnOrder" type="Label" parent="."]
+[node name="TurnOrder" type="Label" parent="." unique_id=1912614995]
 visible = false
 offset_left = 13.0
 offset_top = -90.0
@@ -434,7 +430,7 @@ text = "..."
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Effect" type="Sprite2D" parent="."]
+[node name="Effect" type="Sprite2D" parent="." unique_id=575966280]
 visible = false
 modulate = Color(1, 1, 1, 0)
 z_index = 1

@@ -24,6 +24,7 @@ signal cancel_ability_tame_select
 signal cycle_enemy(dir)
 signal confirm_enemy
 signal cancel_enemy
+signal tutorial_type_picked(type) # Tutorial only: a type was chosen while tutorial_pick_only is on
 
 # All turn states
 enum State {
@@ -51,6 +52,7 @@ const ATTACK_OPTIONS := [
 # Default state
 var state := State.NONE
 var previous_state : State
+var tutorial_pick_only := false # Tutorial exception: choosing a type only reports it (no chip is used, no target is selected, the panel stays open and Cancel is ignored)
 var selecting_tame_for_ability := false
 var last_selected_attack_type: CombatTypes.EntityType
 
@@ -85,6 +87,32 @@ const GEAR_ARROW_BOB := 3.0 # How far the arrows move outward on the beat
 const GEAR_BEAT_POP := 0.12
 const GEAR_BEAT_HOP := 3.0
 const TAME_TITLE_OVERLAP := 2.0 # How far the title's lower edge sinks toward the panel
+
+# Panels grow out of the selected gear option and shrink back into it
+const PANEL_OPEN_TIME := 0.14
+const PANEL_CLOSE_TIME := 0.10
+const PANEL_START_SCALE := 0.2
+const GEAR_DIM := Color(0.6, 0.6, 0.6) # The gear while a menu is open
+const GEAR_SPIN_TURN := PI / 2.0 # The gear turns a quarter when a menu opens and back when it closes
+const GEAR_TURN_TIME := 0.18 # Moving the options one step
+const BUFFER_MSEC := 250 # A Confirm or Cancel pressed during a transition waits this long to be applied
+const BUFFER_STATES := [State.OPTION_SELECT, State.ATTACK_TYPE_SELECT, State.ABILITIES_SELECT, State.ITEMS_SELECT, State.LOCKED]
+const BEAT_SETTLED := 0.6 # The pop and the label flash of the selected option settle to this after their first beat
+
+# Transition bookkeeping: every panel or gear animation counts as busy, and one Confirm or Cancel pressed meanwhile is kept
+var transitions := 0
+var buffered_action := ""
+var buffered_msec := 0
+var panel_tweens := {} # panel -> its running grow or shrink tween
+var gear_turn_tweens: Array[Tween] = []
+var gear_dim_tween: Tween
+var gear_arrow_fade: Tween
+var gear_loop_tween: Tween # The gear spins slowly while a creature is being selected
+var gear_spun := false # True while the gear has made its quarter turn for an open menu
+var gear_turn_target := 0.0 # The rotation the option turns lead to
+var gear_rest_rotation := 0.0 # The gear's rotation before that quarter turn
+var gear_beat_count := 0
+var gear_beat_phase := 0.0
 
 # The menus are placed for the normal camera, so they follow the camera's transform and stay attached to the Droid while it moves and zooms
 func _process(_delta: float) -> void:
@@ -133,9 +161,18 @@ func _set_gear_cursor(active: bool):
 		gear_arrow_tween.kill()
 		gear_arrow_tween = null
 	_stop_gear_beat()
+	if gear_arrow_fade:
+		gear_arrow_fade.kill()
+	gear_arrow_fade = create_tween().set_parallel(true)
 	for arrow in gear_arrows:
-		arrow.visible = active
+		if active:
+			arrow.visible = true
+			arrow.modulate.a = 0.0
+		gear_arrow_fade.tween_property(arrow, "modulate:a", 1.0 if active else 0.0, 0.12 if active else 0.08)
 	if not active:
+		gear_arrow_fade.chain().tween_callback(func():
+			for arrow in gear_arrows:
+				arrow.visible = false)
 		return
 	
 	# Arrows flank the top slot, in screen space (the gear menu is scaled, so they are not its children)
@@ -165,9 +202,14 @@ func _start_gear_beat():
 		gear_flash_material.shader = preload("res://Scenes/UI/FlashWhite.gdshader")
 	gear_beat_label.material = gear_flash_material
 	gear_beat_label.self_modulate = GEAR_LABEL_REST
+	gear_beat_count = 0
+	gear_beat_phase = 0.0
 	gear_beat_tween = create_tween().set_loops()
 	gear_beat_tween.tween_method(func(phase: float):
-		var envelope := SelectionPulse.beat_envelope(phase)
+		if phase < gear_beat_phase:
+			gear_beat_count += 1 # The next beat starts
+		gear_beat_phase = phase
+		var envelope := SelectionPulse.beat_envelope(phase) * (1.0 if gear_beat_count == 0 else BEAT_SETTLED) # Full strength on the first beat after a change
 		gear_beat_sprite.scale = Vector2.ONE * (1.0 + GEAR_BEAT_POP * envelope)
 		var hop := roundf(GEAR_BEAT_HOP * envelope) # Whole pixels, so the text stays crisp
 		gear_beat_sprite.position.y = -hop
@@ -201,6 +243,13 @@ func start_player_turn():
 
 # Applies next state based on current state input by player
 func _unhandled_input(event):
+	# During a transition one Confirm or Cancel is kept and applied when it ends
+	if transitions > 0 and state in BUFFER_STATES and (event.is_action_pressed("ui_accept") or event.is_action_pressed("ui_cancel")):
+		buffered_action = "ui_accept" if event.is_action_pressed("ui_accept") else "ui_cancel"
+		buffered_msec = Time.get_ticks_msec()
+		get_viewport().set_input_as_handled()
+		return
+	
 	match state:
 		State.OPTION_SELECT:
 			_handle_gear_input(event)
@@ -243,6 +292,8 @@ func _handle_attack_type_input(event):
 	elif event.is_action_pressed("ui_accept"):
 		_confirm_attack_type()
 	elif event.is_action_pressed("ui_cancel"):
+		if tutorial_pick_only:
+			return
 		if selecting_tame_for_ability:
 			_cancel_ability_tame_select()
 		else:
@@ -290,14 +341,20 @@ func _handle_items_input(event):
 		_cancel_to_gear(MENU_ITEMS)
 
 func _cancel_to_gear(menu_name: String):
-	_close_menu(menu_name)
+	# The gear brightens and the arrows return while the panel shrinks into it; input is accepted again when the panel is gone
+	state = State.LOCKED
+	_begin_transition()
 	_stop_gear_spin()
-	state = State.OPTION_SELECT
 	_restore_gear_menu()
+	await _close_menu(menu_name)
+	if state == State.LOCKED:
+		state = State.OPTION_SELECT
+	_end_transition()
 
 # Backing out of enemy selection to attack select state (pressing X)
 func cancel_enemy_selection():
 	state = State.LOCKED
+	_stop_gear_loop()
 	
 	if refund_guess_on_target_cancel:
 		PlayerData.add_guesses(last_selected_attack_type, 1) # Returns consumed guess
@@ -405,15 +462,7 @@ func _open_menu(menu_name: String, reset_index := false):
 	
 	_refresh_menu_rows(menu_name)
 	_update_popup(menu_name)
-	
-	panel.visible = true
-	panel.scale = Vector2.ZERO
-	panel.modulate.a = 0.0
-	
-	var tween := create_tween()
-	tween.tween_property(panel, "scale", Vector2.ONE, 0.15)
-	tween.parallel().tween_property(panel, "modulate:a", 1.0, 0.15)
-	await tween.finished
+	await _animate_panel(panel, true)
 
 func _close_menu(menu_name: String):
 	var panel := _get_panel(menu_name)
@@ -425,11 +474,7 @@ func _close_menu(menu_name: String):
 	elif menu_name == MENU_ABILITIES:
 		ability_popup.visible = false
 	
-	var tween := create_tween()
-	tween.tween_property(panel, "scale", Vector2.ZERO, 0.15)
-	tween.parallel().tween_property(panel, "modulate:a", 0.0, 0.12)
-	await tween.finished
-	panel.visible = false
+	await _animate_panel(panel, false)
 
 # Shows the info box of the selected row (only abilities and items have one)
 func _update_popup(menu_name: String):
@@ -456,60 +501,69 @@ func _handle_self_select_input(event):
 	elif event.is_action_pressed("ui_cancel"):
 		emit_signal("cancel_enemy")
 
-# Animation for hiding the attack option menu when canceling attack or starting enemy select state
 func _hide_menu(selected_option: String):
-	var panel = _correct_panel(selected_option)
-	
-	var tween := create_tween()
-	tween.tween_property(panel, "scale", Vector2.ZERO, 0.15)
-	tween.parallel().tween_property(panel, "modulate:a", 0.0, 0.12)
-	
-	await tween.finished
-	panel.visible = false
+	await _animate_panel(_correct_panel(selected_option), false)
 
 # Hides all player turn UI when enemy has been selected and confirmed, after which the player turn is executed
 func hide_all():
 	state = State.NONE
+	buffered_action = ""
+	_kill_panel_tweens()
 	visible = false
 
-# Moves the gear sprite and its options according to new index
 func _move_gear(dir: int):
 	gear_index = wrapi(gear_index + dir, 0, gear_options.size())
-	
-	# Tween logic
-	_animate_gear_change(gear_index, dir)
-	_update_gear_visuals()
-	_update_gear_positions(dir)
+	_turn_gear(dir)
 	_start_gear_beat()
 
-# Animates the gear menu and its options with tweens
-func _animate_gear_change(to: int, dir: int):
-	# Gear sprite rotation tween with transition
-	var tween := create_tween()
-	tween.tween_property(
-		gear_sprite,
-		"rotation",
-		gear_sprite.rotation + dir * PI / 4,
-		0.2
-	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+func _turn_gear(dir: int):
+	# One tween per element, and the ones of the previous press are killed, so pressing quickly never stacks them
+	for tween in gear_turn_tweens:
+		tween.kill()
+	gear_turn_tweens.clear()
 	
-	# Highlighting/darkening options with scale and modulate tweens
+	var spin := create_tween()
+	gear_turn_target += dir * PI / 4 # From the target, not the current angle, so a press in the middle of a turn never drifts
+	spin.tween_property(gear_sprite, "rotation", gear_turn_target, 0.2)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	gear_turn_tweens.append(spin)
+	
 	for i in gear_options.size():
 		var option = _get_gear_option_node(i)
-		var selected := i == to
-		
-		var option_scale := Vector2.ONE * (1.4 if selected else 0.9)
+		var slot_index := wrapi(i - gear_index, 0, option_slots.size())
+		var selected := i == gear_index
+		var label: Label = option.get_node("Label")
 		var color := Color.WHITE if selected else Color(0.5, 0.5, 0.5)
-		create_tween().tween_property(option, "scale", option_scale, 0.1)
-		create_tween().tween_property(option, "modulate", color, 0.1)
+		label.visible = selected
+		
+		# The option sliding in from behind fades in
+		if slot_index == 1 and dir > 0:
+			option.modulate.a = 0.0
+		
+		var tween := create_tween().set_parallel(true)
+		var target_pos: Vector2 = option_slots[slot_index] + (Vector2(0, -5) if selected else Vector2.ZERO)
+		tween.tween_property(option, "position", target_pos, GEAR_TURN_TIME).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tween.tween_property(option, "scale", Vector2.ONE * (1.3 if selected else 0.85), 0.15)
+		tween.tween_property(option, "modulate", color, 0.12)
+		tween.tween_property(label, "modulate:a", 1.0 if selected else 0.0, 0.12)
+		gear_turn_tweens.append(tween)
 
-# Animates the gear menu at start of turn/when backing out of an option
 func _show_gear_menu():
 	visible = true
 	gear_menu.visible = true
 	gear_menu.scale = Vector2.ZERO
 	gear_menu.modulate = Color.WHITE
 	gear_sprite.rotation = 0.0
+	gear_turn_target = 0.0
+	gear_spun = false
+	if gear_spin_tween:
+		gear_spin_tween.kill()
+		gear_spin_tween = null
+	for tween in gear_turn_tweens:
+		tween.kill()
+	gear_turn_tweens.clear()
+	if gear_dim_tween:
+		gear_dim_tween.kill()
 	
 	_reset_gear_layout()
 	
@@ -520,7 +574,6 @@ func _show_gear_menu():
 		0.4
 	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
-	_update_gear_visuals()
 	_set_gear_cursor(false)
 	_show_gear_cursor_later()
 
@@ -532,6 +585,15 @@ func _show_gear_cursor_later():
 
 func hide_player_turn_ui():
 	_set_gear_cursor(false)
+	_kill_panel_tweens()
+	if gear_loop_tween: # The gear spins away fast while it fades
+		gear_loop_tween.kill()
+		gear_loop_tween = null
+	if gear_spin_tween:
+		gear_spin_tween.kill()
+	gear_spin_tween = create_tween()
+	gear_spin_tween.tween_property(gear_sprite, "rotation", gear_sprite.rotation + TAU * 2.0, 0.4)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	var tween = create_tween()
 	tween.tween_property(
 		gear_menu,
@@ -551,89 +613,50 @@ func hide_player_turn_ui():
 	gear_menu.visible = false
 	visible = false
 
-# Gear spinning loop animation during attack menu selection
 func _start_gear_spin():
-	_stop_gear_spin() # Default just in case
+	if gear_spun:
+		return
+	gear_rest_rotation = gear_turn_target
+	_turn_gear_sprite(gear_rest_rotation + GEAR_SPIN_TURN, 0.25)
+	gear_spun = true
 
-	gear_spin_tween = create_tween()
-	gear_spin_tween.set_loops()
-	gear_spin_tween.tween_property(
-		gear_sprite,
-		"rotation",
-		TAU,
-		3.5
-	).set_trans(Tween.TRANS_LINEAR).as_relative()
-
-
-# Stops gear spinning if active (when exiting back to option selection)
 func _stop_gear_spin():
+	_stop_gear_loop()
+	if not gear_spun:
+		return
+	_turn_gear_sprite(gear_rest_rotation, PANEL_CLOSE_TIME) # Back before input returns, so no gear turn starts while it is still moving
+	gear_spun = false
+
+# The slow endless spin while a creature is being selected
+func _start_gear_loop():
+	if not visible or gear_loop_tween:
+		return
 	if gear_spin_tween:
 		gear_spin_tween.kill()
-		gear_spin_tween = null
-		create_tween().tween_property(
-			gear_sprite,
-			"rotation",
-			round(gear_sprite.rotation / PI) * PI,
-			0.12
-		).set_trans(Tween.TRANS_LINEAR)
+	gear_loop_tween = create_tween().set_loops()
+	gear_loop_tween.tween_property(gear_sprite, "rotation", TAU, 3.5).set_trans(Tween.TRANS_LINEAR).as_relative()
 
-# Animates gear visual options with tweens based on player input
-func _update_gear_visuals():
-	var count := gear_options_root.get_child_count()
-	for i in count:
-		var option = _get_gear_option_node(i)
-		var selected := i == gear_index
-		var label = option.get_node("Label")
-		
-		var tween := create_tween()
-		# Option (node) properties
-		tween.tween_property(
-			option,
-			"position:y",
-			-85 if selected else option.position.y,
-			0.15
-		).set_trans(Tween.TRANS_BACK)
-		tween.parallel().tween_property(
-			option,
-			"scale",
-			Vector2.ONE * (1.3 if selected else 0.85),
-			0.15
-		)
-		tween.parallel().tween_property(
-			option,
-			"modulate",
-			Color.WHITE if selected else Color(0.5, 0.5, 0.5),
-			0.12
-		)
-		
-		# Label properties
-		label.visible = selected
-		var target_alpha := 1.0 if selected else 0.0
-		tween.parallel().tween_property(
-			label,
-			"modulate:a",
-			target_alpha,
-			0.12
-		)
+# Ends the endless spin by easing on to the next full turn (it looks the same as the resting angle, which the gear then takes without a jump)
+func _stop_gear_loop():
+	if not gear_loop_tween:
+		return
+	gear_loop_tween.kill()
+	gear_loop_tween = null
+	var rest := gear_rest_rotation + (GEAR_SPIN_TURN if gear_spun else 0.0)
+	var target := rest + ceilf((gear_sprite.rotation - rest) / TAU) * TAU
+	if gear_spin_tween:
+		gear_spin_tween.kill()
+	gear_spin_tween = create_tween()
+	gear_spin_tween.tween_property(gear_sprite, "rotation", target, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	gear_spin_tween.tween_callback(func(): gear_sprite.rotation = rest)
 
-# Changes gear positions depending on the direction the gear moved in to have a sort of spinning/shuffling effect (Mario & Luigi, Paper Mario inspiration)
-func _update_gear_positions(dir: int):
-	for i in gear_options_root.get_child_count():
-		var option = _get_gear_option_node(i)
-		var slot_index := wrapi(i - gear_index, 0, option_slots.size())
-		var selected := i == gear_index
-		# Offset up if selected
-		var target_pos = option_slots[slot_index] + Vector2(0, -5) if selected else option_slots[slot_index]
-		
-		var tween := create_tween()
-		# Icon moves to target_pos and fades out
-		tween.tween_property(option, "position", target_pos, 0.18)\
-			.set_trans(Tween.TRANS_CUBIC)\
-			.set_ease(Tween.EASE_OUT)
-		
-		if slot_index == 1 and dir > 0:
-			option.modulate.a = 0.0
-			tween.parallel().tween_property(option, "modulate:a", 1.0, 0.1)
+# One eased turn of the gear sprite to a rotation (a quarter when a menu opens, back to where it was when it closes)
+func _turn_gear_sprite(target: float, time: float):
+	if gear_spin_tween:
+		gear_spin_tween.kill()
+	gear_spin_tween = create_tween()
+	gear_spin_tween.tween_property(gear_sprite, "rotation", target, time)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 # Confirms option and sets the current state to locked so no more player inputs can be given
 func _confirm_gear_option():
@@ -644,34 +667,88 @@ func _confirm_gear_option():
 	_set_gear_cursor(false)
 	_start_action_transition()
 
-# Animation logic for preparing player options after OPTION_SELECT state
 func _start_action_transition():
-	# Darkens gear UI
-	create_tween().tween_property(
-		gear_menu,
-		"modulate",
-		Color(0.6, 0.6, 0.6),
-		0.2
-	)
-	
-	_start_gear_spin() # Starts spinning gear (preparing for attack)
+	_begin_transition()
+	_dim_gear(GEAR_DIM, 0.2) # Darkens gear UI
+	_start_gear_spin() # A quarter turn (preparing for attack)
 	await get_tree().create_timer(0.05).timeout # Shows the attack menu after a small delay
 	await _open_menu(gear_options[gear_index], true)
+	_end_transition()
+
+# TRANSITIONS
+# A transition (a panel growing or shrinking, a confirm opening a menu, a cancel returning to the gear) keeps the UI busy until it ends
+func _begin_transition():
+	transitions += 1
+
+func _end_transition():
+	transitions = maxi(transitions - 1, 0)
+	if transitions == 0 and buffered_action != "":
+		_apply_buffered_action.call_deferred()
+
+# Applies the Confirm or Cancel that was pressed during the transition, if it is still fresh
+func _apply_buffered_action():
+	var action := buffered_action
+	buffered_action = ""
+	if action == "" or Time.get_ticks_msec() - buffered_msec > BUFFER_MSEC:
+		return
+	var press := InputEventAction.new()
+	press.action = action
+	press.pressed = true
+	_unhandled_input(press)
+
+# Where panels grow from and shrink to: the selected option of the gear (it always sits in the top slot)
+func _gear_anchor() -> Vector2:
+	return gear_menu.position + (option_slots[0] + Vector2(0, -5)) * 0.75
+
+# A panel grows out of the gear (back ease, a little overshoot) or shrinks back into it; returns when the animation has ended
+func _animate_panel(panel: UIPanel, opening: bool):
+	_begin_transition()
+	if panel_tweens.has(panel):
+		panel_tweens[panel].kill()
+	panel.pivot_offset = _gear_anchor() - panel.position # Scaling around the gear option makes the panel come out of it
+	var time := PANEL_OPEN_TIME if opening else PANEL_CLOSE_TIME
+	var tween := create_tween().set_parallel(true)
+	if opening:
+		panel.visible = true
+		panel.scale = Vector2.ONE * PANEL_START_SCALE
+		panel.modulate.a = 0.0
+		tween.tween_property(panel, "scale", Vector2.ONE, time).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tween.tween_property(panel, "modulate:a", 1.0, time * 0.6)
+	else:
+		tween.tween_property(panel, "scale", Vector2.ONE * PANEL_START_SCALE, time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tween.tween_property(panel, "modulate:a", 0.0, time * 0.7)
+	panel_tweens[panel] = tween
+	
+	await get_tree().create_timer(time).timeout
+	if panel_tweens.get(panel) == tween: # No newer animation took the panel over
+		panel_tweens.erase(panel)
+		if not opening:
+			panel.visible = false
+	_end_transition()
+
+func _kill_panel_tweens():
+	for panel in panel_tweens:
+		panel_tweens[panel].kill()
+	panel_tweens.clear()
+
+# Dims or brightens the gear (one tween, so the last change wins)
+func _dim_gear(color: Color, time: float):
+	if gear_dim_tween:
+		gear_dim_tween.kill()
+	gear_dim_tween = create_tween()
+	gear_dim_tween.tween_property(gear_menu, "modulate", color, time)
+
+# True while the player is choosing (the gear, the menus, a target) or a menu is changing, false during the enemy turn, the tame sequence and minigames
+func is_choosing() -> bool:
+	return transitions > 0 or state in [State.OPTION_SELECT, State.ATTACK_TYPE_SELECT, State.ABILITIES_SELECT, State.ITEMS_SELECT, State.ENEMY_SELECT, State.SELF_SELECT]
 
 # Getter for the specific node option that the player selects
 func _get_gear_option_node(index: int):
 	return gear_options_root.get_child(index) as Node2D
 
-# Tween animation for moving back to the option selection
 func _restore_gear_menu():
 	_set_gear_cursor(true)
-	var tween = create_tween()
-	tween.tween_property(
-		gear_menu,
-		"modulate",
-		Color.WHITE,
-		0.15
-	)
+	_dim_gear(Color.WHITE, 0.15)
 
 # Preselects an attack type in the attack menu (used by the tutorial)
 func set_attack_index(index: int):
@@ -719,6 +796,10 @@ func _update_ability_info_popup():
 func _confirm_attack_type():
 	var chosen_type: CombatTypes.EntityType = ATTACK_OPTIONS[attack_list.selected_index].id
 	
+	if tutorial_pick_only:
+		tutorial_type_picked.emit(chosen_type)
+		return
+	
 	if not PlayerData.has_guess(chosen_type):
 		shake_panel()
 		return
@@ -736,6 +817,7 @@ func _confirm_attack_type():
 	pending_tame_type_for_ability = false
 	
 	state = State.ENEMY_SELECT
+	_start_gear_loop()
 	emit_signal("attack_type_selected", chosen_type)
 
 func _cancel_ability_tame_select():
@@ -750,6 +832,7 @@ func _cancel_ability_tame_select():
 # For locking player inputs in the combat scene
 func lock_input():
 	state = State.LOCKED
+	buffered_action = ""
 
 # Shakes panel when invalid option is selected (i.e guess type that has no guesses)
 func shake_panel(strength: float = 1):
@@ -779,12 +862,14 @@ func _correct_panel(selected_option: String):
 	return panel
 
 func _start_targeting(from_menu := "", refund_guess := false):
+	_start_gear_loop()
 	previous_state = state
 	target_return_menu = from_menu
 	refund_guess_on_target_cancel = refund_guess
 	state = State.ENEMY_SELECT
 
 func _start_self_targeting(from_menu := ""):
+	_start_gear_loop()
 	previous_state = state
 	target_return_menu = from_menu
 	refund_guess_on_target_cancel = false

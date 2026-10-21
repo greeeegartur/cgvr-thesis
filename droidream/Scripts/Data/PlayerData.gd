@@ -13,6 +13,7 @@ const BASE_GUESSES := {
 }
 const MAX_ITEM_TYPES := 6
 const MAX_ABILITY_SLOTS := 6
+const MAX_DEFENSE := 0.75 # Permanent defense from boons stops here (the Harden bonus is temporary and stacks on top)
 
 # Actual adjustable player variables (can change for the player)
 var max_hp : float
@@ -30,6 +31,7 @@ var abilities: Array[InventoryAbility] = []
 var killed_creatures: Array[String] = []
 var tamed_creatures: Array[String] = []
 var karma := 0
+var tame_hints_shown := 0 # Tame sequences that showed the "Press Z at the right time!" hint in this run
 const KARMA_THRESHOLDS := [15, 25, 40, 50, 60, 75]
 
 signal stats_changed
@@ -39,6 +41,7 @@ func _ready():
 
 func reset_run():
 	MinigameCountdown.reset() # Every minigame counts down again in the new run
+	ShopDialogue.reset() # Tuh-U greets you like a first visit again
 	# Reset stats
 	max_hp = BASE_MAX_HP
 	hp = BASE_MAX_HP
@@ -49,6 +52,7 @@ func reset_run():
 	# Reset progression
 	currency = 0
 	karma = 0
+	tame_hints_shown = 0
 	killed_creatures.clear()
 	tamed_creatures.clear()
 	abilities.clear()
@@ -73,7 +77,7 @@ func add_power(amount):
 	stats_changed.emit()
 
 func add_defense(amount):
-	defense += amount
+	defense = minf(defense + amount, MAX_DEFENSE)
 	stats_changed.emit()
 
 func add_hp(amount):
@@ -258,6 +262,9 @@ func get_ending_type() -> String:
 	if killed > 0 and tamed > 0:
 		return "neutral"
 	return "?" # Should not happen
+
+func has_max_defense() -> bool:
+	return defense >= MAX_DEFENSE
 
 func has_max_abilities() -> bool:
 	return abilities.size() >= MAX_ABILITY_SLOTS

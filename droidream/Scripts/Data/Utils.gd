@@ -24,13 +24,17 @@ func weighted_pick(weights: Dictionary):
 	var roll := randf() * total
 	var acc := 0.0
 	
+	var last_key = weights.keys()[0]
 	for key in weights.keys():
+		if weights[key] <= 0.0:
+			continue # A key without weight is never picked (not even by a roll of exactly 0)
+		last_key = key
 		acc += weights[key]
 		if roll <= acc:
 			return key
 	
-	# Fallback (should never happen)
-	return weights.keys()[0]
+	# Fallback (rounding): the last key that has weight
+	return last_key
 
 # Returns an array of all the wrong types
 func _get_wrong_guess_type(enemy_type: CombatTypes.EntityType) -> CombatTypes.EntityType:

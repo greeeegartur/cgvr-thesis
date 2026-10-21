@@ -2,6 +2,8 @@ extends Node
 
 class_name StopManager
 
+# The shop between stages: Tuh-U drops in, three items are rolled onto big centered cards, the selected one is described in a box under them
+
 signal stop_finished
 signal demo_ending_finished
 
@@ -15,34 +17,85 @@ enum State {
 
 # Base selection
 var state := State.INACTIVE
-var selection_index := 0
-var next_pop_tween: Tween
-var ufo_idle_tween: Tween
+var selection_index := 0 # The cards first, then the "Next" button
 
 @onready var ui := $StopUI
 @onready var ufo := $StopUI/TuhU
-@onready var items_container := $StopUI/ItemsContainer
-@onready var next_button := $StopUI/NextArrow
-@onready var stop_text := $StopUI/StopText
-@onready var popup := $StopUI/ShopItemContainer
+@onready var combat_manager := $"../CombatManager"
 @onready var combat_ui := $"../UI/CombatUI"
 @onready var player_visual := $"../World/PlayerVisual"
 @onready var camera := $"../Camera2D"
 @onready var speech_bubble := $"../UI/SpeechBubble"
-@onready var item_scene = preload("res://Scenes/UI/ShopItem.tscn")
 @onready var HitFeedbackScene = preload("res://Scenes/VFX/HitFeedbackText.tscn")
 
-var popup_tween: Tween
-var popup_scale_tween: Tween
+const FONT_BOLD := preload("res://Graphics/Fonts/PixelOperator-Bold.ttf")
 const UFO_STOP_POS := Vector2(390, 210)
-const UFO_ENDING_POS := Vector2(170, 210)
+const UFO_ENDING_POS := Vector2(170, 210) # Beside the Droid, looking at it
+const UFO_ENDING_CENTER_Y := 150.0 # Height where he steps toward the player (the middle of the screen) to break the fourth wall
+const UFO_SHOP_POS := Vector2(556, 164) # Right of the items, looking at the Droid on the left
+const UFO_HOME_POS := Vector2(463, -20) # Where Tuh-U waits above the screen
+const CARD_GAP := 8.0
+const SHOP_LEFT := 160.0 # Left edge of the items: away from the top HUD and the Droid, and Tuh-U sits about as far from the right edge as the Droid is from the left
+const DETAIL_WIDTH := 300.0 # Slim, so Tuh-U and his bubble fit beside it
+const CARDS_TOP := 104.0
+const DETAIL_TOP := 206.0
+const NEXT_SIZE := Vector2(62, 32)
+const NEXT_ARROW_SPACE := 14.0 # The arrow takes the right side, so the text is nudged left to look centered
+const ENDING_WIDTHS := [120.0, 150.0, 190.0, 230.0] # The ending's lines are longer than the shop's
+const CARDS_AFTER_ENTRY := 0.6 # Seconds into Tuh-U's glide when the cards start to appear
+const LINE_TIME := 2.4 # Seconds a line of Tuh-U stays up
+
+var shop_layer: CanvasLayer # Screen-fixed layer above the dimmed world
+var card_row: Control
+var cards: Array[ShopCard] = []
+var detail: ShopDetailPanel
+var shop_bubble: ShopBubble
+var next_button: UIPanel
+var next_arrow: UIArrow
+var next_label: Label
+var next_tween: Tween
+var line_id := 0
+var ufo_scale := Vector2.ONE
 
 func _ready():
-	var base_y = popup.position.y - 10.0
-	var t = create_tween()
-	t.set_loops()
-	t.tween_property(popup, "position:y", base_y + 3, 1.2)
-	t.tween_property(popup, "position:y", base_y, 1.2)
+	_build_shop_ui()
+
+func _build_shop_ui():
+	shop_layer = CanvasLayer.new()
+	shop_layer.layer = 2 # Above the HUD and the world dim, below the pause menu
+	shop_layer.visible = false
+	add_child(shop_layer)
+	card_row = Control.new()
+	card_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shop_layer.add_child(card_row)
+	shop_bubble = ShopBubble.new()
+	detail = ShopDetailPanel.new()
+	detail.top_y = DETAIL_TOP
+	detail.modulate.a = 0.0 # Hidden until the first card is selected, so it does not sit at the top left while the shop opens
+	shop_layer.add_child(detail)
+	
+	next_button = UIPanel.new()
+	next_button.size = NEXT_SIZE
+	next_button.pivot_offset = NEXT_SIZE * 0.5
+	next_button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	next_button.visible = false
+	shop_layer.add_child(next_button)
+	next_label = Label.new()
+	next_label.text = "Next"
+	next_label.add_theme_font_override("font", FONT_BOLD)
+	next_label.add_theme_font_size_override("font_size", 14)
+	next_label.add_theme_constant_override("outline_size", 4)
+	next_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	next_label.position = Vector2(-NEXT_ARROW_SPACE * 0.5, 0) # Centered between the left edge and the arrow
+	next_label.size = NEXT_SIZE
+	next_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	next_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	next_button.add_child(next_label)
+	next_arrow = UIArrow.new()
+	next_arrow.facing = 1
+	next_arrow.position = Vector2(NEXT_SIZE.x - 16, NEXT_SIZE.y * 0.5 - 5.5)
+	next_button.add_child(next_arrow)
+	shop_layer.add_child(shop_bubble) # Last, so it is drawn above the rest
 
 func _unhandled_input(event):
 	if state != State.ACTIVE:
@@ -56,61 +109,50 @@ func _unhandled_input(event):
 		_activate_selection()
 
 func _move_selection(direction: int):
-	var max_index := items_container.get_child_count()
-	selection_index = clamp(selection_index + direction, 0, max_index)
+	selection_index = clampi(selection_index + direction, 0, cards.size())
 	_update_selection_visuals()
 
 func _update_selection_visuals():
-	for i in items_container.get_child_count():
-		var item = items_container.get_child(i)
-		var selected = (i == selection_index)
-		item.set_selected(selected)
-		if selected:
-			item.start_pop()
-			_move_popup_to(item)
-		else:
-			item.stop_pop()
+	for i in cards.size():
+		cards[i].set_selected(i == selection_index)
 	
-	# Next button logic
-	var is_next := selection_index == items_container.get_child_count()
+	var is_next := selection_index == cards.size()
+	_set_next_selected(is_next)
 	if is_next:
-		_hide_popup()
+		detail.show_next()
 	else:
-		_show_popup()
-	_set_next_button_selected(is_next)
+		var card := cards[selection_index]
+		detail.show_entry(card.entry, card.quantity)
 
-func _move_popup_to(item: ShopItem):
-	popup.visible = true
-	popup.setup(item.item_data, item.quantity, _get_modified_price(item.item_data.cost))
-	var target_x = item.global_position.x - 72
-	
-	if popup_tween:
-		popup_tween.kill()
-	popup_tween = create_tween()
-	popup_tween.set_trans(Tween.TRANS_CUBIC)
-	popup_tween.set_ease(Tween.EASE_OUT)
-	popup_tween.tween_property(
-		popup,
-		"global_position:x",
-		target_x + 4,
-		0.18
-	)
-	popup_tween.tween_property(popup, "global_position:x", target_x, 0.08)
+func _set_next_selected(selected: bool):
+	if next_tween:
+		next_tween.kill()
+	next_tween = create_tween().set_parallel(true)
+	var shade := 1.0 if selected else 0.7
+	next_tween.tween_property(next_button, "scale", Vector2.ONE * (1.08 if selected else 1.0), 0.12)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	next_tween.tween_property(next_button, "modulate", Color(shade, shade, shade, 1.0), 0.12)
+	next_button.set_highlight(selected, Color.WHITE, 2.0) # Selected containers get a white outline
 
 func _activate_selection():
-	if selection_index < items_container.get_child_count():
-		var item_node = items_container.get_child(selection_index)
-		_attempt_purchase(item_node)
+	if selection_index < cards.size():
+		_attempt_purchase(cards[selection_index])
 	else:
 		await _exit_stop()
 
-func _attempt_purchase(shop_item: ShopItem):
-	var data := shop_item.item_data
+func _attempt_purchase(shop_item: ShopCard):
+	var data := shop_item.entry
 	var actual_cost := _get_modified_price(data.cost)
 	
-	# Does not allow purchase
-	if PlayerData.currency < actual_cost or shop_item.quantity <= 0:
+	# Sold out
+	if shop_item.quantity <= 0:
 		shop_item.shake()
+		return
+	
+	# Cannot afford it
+	if PlayerData.currency < actual_cost:
+		shop_item.shake()
+		_tuhu_says(ShopDialogue.deny())
 		return
 	
 	var added := false
@@ -169,294 +211,204 @@ func _attempt_purchase(shop_item: ShopItem):
 	# Purchase accepted
 	PlayerData.currency -= actual_cost
 	shop_item.confirm_purchase()
-	_play_purchase_feedback(shop_item)
 	_spawn_purchase_feedback(shop_item)
+	_tuhu_says(ShopDialogue.buy())
 	
-	shop_item.quantity -= 1
+	shop_item.set_quantity(shop_item.quantity - 1)
 	combat_ui.refresh_player_hud()
+	_refresh_prices()
 	_update_selection_visuals()
+
+# Prices turn red on the cards the player cannot afford (anymore)
+func _refresh_prices():
+	for card in cards:
+		var price := _get_modified_price(card.entry.cost)
+		card.set_price(price, PlayerData.currency >= price)
 
 func enter_stop():
 	state = State.ENTERING
 	ui.visible = true
-	popup.scale = Vector2.ZERO
-	popup.visible = true
+	shop_layer.visible = true
+	_take_ufo()
+	combat_manager._world_gray_out(true, true) # The Droid stays undimmed
 	
-	await _animate_ufo_entry()
-	await _spawn_items()
+	# The cards start rolling in while Tuh-U is still gliding down (not waited for: he settles by the time the cards are in)
+	_animate_ufo_entry(UFO_SHOP_POS.y)
+	await get_tree().create_timer(CARDS_AFTER_ENTRY).timeout
+	await _spawn_cards()
 	await _show_next_button()
 	selection_index = 0
 	_update_selection_visuals()
 	
 	state = State.ACTIVE
 	set_process_input(true)
+	_tuhu_says(ShopDialogue.arrival())
 
 func _exit_stop():
 	state = State.EXITING
 	set_process_input(false)
-	
-	await _animate_items_out()
+	line_id += 1
+	combat_manager._world_gray_out(false, true) # The world lights up again while the shop leaves
+	_hide_line() # Tuh-U's bubble goes away
+	_animate_items_out() # The cards drop and fade with the box and the button, then Tuh-U lifts away
+	detail.pop_out()
 	await _next_button_out()
+	await get_tree().create_timer(ScreenMotion.EXIT_STAGGER * 2.0).timeout
 	await _animate_ufo_exit()
 	_stop_ufo_idle()
+	_return_ufo()
 	
 	# Resetting selection and UI for next stage
 	selection_index = 0
-	for child in items_container.get_children():
-		child.stop_pop()
-	next_button.scale = Vector2.ONE
+	shop_layer.visible = false
 	
 	state = State.INACTIVE
 	ui.visible = false
 	
 	stop_finished.emit()
 
-func _animate_ufo_entry():
-	ufo.position.y = -20
-	var tween := create_tween()
-	tween.tween_property(ufo, "position:y", 210, 1.2)
-	tween.set_trans(Tween.TRANS_BACK)
-	tween.set_ease(Tween.EASE_OUT)
-	
-	await tween.finished
-	_start_ufo_idle()
+# Tuh-U moves to the screen-fixed layer for the shop (the world is dimmed behind it), facing the Droid on the left
+func _take_ufo():
+	ufo_scale = ufo.scale
+	ufo.reparent(shop_layer, false)
+	ufo.position = Vector2(UFO_SHOP_POS.x, -20)
+	ufo.flip_toward_right() # Faces the Droid on the left
+
+# ...and goes back to the stop UI where the demo ending expects him
+func _return_ufo():
+	ufo.reparent(ui, false)
+	ufo.scale = ufo_scale
+	ufo.reset_pose()
+	ufo.position = UFO_HOME_POS
+
+func _animate_ufo_entry(target_y := 210.0):
+	await ufo.glide_in(target_y) # Swoops in, then floats
 
 func _start_ufo_idle():
-	_stop_ufo_idle()
-
-	ufo_idle_tween = create_tween()
-	ufo_idle_tween.set_loops()
-
-	ufo_idle_tween.tween_property(
-		ufo,
-		"position:y",
-		ufo.position.y + 10,
-		1.2
-	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-
-	ufo_idle_tween.tween_property(
-		ufo,
-		"position:y",
-		ufo.position.y,
-		1.2
-	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	ufo.set_hovering(true)
 
 func _stop_ufo_idle():
-	if ufo_idle_tween:
-		ufo_idle_tween.kill()
-		ufo_idle_tween = null
+	ufo.set_hovering(false)
 
 func _animate_ufo_exit():
-	var tween := create_tween()
-	tween.tween_property(ufo, "position:y", -20, 0.8)
-	tween.set_trans(Tween.TRANS_BACK)
-	tween.set_ease(Tween.EASE_IN)
-	await tween.finished
+	await ufo.glide_out()
 
-func _play_purchase_feedback(shop_item: ShopItem):
-	var tween := create_tween()
-	# Popup slamming
-	tween.tween_property(
-		popup,
-		"scale",
-		Vector2(0.85, 1.25),
-		0.08
-	)
-
-	# Flash
-	tween.parallel().tween_property(popup, "modulate", Color(1,1,1,2), 0.05)
-	tween.tween_property(popup, "modulate", Color.WHITE, 0.1)
+# Rolls the items and lays the cards out in a centered row
+func _spawn_cards():
+	var rolled_items: Array = _roll_shop_items()
+	var count: int = rolled_items.size()
+	if count < 3:
+		push_warning("The shop rolled only %d cards." % count) # Should not happen: chips fill missing cards
+	var total: float = count * ShopCard.CARD_SIZE.x + maxi(count - 1, 0) * CARD_GAP
 	
-	# Bouncing
-	tween.tween_property(
-		popup,
-		"scale",
-		Vector2.ONE * 1.6,
-		0.18
-	).set_trans(Tween.TRANS_BACK)
-
-	# Item pop confirmation
-	tween.parallel().tween_property(
-		shop_item,
-		"scale",
-		Vector2(1.45, 1.45),
-		0.12
-	)
-	tween.tween_property(
-		shop_item,
-		"scale",
-		Vector2.ONE * 1.2,
-		0.12
-	)
-
-	await tween.finished
-
-func _spawn_items():
-	items_container.visible = true
+	# The detail box lines up with a full row of three cards, the Next button sits beside the row
+	var row_width: float = 3.0 * ShopCard.CARD_SIZE.x + 2.0 * CARD_GAP
+	var row_left: float = SHOP_LEFT
+	var start_x: float = row_left + (row_width - total) * 0.5 # A shorter row stays centered
+	detail.size = Vector2(DETAIL_WIDTH, ShopDetailPanel.MIN_HEIGHT)
+	detail.position.x = row_left + (row_width - DETAIL_WIDTH) * 0.5
+	next_button.position = Vector2(detail.position.x + DETAIL_WIDTH + 12.0, DETAIL_TOP + 6.0) # Beside the detail box
 	
-	var rolled_items = _roll_shop_items()
-	
-	for i in rolled_items.size():
-		var item_instance = item_scene.instantiate()
-		item_instance.position = Vector2(410 + (i * 53), 250)
-		items_container.add_child(item_instance)
+	for i in count:
+		var data: ShopEntry = rolled_items[i]
+		var card := ShopCard.new()
+		card_row.add_child(card)
+		card.position = Vector2(start_x + i * (ShopCard.CARD_SIZE.x + CARD_GAP), CARDS_TOP)
+		card.rest_position = card.position
 		
-		var data = rolled_items[i]
-		item_instance.setup(data)
-
 		# Generate stack size depending on given item (necessary for chips and maybe other items)
-		if data.max_stack > 1:
-			item_instance.quantity = randi_range(1, data.max_stack)
-		else:
-			item_instance.quantity = 1
-		
-		item_instance.scale = Vector2.ZERO
-		var tween := create_tween()
-		tween.tween_property(item_instance, "scale", Vector2.ONE, 0.2)
+		var stack := randi_range(1, data.max_stack) if data.max_stack > 1 else 1
+		var price := _get_modified_price(data.cost)
+		card.setup(data, stack, price, PlayerData.currency >= price)
+		card.set_selected(false)
+		card.pop_in(i * ScreenMotion.STAGGER)
+		cards.append(card)
+	
+	await get_tree().create_timer(ScreenMotion.ENTER_TIME * 0.7 + count * ScreenMotion.STAGGER).timeout # Waits for the cards to be mostly in
 
-func _animate_items_out() -> void:
-	var children := items_container.get_children()
-	
-	for i in children.size():
-		var item = children[i]
-		var tween := create_tween()
-		tween.tween_property(item, "scale", Vector2.ZERO, 0.2)
-		tween.parallel().tween_property(item, "modulate:a", 0.0, 0.2)
-	
-	await get_tree().create_timer(0.25).timeout
-	
-	for child in children:
-		child.queue_free()
+func _animate_items_out():
+	for i in cards.size():
+		cards[i].pop_out(i * ScreenMotion.EXIT_STAGGER)
+	var done_in := ScreenMotion.EXIT_TIME + cards.size() * ScreenMotion.EXIT_STAGGER
+	var leaving := cards.duplicate()
+	cards.clear()
+	await get_tree().create_timer(done_in).timeout
+	for card in leaving:
+		card.queue_free()
 
-# Also shows stop text
 func _show_next_button():
 	next_button.visible = true
 	next_button.scale = Vector2.ZERO
-	stop_text.visible = true
-	stop_text.scale = Vector2.ZERO
-	
 	var tween := create_tween()
-	tween.tween_property(next_button, "scale", Vector2.ONE, 0.2)
-	tween.parallel().tween_property(stop_text, "scale", Vector2.ONE, 0.2)
+	tween.tween_property(next_button, "scale", Vector2.ONE, ScreenMotion.ENTER_TIME * 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	await tween.finished
 
 func _next_button_out():
 	var tween := create_tween()
-	tween.tween_property(next_button, "scale", Vector2.ZERO, 0.2)
-	tween.parallel().tween_property(stop_text, "scale", Vector2.ZERO, 0.2)
+	tween.tween_property(next_button, "scale", Vector2.ZERO, ScreenMotion.EXIT_TIME)
 	await tween.finished
-	
 	next_button.visible = false
-	stop_text.visible = false
 
-func _set_next_button_selected(selected: bool):
-	if selected:
-		_start_next_pop()
-	else:
-		_stop_next_pop()
-
-func _start_next_pop():
-	if next_pop_tween:
-		next_pop_tween.kill()
-	
-	next_pop_tween = create_tween()
-	next_pop_tween.set_loops()
-	next_pop_tween.tween_property(next_button, "scale", Vector2(1.2,1.2), 0.4)
-	next_pop_tween.tween_property(next_button, "scale", Vector2.ONE, 0.4)
-	next_pop_tween.set_trans(Tween.TRANS_LINEAR)
-	next_pop_tween.set_ease(Tween.EASE_IN)
-
-func _stop_next_pop():
-	if next_pop_tween:
-		next_pop_tween.kill()
-	next_button.scale = Vector2.ONE
-
-# Randomly picks 3 items to display in the shop from current unlocked items
+# Picks 3 different cards by rarity from the entries the player can actually take; chips fill in if fewer are valid
 func _roll_shop_items():
-	var pool = ItemDb.get_unlocked_items().duplicate()
-	var chosen: Array[ShopEntry] = []
+	var valid: Array = ItemDb.get_unlocked_items().filter(_can_take)
+	var chosen: Array[ShopEntry] = ItemDb.pick_weighted(valid, 3)
 	
-	while chosen.size() < 3 and pool.size() > 0:
-		var item = pool.pick_random()
-		pool.erase(item)
-		
-		# Duplicate check for abilities
-		if item.type == ShopEntry.ItemType.ABILITY and item.ability_data:
-			if PlayerData.has_ability(item.ability_data.id):
-				continue
-			if PlayerData.has_max_abilities():
-				continue
-		
-		# And same for passives
-		if item.type == ShopEntry.ItemType.PASSIVE and item.passive_data:
-			if PlayerData.has_ability(item.passive_data.id):
-				continue
-			if PlayerData.has_max_abilities():
-				continue
-		
-		# Also same check for items
-		if item.type == ShopEntry.ItemType.ITEM and item.item_data:
-			# Skip if player cannot add one
-			if not PlayerData.can_add_item(item.item_data, 1):
-				continue
-		
-		# Does not allow the same item to be in the shop twice, i.e "Repair" ability and "Repair" ability
-		if chosen.any(func(i): return i.id == item.id):
-			continue
-		
-		chosen.append(item)
+	for id in ItemDb.FILLER_IDS:
+		if chosen.size() >= 3:
+			break
+		var filler: ShopEntry = ItemDb.get_item(id)
+		if not chosen.has(filler):
+			chosen.append(filler)
 	
 	return chosen
 
-func _hide_popup():
-	if popup_scale_tween:
-		popup_scale_tween.kill()
-	popup_scale_tween = create_tween()
-	popup_scale_tween.tween_property(
-		popup,
-		"scale",
-		Vector2.ZERO,
-		0.15
-	)
+# Whether the player can take a shop entry right now (no owned abilities, no full slots or stacks)
+func _can_take(item: ShopEntry) -> bool:
+	if item.type == ShopEntry.ItemType.ABILITY and item.ability_data:
+		return not PlayerData.has_ability(item.ability_data.id) and not PlayerData.has_max_abilities()
+	if item.type == ShopEntry.ItemType.PASSIVE and item.passive_data:
+		return not PlayerData.has_ability(item.passive_data.id) and not PlayerData.has_max_abilities()
+	if item.type == ShopEntry.ItemType.ITEM and item.item_data:
+		return PlayerData.can_add_item(item.item_data, 1)
+	return true
 
-func _show_popup():
-	if popup_scale_tween:
-		popup_scale_tween.kill()
-	popup_scale_tween = create_tween()
-	popup_scale_tween.tween_property(
-		popup,
-		"scale",
-		Vector2.ONE * 1.6,
-		0.15
-	)
+# Tuh-U says a short line in his bubble without blocking the shop; a new line replaces the old one
+func _tuhu_says(line: Dictionary):
+	line_id += 1
+	var id := line_id
+	match line["mood"]:
+		"happy":
+			ufo.play_happy()
+		"sad":
+			ufo.play_sad()
+		_:
+			ufo.play_normal()
+	shop_bubble.say(line["text"], ufo.global_position + Vector2(0, -22))
+	await get_tree().create_timer(LINE_TIME + line["text"].length() * 0.02).timeout
+	if id == line_id and state == State.ACTIVE:
+		_hide_line()
 
-func _spawn_purchase_feedback(shop_item: ShopItem):
-	var texts = [
-		"[color=#17e84f][wave freq=12]Bought![/wave][/color]",
-		"[color=#eff238][wave freq=12]Acquired![/wave][/color]",
-		"[color=#3d9feb][shake rate=14]Got it![/shake][/color]"
-	]
-	var feedback := HitFeedbackScene.instantiate()
-	ui.add_child(feedback)
-	
-	feedback.rotation_degrees = randf_range(-3,3)
-	feedback.global_position = shop_item.global_position + Vector2(0,-20)
-	feedback.play(texts.pick_random())
+func _hide_line():
+	shop_bubble.hide_bubble()
+
+func _spawn_purchase_feedback(shop_item: ShopCard):
+	var at := shop_item.global_position + Vector2(ShopCard.CARD_SIZE.x * 0.5 - 20, -8)
+	ActionFeedback.show(HitFeedbackScene, shop_layer, at, ActionFeedback.Tier.PURCHASE, false)
 
 func _get_modified_price(base_cost: int) -> int:
 	return base_cost + PlayerData.get_shop_price_increase()
 
-func _spawn_inventory_full_feedback(shop_item: ShopItem, message: String):
+func _spawn_inventory_full_feedback(shop_item: ShopCard, message: String):
 	var feedback := HitFeedbackScene.instantiate()
-	ui.add_child(feedback)
+	shop_layer.add_child(feedback)
 	feedback.rotation_degrees = randf_range(-3, 3)
-	feedback.global_position = shop_item.global_position + Vector2(0, -20)
+	feedback.global_position = shop_item.global_position + Vector2(ShopCard.CARD_SIZE.x * 0.5 - 30, -8)
 	feedback.play(message)
 
 # ENDING METHODS
-func say(text: String, mood := "normal"):
-	speech_bubble.set_target(ufo)
-	
+# Tuh-U's ending dialogue uses the same pixel bubble as the shop, above him and growing to the right, waiting for Confirm after each line
+func say(text: String, mood := "normal", hops := false):
 	match mood:
 		"happy":
 			ufo.play_happy()
@@ -468,15 +420,22 @@ func say(text: String, mood := "normal"):
 			ufo.play_look_down()
 		"up":
 			ufo.play_look_up()
+		"front":
+			ufo.play_normal() # Looking at the player
 		_:
-			ufo.play_normal()
+			ufo.play_look_right() # The sideways-looking face, mirrored by his facing: his eyes are on the Droid
+	_stop_ufo_idle() # He holds still while he talks, so the tail of the bubble keeps pointing at him
+	if hops:
+		ufo.hop() # Not waited for, it plays under the line
 	
-	speech_bubble.show_bubble()
-	await speech_bubble.say_line(text)
+	var ufo_screen: Vector2 = ufo.get_global_transform_with_canvas().origin
+	shop_bubble.configure(ufo_screen + Vector2(-16, -36), true, ENDING_WIDTHS)
+	await shop_bubble.say_and_wait(text, ufo_screen + Vector2(0, -20))
 
 
 func end_say():
-	speech_bubble.hide_bubble()
+	await shop_bubble.hide_bubble()
+	shop_bubble.configure(ShopBubble.ANCHOR) # Back to the shop's place
 
 
 func move_ufo_to(pos: Vector2, duration := 0.75, restart_idle := true):
@@ -500,50 +459,51 @@ func enter_demo_ending_stop():
 	
 	ui.visible = true
 	
-	# Hide normal shop UI.
-	popup.visible = false
-	items_container.visible = false
+	# Only the speech bubble of the shop layer is used (no cards, box or Next button)
+	shop_layer.visible = true
+	detail.visible = false
 	next_button.visible = false
-	stop_text.visible = false
 	
-	# Clear any leftover shop items.
-	for child in items_container.get_children():
-		child.queue_free()
-	
-	if not speech_bubble.is_node_ready():
-		await speech_bubble.ready
-	
-	speech_bubble.set_target(ufo)
-	speech_bubble.show_tail()
-	
+	camera.follow(player_visual) # The camera is already on its way to the Droid while Tuh-U arrives
 	await _animate_ufo_entry()
+	ufo.flip_toward_left() # Faces the Droid from now on
 	await move_ufo_to(UFO_ENDING_POS, 0.8)
 	
 	await _play_demo_ending_dialogue()
 	
 	set_process_input(false)
 	
-	end_say()
+	await end_say()
 	await get_tree().create_timer(0.25).timeout
-	await move_ufo_to(UFO_STOP_POS, 0.5)
+	_stop_ufo_idle()
+	await _animate_ufo_exit() # He leaves upward like he does in the shop
 	
 	state = State.INACTIVE
 	ui.visible = false
+	shop_layer.visible = false
+	detail.visible = true
 	
 	demo_ending_finished.emit()
 
+# The staging follows the tutorial: the bubble leaves before he moves, he looks at the Droid when he talks about it and at the player when he breaks the fourth wall
 func _play_demo_ending_dialogue():
-	camera.follow(player_visual)
 	player_visual.hide_hp()
-	await get_tree().create_timer(0.35).timeout
+	await camera.wait_until_settled() # The first line waits for the camera to finish focusing on the Droid
+	await get_tree().create_timer(0.3).timeout
 	
-	await say("Hey, we made it to the end of the jungle!", "happy")
-	await say("You're sure to become an excellent caretaker! There's no doubt in my mind!", "happy")
+	await say("Hey, we made it to the [b]end of the jungle[/b]!", "happy", true)
+	await say("You're sure to become an [b]excellent caretaker[/b]! There's no doubt in my mind!", "happy", true)
+	
+	# Away from the Droid and toward the player for the bad news
+	await _ending_move(Vector2(camera.get_screen_center_position().x, UFO_ENDING_CENTER_Y), false) # The camera follows the Droid, so the middle of the screen is found from it
 	await say("Unfortunately I have to break the fourth wall with some bad news.", "sad")
-	await say("You've reached the end of the demo made for this thesis.", "normal")
+	await say("You've reached the end of the [b]demo[/b].", "front")
 	await say("There's kinda nothing beyond this point other than unfinished assets.", "right")
-	await say("Feel free to try playing through the jungle again though! The experience is different each time!", "happy")
+	await say("Feel free to try playing through the jungle again though! The experience is different each time!", "happy", true)
 	
+	# Back to the Droid for its result
+	await end_say()
+	await _ending_move(UFO_ENDING_POS, true)
 	await player_visual.bubble_emote("worry")
 	await get_tree().create_timer(0.25).timeout
 	
@@ -560,12 +520,20 @@ func _play_demo_ending_dialogue():
 			await say("Honestly, I'm not sure how to evaluate you.", "normal") # Should not happen
 	
 	await say("I'm sending you back to the title screen now.", "normal")
-	end_say()
+	await end_say()
+
+# Moves Tuh-U once the bubble is gone and turns him toward the Droid (on the left) or the player
+func _ending_move(pos: Vector2, toward_droid: bool) -> void:
+	await end_say()
+	if toward_droid:
+		ufo.flip_toward_left()
+	await move_ufo_to(pos, 0.7)
+	await get_tree().create_timer(0.15).timeout
 
 func _play_pacifist_demo_dialogue():
-	await say("You managed to tame every creature in the jungle! You've done incredibly well!", "happy")
+	await say("You managed to tame [b]every creature[/b] in the jungle! You've done incredibly well!", "happy", true)
 	await say("I'm sure it must've been difficult, managing so many resources and whatnot.", "normal")
-	await say("You really are a true creature caretaker! I'm so proud!", "happy")
+	await say("You really are a true creature caretaker! I'm so proud!", "happy", true)
 
 
 func _play_neutral_demo_dialogue():

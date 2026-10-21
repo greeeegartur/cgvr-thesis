@@ -1,12 +1,13 @@
 extends ColorRect
 class_name MinigameGlow
 
-# A swirling, blob-like dream glow with drifting sparks behind the minigame box; fades in with the minigame and out when it ends
+# A swirling, blob-like dream glow with drifting sparks behind the minigame box; blooms from behind the box once it is fully there and fades out when the minigame ends
 
 const SHADER := preload("res://Scenes/VFX/MinigameGlow.gdshader")
 const MARGIN := 100.0 # How far the glow reaches past the box on each side
 const FALLBACK_BOX := Vector2(272, 302) # Minigames whose box has no PlayArea (Beetle Rush)
-const FADE_IN := 0.6
+const FADE_IN := 0.8
+const BLOOM_FROM := 0.85 # Scale the glow grows from while it fades in
 const FADE_OUT := 0.4
 const SPARK_COUNT := 26
 const SPARK_COLORS := [Color("#b04aff"), Color("#ff4ac0"), Color("#ffffff")]
@@ -80,11 +81,20 @@ func setup(root: Node2D) -> void:
 	sparks_node = Sparks.new()
 	add_child(sparks_node)
 	_follow_area()
-	create_tween().tween_method(_set_intensity, 0.0, 1.0, FADE_IN)
+
+# Blooms from behind the box; the glow already exists (invisible) while the box grows in, so its first draw does not stagger the bloom
+func bloom() -> void:
+	var tween := create_tween().set_parallel(true)
+	tween.tween_method(_set_intensity, 0.0, 1.0, FADE_IN).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.tween_method(_set_bloom, BLOOM_FROM, 1.0, FADE_IN).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+func _set_bloom(value: float) -> void:
+	scale = Vector2(value, value)
 
 # The glow keeps itself centered on the box
 func _follow_area() -> void:
 	size = box_size + Vector2(MARGIN, MARGIN) * 2.0
+	pivot_offset = size * 0.5
 	global_position = root_ref.global_position + box_offset - size * 0.5
 	material_ref.set_shader_parameter("rect_size", size)
 	sparks_node.area = size

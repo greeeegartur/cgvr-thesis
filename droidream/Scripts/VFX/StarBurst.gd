@@ -3,7 +3,7 @@ class_name StarBurst
 
 # One shared effect for hits, blocks, crits, kills and taming: chunky outlined stars, impact rays, rings, a slash line and sparkle crosses (Paper Mario style, all drawn in code)
 
-enum Preset { NORMAL, BLOCK, CRIT, KILL, TAME, TAME_FAIL }
+enum Preset { NORMAL, BLOCK, CRIT, KILL, TAME, TAME_FAIL, SMALL, STRONG, LANDING }
 
 const PARTICLE_CAP := 80 # Live stars and sparkles over all bursts; bigger bursts shrink instead of piling up
 const OUTLINE := Color(0, 0, 0, 1)
@@ -13,6 +13,9 @@ const PRESETS := {
 	Preset.CRIT: { "stars": 9, "star_size": Vector2(4, 7), "speed": Vector2(60, 130), "rays": 10, "ray_len": 38.0, "ring": 38.0, "sparkles": 4, "slash": true, "gravity": 0.0, "life": 0.55, "colors": [Color("#fff27a"), Color.WHITE, Color("#ff9a2e")] },
 	Preset.KILL: { "stars": 8, "star_size": Vector2(3, 6), "speed": Vector2(40, 100), "rays": 8, "ray_len": 28.0, "ring": 30.0, "sparkles": 3, "slash": false, "gravity": 90.0, "life": 0.75, "colors": [Color("#ff3a3a"), Color.WHITE, Color("#ff9a8a")] },
 	Preset.TAME: { "stars": 10, "star_size": Vector2(3, 6), "speed": Vector2(20, 60), "rays": 0, "ray_len": 0.0, "ring": 34.0, "ring2": 20.0, "sparkles": 8, "slash": false, "gravity": -50.0, "life": 0.9, "colors": [Color("#ff7ae0"), Color.WHITE, Color("#ffe27a")] },
+	Preset.SMALL: { "stars": 3, "star_size": Vector2(3, 4), "speed": Vector2(25, 55), "rays": 0, "ray_len": 0.0, "ring": 14.0, "sparkles": 0, "slash": false, "gravity": 0.0, "life": 0.3, "colors": [Color.WHITE] },
+	Preset.STRONG: { "stars": 9, "star_size": Vector2(4, 6), "speed": Vector2(45, 100), "rays": 6, "ray_len": 24.0, "ring": 26.0, "sparkles": 3, "slash": false, "gravity": 0.0, "life": 0.45, "colors": [Color("#fff27a"), Color.WHITE] },
+	Preset.LANDING: { "stars": 5, "star_size": Vector2(3, 5), "speed": Vector2(35, 75), "rays": 0, "ray_len": 0.0, "ring": 16.0, "sparkles": 3, "slash": false, "gravity": 0.0, "life": 0.35, "colors": [Color("#fff27a"), Color.WHITE] },
 	Preset.TAME_FAIL: { "stars": 0, "star_size": Vector2(2, 3), "speed": Vector2(10, 30), "rays": 0, "ray_len": 0.0, "ring": 22.0, "sparkles": 6, "slash": false, "gravity": 80.0, "life": 0.7, "colors": [Color("#9a9aa8"), Color("#c8c8d0")] },
 }
 

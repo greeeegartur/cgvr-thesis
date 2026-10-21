@@ -25,12 +25,15 @@ var counts: Array[Label] = []
 var popup: Label
 var popup_tween: Tween
 var known := {} # id -> count from the last update, to find what changed
+var shown: Array = [] # The entries in the slots (the tooltip reads their description and detail)
 var has_baseline := false
 
 func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE # Only the slots take the mouse (for their tooltips)
 	var header := TextureRect.new()
 	header.expand_mode = TextureRect.EXPAND_IGNORE_SIZE # Before the texture, so its own size does not set the minimum
 	header.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	header.texture = header_icon
 	header.custom_minimum_size = Vector2(HEADER_ICON_SIZE, HEADER_ICON_SIZE)
 	header.size = Vector2(HEADER_ICON_SIZE, HEADER_ICON_SIZE)
@@ -44,12 +47,16 @@ func _ready() -> void:
 		slot.position = Vector2(HEADER_WIDTH + i * (SLOT_SIZE + SLOT_GAP), (ROW_HEIGHT - SLOT_SIZE) / 2)
 		add_child(slot)
 		slots.append(slot)
+		slot.mouse_filter = Control.MOUSE_FILTER_STOP # Panels ignore the mouse by default
+		slot.mouse_entered.connect(func(): HudTooltip.show_tip(slot, _tip_for.bind(i), preset))
+		slot.mouse_exited.connect(func(): HudTooltip.hide_tip(slot))
 		
 		var icon := TextureRect.new()
 		icon.size = Vector2(ICON_SIZE, ICON_SIZE)
 		icon.position = Vector2((SLOT_SIZE - ICON_SIZE) / 2, (SLOT_SIZE - ICON_SIZE) / 2)
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		slot.add_child(icon)
 		icons.append(icon)
 		
@@ -109,7 +116,15 @@ func set_entries(entries: Array, announce := true) -> void:
 		if not changes.is_empty():
 			_show_popup(changes[0])
 
+# The tooltip texts of a slot: name, description and detail (empty for an empty slot)
+func _tip_for(index: int) -> Array:
+	if index >= shown.size():
+		return []
+	var entry: Dictionary = shown[index]
+	return [entry.name, entry.get("desc", ""), entry.get("detail", "")]
+
 func _show_entries(entries: Array) -> void:
+	shown = entries
 	for i in cap:
 		var filled := i < entries.size()
 		slots[i].style = null if filled else UIPanelStyle.from_base(EMPTY_STYLE_BASE)

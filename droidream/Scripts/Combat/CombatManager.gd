@@ -54,11 +54,9 @@ var selected_attack_type : CombatTypes.EntityType # Currently selected attack ty
 var turn_order_toggle_enabled := false # UI variable for turn showing enemy visual turn orders
 var locked_enemy_turn_order: Array
 
-# Attack time trackers for player blocking and critical hits
+# Attack time trackers for player blocking
 var attack_time = 0.0
 var attack_timer_running = false
-var critical_window = Vector2.ZERO
-var last_attack_press_time = -1.0
 
 # Player block window variables for handling blocking logic
 var last_block_press_time = -1.0
@@ -71,12 +69,13 @@ var enemy_attack_started_handlers: Dictionary = {}
 var enemy_attack_hit_handlers: Dictionary = {}
 var enemy_attack_finished_handlers: Dictionary = {}
 
-# Crit multipliers (for Recalibration effect)
-const BASE_CRIT_MULTIPLIER := 1.5
-const RECALIBRATION_CRIT_MULTIPLIER := 1.75
+const HIT_RETURN_DELAY := 0.4 # After a hit that did not tame, before the Droid walks home
+var tame_sequence: TameSequence
+var sequence_chip_roll := false
 
 # Entity visual scenes to load for animations and UI
 var enemy_visuals: Dictionary = {} # Loads from CombatEntity and gives a dict of EnemyVisuals for enemies
+var leaving_visuals: Array = [] # Visuals of the finished encounter, kept until they fade out (see fade_out_defeated)
 var player_visual : PlayerVisual
 
 # Minigame and combat-specific variables
@@ -93,8 +92,11 @@ var minigame_queue_ongoing := false
 signal tutorial_attack_resolved(critical: bool, minigame_started: bool)
 signal tutorial_minigame_started(minigame)
 signal tutorial_minigame_finished(success: bool)
+signal tutorial_minigame_released # The new tutorial lets a dream start after its explanation
 
 var tutorial_mode := false
+var tutorial_hold_minigame := false # While true a tutorial dream waits for tutorial_minigame_released before it counts down and starts
+var last_enemy_hit_blocked := false # Whether the last enemy hit was blocked (the tutorial reads it)
 var tutorial_inputs_locked := false
 var last_attack_was_critical := false
 var last_attack_started_minigame := false
@@ -117,10 +119,18 @@ const DUCK_TYPE_COLORS := {
 const HIT_STOP_SCALE := 0.05 # Time scale during a hit-stop
 const HIT_STOP_NORMAL := 0.06
 const HIT_STOP_CRIT := 0.12
+const HIT_STOP_LANDING := 0.04 # A Perfect landing of a tame icon
+const TAME_HINT_SEQUENCES := 3 # The timing hint shows on the first sequences of a run (always in the tutorial)
 const HIT_STOP_BLOCK := 0.10
 const HIT_STOP_HURT := 0.10
 var hit_stop_id := 0
+const ITEM_ZOOM := Vector2(1.25, 1.25) # How close the camera gets to the Droid while an item is used
+const ITEM_EFFECT_HOLD := 1.5 # Seconds combat holds after an item's effect, so its texts and particles can be seen
 const WORLD_DIM_ALPHA := 0.5 # How dark the world gets during a dream (black over it)
+const SHOP_DIM_Z := 5 # Above the creatures (z 1 to 3), below the Droid during the shop
+var shop_dim_rect: ColorRect
+var shop_dimmed := false
+var player_base_z := 0
 var dim_rect: ColorRect
 var betrayal_visual: Node2D = null # Multi-hit: the creature furthest on the tame side that was just turned on
 var betrayal_axis := 0.0
@@ -175,6 +185,8 @@ const ICE_CUBE_HEAL_RATIO := 0.10
 # Prepares combat by loading entities (player and enemy(s)) and starting combat
 func _ready():
 	set_process_input(true)
+	tame_sequence = TameSequence.new()
+	add_child(tame_sequence)
 	await _setup_ui()
 	# Combat scene's process mode (pausing) for minigames
 	process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -315,13 +327,13 @@ func _connect_once(signal_to_connect: Signal, target: Callable) -> void:
 		signal_to_connect.connect(target)
 
 # Resets combat for new round
-func _reset_combat_state():
+# keep_visuals leaves the creatures standing after a victory, so they can fade out instead of vanishing
+func _reset_combat_state(keep_visuals := false):
 	# Variables reset
 	turn = ""
 	selected_enemy = null
 	current_target_reach = 0
 	attack_timer_running = false
-	last_attack_press_time = 0.0
 	heat_up_pending_power_bonus = 0
 	heat_up_active = false
 	heat_up_power_bonus = 0
@@ -342,8 +354,14 @@ func _reset_combat_state():
 	enemy_attack_finished_handlers.clear()
 	
 	# Freeing old enemy visuals and entities
-	for visual in enemy_visuals.values():
+	for visual in leaving_visuals:
 		if is_instance_valid(visual):
+			visual.queue_free()
+	leaving_visuals.clear()
+	for visual in enemy_visuals.values():
+		if keep_visuals:
+			leaving_visuals.append(visual)
+		elif is_instance_valid(visual):
 			visual.queue_free()
 	for enemy in enemies:
 		if is_instance_valid(enemy):
@@ -351,6 +369,17 @@ func _reset_combat_state():
 	
 	enemies.clear()
 	enemy_visuals.clear()
+
+# The creatures of the finished encounter fade away (the ones already gone have nothing to fade) and are freed
+func fade_out_defeated(duration := 0.3) -> void:
+	var fading := leaving_visuals.filter(func(v): return is_instance_valid(v) and v.visible)
+	leaving_visuals.clear()
+	for visual in fading:
+		var tween: Tween = visual.create_tween()
+		tween.tween_property(visual, "modulate:a", 0.0, duration)
+		tween.tween_callback(visual.queue_free)
+	if not fading.is_empty():
+		await get_tree().create_timer(duration).timeout
 
 # Absolute reset for after death (reset to very first stage)
 func _force_full_reset():
@@ -463,7 +492,7 @@ func _start_turn_loop():
 	#PlayerData.add_ability(AbilityDb.get_ability("harden"))
 	#PlayerData.add_ability(AbilityDb.get_ability("heatup"))
 	#PlayerData.add_ability(AbilityDb.get_ability("repair"))
-	PlayerData.add_item(CombatItemDb.get_item("ball"), 2)
+	#PlayerData.add_item(CombatItemDb.get_item("ball"), 2)
 	#PlayerData.add_item(CombatItemDb.get_item("memory_chip"), 2)
 	#PlayerData.add_item(CombatItemDb.get_item("soft_branch"), 2)
 	#PlayerData.add_item(CombatItemDb.get_item("thick_jelly"), 2)
@@ -566,7 +595,7 @@ func _end_combat(victory: bool):
 		print("All enemies defeated or subdued.")
 		tutorial_text.hide_text()
 		var rewards = _generate_rewards()
-		_reset_combat_state()
+		_reset_combat_state(true)
 		combat_end.emit(victory, rewards)
 		# TO-DO Give rewards, XP based on if enemy is defeated/subdued
 		# Defeated = more currency, less items + karma (makes enemies harder, will look into how)
@@ -586,7 +615,7 @@ func _end_combat(victory: bool):
 # ACTION FUNCTIONS
 # These functions progress the turn in some way
 
-# The player's attacking logic, takes the player's attack type as a parameter for damage calculation
+# The player's attacking logic: the Droid walks to the creature, the tame timing sequence runs (shadow icons, Z presses), then the damage is applied once
 func player_attack(attack_type: CombatTypes.EntityType):
 	tutorial_text.hide_text()
 	
@@ -602,95 +631,94 @@ func player_attack(attack_type: CombatTypes.EntityType):
 	
 	print("Player attacks with: ", attack_type)
 	
-	# Setting player's attack position to target enemy (relative to enemy_visual position)
-	var enemy_visual = enemy_visuals[selected_enemy]
+	var target := selected_enemy
+	var enemy_visual = enemy_visuals[target]
 	player_visual.attack_position = _get_player_attack_position(enemy_visual)
 	
 	# Camera settings
-	camera.frame_group([player_visual, enemy_visual], 0.35, CombatCamera.ZOOM_ACTION.x) # A little closer while taming, with the Droid and its target both in view
+	camera.frame_group([player_visual, enemy_visual], 0.35, CombatCamera.ZOOM_ACTION.x, CombatCamera.ACTION_LOWER) # A little closer while taming, with the Droid and its target both in view
 	
-	# Shows crit hint text for the player + allows inputs for crit
-	tutorial_text.show_hint(TutorialText.HintType.CRIT, enemy_visual)
-	player_visual.set_input_enabled(true)
+	# The sequence reads Z itself, so the Droid's own action signal stays off
+	player_visual.set_input_enabled(false)
+	await player_visual.walk_to_target()
 	
-	# Communication with PlayerVisual to calculate hit damage (check for critical hits) and play attack animations
-	player_visual.attack_started.connect(
-		func():
-			# Opens the critical window for the player to hit the opponent for additional damage
-			_start_player_critical_window(),
-		CONNECT_ONE_SHOT
-	)
+	# The icons: every press makes the Droid strike a pose; the results decide the multiplier and the chip roll
+	_connect_once(tame_sequence.pressed, player_visual.pose_on_press)
+	_connect_once(tame_sequence.icon_judged, _on_tame_icon_judged)
+	_connect_once(tame_sequence.last_icon_started, _on_last_tame_icon_started)
+	if tutorial_mode or PlayerData.tame_hints_shown < TAME_HINT_SEQUENCES:
+		if not tutorial_mode:
+			PlayerData.tame_hints_shown += 1
+		_connect_once(tame_sequence.pressed, tutorial_text.hide_text) # The hint goes away with the first press
+		tutorial_text.show_hint(TutorialText.HintType.TAME_TIMING, enemy_visual)
+	var results: Array = await tame_sequence.play(enemy_visual, player_visual, vfx.particle_layer, camera)
+	tutorial_text.hide_text()
+	var multiplier := TameSequence.multiplier(results, PlayerData.has_ability("recalibration"))
+	sequence_chip_roll = TameSequence.roll_chip(results)
+	last_attack_was_critical = results.count(TameSequence.Result.PERFECT) >= 2 # For the tutorial
+	print("Tame sequence: ", results, " multiplier ", multiplier)
+	if results.count(TameSequence.Result.MISS) == results.size():
+		player_visual.play_shrug() # A full fail is met with a small shrug, no screen effects
+	tame_sequence.clear() # The icons fade out while the damage and the feedback start at once
 	
-	player_visual.attack_hit.connect(
-		func():
-			# Hides hint text
-			tutorial_text.hide_text()
-			var minigame_started = await _apply_axis_shift(selected_enemy, attack_type) # Calculates the hit damage
-			if minigame_started:
-				if combat_has_ended:
-					return
-				
-				if _check_victory():
-					_end_combat(true)
-				else:
-					_enemy_turn(),
-		CONNECT_ONE_SHOT
-	)
+	var minigame_started = await _apply_axis_shift(target, attack_type, multiplier) # Calculates the hit damage
+	tame_sequence.clear()
+	if minigame_started:
+		if combat_has_ended:
+			return
+		if _check_victory():
+			_end_combat(true)
+		else:
+			_enemy_turn()
+		return
 	
-	# End of the turn
-	player_visual.attack_finished.connect(
-		func():
-			if in_minigame:
-				return
-			
-			if tutorial_mode:
-				tutorial_attack_resolved.emit(
-					last_attack_was_critical,
-					last_attack_started_minigame
-				)
-				player_visual.set_input_enabled(false)
-				return
-			
-			# Check if enemy defeated
-			if _check_victory():
-				_end_combat(true)
-			else:
-				# Else switch turn to enemy
-				_enemy_turn(),
-		CONNECT_ONE_SHOT
-	)
-	
-	await player_visual.play_attack()
-	
-	# Empty print for visual clarity in terminal while debugging
-	print("")
+	# No dream: a short beat, then the Droid walks home and the turn ends
+	await get_tree().create_timer(HIT_RETURN_DELAY).timeout
+	await player_visual.return_to_home()
+	if in_minigame:
+		return
+	if tutorial_mode:
+		tutorial_attack_resolved.emit(last_attack_was_critical, last_attack_started_minigame)
+		player_visual.set_input_enabled(false)
+		return
+	if _check_victory():
+		_end_combat(true)
+	else:
+		_enemy_turn()
 
-# Opens the player critical hit window during player's atack
-func _start_player_critical_window():
-	last_attack_press_time = -1.0
-	critical_window = Vector2(1.80, 2.05) # TO-DO: tweak this for good hit feel
-	attack_time = 0.0
-	attack_timer_running = true
+# While the last icon travels the camera eases slowly toward the creature (the next frame_group or reset takes it back)
+func _on_last_tame_icon_started() -> void:
+	if Settings.camera_shake:
+		camera.anticipate(0.9)
+
+# Every judged icon gets its feedback: a Perfect locks in with a small star burst, a tiny hit-stop and a stun jitter, the others only show their text
+func _on_tame_icon_judged(_index: int, result: int, spot: Vector2, _count: int) -> void:
+	var enemy_visual: EnemyVisual = enemy_visuals[selected_enemy]
+	var at := spot + Vector2(-48, -26)
+	match result:
+		TameSequence.Result.PERFECT:
+			if Settings.camera_shake:
+				camera.pop_zoom(0.04, 0.12) # A tiny pop
+			StarBurst.play(vfx.particle_layer, spot, StarBurst.Preset.LANDING)
+			vfx.play_tier_feedback(at, ActionFeedback.Tier.PERFECT)
+			_hit_impact(enemy_visual, HIT_STOP_LANDING)
+		TameSequence.Result.GOOD:
+			vfx.play_tier_feedback(at, ActionFeedback.Tier.GOOD)
+		TameSequence.Result.TRY:
+			vfx.play_tier_feedback(at, ActionFeedback.Tier.TRY)
+		_:
+			vfx.play_tier_feedback(at, ActionFeedback.Tier.MISS)
 
 # Processes the player's hit to shift the enemy's axis bar in a specific direction (kill, left or tame, right)
-func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
+func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType, multiplier := 1.0):
 	var enemy_visual = enemy_visuals[enemy]
 	
-	# Only for enemies, so not necessary here
-	attack_timer_running = false
-	
-	# Base damage calculation based on if crit or not
-	var base = player.attack_power
-	
-	var critical = (
-		last_attack_press_time >= critical_window.x
-		and last_attack_press_time <= critical_window.y
-	)
-	last_attack_was_critical = critical # For tutorial
+	# The sequence's multiplier is applied once to the base; the shift is rounded once at the end
+	var base = player.attack_power * multiplier
+	var critical: bool = multiplier >= TameSequence.MULT_ALL_PERFECT # An all-perfect sequence gets the big impact
 	last_attack_started_minigame = false
 	
 	if critical:
-		base *= _get_crit_multiplier() # Either 1.5 or 1.75
 		# VFX effects 
 		vfx.play_overlay_effects("crit", 0.4)
 		vfx.play_crit_feedback(enemy_visual)
@@ -717,12 +745,14 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		# Visual effects
 		enemy_visual.shake(critical)
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
-		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical) # Damage number, particles
-		_hit_impact(enemy_visual, HIT_STOP_CRIT if critical else HIT_STOP_NORMAL)
-		camera.impact(CombatCamera.Impact.MEDIUM)
+		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical, false, multiplier, true) # Damage number, particles
+		if critical:
+			_hit_impact(enemy_visual, HIT_STOP_CRIT) # The Perfect landings already gave the small hit-stops
+		if multiplier >= TameSequence.MULT_TRIED:
+			camera.impact(CombatCamera.Impact.MEDIUM)
 		
-		# Restores chip if matches conditions inside method
-		_try_restore_chip(guess_type, critical)
+		# Restores a chip when the sequence rolled one
+		_restore_chip_after_sequence(guess_type)
 		
 		print("Enemy gets %.2f tame progress, now axis line is %.2f and %.2f away from tame." % [value_shift, enemy.axis_value, enemy.max_hp - value_shift])
 		
@@ -752,11 +782,12 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType):
 		# Visual effects
 		enemy_visual.shake(critical)
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
-		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical)
-		_hit_impact(enemy_visual, HIT_STOP_CRIT if critical else HIT_STOP_NORMAL)
+		vfx.play_damage_vfx(enemy_visual, abs(actual_shift), critical, false, multiplier)
+		if critical:
+			_hit_impact(enemy_visual, HIT_STOP_CRIT)
 		
-		# Restores chip if matches conditions inside method
-		_try_restore_chip(guess_type, critical)
+		# Restores a chip when the sequence rolled one
+		_restore_chip_after_sequence(guess_type)
 		
 		# Checking if enemy has been defeated
 		_resolve_enemy_state(enemy)
@@ -837,10 +868,15 @@ func _start_minigame(enemy: CombatEntity, play_explosion := true):
 	
 	# Minigame's damage signal
 	minigame.damage_taken.connect(_on_minigame_damage_taken)
+	await minigame.animate_in() # The box appears now and stays through the explanation, the countdown and the minigame (play() does not animate it in again)
+	if glow:
+		glow.bloom() # The box is fully there, the glow blooms from behind it
 	if tutorial_mode:
 		tutorial_minigame_started.emit(minigame)
 	
-	if not tutorial_mode:
+	if tutorial_hold_minigame:
+		await tutorial_minigame_released
+	if not tutorial_mode or tutorial_hold_minigame:
 		await MinigameCountdown.play(self, "dream_" + enemy.minigame_id) # The first time this dream appears in the run
 	
 	minigame.play()
@@ -919,7 +955,7 @@ func _enemy_attack_single(enemy: CombatEntity):
 	
 	# Support patterns
 	if pattern.is_support:
-		camera.frame_group([visual], 0.35, CombatCamera.ZOOM_ACTION.x) # The supporting creature gets the focus too
+		camera.frame_group([visual], 0.35, CombatCamera.ZOOM_ACTION.x, CombatCamera.ACTION_LOWER) # The supporting creature gets the focus too
 		await _handle_support_pattern(enemy, pattern)
 		# Support patterns have no attack-finished handler, so the enemy's base layer is restored here (keeps the player above it)
 		if is_instance_valid(visual):
@@ -930,7 +966,7 @@ func _enemy_attack_single(enemy: CombatEntity):
 	visual.attack_position = _get_enemy_attack_position(visual)
 	
 	# Camera controls + tutorial text visible
-	camera.frame_group([player_visual, visual], 0.35, CombatCamera.ZOOM_ACTION.x) # A little closer while blocking, with the Droid and the attacker both in view
+	camera.frame_group([player_visual, visual], 0.35, CombatCamera.ZOOM_ACTION.x, CombatCamera.ACTION_LOWER) # A little closer while blocking, with the Droid and the attacker both in view
 	camera.anticipate() # Slow push toward the attacker during its wind-up
 	tutorial_text.show_hint(TutorialText.HintType.BLOCK, player_visual)
 	await _play_enemy_attack_pattern(enemy, visual, pattern)
@@ -1046,6 +1082,7 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 		and last_block_press_time <= window_end
 	)
 	
+	last_enemy_hit_blocked = blocked
 	var base_damage = enemy.attack_power
 	var hit_mult = hit.damage_multiplier
 	var damage = max(0.0, base_damage * hit_mult)
@@ -1120,13 +1157,6 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	if player.hp <= 0:
 		_end_combat(false)
 
-# Listens for player attack presses for critical hit logic
-func _on_player_attack_pressed():
-	# Failsafe to check if the function is running by accident
-	if turn != "player":
-		return
-	last_attack_press_time = attack_time
-
 # Listens for player block during an enemy's attack
 func _on_player_block_attempted():
 	# Failsafe to check if the function is running by accident
@@ -1156,15 +1186,13 @@ func _on_player_block_attempted():
 	# If all previous checks passed then block was triggered -> cooldown starts here
 	_start_block_cooldown()
 
-# Decides if action is player block or critical hit
+# Decides if the action press is a player block (taming reads Z in the tame sequence)
 func _on_player_action_pressed():
 	# Does not allow combat actions in minigames, only minigame centered logic handled by another script
 	if in_minigame:
 		return
 	if turn == "enemy":
 		_on_player_block_attempted()
-	elif turn == "player":
-		_on_player_attack_pressed()
 
 # Starts the player's block cooldown during the enemy turn
 func _start_block_cooldown():
@@ -1182,18 +1210,25 @@ func _start_block_cooldown():
 func _is_quick_tame(enemy: CombatEntity) -> bool:
 	return enemy.is_tamed() and enemy.turns_taken == 0
 
-# Chip restoring function for the player to gain back chips with crits; also acts as a softlock prevention method
+# Chip restoring for multi-tame to gain back chips with a random chance; also acts as a softlock prevention method
 func _try_restore_chip(used_type: CombatTypes.EntityType, critical: bool):
 	var total_chips = PlayerData._get_total_chips()
 	# 1. Player uses last chip, so that chip is always restored regardless of crit
 	if total_chips == 0:
 		_restore_chip(used_type)
-		player_visual.play_restore_chip()
+		_show_chip_restored(used_type)
 		return
 	# 2. Random crit chance
 	if randf() <= 0.10:
 		_restore_chip(used_type)
-		player_visual.play_restore_chip()
+		_show_chip_restored(used_type)
+
+# After the tame sequence: the last chip is always restored; otherwise the sequence's roll decides (one chip at most)
+func _restore_chip_after_sequence(used_type: CombatTypes.EntityType):
+	if PlayerData._get_total_chips() == 0 or sequence_chip_roll:
+		_restore_chip(used_type)
+		_show_chip_restored(used_type)
+	sequence_chip_roll = false
 
 # ABILITY, PASSIVE & ITEM-SPECIFIC FUNCTIONS
 # These functions are inherently ACTION functions, but categorised because of their niche uses
@@ -1411,7 +1446,7 @@ func _passive_microbots():
 			]
 			var restored_type = available_types.pick_random()
 			_restore_chip(restored_type)
-			vfx.spawn_info(player_visual, "[color=#eff238]Chip restored![/color]\n%s" % CombatTypes.type_bbcode(restored_type))
+			_show_chip_restored(restored_type)
 
 # Heals the player for a random amount between 20-50%
 func _item_beetle_juice_sequence(inventory_item: InventoryItem, target = null):
@@ -1441,7 +1476,7 @@ func _item_memory_chip_sequence(item: InventoryItem, target):
 	# Shows which chips were restored, colored by type (e.g. "Chips restored!" over "Sky + Earth")
 	vfx.spawn_info(
 		player_visual,
-		"[color=#cfcfcf]Chips restored![/color]\n%s" % " + ".join(restored_names)
+		"[color=#e8e8e8]Chips restored![/color]\n%s" % " + ".join(restored_names)
 	)
 
 # Grants even more block power for the player for 3 turns
@@ -1669,7 +1704,7 @@ func _set_selected_enemy(enemy: CombatEntity):
 	for e in affected:
 		if enemy_visuals.has(e):
 			framed.append(enemy_visuals[e])
-	camera.frame_group(framed)
+	camera.frame_group(framed, 0.35, 0.0, CombatCamera.ACTION_LOWER)
 
 # Hides every target preview marker on all creatures
 func _clear_target_markers():
@@ -1749,8 +1784,15 @@ func _execute_item(target):
 	if item.data.id == "ball":
 		await item.data.use_effect.call(self, item, target)
 	else:
+		# The camera stays on the Droid so the effect can be seen, and combat holds a moment afterwards (the Hypno Bone changes the creatures, so it stays wide)
+		var focus_player: bool = item.data.id != "hypno_bone"
+		if focus_player:
+			camera.ability_push_in(player_visual, ITEM_ZOOM)
 		await player_visual.play_item_use()
 		await item.data.use_effect.call(self, item, target)
+		await get_tree().create_timer(ITEM_EFFECT_HOLD).timeout
+		if focus_player:
+			await camera.reset_camera()
 	
 	var item_index := PlayerData.items.find(item)
 	if item_index != -1:
@@ -1985,7 +2027,11 @@ func _get_free_enemy_slot() -> int:
 			return i
 	return -1
 
-# Restores the players chip when 1) landing a critical hit with 10% chance or 2) last chip used
+# The info text over the Droid when a chip comes back, with the chip's type colored
+func _show_chip_restored(type: CombatTypes.EntityType):
+	vfx.spawn_info(player_visual, "[color=#e8e8e8]Chip restored![/color]\n%s" % CombatTypes.type_bbcode(type))
+
+# Gives back one chip of the given type
 func _restore_chip(type: CombatTypes.EntityType):
 	match type:
 		CombatTypes.EntityType.SKY:
@@ -2261,10 +2307,6 @@ func _apply_scratchy_frame_reflect(enemy: CombatEntity, amount: float):
 	enemy_visual.shake(false)
 	vfx.play_damage_vfx(enemy_visual, abs(actual_shift), false)
 
-# Checks if the player has the Recalibration passive or not, decides multiplier based on it (1.75 with, 1.5 without)
-func _get_crit_multiplier() -> float:
-	return RECALIBRATION_CRIT_MULTIPLIER if PlayerData.has_ability("recalibration") else BASE_CRIT_MULTIPLIER
-
 # Human At Heart passive ability effect method; counts enemies killed and heals the player + permanently increases power by 0.25
 func _apply_human_at_heart(killed_count: int):
 	if killed_count <= 0:
@@ -2328,7 +2370,7 @@ func _roll_tamed_enemy_drops() -> Array:
 		if drop_pool.is_empty():
 			continue
 		
-		var picked_id: String = drop_pool.pick_random()
+		var picked_id := _pick_drop_id(drop_pool)
 		var item_data: ItemData = CombatItemDb.get_item(picked_id)
 		if item_data == null:
 			continue
@@ -2340,6 +2382,15 @@ func _roll_tamed_enemy_drops() -> Array:
 			_add_reward_item(item_rewards, item_data, drop_amount)
 	
 	return item_rewards
+
+# Picks one id of a creature's drop pool by item rarity (a rare Ball drops less often than a common Soft Branch)
+func _pick_drop_id(drop_ids: Array) -> String:
+	var entries: Array = []
+	for id in drop_ids:
+		if ItemDb.items.has(id):
+			entries.append(ItemDb.get_item(id))
+	var picked := ItemDb.pick_weighted(entries, 1)
+	return picked[0].id if not picked.is_empty() else drop_ids.pick_random()
 
 # Handles the ball item's hit logic: intent-specific, so even if two different types of creatures are hit, they will both move towards kill/tame at the same time
 func _resolve_ball_hit(target: CombatEntity, intent: String, multiplier: float):
@@ -2491,7 +2542,10 @@ func tutorial_prepare_dummy_for_minigame():
 
 # ANIMATION METHODS
 # Smooth tween BG animation for minigame enter/exiting 
-func _world_gray_out(gray_out: bool):
+func _world_gray_out(gray_out: bool, spare_player := false):
+	if spare_player:
+		_shop_dim(gray_out)
+		return
 	# The world (background, creatures and the Droid) lives in several nodes, so a black layer between it and the UI dims it all
 	if dim_rect == null:
 		var dim_layer := CanvasLayer.new()
@@ -2508,6 +2562,26 @@ func _world_gray_out(gray_out: bool):
 	var tween := create_tween()
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	tween.tween_property(dim_rect, "color:a", WORLD_DIM_ALPHA if gray_out else 0.0, 0.5)
+
+# The shop dims the background and the creatures but not the Droid: the dim sits in the world, between them and the Droid
+func _shop_dim(dim: bool):
+	if shop_dim_rect == null:
+		shop_dim_rect = ColorRect.new()
+		shop_dim_rect.color = Color(0, 0, 0, 0)
+		shop_dim_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		shop_dim_rect.position = Vector2(-2000, -2000)
+		shop_dim_rect.size = Vector2(4000, 4000)
+		shop_dim_rect.z_index = SHOP_DIM_Z
+		get_parent().get_node("World").add_child(shop_dim_rect)
+	if dim and not shop_dimmed: # The dim stays on from the rewards through the shop, so the Droid's normal z is only taken once
+		player_base_z = player_visual.z_index
+		player_visual.z_index = SHOP_DIM_Z + 1
+	shop_dimmed = dim
+	var tween := create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tween.tween_property(shop_dim_rect, "color:a", WORLD_DIM_ALPHA if dim else 0.0, ScreenMotion.DIM_TIME)
+	if not dim:
+		tween.finished.connect(func(): player_visual.z_index = player_base_z)
 
 func animate_enemy_entry():
 	for visual in enemy_visuals.values():

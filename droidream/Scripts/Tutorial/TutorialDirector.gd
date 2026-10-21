@@ -50,6 +50,7 @@ const UFO_POS_OUTRO := Vector2(150, 205)
 var dummy_enemy: CombatEntity
 
 func _ready():
+	ControlTextures.swap_in(get_tree().current_scene) # The key pictures of the scheme in use
 	await speech_bubble.ready
 	
 	PlayerData.set_guesses(0, 4, 0)
@@ -516,9 +517,9 @@ func crit_tutorial_phase():
 	combat_manager.tutorial_unlock_player_turn_ui()
 	combat_manager.player_turn_ui.set_attack_index(1)
 	
-	await overlay_say("Once you start %s, try %s right before making contact with the creature." % [
+	await overlay_say("Once you start %s, press %s just as the shrinking icon meets its shadow." % [
 		bb("taming", "taming"),
-		bb("taming", "timing")
+		bb("taming", "Z")
 	], "normal")
 	await wait_for_accept()
 	

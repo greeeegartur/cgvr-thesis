@@ -18,6 +18,7 @@ var running = false
 # Damage signal for CombatManager, including position
 signal damage_taken(amount: float, world_position: Vector2)
 var damage_cooldown := false
+var entered := false # The enter animation has played
 
 # Visual node
 @onready var visual_root := $VisualRoot
@@ -79,7 +80,11 @@ func end(success : bool):
 	queue_free()
 
 # Ease in/out animation tween transition methods
+# The box grows in once; if it is already there (a countdown, a tutorial explanation or a pause came first) it stays where it is until the minigame ends
 func animate_in():
+	if entered:
+		return
+	entered = true
 	visual_root.scale = Vector2.ZERO
 	visual_root.modulate.a = 0.0
 	
@@ -104,6 +109,7 @@ func animate_out():
 # Duration setting for minigames
 func set_duration(value: float):
 	max_duration = value
+	ControlTextures.swap_in(self) # Every minigame's _ready calls this first: the key pictures of the scheme in use
 
 # In Combat scene methods
 func _enter_tree():
