@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SoundData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/SoundData.gd" id="1_script"]
+[ext_resource type="AudioStream" path="res://Sounds/SFX/Mono/beetle_walk.wav" id="2_stream"]
+
+[resource]
+script = ExtResource("1_script")
+id = "beetle_walk"
+stream = ExtResource("2_stream")
+volume_db = 2.9
+pitch_variation = 0.08
+max_voices = 3
+restart = false
+cooldown = 0.06
+ui = false

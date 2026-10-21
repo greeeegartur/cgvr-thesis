@@ -76,9 +76,13 @@ func _unhandled_input(event):
 	if not visible:
 		return
 	if event.is_action_pressed("ui_down"):
+		if not input_locked:
+			Sfx.play_ui("option_move")
 		selected = (selected + 1) % 3
 		_update_selection()
 	if event.is_action_pressed("ui_up"):
+		if not input_locked:
+			Sfx.play_ui("option_move")
 		selected = (selected - 1 + 3) % 3
 		_update_selection()
 	if event.is_action_pressed("ui_accept"):
@@ -134,6 +138,7 @@ func _confirm_selection():
 	if input_locked:
 		return
 	input_locked = true
+	Sfx.play_ui("shop_buy") # The boon is taken
 	
 	# Player acquires boon with effect call
 	var boon: BoonData = boons[selected]

@@ -100,6 +100,7 @@ func flash():
 	
 	# Start flash
 	flash_cooldown = true
+	Sfx.play_ui("flashlight")
 	
 	var overlapping = flash_area.get_overlapping_areas()
 	for area in overlapping:
@@ -155,6 +156,7 @@ func get_random_screen_position(padding: float = 10.0) -> Vector2:
 # Bat dying logic
 func _on_bat_died(bat):
 	bats_remaining -= 1
+	Sfx.play_ui("hop", { "pitch": 1.15 }) # A lit bat is gone
 	
 	# Flash size increases
 	base_light_radius += 0.02
@@ -176,6 +178,7 @@ func spawn_damage_number(damage: float):
 
 # Minigame end logic
 func win_sequence():
+	stop_timer_sound()
 	timer_active = false
 	set_duration(90.0) # Just in case to not timeout
 	set_process_unhandled_input(false)

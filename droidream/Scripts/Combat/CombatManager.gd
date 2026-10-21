@@ -124,6 +124,7 @@ const TAME_HINT_SEQUENCES := 3 # The timing hint shows on the first sequences of
 const HIT_STOP_BLOCK := 0.10
 const HIT_STOP_HURT := 0.10
 var hit_stop_id := 0
+const DREAM_OPEN_FADE := 0.5
 const ITEM_ZOOM := Vector2(1.25, 1.25) # How close the camera gets to the Droid while an item is used
 const ITEM_EFFECT_HOLD := 1.5 # Seconds combat holds after an item's effect, so its texts and particles can be seen
 const WORLD_DIM_ALPHA := 0.5 # How dark the world gets during a dream (black over it)
@@ -298,6 +299,7 @@ func _spawn_enemy(enemy_id: String, slot_index: int, spawner: CombatEntity):
 	tween.tween_property(visual, "position", target_pos, 0.8)
 	tween.set_trans(Tween.TRANS_BACK)
 	tween.set_ease(Tween.EASE_OUT)
+	visual.play_steps(0.8) # The new bat flaps in
 	await tween.finished
 
 func _setup_ui():
@@ -778,6 +780,7 @@ func _apply_axis_shift(enemy: CombatEntity, guess_type: CombatTypes.EntityType, 
 		
 		if before > 0.0: # The creature was on the tame side
 			_play_betrayal(enemy_visual)
+		Sfx.play("hurt", enemy_visual) # A kill-side hit
 		
 		# Visual effects
 		enemy_visual.shake(critical)
@@ -828,6 +831,7 @@ func _apply_axis_shift_with_multiplier(enemy: CombatEntity, guess_type: CombatTy
 		
 		if before > 0.0:
 			_note_betrayal(enemy_visual, before)
+		Sfx.play("hurt", enemy_visual) # A kill-side hit
 		
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
 		enemy_visual.shake(multiplier >= 1.5)
@@ -851,6 +855,7 @@ func _start_minigame(enemy: CombatEntity, play_explosion := true):
 	if play_explosion:
 		vfx.play_subdue(enemy_visual)
 	var aura := TameAura.attach(enemy_visual, 0.5 if play_explosion else 0.2) # Neon light swirls up inside the creature
+	Sfx.play("dream_open", enemy_visual, { "fade_in": DREAM_OPEN_FADE }) # The creature turns pink: the dream opens with a sine fade-in
 	await player_visual.play_subdue()
 	enemy_visual.clear_minigame_highlight() # The highlight has done its job once the minigame starts
 	
@@ -910,6 +915,7 @@ func _start_minigame(enemy: CombatEntity, play_explosion := true):
 
 # Connects BaseMinigame signal to give player damage based on minigame
 func _on_minigame_damage_taken(amount: float, pos: Vector2):
+	Sfx.play_ui("hurt", { "volume": -6.0, "pitch": 1.12 }) # Dream damage is a softer, higher hurt
 	_change_player_hp(-Utils.quantize_min(amount))
 	vfx.play_overlay_effects("normal")
 	_hit_impact(player_visual, HIT_STOP_NORMAL)
@@ -1103,6 +1109,7 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	if has_reflexive_sensors and randf() <= REFLEXIVE_SENSORS_MISS_CHANCE and not enemy_crit:
 		missed_attack = true
 		damage = 0.0
+		Sfx.play("blocking", player_visual, { "pitch": 1.1 }) # The creature missed
 		vfx.spawn_feedback(player_visual, "[color=#8be9fd][wave freq=14]Miss![/wave][/color]")
 		print("Enemy creature missed the attack!")
 	
@@ -1110,6 +1117,7 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	elif blocked:
 		damage *= 0.5
 		player_visual.play_block_success()
+		Sfx.play("block_break", player_visual)
 		camera.impact(CombatCamera.Impact.LARGE)
 		_hit_impact(player_visual, HIT_STOP_BLOCK)
 		if not enemy_crit:
@@ -1128,6 +1136,7 @@ func _resolve_enemy_hit(enemy: CombatEntity, hit: Dictionary):
 	# No block happened
 	else:
 		player_visual.play_block_fail()
+		Sfx.play("hurt", player_visual)
 		vfx.play_overlay_effects("normal")
 		camera.impact(CombatCamera.Impact.SMALL)
 		_hit_impact(player_visual, HIT_STOP_HURT)
@@ -1171,6 +1180,7 @@ func _on_player_block_attempted():
 	
 	# The block pose always plays on a press, even if the press does not count
 	player_visual.play_block_press()
+	Sfx.play("blocking", player_visual)
 	
 	# Checks if block is currently on cooldown
 	if block_on_cooldown:
@@ -1253,6 +1263,7 @@ func _ability_repair_sequence(ability: InventoryAbility):
 	
 	tutorial_text.show_hint(TutorialText.HintType.REPAIR, player_visual)
 	await MinigameCountdown.play(self, "ability_repair")
+	Sfx.reset_press_ladder()
 	
 	# Repair game logic
 	while timer < duration:
@@ -1274,6 +1285,9 @@ func _ability_repair_sequence(ability: InventoryAbility):
 			
 			if not PauseMenu.active and Input.is_action_just_pressed(expected_input):
 				collected += 1
+				Sfx.play_press(false, player_visual)
+				if collected == max_collect:
+					Sfx.play("all_perfect", player_visual) # Every part was absorbed
 				vfx.play_overlay_effects("block")
 				vfx.play_speedlines(vfx.get_vfx_color_from_string("block"))
 				await vfx._absorb_object(player_visual, data.node)
@@ -1912,10 +1926,12 @@ func _resolve_enemy_state(enemy: CombatEntity):
 
 	if enemy.is_killed():
 		visual.z_index = 1
+		Sfx.play("killed", visual)
 		vfx.play_kill_burst(visual)
 		await visual.play_defeat(false)
 	elif enemy.is_tamed():
 		visual.z_index = 1
+		Sfx.play("tamed", visual)
 		if _is_quick_tame(enemy):
 			vfx.play_perfect_feedback(visual)
 		await visual.play_defeat(true)
@@ -2595,6 +2611,7 @@ func animate_enemy_entry():
 		tween.tween_property(visual, "position", target_pos, 0.6)
 		tween.set_trans(Tween.TRANS_BACK)
 		tween.set_ease(Tween.EASE_OUT)
+		visual.play_steps(0.6) # Walks (or flies) in
 		
 	await get_tree().create_timer(0.6).timeout
 

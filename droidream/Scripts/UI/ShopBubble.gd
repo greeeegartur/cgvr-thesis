@@ -14,6 +14,10 @@ const TOP_LIMIT := 8.0 # The bubble never goes above this (no cropping at the to
 const LINE_SPACING := 3.0 # The Label's default space between lines
 const TAIL_LENGTH := 14.0
 const TYPE_SPEED := 0.02
+const BLIP_EVERY := 2 # Tuh-U's voice blips on every 2nd visible letter
+const BLIP_GAP := 55 # ...but never closer than this (msec)
+const BLIP_LENGTH := 0.085 # Only the first syllable of the voice file, so blips never smear into each other
+const MOOD_PITCH := { "happy": 1.12, "sad": 0.88 } # His voice is higher when he is happy, lower when he is sad
 
 var label: RichTextLabel
 var box_size := Vector2.ZERO
@@ -27,6 +31,8 @@ var skippable := false # While a line types out and may be skipped, one Confirm 
 var skip_requested := false
 var bob_tween: Tween
 var pop_tween: Tween
+var voice_pitch := 1.0 # Set from his mood for the next line (see set_mood)
+var last_blip := 0
 
 func _init() -> void:
 	position = anchor
@@ -66,19 +72,40 @@ func say(text: String, target: Vector2, allow_skip := false) -> void:
 	label.visible_characters = 0
 	queue_redraw()
 	_pop_in()
-	var total := _plain(text).length()
+	var plain := _plain(text)
+	var total := plain.length()
 	skippable = allow_skip # Read as an input event, so a quick press between two letters is never missed
 	skip_requested = false
+	var letters := 0
 	for i in total:
 		if mine != serial:
 			return
 		if skip_requested:
-			break
+			break # Skipping shows the rest at once, without a burst of blips
 		label.visible_characters = i + 1
+		if _is_letter(plain[i]):
+			letters += 1
+			if letters % BLIP_EVERY == 1:
+				_blip()
 		await get_tree().create_timer(TYPE_SPEED).timeout
 	if mine == serial:
 		label.visible_characters = -1
 		skippable = false
+
+# Tuh-U's mood for the next line sets the pitch of his voice
+func set_mood(mood: String) -> void:
+	voice_pitch = MOOD_PITCH.get(mood, 1.0)
+
+# One voice blip, unless the last one was too recent
+func _blip() -> void:
+	var now := Time.get_ticks_msec()
+	if now - last_blip < BLIP_GAP:
+		return
+	last_blip = now
+	Sfx.play_ui("text_speech", { "pitch": voice_pitch, "length": BLIP_LENGTH })
+
+func _is_letter(character: String) -> bool:
+	return character != " " and character.to_upper() != character.to_lower() or character.is_valid_int()
 
 func _input(event: InputEvent) -> void:
 	if skippable and event.is_action_pressed("ui_accept"):

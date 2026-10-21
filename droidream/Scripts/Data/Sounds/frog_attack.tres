@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SoundData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/SoundData.gd" id="1_script"]
+[ext_resource type="AudioStream" path="res://Sounds/SFX/Mono/frog_attack.wav" id="2_stream"]
+
+[resource]
+script = ExtResource("1_script")
+id = "frog_attack"
+stream = ExtResource("2_stream")
+volume_db = 4.6
+pitch_variation = 0.06
+max_voices = 2
+restart = false
+cooldown = 0.0
+ui = false

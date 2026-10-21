@@ -445,6 +445,7 @@ func overlay_say(text: String, mood := "normal"):
 	await bubble.say(text, _bubble_target(), true)
 
 func _set_mood(mood: String):
+	bubble.set_mood(mood)
 	match mood:
 		"happy":
 			ufo.play_happy()

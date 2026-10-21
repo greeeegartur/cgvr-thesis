@@ -358,6 +358,26 @@ tracks/7/keys = {
 "method": &"on_attack_hit"
 }]
 }
+tracks/8/type = "method"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("../..")
+tracks/8/interp = 1
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"times": PackedFloat32Array(0.267, 0.8, 1.567),
+"transitions": PackedFloat32Array(1, 1, 1),
+"values": [{
+"args": ["frog_hop", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["frog_hop", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["frog_attack", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}]
+}
 
 [sub_resource type="Animation" id="Animation_hk45v"]
 resource_name = "frog_attack_2"
@@ -463,6 +483,26 @@ tracks/7/keys = {
 "method": &"on_attack_hit"
 }]
 }
+tracks/8/type = "method"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("../..")
+tracks/8/interp = 1
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"times": PackedFloat32Array(0.267, 1.16, 2.134),
+"transitions": PackedFloat32Array(1, 1, 1),
+"values": [{
+"args": ["frog_hop", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["frog_attack", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["frog_attack", 0.0, 0.0, 1.08, 0.0],
+"method": &"sfx"
+}]
+}
 
 [sub_resource type="Animation" id="Animation_um46k"]
 resource_name = "frog_heal"
@@ -539,6 +579,26 @@ tracks/5/keys = {
 "update": 0,
 "values": [Vector2(-48.6373, -22.7684), Vector2(58.8172, -31.8172), Vector2(-61.0794, -5.8019)]
 }
+tracks/6/type = "method"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("../..")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0.0, 0.933, 1.4666),
+"transitions": PackedFloat32Array(1, 1, 1),
+"values": [{
+"args": ["frog_flies", 0.0, 0.0, 1.0, 1.85],
+"method": &"sfx"
+}, {
+"args": ["frog_hop", -4.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["frog_hop", -4.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}]
+}
 
 [sub_resource type="Animation" id="Animation_0l0xx"]
 resource_name = "idle"
@@ -579,6 +639,20 @@ tracks/2/keys = {
 "transitions": PackedFloat32Array(1),
 "update": 1,
 "values": [false]
+}
+tracks/3/type = "method"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("../..")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0.29),
+"transitions": PackedFloat32Array(1),
+"values": [{
+"args": ["frog_hop"],
+"method": &"idle_sfx"
+}]
 }
 
 [sub_resource type="Animation" id="Animation_7naox"]
@@ -623,6 +697,8 @@ _data = {
 [node name="EnemyVisual" type="Node2D" unique_id=1675181070]
 z_index = 1
 script = ExtResource("1_5mb4n")
+step_sound = "frog_hop"
+step_interval = 0.4
 
 [node name="EnemyAxisBar" parent="." unique_id=751089638 instance=ExtResource("2_w3ncc")]
 offset_left = -40.8

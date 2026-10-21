@@ -111,6 +111,7 @@ func _input(event: InputEvent) -> void:
 					open()
 					get_viewport().set_input_as_handled()
 			State.MAIN:
+				Sfx.play_cancel()
 				close()
 				get_viewport().set_input_as_handled()
 			State.CONFIRM_QUIT:
@@ -133,6 +134,7 @@ func _input(event: InputEvent) -> void:
 	elif event.is_action_pressed("ui_accept"):
 		list.confirm()
 	elif event.is_action_pressed("ui_cancel"):
+		Sfx.play_cancel()
 		if state == State.CONFIRM_QUIT:
 			_show_main()
 		else:
@@ -154,6 +156,8 @@ func open() -> void:
 	stored_time_scale = Engine.time_scale if Engine.time_scale > 0.1 else 1.0 # A hit-stop that was running is dropped
 	Engine.time_scale = 0.0
 	active = true
+	Sfx.set_paused(true)
+	Sfx.play_ui("option_select")
 	
 	visible = true
 	_show_main()
@@ -173,6 +177,7 @@ func close() -> void:
 	visible = false
 	Engine.time_scale = stored_time_scale
 	active = false
+	Sfx.set_paused(false)
 	state = State.CLOSED
 
 func _animate_in() -> void:

@@ -9,6 +9,7 @@ signal finished(multiplier: float)
 var anchors: Array = [] # Creatures the ability hits: shapes appear over them, one after another
 
 func play():
+	Sfx.reset_press_ladder()
 	var scores: Array[float] = []
 	var prompt_count = randi_range(3, 4)
 	
@@ -24,6 +25,8 @@ func play():
 		prompt.queue_free()
 		await get_tree().create_timer(0.15).timeout
 	
+	if scores.all(func(score): return score >= 1.0):
+		Sfx.play_ui("all_perfect") # Every shape was aligned
 	finished.emit(_score_to_multiplier(scores))
 
 const PROMPT_SCALE := 2.6

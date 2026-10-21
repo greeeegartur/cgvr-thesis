@@ -109,7 +109,10 @@ func _unhandled_input(event):
 		_activate_selection()
 
 func _move_selection(direction: int):
+	var before := selection_index
 	selection_index = clampi(selection_index + direction, 0, cards.size())
+	if selection_index != before:
+		Sfx.play_ui("option_move")
 	_update_selection_visuals()
 
 func _update_selection_visuals():
@@ -138,6 +141,7 @@ func _activate_selection():
 	if selection_index < cards.size():
 		_attempt_purchase(cards[selection_index])
 	else:
+		Sfx.play_ui("option_select")
 		await _exit_stop()
 
 func _attempt_purchase(shop_item: ShopCard):
@@ -209,6 +213,7 @@ func _attempt_purchase(shop_item: ShopCard):
 		return
 	
 	# Purchase accepted
+	Sfx.play_ui("shop_buy")
 	PlayerData.currency -= actual_cost
 	shop_item.confirm_purchase()
 	_spawn_purchase_feedback(shop_item)
@@ -377,6 +382,7 @@ func _can_take(item: ShopEntry) -> bool:
 func _tuhu_says(line: Dictionary):
 	line_id += 1
 	var id := line_id
+	shop_bubble.set_mood(line["mood"])
 	match line["mood"]:
 		"happy":
 			ufo.play_happy()
@@ -409,6 +415,7 @@ func _spawn_inventory_full_feedback(shop_item: ShopCard, message: String):
 # ENDING METHODS
 # Tuh-U's ending dialogue uses the same pixel bubble as the shop, above him and growing to the right, waiting for Confirm after each line
 func say(text: String, mood := "normal", hops := false):
+	shop_bubble.set_mood(mood)
 	match mood:
 		"happy":
 			ufo.play_happy()

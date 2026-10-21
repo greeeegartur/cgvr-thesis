@@ -104,6 +104,7 @@ func _unhandled_input(event):
 		flap()
 
 func flap():
+	Sfx.play_ui("bat_flap", { "volume": 4.0 }) # The duck's wings
 	velocity.y = -flap_strength
 
 	# tiny squash/stretch
@@ -162,6 +163,7 @@ func spawn_fish() -> void:
 	var life_time := randf_range(fish_jump_duration_min, fish_jump_duration_max)
 
 	fish.position = Vector2(spawn_x, base_y)
+	Sfx.play_ui("hop", { "volume": -2.0 }) # The fish jumps out of the water (jumps may overlap)
 
 	if fish.has_method("setup"):
 		fish.setup(base_y, peak_y, drift_speed, life_time)
@@ -191,6 +193,7 @@ func check_player_collisions() -> void:
 
 func collect_fish(fish: Node) -> void:
 	fish.collected = true
+	Sfx.play_ui("option_select", { "pitch": Sfx.semitones(fish_collected * 2) }) # Each fish a step higher
 
 	var tween := create_tween()
 	tween.tween_property(fish, "scale", Vector2.ONE * 1.35, 0.08)
@@ -246,6 +249,7 @@ func flicker_player() -> void:
 	await tween.finished
 
 func win_sequence() -> void:
+	stop_timer_sound()
 	win_started = true
 	spawn_active = false
 	player_locked = true

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SoundData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/SoundData.gd" id="1_script"]
+[ext_resource type="AudioStream" path="res://Sounds/SFX/Mono/tuhu_fly.wav" id="2_stream"]
+
+[resource]
+script = ExtResource("1_script")
+id = "tuhu_fly"
+stream = ExtResource("2_stream")
+volume_db = -3.2
+pitch_variation = 0.0
+max_voices = 1
+restart = true
+cooldown = 0.0
+ui = false

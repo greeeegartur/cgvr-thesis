@@ -27,6 +27,8 @@ static func go_to_title(tree: SceneTree) -> void:
 	# Everything that the pause or a slow-motion effect may have left behind goes back to normal
 	Engine.time_scale = 1.0
 	PauseMenu.active = false
+	Sfx.set_paused(false)
+	Sfx.stop_all()
 	PlayerData.reset_run()
 	tree.change_scene_to_file(TITLE_SCENE)
 	await tree.process_frame

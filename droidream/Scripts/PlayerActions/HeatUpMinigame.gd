@@ -26,6 +26,7 @@ var _target_prompt_count := 0
 var _running := false
 
 func play():
+	Sfx.reset_press_ladder()
 	_running = true
 	_hits = 0
 	_spawned = 0
@@ -49,6 +50,8 @@ func play():
 		await get_tree().process_frame
 	
 	_running = false
+	if _hits >= _target_prompt_count:
+		Sfx.play_ui("all_perfect") # Every key was hit
 	finished.emit(_hits_to_bonus(_hits, _target_prompt_count))
 
 func _spawn_prompt():

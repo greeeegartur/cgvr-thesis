@@ -26,6 +26,7 @@ var _running := false
 var _feedback_tweens := {} # Slot -> its running feedback tween (stopped when the next segment starts)
 
 func play():
+	Sfx.reset_press_ladder()
 	_build_stages()
 	_current_stage = 0
 	_current_input_index = 0
@@ -89,6 +90,7 @@ func _process_action(action: String):
 	var slot: TextureRect = sequence_row.get_child(_current_input_index)
 	
 	if action == expected:
+		Sfx.play_press(false)
 		_play_correct_feedback(slot)
 		prompt_hit.emit(slot.global_position)
 		
@@ -101,10 +103,12 @@ func _process_action(action: String):
 			
 			if _current_stage >= _stages.size():
 				_running = false
+				Sfx.play_ui("all_perfect") # Every stage finished
 				return
 			
 			_show_stage(_current_stage)
 	else:
+		Sfx.play_ui("blocking", { "pitch": 1.1, "volume": -4.0 }) # A missed press
 		_play_wrong_feedback(slot)
 
 func _play_correct_feedback(slot: TextureRect):

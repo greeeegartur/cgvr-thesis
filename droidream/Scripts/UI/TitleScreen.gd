@@ -204,6 +204,7 @@ func _open_popup() -> void:
 	popup_tween.tween_property(popup_panel, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func _close_popup() -> void:
+	Sfx.play_cancel()
 	state = State.MENU
 	if popup_tween:
 		popup_tween.kill()

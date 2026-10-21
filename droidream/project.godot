@@ -30,6 +30,7 @@ ItemDb="*res://Scripts/Data/ItemDB.gd"
 AbilityDb="*res://Scripts/Data/AbilityDB.gd"
 CombatItemDb="*res://Scripts/Data/CombatItemDb.gd"
 Settings="*res://Scripts/Data/Settings.gd"
+Sfx="*res://Scripts/Audio/Sfx.gd"
 
 [display]
 

@@ -257,6 +257,8 @@ func _adjust(direction: int) -> void:
 			Settings.set_easier_timing(not Settings.easier_timing)
 		_:
 			return
+	# Sliders play the move sound at their new level (the SFX slider is heard right away), toggles click like a confirm
+	Sfx.play_ui("option_move" if list.selected_index <= 1 else "option_select")
 	list.update_rows(_main_entries())
 
 func _on_confirmed(index: int) -> void:
@@ -293,6 +295,7 @@ func _on_confirmed(index: int) -> void:
 				_back()
 
 func _back() -> void:
+	Sfx.play_cancel()
 	match page:
 		Page.MAIN:
 			close()
@@ -309,6 +312,7 @@ func _start_capture(action: String) -> void:
 	_show_note("Press a key for %s (ESC cancels)" % ACTION_NAMES[action], 0.0)
 
 func _capture_key(event: InputEventKey) -> void:
+	Sfx.play_ui("option_select")
 	var action := capturing
 	capturing = ""
 	if event.physical_keycode == KEY_ESCAPE:

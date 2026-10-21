@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SoundData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/SoundData.gd" id="1_script"]
+[ext_resource type="AudioStream" path="res://Sounds/SFX/Mono/modifier_indicator.wav" id="2_stream"]
+
+[resource]
+script = ExtResource("1_script")
+id = "modifier_indicator"
+stream = ExtResource("2_stream")
+volume_db = -1.1
+pitch_variation = 0.03
+max_voices = 2
+restart = false
+cooldown = 0.1
+ui = false

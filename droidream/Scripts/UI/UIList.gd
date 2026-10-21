@@ -13,6 +13,7 @@ signal confirmed(index: int)
 @export var min_width := 0.0 # Rows are at least this wide
 @export var center_text := false # Rows center their text
 @export var ignore_time_scale := false # True for menus that keep animating while the game is frozen (the pause menu)
+@export var play_sounds := true # Moving and confirming play the menu sounds (owners that judge a confirm themselves turn this off)
 
 const TRAVEL_TIME := 0.12
 
@@ -72,6 +73,8 @@ func count() -> int:
 func move(dir: int) -> void:
 	if rows.is_empty():
 		return
+	if rows.size() > 1 and play_sounds:
+		Sfx.play_ui("option_move")
 	select(wrapi(selected_index + dir, 0, rows.size()))
 
 # Selects a row by index
@@ -86,6 +89,8 @@ func select(index: int, animate := true) -> void:
 # Confirms the selected row
 func confirm() -> void:
 	if not rows.is_empty():
+		if play_sounds:
+			Sfx.play_ui("option_select")
 		confirmed.emit(selected_index)
 
 # Size the list needs: the widest row by the visible rows

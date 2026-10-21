@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SoundData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/SoundData.gd" id="1_script"]
+[ext_resource type="AudioStream" path="res://Sounds/SFX/Mono/blocking.wav" id="2_stream"]
+
+[resource]
+script = ExtResource("1_script")
+id = "blocking"
+stream = ExtResource("2_stream")
+volume_db = -6.9
+pitch_variation = 0.04
+max_voices = 3
+restart = false
+cooldown = 0.0
+ui = false

@@ -300,6 +300,50 @@ tracks/6/keys = {
 "update": 0,
 "values": [Vector2(-11.4743, -21.2205), Vector2(-24.2467, -21.2205)]
 }
+tracks/7/type = "method"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("../..")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0.07, 1.349, 1.482, 1.615, 1.749, 2.488, 2.622, 2.755, 2.888, 3.633, 4.033),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"values": [{
+"args": ["duck_quack", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["duck_walk", 0.0, 0.0, 1.1, 0.0],
+"method": &"sfx"
+}, {
+"args": ["duck_walk", 0.0, 0.0, 1.1, 0.0],
+"method": &"sfx"
+}, {
+"args": ["duck_walk", 0.0, 0.0, 1.1, 0.0],
+"method": &"sfx"
+}, {
+"args": ["duck_walk", 0.0, 0.0, 1.1, 0.0],
+"method": &"sfx"
+}, {
+"args": ["duck_walk", 0.0, 0.0, 1.1, 0.0],
+"method": &"sfx"
+}, {
+"args": ["duck_walk", 0.0, 0.0, 1.1, 0.0],
+"method": &"sfx"
+}, {
+"args": ["duck_walk", 0.0, 0.0, 1.1, 0.0],
+"method": &"sfx"
+}, {
+"args": ["duck_walk", 0.0, 0.0, 1.1, 0.0],
+"method": &"sfx"
+}, {
+"args": ["duck_walk", -3.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["duck_walk", -3.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}]
+}
 
 [sub_resource type="Animation" id="Animation_23ha3"]
 resource_name = "duck_tackle_single"
@@ -390,6 +434,38 @@ tracks/6/keys = {
 "update": 0,
 "values": [Vector2(-11.4743, -21.2205), Vector2(-24.2467, -21.2205), Vector2(-11.4743, -21.2205)]
 }
+tracks/7/type = "method"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("../..")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0.17, 1.349, 1.482, 1.615, 1.749, 2.545, 2.946),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"values": [{
+"args": ["duck_quack", 0.0, 0.42, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["duck_walk", 0.0, 0.0, 1.1, 0.0],
+"method": &"sfx"
+}, {
+"args": ["duck_walk", 0.0, 0.0, 1.1, 0.0],
+"method": &"sfx"
+}, {
+"args": ["duck_walk", 0.0, 0.0, 1.1, 0.0],
+"method": &"sfx"
+}, {
+"args": ["duck_walk", 0.0, 0.0, 1.1, 0.0],
+"method": &"sfx"
+}, {
+"args": ["duck_walk", -3.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["duck_walk", -3.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}]
+}
 
 [sub_resource type="Animation" id="Animation_x4blf"]
 resource_name = "idle"
@@ -450,6 +526,8 @@ _data = {
 z_index = 1
 position = Vector2(0, 6)
 script = ExtResource("1_fvduc")
+step_sound = "duck_walk"
+step_interval = 0.2
 
 [node name="EnemyAxisBar" parent="." unique_id=1967246209 instance=ExtResource("2_6raiu")]
 offset_left = -41.4
