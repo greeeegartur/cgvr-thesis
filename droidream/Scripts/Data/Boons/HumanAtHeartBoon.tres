@@ -7,7 +7,7 @@
 script = ExtResource("1_e2qvp")
 id = "human_at_heart"
 name = "Human At Heart"
-description = "At the end of the encounter, heal 10% of max health and permanently gain +0.25 power for each enemy killed."
+description = "For each enemy killed after an encounter, heal 10% of max health and permanently gain +0.25 power."
 type = "Passive"
 icon = ExtResource("1_t32rt")
 metadata/_custom_type_script = "uid://yjimuc2myefo"

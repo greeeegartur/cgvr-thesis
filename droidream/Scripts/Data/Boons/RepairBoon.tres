@@ -7,7 +7,7 @@
 script = ExtResource("1_qmy2n")
 id = "repair"
 name = "Repair"
-description = "Gain the option to heal yourself for up to 50% of your max health!"
+description = "Heal yourself for up to 50% of your max health."
 type = "Ability"
 icon = ExtResource("1_6cu1r")
 metadata/_custom_type_script = "uid://yjimuc2myefo"

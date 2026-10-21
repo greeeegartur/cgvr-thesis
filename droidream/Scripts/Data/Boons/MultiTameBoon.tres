@@ -7,7 +7,7 @@
 script = ExtResource("2_xumwd")
 id = "multitame"
 name = "Multi-Tame"
-description = "Become able to target multiple creatures at once with a single chip! Works on all surrounding creatures of the selected target."
+description = "Target multiple creatures at once with a single chip!"
 type = "Ability"
 icon = ExtResource("1_ihh8d")
 metadata/_custom_type_script = "uid://yjimuc2myefo"

@@ -281,7 +281,7 @@ func _handle_target_input(event):
 			emit_signal("cycle_enemy", 1)
 
 	if event.is_action_pressed("ui_accept"):
-		Sfx.play_ui("option_select")
+		Sfx.play_ui("shop_buy") # A target is chosen
 		emit_signal("confirm_enemy")
 	elif event.is_action_pressed("ui_cancel"):
 		Sfx.play_cancel()

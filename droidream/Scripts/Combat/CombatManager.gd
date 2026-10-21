@@ -2045,7 +2045,7 @@ func _get_free_enemy_slot() -> int:
 
 # The info text over the Droid when a chip comes back, with the chip's type colored
 func _show_chip_restored(type: CombatTypes.EntityType):
-	vfx.spawn_info(player_visual, "[color=#e8e8e8]Chip restored![/color]\n%s" % CombatTypes.type_bbcode(type))
+	vfx.spawn_info_above(player_visual, "[color=#e8e8e8]Chip restored![/color]\n%s" % CombatTypes.type_bbcode(type))
 
 # Gives back one chip of the given type
 func _restore_chip(type: CombatTypes.EntityType):
@@ -2616,11 +2616,12 @@ func animate_enemy_entry():
 	await get_tree().create_timer(0.6).timeout
 
 # Animates the duck type reveal at the start of combat
+# The type color stays on the duck for the whole encounter, so its type is always clear
+# It tints the sprite's own self_modulate: the Visual's modulate is reset by the target arrow and the selection effects
 func _flash_enemy_type_color(visual: EnemyVisual, color: Color, duration: float):
-	var original_modulate := visual.modulate
+	var sprite := visual.visual.get_node("Sprite2D") as CanvasItem
 	var tween := create_tween()
-	tween.tween_property(visual.visual, "modulate", color, 0.15)
+	tween.tween_property(sprite, "self_modulate", color, 0.15)
 	tween.tween_interval(duration)
-	tween.tween_property(visual.visual, "modulate", original_modulate, 0.2)
 	
 	await tween.finished

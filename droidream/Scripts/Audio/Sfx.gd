@@ -5,8 +5,10 @@ extends Node
 
 const POOL_SIZE := 24 # Players for sounds that happen in the world (panned)
 const FLAT_POOL_SIZE := 12 # Players for centered sounds (UI, Tuh-U's voice, minigames on the screen)
-const PAN_STRENGTH := 0.6 # Times the project's 2D panning strength (0.5), so a sound at the screen edge is panned about 30%
+const PAN_STRENGTH := 0.0 # Every sound plays centered (panning by screen position made the creatures' side sound heavier)
 const SFX_BUS := "SFX"
+const MUFFLED_BUS := "SFX Muffled" # A low-passed branch of the SFX bus for hollow, distant versions of a sound
+const MUFFLED_CUTOFF := 900.0
 const MUSIC_BUS := "Music"
 const SILENT_DB := -60.0
 const CUT_FADE := 0.04 # A cut sound fades over this, so it never clicks
@@ -69,6 +71,7 @@ func _ready() -> void:
 	for data in SOUND_FILES:
 		sounds[data.id] = data
 	_add_limiter()
+	_add_muffled_bus()
 	for i in POOL_SIZE:
 		var player := AudioStreamPlayer2D.new()
 		player.bus = SFX_BUS
@@ -99,10 +102,22 @@ func _add_limiter() -> void:
 	limiter.ceiling_db = LIMITER_CEILING_DB
 	AudioServer.add_bus_effect(index, limiter)
 
+# A bus that sends into SFX through a low-pass filter (so the SFX slider and the limiter still apply)
+func _add_muffled_bus() -> void:
+	if AudioServer.get_bus_index(MUFFLED_BUS) != -1:
+		return
+	AudioServer.add_bus()
+	var index := AudioServer.bus_count - 1
+	AudioServer.set_bus_name(index, MUFFLED_BUS)
+	AudioServer.set_bus_send(index, SFX_BUS)
+	var filter := AudioEffectLowPassFilter.new()
+	filter.cutoff_hz = MUFFLED_CUTOFF
+	AudioServer.add_bus_effect(index, filter)
+
 # PLAYING
 # Plays a sound by id; at is where it happens in the world (a Node2D or a Vector2) for panning, null plays it centered
 # options: "volume" (dB on top of its level), "pitch" (multiplier), "from" (seconds into the file), "fade_in" (seconds),
-# "length" (seconds until it is cut with a short fade), "loop" (repeats until stopped)
+# "length" (seconds until it is cut with a short fade), "loop" (repeats until stopped), "muffled" (through the low-pass bus)
 func play(id: String, at: Variant = null, options := {}) -> Node:
 	var data: SoundData = sounds.get(id)
 	if data == null:
@@ -135,6 +150,7 @@ func play(id: String, at: Variant = null, options := {}) -> Node:
 		player.global_position = at.global_position if at is Node2D else at
 
 	player.stream = _loop_stream(id) if options.get("loop", false) else data.stream
+	player.bus = MUFFLED_BUS if options.get("muffled", false) else SFX_BUS
 	var base_db: float = data.volume_db + float(options.get("volume", 0.0))
 	player.set_meta("base_db", base_db)
 	player.pitch_scale = float(options.get("pitch", 1.0)) * (1.0 + randf_range(-data.pitch_variation, data.pitch_variation))
@@ -160,6 +176,10 @@ func play_ui(id: String, options := {}) -> Node:
 # Backing out of a menu: the confirm sound, lower and softer
 func play_cancel() -> void:
 	play_ui("option_select", { "pitch": 0.8, "volume": -3.0 })
+
+# Leaving the options: a muffled, lower confirm, as if the menu closes away from you
+func play_menu_close() -> void:
+	play_ui("option_select", { "pitch": 0.85, "volume": 4.0, "muffled": true }) # The filter takes most of its brightness away, so it gets more level back
 
 # A denied action (no chips, on cooldown, can't afford): the miss sound, soft and low
 func play_deny() -> void:

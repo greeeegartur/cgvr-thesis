@@ -8,7 +8,7 @@
 script = ExtResource("1_ufev3")
 id = "multitame"
 display_name = "Multi-tame"
-description = "Become able to target multiple creatures at once with a single chip! Works on all surrounding creatures of the selected target."
+description = "Target multiple creatures at once with a single chip!"
 icon = ExtResource("2_vk0cj")
 cost = 7
 max_stack = 1

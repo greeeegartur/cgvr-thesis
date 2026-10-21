@@ -295,7 +295,10 @@ func _on_confirmed(index: int) -> void:
 				_back()
 
 func _back() -> void:
-	Sfx.play_cancel()
+	if page == Page.MAIN:
+		Sfx.play_menu_close() # Leaving the options is a muffled close
+	else:
+		Sfx.play_cancel()
 	match page:
 		Page.MAIN:
 			close()

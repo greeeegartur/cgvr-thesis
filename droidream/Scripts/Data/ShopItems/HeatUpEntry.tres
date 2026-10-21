@@ -8,7 +8,7 @@
 script = ExtResource("1_qfyug")
 id = "heatup"
 display_name = "Heat Up"
-description = "After use, gain up to +3 power, but lose -0.5 defense for 2 turns."
+description = "Gain up to +3 power, but lose -0.5 defense for 2 turns."
 icon = ExtResource("2_nekrq")
 cost = 6
 max_stack = 1

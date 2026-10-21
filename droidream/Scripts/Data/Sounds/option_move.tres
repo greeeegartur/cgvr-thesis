@@ -7,7 +7,7 @@
 script = ExtResource("1_script")
 id = "option_move"
 stream = ExtResource("2_stream")
-volume_db = -7.5
+volume_db = 4.5
 pitch_variation = 0.06
 max_voices = 3
 restart = false

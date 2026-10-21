@@ -7,7 +7,7 @@
 script = ExtResource("1_script")
 id = "block_break"
 stream = ExtResource("2_stream")
-volume_db = 2.6
+volume_db = 4.1
 pitch_variation = 0.03
 max_voices = 2
 restart = false

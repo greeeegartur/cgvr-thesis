@@ -8,7 +8,7 @@
 script = ExtResource("1_cm17s")
 id = "reflexive_sensors"
 display_name = "Reflexive Sensors"
-description = "Have a 35% chance to block damage even more and a 10% chance to avoid damage entirely."
+description = "Have a 35% chance to block even more damage, and a 10% chance to avoid damage."
 type = 1
 icon = ExtResource("1_cucws")
 cost = 6

@@ -7,6 +7,6 @@
 script = ExtResource("1_frfg2")
 id = "ice_cube"
 display_name = "Ice Cube"
-description = "Prevents long-term overheating. Use to heal 10% of your max health for 3 turns."
+description = "Prevents long-term overheating. On use, heal 10% of your max health for the next 3 turns."
 icon = ExtResource("1_hx36r")
 metadata/_custom_type_script = "uid://heqkiwbydg3j"

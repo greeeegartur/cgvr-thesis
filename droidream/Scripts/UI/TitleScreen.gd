@@ -36,7 +36,8 @@ var popup_tween: Tween
 
 func _ready():
 	set_process_unhandled_input(false)
-	
+	MinigameCountdown.reset(true) # Every visit to the title starts a fresh session: the next player gets every countdown again, the tutorial's beetle included
+
 	black.visible = true
 	black.modulate.a = 1.0
 	

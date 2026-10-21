@@ -8,7 +8,7 @@
 script = ExtResource("1_5a83r")
 id = "memory_chip"
 display_name = "Memory Chip"
-description = "A neatly shaped chip. Restores up to 2 random chips on use."
+description = "A neatly shaped chip. Restores 1-2 random chips on use."
 type = 2
 icon = ExtResource("1_5gcoh")
 cost = 3

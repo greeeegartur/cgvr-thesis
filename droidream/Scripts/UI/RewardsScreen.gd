@@ -35,7 +35,7 @@ func _unhandled_input(event):
 			return
 		if not closing:
 			closing = true
-			Sfx.play_ui("option_select")
+			Sfx.play_ui("shop_buy")
 		confirmed.emit()
 
 # Spawns and shows rewards menu
