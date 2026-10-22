@@ -8,7 +8,7 @@
 script = ExtResource("3_35d4n")
 id = "thick_jelly"
 display_name = "Thick Jelly"
-description = "Surprisingly hard texture? Could be applied to further block damage for the next 3 turns."
+description = "Surprisingly hard texture? Can be applied to block more +0.25 damage for the next 3 turns."
 type = 2
 icon = ExtResource("1_tbjhf")
 cost = 4

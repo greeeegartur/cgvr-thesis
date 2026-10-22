@@ -17,6 +17,7 @@ var gear_spin_tween: Tween
 var scene_scale = Vector2(0.9, 0.9)
 var skipping := false
 var revealing := false # True while rows are still appearing
+var closing := false # True once confirmed, so pressing again while it leaves plays no second sound
 var rows: Array[RewardRow] = []
 
 const ROW_FINAL_SCALE := 1.0 # Scale rows keep after their pop (reduced for all rows if they would not fit in the container)
@@ -32,11 +33,15 @@ func _unhandled_input(event):
 			for row in rows:
 				row.finish_instantly()
 			return
+		if not closing:
+			closing = true
+			Sfx.play_ui("shop_buy")
 		confirmed.emit()
 
 # Spawns and shows rewards menu
 func show_rewards(rewards:Dictionary):
 	skipping = false
+	closing = false
 	rows.clear()
 	visible = true
 	panel.visible = true
@@ -80,9 +85,11 @@ func _play_rewards(rewards: Dictionary):
 	_fit_rows(new_rows) # Shared row size, one tight slot per row from the top of the container
 	
 	revealing = true
-	for row in new_rows:
+	for i in new_rows.size():
+		var row := new_rows[i]
 		if not skipping:
 			await get_tree().create_timer(0.04).timeout
+			Sfx.play_ui("option_move", { "pitch": Sfx.semitones(i * 2) }) # Each row pops a step higher
 		
 		row.skipped = skipping
 		await row.animate_in()

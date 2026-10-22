@@ -6,5 +6,5 @@
 script = ExtResource("1_0n11p")
 id = "enamor"
 display_name = "Enamor"
-description = "Have a 75% chance to charm tamed creatures into giving you 2x more rewards after encounters!"
+description = "Have a 75% chance to get 2x the rewards from tamed creatures!"
 metadata/_custom_type_script = "uid://dqqq30gwb44lh"

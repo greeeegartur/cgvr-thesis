@@ -195,6 +195,7 @@ func _place_arrows(amount: float) -> void:
 	arrows[1].position = Vector2(CARD_SIZE.x + 4 - nudge, CARD_SIZE.y * 0.5 - 5)
 
 func shake() -> void:
+	Sfx.play_deny()
 	var tween := create_tween()
 	tween.tween_property(self, "position:x", rest_position.x + 6, 0.05)
 	tween.tween_property(self, "position:x", rest_position.x - 6, 0.05)

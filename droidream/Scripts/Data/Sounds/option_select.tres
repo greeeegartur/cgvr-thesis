@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SoundData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/SoundData.gd" id="1_script"]
+[ext_resource type="AudioStream" path="res://Sounds/SFX/Mono/option_select.wav" id="2_stream"]
+
+[resource]
+script = ExtResource("1_script")
+id = "option_select"
+stream = ExtResource("2_stream")
+volume_db = -4.1
+pitch_variation = 0.04
+max_voices = 2
+restart = false
+cooldown = 0.0
+ui = true

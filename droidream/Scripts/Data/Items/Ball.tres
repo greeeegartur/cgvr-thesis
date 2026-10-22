@@ -7,7 +7,7 @@
 script = ExtResource("1_4pjlb")
 id = "ball"
 display_name = "Ball"
-description = "Every creature's favorite! Can be thrown to tame creatures. This does not use chips."
+description = "Every creature's favorite! Can be thrown to tame creatures without using chips."
 icon = ExtResource("1_m27l2")
 target_type = 1
 target_reach = 1

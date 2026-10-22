@@ -8,7 +8,7 @@
 script = ExtResource("1_6kg56")
 id = "harden"
 display_name = "Harden"
-description = "On use, gain up to +2 defense for a single turn!"
+description = "Gain up to +2 defense for the current turn!"
 icon = ExtResource("2_v3j4n")
 cost = 4
 max_stack = 1

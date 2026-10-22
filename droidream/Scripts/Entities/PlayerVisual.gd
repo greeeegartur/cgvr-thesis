@@ -125,6 +125,13 @@ func _move_to_home_position():
 	await tween.finished
 	anim.play("player_idle")
 
+# Plays a sound from an animation's method track (its steps), at the Droid
+func sfx(id: String, volume := 0.0, from := 0.0, pitch := 1.0, length := 0.0) -> void:
+	var options := { "volume": volume, "from": from, "pitch": pitch }
+	if length > 0.0:
+		options["length"] = length
+	Sfx.play(id, self, options)
+
 # Sets the home position in CombatManager
 func set_home_position():
 	home_position = global_position
@@ -193,6 +200,7 @@ func play_block_fail():
 	
 func play_defeat():
 	input_enabled = false
+	Sfx.play("killed", self)
 	anim.play("player_defeat")
 
 func play_subdue():
@@ -367,6 +375,7 @@ func _get_emote_texture(emote_id: String) -> Texture2D:
 	return null
 
 func hop():
+	Sfx.play("hop", self)
 	var base_y := position.y
 	var tween := create_tween()
 	tween.tween_property(self, "position:y", base_y - 14, 0.12)

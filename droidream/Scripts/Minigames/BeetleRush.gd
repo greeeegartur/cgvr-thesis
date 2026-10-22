@@ -52,6 +52,10 @@ const DAMAGE := 0.25 # Damage player takes if hurt, TO-DO: change this to consid
 var collision_enabled := false
 var beetles_paused := false
 
+var walk_loops: Array = [] # [player, serial] of each beetle walk loop
+const WALK_LOOPS_MAX := 3
+const WALK_START_DB := -14.0 # The walk starts this much quieter and reaches its full level at the end of the dream
+
 func _ready():
 	# Setting duration of 5 seconds
 	set_duration(5.0)
@@ -70,6 +74,7 @@ func _ready():
 
 func _process(delta):
 	super._process(delta) # for elapsing variable and minigame end condition
+	_update_walk_sound()
 	
 	if not running:
 		return
@@ -110,6 +115,7 @@ func try_flick_move(dir: String):
 		return
 	
 	# If passed check, move hand
+	Sfx.play_ui("option_move")
 	current_lane = target_lane
 	hand_cooldown = true # During animation
 	
@@ -133,6 +139,7 @@ func flick_beetle(beetle):
 		return
 	
 	# Stop beetle activity
+	Sfx.play_ui("beetle_flicked")
 	beetle.flicked = true
 	beetle.set_process(false)
 	beetle.reset_animation()
@@ -251,3 +258,29 @@ func on_timeout():
 		beetle.set_process(false)
 	
 	end(true)
+
+# SOUNDS
+# Every running beetle loops its walk (three at most), and the walk gets louder over the dream, so it builds toward the end
+func _update_walk_sound() -> void:
+	var walking := 0
+	for beetle in beetles_node.get_children():
+		if not beetle.flicked:
+			walking += 1
+	var wanted := mini(walking, WALK_LOOPS_MAX) if running else 0
+	while walk_loops.size() < wanted:
+		var player := Sfx.play_ui("beetle_rush_walk", { "loop": true, "from": randf_range(0.0, 0.3) }) # Started at different points, so the loops never step together
+		walk_loops.append([player, Sfx.serial_of(player)])
+	while walk_loops.size() > wanted:
+		var loop: Array = walk_loops.pop_back()
+		Sfx.stop(loop[0], 0.1, loop[1])
+	var level := lerpf(WALK_START_DB, 0.0, clampf(elapsed / max_duration, 0.0, 1.0))
+	for loop in walk_loops:
+		if Sfx.serial_of(loop[0]) == loop[1]:
+			Sfx.set_level(loop[0], level)
+
+# The dream is over: the walking stops with the dream-end sound
+func stop_timer_sound() -> void:
+	super.stop_timer_sound()
+	for loop in walk_loops:
+		Sfx.stop(loop[0], 0.15, loop[1])
+	walk_loops.clear()

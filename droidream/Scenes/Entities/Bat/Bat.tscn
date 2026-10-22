@@ -255,6 +255,29 @@ tracks/5/keys = {
 "update": 1,
 "values": [0, 1, 0, 1, 0, 1, 0]
 }
+tracks/6/type = "method"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("../..")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0.167, 0.3, 0.503, 0.967),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"values": [{
+"args": ["bat_flap", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["bat_screech", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["bat_flap", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["bat_flap", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}]
+}
 
 [sub_resource type="Animation" id="Animation_ovd4s"]
 resource_name = "bat_sweep"
@@ -296,6 +319,32 @@ tracks/2/keys = {
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
 "update": 1,
 "values": [0, 1, 0, 1, 0, 1, 0, 1, 0]
+}
+tracks/3/type = "method"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("../..")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0.0, 0.2, 0.733, 2.067, 2.462),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"values": [{
+"args": ["bat_attack", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["bat_flap", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["bat_flap", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["bat_flap", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["bat_flap", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}]
 }
 
 [sub_resource type="Animation" id="Animation_6ly4o"]
@@ -384,6 +433,8 @@ _data = {
 [node name="EnemyVisual" type="Node2D" unique_id=521180786]
 z_index = 1
 script = ExtResource("1_a4a18")
+step_sound = "bat_flap"
+step_interval = 0.3
 
 [node name="EnemyAxisBar" parent="." unique_id=467165124 instance=ExtResource("2_iwn4t")]
 offset_left = -42.4

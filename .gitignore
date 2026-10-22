@@ -20,6 +20,7 @@ droidream/.mono/
 droidream/android/
 droidream/export_credentials.cfg
 *.translation
+*.import
 
 # Build output
 builds/

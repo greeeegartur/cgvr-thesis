@@ -36,7 +36,9 @@ var popup_tween: Tween
 
 func _ready():
 	set_process_unhandled_input(false)
-	
+	Music.play_title()
+	MinigameCountdown.reset(true) # Every visit to the title starts a fresh session: the next player gets every countdown again, the tutorial's beetle included
+
 	black.visible = true
 	black.modulate.a = 1.0
 	
@@ -184,6 +186,7 @@ func _on_options_closed() -> void:
 func _quit_game() -> void:
 	state = State.LEAVING
 	controls_hint.hide_text()
+	Music.fade_out(0.8)
 	await _fade_to_black(0.8)
 	get_tree().quit()
 
@@ -204,6 +207,7 @@ func _open_popup() -> void:
 	popup_tween.tween_property(popup_panel, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func _close_popup() -> void:
+	Sfx.play_cancel()
 	state = State.MENU
 	if popup_tween:
 		popup_tween.kill()
@@ -219,6 +223,7 @@ func _close_popup() -> void:
 func _on_popup_confirmed(index: int) -> void:
 	state = State.LEAVING
 	controls_hint.hide_text()
+	Music.fade_out(1.0) # The title music leaves with the fade to black
 	await _fade_to_black(1.0)
 	if index == 0:
 		Settings.set_minigame_countdown(true) # Playing the tutorial turns the countdowns on

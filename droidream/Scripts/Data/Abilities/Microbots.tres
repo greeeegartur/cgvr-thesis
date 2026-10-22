@@ -6,5 +6,5 @@
 script = ExtResource("1_sbppl")
 id = "microbots"
 display_name = "Microbots"
-description = "Every two turns heal for 20% of your max health and have a 30% chance to restore a random chip."
+description = "Every two turns, heal for 20% of your max health and have a 30% chance to gain a chip."
 metadata/_custom_type_script = "uid://dqqq30gwb44lh"

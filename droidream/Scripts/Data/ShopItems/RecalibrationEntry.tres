@@ -8,7 +8,7 @@
 script = ExtResource("1_gqkes")
 id = "recalibration"
 display_name = "Recalibration"
-description = "Perfect timing is easier to hit, and an all-perfect tame deals 1.75x instead of 1.5x."
+description = "Perfect timing becomes easier, and an all-perfect tame is 1.75x as effective."
 type = 1
 icon = ExtResource("1_2l56q")
 cost = 8

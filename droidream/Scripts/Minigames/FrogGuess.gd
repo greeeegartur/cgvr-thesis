@@ -65,7 +65,10 @@ func _unhandled_input(event):
 		confirm_guess()
 
 func change_guess(amount: int) -> void:
+	var before := current_guess
 	current_guess = clamp(current_guess + amount, 1, 9)
+	if current_guess != before:
+		Sfx.play_ui("option_move")
 	update_guess_label()
 
 func update_guess_label() -> void:
@@ -127,6 +130,8 @@ func overlaps_existing(candidate_pos: Vector2, candidate_half_size: Vector2) -> 
 	return false
 
 func confirm_guess() -> void:
+	Sfx.play_ui("option_select")
+	stop_timer_sound()
 	input_locked = true
 	revealed = true
 	set_process_input(false)

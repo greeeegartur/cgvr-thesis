@@ -53,9 +53,11 @@ func play_prompt() -> float:
 			else:
 				score = 0.4
 			
+			Sfx.play_press(score >= 0.9)
 			await _play_hit_feedback(accuracy)
 			return score
 	
+	Sfx.play_ui("blocking", { "pitch": 1.1, "volume": -4.0 }) # A missed press
 	await _play_miss_feedback()
 	return 0.25
 

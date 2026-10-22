@@ -20,8 +20,11 @@ class_name TuhU
 var texture_tween: Tween
 var emote_tween: Tween
 var move_tween: Tween
+var fly_player: Node # The flying hum of the current move
+var fly_serial := 0
 
 # Floating: a layered hover (slow bob, a tiny side drift, a slight rocking tilt), a soft glow under him and twinkling stars
+const FLY_FADE := 0.3 # Longest fade of his flying hum
 const BOB := 4.0 # Pixels up and down
 const DRIFT := 2.0 # Pixels sideways, on its own rhythm
 const ROCK := 2.0 # Degrees of tilt
@@ -146,6 +149,7 @@ func _set_effects(strength: float, duration := 0.4) -> void:
 func glide_in(target_y: float, duration := 1.2) -> void:
 	if move_tween:
 		move_tween.kill()
+	_fly_sound(duration)
 	hovering = false
 	hover_amount = 0.0
 	var end_x := position.x
@@ -165,6 +169,7 @@ func glide_in(target_y: float, duration := 1.2) -> void:
 func glide_out(duration := 0.8) -> void:
 	if move_tween:
 		move_tween.kill()
+	_fly_sound(duration)
 	var lean := signf(scale.x)
 	var start := position
 	_set_effects(0.4, 0.25)
@@ -273,6 +278,8 @@ func bubble_emote(emote_id: String, duration := 1.5):
 func move_to(target: Vector2, duration := 0.75):
 	if move_tween:
 		move_tween.kill()
+	if global_position.distance_to(target) > 4.0:
+		_fly_sound(duration)
 	
 	var lean := clampf((target.x - global_position.x) / 60.0, -1.0, 1.0) * 6.0 * signf(scale.x) # A small tilt toward where he is going
 	move_tween = create_tween().set_parallel(true)
@@ -287,6 +294,7 @@ func move_to(target: Vector2, duration := 0.75):
 
 
 func hop():
+	Sfx.play_ui("hop")
 	var base_y := position.y
 	var tween := create_tween()
 	tween.tween_property(self, "position:y", base_y - 16, 0.12)
@@ -316,3 +324,14 @@ func _get_emote_texture(emote_id: String) -> Texture2D:
 	
 	push_warning("Unknown Tuh-U emote: " + emote_id)
 	return null
+
+# His flying hum while he moves: it fades in with a sine as he sets off and out as he arrives (a newer move takes it over)
+func _fly_sound(duration: float) -> void:
+	var fade := minf(FLY_FADE, duration * 0.35)
+	Sfx.stop(fly_player, 0.08, fly_serial)
+	fly_player = Sfx.play_ui("tuhu_fly", { "loop": true, "fade_in": fade })
+	fly_serial = Sfx.serial_of(fly_player)
+	var mine := fly_serial
+	await get_tree().create_timer(maxf(duration - fade, 0.0)).timeout
+	if mine == fly_serial:
+		Sfx.stop(fly_player, fade, mine)

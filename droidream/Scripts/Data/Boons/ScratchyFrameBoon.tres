@@ -7,7 +7,7 @@
 script = ExtResource("1_nsc46")
 id = "scratchy_frame"
 name = "Scratchy Frame"
-description = "When a creature damages you, its intent will shift for that same amount of damage. This cannot kill or tame the creature."
+description = "When damaged, the creature will be tamed towards the closest intent. This cannot kill or tame the creature."
 type = "Passive"
 icon = ExtResource("1_m0qrn")
 metadata/_custom_type_script = "uid://yjimuc2myefo"

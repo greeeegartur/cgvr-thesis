@@ -7,7 +7,7 @@
 script = ExtResource("2_x636o")
 id = "heatup"
 name = "Heat Up"
-description = "After use, gain up to +3 power, but lose -0.5 defense for 2 turns."
+description = "Gain up to +3 power, but lose -0.5 defense for 2 turns."
 type = "Ability"
 icon = ExtResource("1_i6i7o")
 metadata/_custom_type_script = "uid://yjimuc2myefo"

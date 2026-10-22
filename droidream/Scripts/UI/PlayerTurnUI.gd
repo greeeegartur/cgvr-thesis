@@ -274,13 +274,17 @@ func _handle_gear_input(event):
 func _handle_target_input(event):
 	if state == State.ENEMY_SELECT:
 		if event.is_action_pressed("ui_left"):
+			Sfx.play_ui("option_move")
 			emit_signal("cycle_enemy", -1)
 		elif event.is_action_pressed("ui_right"):
+			Sfx.play_ui("option_move")
 			emit_signal("cycle_enemy", 1)
 
 	if event.is_action_pressed("ui_accept"):
+		Sfx.play_ui("shop_buy") # A target is chosen
 		emit_signal("confirm_enemy")
 	elif event.is_action_pressed("ui_cancel"):
+		Sfx.play_cancel()
 		emit_signal("cancel_enemy")
 
 # Moves options in the ATTACK_TYPE_SELECT state based on player inputs
@@ -318,6 +322,7 @@ func _handle_abilities_input(event):
 			shake_panel()
 			return
 		
+		Sfx.play_ui("option_select")
 		ability_popup.visible = false
 		emit_signal("ability_selected", ability)
 	elif event.is_action_pressed("ui_cancel"):
@@ -335,12 +340,14 @@ func _handle_items_input(event):
 	elif event.is_action_pressed("ui_down"):
 		items_list.move(1)
 	elif event.is_action_pressed("ui_accept"):
+		Sfx.play_ui("option_select")
 		item_popup.visible = false
 		emit_signal("item_selected", items[items_list.selected_index])
 	elif event.is_action_pressed("ui_cancel"):
 		_cancel_to_gear(MENU_ITEMS)
 
 func _cancel_to_gear(menu_name: String):
+	Sfx.play_cancel()
 	# The gear brightens and the arrows return while the panel shrinks into it; input is accepted again when the panel is gone
 	state = State.LOCKED
 	_begin_transition()
@@ -512,6 +519,7 @@ func hide_all():
 	visible = false
 
 func _move_gear(dir: int):
+	Sfx.play_ui("option_move")
 	gear_index = wrapi(gear_index + dir, 0, gear_options.size())
 	_turn_gear(dir)
 	_start_gear_beat()
@@ -663,6 +671,7 @@ func _confirm_gear_option():
 	if gear_options[gear_index] not in gear_options:
 		return
 	
+	Sfx.play_ui("option_select")
 	state = State.LOCKED
 	_set_gear_cursor(false)
 	_start_action_transition()
@@ -797,12 +806,14 @@ func _confirm_attack_type():
 	var chosen_type: CombatTypes.EntityType = ATTACK_OPTIONS[attack_list.selected_index].id
 	
 	if tutorial_pick_only:
+		Sfx.play_ui("option_select")
 		tutorial_type_picked.emit(chosen_type)
 		return
 	
 	if not PlayerData.has_guess(chosen_type):
 		shake_panel()
 		return
+	Sfx.play_ui("option_select")
 	
 	if selecting_tame_for_ability:
 		await _close_menu(MENU_ATTACK)
@@ -821,6 +832,7 @@ func _confirm_attack_type():
 	emit_signal("attack_type_selected", chosen_type)
 
 func _cancel_ability_tame_select():
+	Sfx.play_cancel()
 	selecting_tame_for_ability = false
 	pending_tame_type_for_ability = false
 	refund_guess_on_target_cancel = true
@@ -836,6 +848,7 @@ func lock_input():
 
 # Shakes panel when invalid option is selected (i.e guess type that has no guesses)
 func shake_panel(strength: float = 1):
+	Sfx.play_deny()
 	var panel = _correct_panel(gear_options[gear_index])
 	var original_pos = panel.position
 	

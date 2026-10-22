@@ -7,7 +7,7 @@
 script = ExtResource("1_pyw86")
 id = "repair"
 display_name = "Repair"
-description = "Gain the option to heal yourself for up to 50% of your max health!"
+description = "Heal yourself for up to 50% of your max health."
 icon = ExtResource("1_ow3jv")
 cooldown_max = 2
 target_type = 1

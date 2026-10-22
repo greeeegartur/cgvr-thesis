@@ -8,7 +8,7 @@
 script = ExtResource("1_wvbfh")
 id = "repair_entry"
 display_name = "Repair"
-description = "Gain the option to heal yourself for up to 50% of your max health!"
+description = "Heal yourself for up to 50% of your max health."
 icon = ExtResource("2_ej280")
 cost = 5
 max_stack = 1

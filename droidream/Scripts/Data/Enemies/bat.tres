@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="EnemyInfo" load_steps=6 format=3 uid="uid://lnot3vlsmfkk"]
+[gd_resource type="Resource" script_class="EnemyInfo" format=3 uid="uid://lnot3vlsmfkk"]
 
 [ext_resource type="Script" uid="uid://by18pvdsekurc" path="res://Scripts/Data/EnemyAttackPattern.gd" id="1_h7bvq"]
 [ext_resource type="Script" uid="uid://c8hmcdrkefq7i" path="res://Scripts/Data/EnemyInfo.gd" id="2_fh84n"]
@@ -10,7 +10,7 @@
 script = ExtResource("2_fh84n")
 enemy_id = "bat"
 name = "Small Bat"
-max_hp = 6.0
+max_hp = 6.5
 attack = 1
 trust_max = 1
 minigame_id = "bat_flash"

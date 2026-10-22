@@ -21,13 +21,14 @@ class_name VFXCombatManager
 @onready var feedback_layer := $"../FeedbackText"
 @onready var karma_overlay := $"../KarmaOverlay"
 
-
 # Colors
 @export var normal_flash_color = Color("e72237ff")
 @export var crit_flash_color = Color("#eff238")
 @export var subdue_flash_color = Color("9a2ea3ff")
 @export var block_flash_color = Color("00d200ff")
 var COLORS : Dictionary
+
+const INFO_ABOVE_HEAD := Vector2(-48, -66) # From a character's feet to a text box centered just above its head
 
 func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -183,7 +184,20 @@ func spawn_info(target_visual: Node2D, text: String):
 	var feedback := HitFeedbackScene.instantiate()
 	feedback_layer.add_child(feedback)
 	feedback.position = ActionFeedback.place(feedback_layer, target_visual.position + Vector2(0, -20), ActionFeedback.FEEDBACK_BOX, 24.0, 14.0)
+	Sfx.play("modifier_indicator", target_visual) # Ability, item and status texts
 	feedback.play_info(text)
+
+# An info text right above a character's head (not moved aside by other texts, only kept on screen)
+func spawn_info_above(target_visual: Node2D, text: String):
+	if not HitFeedbackScene:
+		return
+	
+	var feedback := HitFeedbackScene.instantiate()
+	feedback_layer.add_child(feedback)
+	var at: Vector2 = target_visual.position + INFO_ABOVE_HEAD
+	feedback.position = ActionFeedback.place(feedback_layer, at, ActionFeedback.FEEDBACK_BOX, 24.0, 0.0, false)
+	feedback.play_info(text)
+	Sfx.play("modifier_indicator", target_visual)
 
 # One of the tier texts (Perfect, Good, Try, Miss, Block...) at a world position, kept inside the camera
 func play_tier_feedback(at: Vector2, tier: ActionFeedback.Tier) -> void:
@@ -208,6 +222,14 @@ func play_betrayal_feedback(target_visual: Node2D):
 # Small one-shot particles around an entity for heals, power and defense changes
 func play_buff_particles(target_visual: Node2D, kind: BuffParticles.Kind):
 	BuffParticles.burst(particle_layer, target_visual.position, kind)
+	# Heals have their own sound; power and defense changes share the stat sound (a drop is lower)
+	match kind:
+		BuffParticles.Kind.HEAL:
+			Sfx.play("healing", target_visual)
+		BuffParticles.Kind.DEFENSE_DOWN:
+			Sfx.play("stat_change", target_visual, { "pitch": 0.8, "volume": -3.0 })
+		_:
+			Sfx.play("stat_change", target_visual)
 
 func play_crit_feedback(target_visual):
 	play_tier_feedback(target_visual.position + Vector2(0, -20), ActionFeedback.Tier.PERFECT)

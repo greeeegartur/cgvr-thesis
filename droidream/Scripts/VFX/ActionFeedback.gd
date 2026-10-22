@@ -61,8 +61,8 @@ static func _pick(tier: Tier) -> Array:
 
 # PLACEMENT
 # Returns the position for something whose footprint is box (relative to the position): clamped inside the camera's visible rect with the text's rise and sideways drift
-# kept inside too, and moved up or down away from live texts placed before it
-static func place(layer: Node, at: Vector2, box: Rect2, rise: float, drift: float) -> Vector2:
+# kept inside too, and moved up or down away from live texts placed before it (unless avoid is false)
+static func place(layer: Node, at: Vector2, box: Rect2, rise: float, drift: float, avoid := true) -> Vector2:
 	var viewport := layer.get_viewport()
 	var canvas := viewport.get_canvas_transform()
 	var zoom := canvas.get_scale().x
@@ -71,7 +71,7 @@ static func place(layer: Node, at: Vector2, box: Rect2, rise: float, drift: floa
 	var pos := at
 	var now := Time.get_ticks_msec()
 	slots = slots.filter(func(slot): return slot.until > now)
-	for attempt in 4:
+	for attempt in (4 if avoid else 0): # A text that must stay at its spot (avoid false) is only kept inside the camera
 		pos = _clamp(pos, box, inner, rise, drift)
 		var footprint := Rect2(pos + box.position, box.size)
 		var overlap := false

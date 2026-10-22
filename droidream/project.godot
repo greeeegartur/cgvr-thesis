@@ -30,6 +30,8 @@ ItemDb="*res://Scripts/Data/ItemDB.gd"
 AbilityDb="*res://Scripts/Data/AbilityDB.gd"
 CombatItemDb="*res://Scripts/Data/CombatItemDb.gd"
 Settings="*res://Scripts/Data/Settings.gd"
+Sfx="*res://Scripts/Audio/Sfx.gd"
+Music="*res://Scripts/Audio/Music.gd"
 
 [display]
 
@@ -127,7 +129,7 @@ toggle_turn_order={
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0
-environment/defaults/default_clear_color=Color(0, 0, 0, 1)
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
+environment/defaults/default_clear_color=Color(0, 0, 0, 1)

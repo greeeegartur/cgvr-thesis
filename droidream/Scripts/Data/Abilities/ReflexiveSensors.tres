@@ -6,5 +6,5 @@
 script = ExtResource("1_ekfts")
 id = "reflexive_sensors"
 display_name = "Reflexive Sensors"
-description = "Have a 35% chance to block damage even more and a 10% chance to avoid damage entirely."
+description = "Have a 35% chance to block even more damage, and a 10% chance to avoid damage."
 metadata/_custom_type_script = "uid://dqqq30gwb44lh"

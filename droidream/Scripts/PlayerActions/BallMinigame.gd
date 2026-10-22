@@ -66,6 +66,16 @@ func _resolve():
 		ratio = 1.0
 	var multiplier := _ratio_to_multiplier(ratio)
 	
+	# The throw's press: perfect when the meter is full (flawless also gets All-perfect), normal for a fair throw, a miss for a weak one
+	Sfx.reset_press_ladder()
+	if multiplier >= 1.75:
+		Sfx.play_press(true)
+		Sfx.play_ui("all_perfect", { "volume": -3.0 })
+	elif multiplier > 1.0:
+		Sfx.play_press(false)
+	else:
+		Sfx.play_ui("blocking", { "pitch": 1.1, "volume": -4.0 }) # A missed press
+	
 	# A bright flash, a pop and the meter shrinks away
 	var tween := create_tween()
 	tween.tween_property(meter_bg, "modulate", Color(1.8, 1.8, 1.8), 0.05)

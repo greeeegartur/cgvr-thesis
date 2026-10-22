@@ -24,6 +24,12 @@ const RECALIBRATION_PERFECT_FACTOR := 1.25
 const MIN_ICONS := 2
 const MAX_ICONS := 3
 
+# Sounds
+const SWOOSH_PEAK := 0.65 # Seconds into the swoosh file where it is loudest: it is started so this lands on the shadow
+const SWOOSH_FADE_IN := 0.12
+const SWOOSH_FADE_OUT := 0.15 # After a press the swoosh gets out of the way of the press sound
+const SWOOSH_STEP := 2.0 # Semitones each further icon of a sequence swooshes higher
+
 # Damage multipliers
 const MULT_ALL_MISS := 0.75
 const MULT_TRIED := 1.0
@@ -105,6 +111,7 @@ func play(enemy_visual: EnemyVisual, player_visual: Node2D, layer: Node2D, camer
 	var count := mini(randi_range(MIN_ICONS, MAX_ICONS), spots.size())
 	var results: Array = []
 	icons.clear()
+	Sfx.reset_press_ladder()
 	for i in count:
 		# This icon's shadow appears (the previous one is already gone)
 		var icon := TameIcon.new()
@@ -116,14 +123,36 @@ func play(enemy_visual: EnemyVisual, player_visual: Node2D, layer: Node2D, camer
 		if i == count - 1:
 			last_icon_started.emit()
 		icon.begin_travel(_pick_start(icon.spot, enemy_visual, player_visual, camera), _pick_turn())
+		var swoosh := Sfx.play("tame_swoosh", icon.spot, {
+			"from": maxf(SWOOSH_PEAK - HALF, 0.0), # The loudest moment lands on the shadow, the perfect moment
+			"fade_in": SWOOSH_FADE_IN,
+			"pitch": Sfx.semitones(i * SWOOSH_STEP),
+		})
+		var swoosh_serial := Sfx.serial_of(swoosh)
 		var result: int = await _run_icon(icon)
 		results.append(result)
+		_play_result_sound(result, icon.spot, swoosh, swoosh_serial)
 		icon_judged.emit(i, result, spots[i], count)
 		
 		# The feedback plays, then the next shadow appears; the finished ones stay where they are until clear() at the end (no wait after the last one)
 		if i < count - 1:
 			await _wait(AFTER_PRESS)
+	if count > 0 and results.count(Result.PERFECT) == results.size():
+		Sfx.play("all_perfect", enemy_visual)
 	return results
+
+# The press sound of a judged icon (each landed press climbs the press ladder; a miss does not), and the swoosh fades out
+func _play_result_sound(result: int, spot: Vector2, swoosh: Node, swoosh_serial: int) -> void:
+	match result:
+		Result.PERFECT:
+			Sfx.play_press(true, spot)
+		Result.GOOD:
+			Sfx.play_press(false, spot)
+		Result.TRY:
+			Sfx.play_press(false, spot) # An early or late press still lands, only weaker
+		_:
+			Sfx.play("blocking", spot, { "pitch": 1.1, "volume": -4.0 }) # A missed icon
+	Sfx.stop(swoosh, SWOOSH_FADE_OUT if result != Result.MISS else FULL - HALF, swoosh_serial)
 
 # Runs one icon: it flies its curve, the first press is judged against the half-point, no press by then (plus the Good window) is a miss
 func _run_icon(icon: TameIcon) -> int:

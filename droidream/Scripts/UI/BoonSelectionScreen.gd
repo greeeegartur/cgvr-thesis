@@ -3,6 +3,8 @@ class_name BoonSelectionScreen
 
 signal boon_selected
 
+const CARD_TICK_LENGTH := 0.085 # Only the first syllable of the blip
+const CARD_TICK_PITCH_STEP := 0.1 # Each card's tick is this much higher than the one before
 const HOP_PIXELS := 3.0 # Height of the selected card's hop
 const PULSE_STRENGTH := 0.5 # Selection effect strength for a card (1.0 is a main creature target)
 
@@ -62,7 +64,10 @@ func show_boons(rolled_boons):
 		containers[i].scale = Vector2.ZERO
 		containers[i].modulate.a = 0.0
 		var card_delay: float = delay + ScreenMotion.STAGGER * 1.5
-		get_tree().create_timer(card_delay).timeout.connect(func(): containers[i].visible = true)
+		get_tree().create_timer(card_delay).timeout.connect(func():
+			containers[i].visible = true
+			Sfx.play_ui("text_speech", { "pitch": 1.0 + i * CARD_TICK_PITCH_STEP, "length": CARD_TICK_LENGTH, "volume": -3.0 }) # The same soft tick as the reward count, a little higher with each card
+		)
 		var card_tween := create_tween().set_parallel(true)
 		card_tween.tween_property(containers[i], "scale", Vector2.ONE, ScreenMotion.ENTER_TIME).set_delay(card_delay)\
 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -76,9 +81,13 @@ func _unhandled_input(event):
 	if not visible:
 		return
 	if event.is_action_pressed("ui_down"):
+		if not input_locked:
+			Sfx.play_ui("option_move")
 		selected = (selected + 1) % 3
 		_update_selection()
 	if event.is_action_pressed("ui_up"):
+		if not input_locked:
+			Sfx.play_ui("option_move")
 		selected = (selected - 1 + 3) % 3
 		_update_selection()
 	if event.is_action_pressed("ui_accept"):
@@ -134,6 +143,7 @@ func _confirm_selection():
 	if input_locked:
 		return
 	input_locked = true
+	Sfx.play_ui("shop_buy") # The boon is taken
 	
 	# Player acquires boon with effect call
 	var boon: BoonData = boons[selected]

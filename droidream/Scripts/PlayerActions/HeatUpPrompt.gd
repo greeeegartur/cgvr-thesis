@@ -53,6 +53,8 @@ func _on_success():
 		return
 	finished = true
 	hit.emit(global_position) # The key is drawn around its origin
+	Sfx.play_ui("light_explosion")
+	Sfx.play_press(false)
 	
 	var tween := create_tween()
 	tween.tween_property(self, "scale", Vector2.ONE * 4.3, 0.06)
@@ -66,6 +68,7 @@ func _on_fail():
 	if finished:
 		return
 	finished = true
+	Sfx.play_ui("blocking", { "pitch": 1.1, "volume": -4.0 }) # A missed press
 	
 	var tween := create_tween()
 	tween.tween_property(self, "modulate:a", 0.0, 0.08)

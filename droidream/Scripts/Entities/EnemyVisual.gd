@@ -30,6 +30,13 @@ var secondary_arrow: Node2D
 var target_count_label: Label
 var selection_pulse: SelectionPulse
 
+# Sound variables
+@export var step_sound := "" # Its steps (or flaps) while it moves across the scene
+@export var step_interval := 0.2 # Seconds between two of them
+const IDLE_SOUND_GAP := 600 # Msec; idle sounds of different creatures never come closer, so only one idle creature is heard at a time
+const IDLE_VOLUME := -14.0 # Idle sounds (a frog hopping in place) are much quieter than the same sound in an attack
+static var last_idle_sound := 0
+
 # Shake variables
 @export var shake_strength = 3.0
 @export var crit_shake_strength = 6.0
@@ -118,6 +125,7 @@ func _move_to_attack_position(target: Vector2):
 	var dist = global_position.distance_to(target)
 	var duration = dist / move_speed # t = d/v
 	
+	play_steps(duration)
 	var tween := create_tween()
 	tween.tween_property(self, "global_position", target, duration)\
 		.set_trans(Tween.TRANS_LINEAR)\
@@ -128,6 +136,7 @@ func _move_to_home_position():
 	var dist = global_position.distance_to(home_position)
 	var duration = dist / move_speed # t = d/v
 	
+	play_steps(duration)
 	var tween := create_tween()
 	tween.tween_property(self, "global_position", home_position, duration)\
 		.set_trans(Tween.TRANS_LINEAR)\
@@ -145,6 +154,34 @@ func update_axis(value: float, delta_value := 0):
 
 func update_axis_trust():
 	axis_bar.gain_trust()
+
+# SOUNDS
+# Plays a sound from an animation's method track: volume in dB on top of its level, from = seconds into the file, length cuts it
+func sfx(id: String, volume := 0.0, from := 0.0, pitch := 1.0, length := 0.0) -> void:
+	if is_defeated:
+		return
+	var options := { "volume": volume, "from": from, "pitch": pitch }
+	if length > 0.0:
+		options["length"] = length
+	Sfx.play(id, self, options)
+
+# A quiet sound from the idle loop (a frog hopping in place); only one idle creature is heard at a time
+func idle_sfx(id: String) -> void:
+	var now := Time.get_ticks_msec()
+	if is_defeated or now - last_idle_sound < IDLE_SOUND_GAP:
+		return
+	last_idle_sound = now
+	Sfx.play(id, self, { "volume": IDLE_VOLUME })
+
+# Its steps (or flaps) for a move of the given length
+func play_steps(duration: float) -> void:
+	if step_sound == "":
+		return
+	var walked := 0.0
+	while walked < duration - 0.05 and not is_defeated:
+		Sfx.play(step_sound, self)
+		await get_tree().create_timer(step_interval).timeout
+		walked += step_interval
 
 # Creates light position shake for enemy
 func shake(is_critical: bool):
@@ -176,6 +213,7 @@ func hop(times := 1):
 	var orig := position
 	var tween := create_tween()
 	for i in range(times):
+		tween.tween_callback(func(): Sfx.play("hop", self))
 		tween.tween_property(self, "position:y", orig.y - 18, 0.16)
 		tween.tween_property(self, "position:y", orig.y, 0.2)
 

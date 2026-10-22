@@ -47,6 +47,7 @@ static func play(host: Node, key: String) -> void:
 	layer.add_child(label)
 	
 	for number in [3, 2, 1]:
+		Sfx.play_ui("shop_buy", { "pitch": Sfx.semitones((3 - number) * 2) }) # Each number a step higher, building into the dream
 		label.text = str(number)
 		label.scale = Vector2.ONE * START_SCALE
 		label.modulate.a = 1.0

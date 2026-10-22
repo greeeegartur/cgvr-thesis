@@ -15,6 +15,8 @@ var animating := false
 var final_scale := 1.4
 var active_tween: Tween
 
+const COUNT_TICK_LENGTH := 0.085 # Only the first syllable of the blip
+
 func setup(texture:Texture2D, name:String, amount:int, p_final_scale := 1.4):
 	icon.texture = texture
 	name_text = name
@@ -33,6 +35,8 @@ func play_count():
 			return
 		
 		amount_label.text = "x%d" % i
+		if i % 2 == 1:
+			Sfx.play_ui("text_speech", { "pitch": 1.0 + minf(i * 0.02, 0.4), "length": COUNT_TICK_LENGTH, "volume": -3.0 }) # A soft tick that climbs with the count
 		await get_tree().create_timer(0.035).timeout
 	
 	if skipped:

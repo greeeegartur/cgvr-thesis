@@ -97,6 +97,7 @@ func _input(event: InputEvent) -> void:
 # Leaves the tutorial for the game: a fade, a fresh run and the combat scene
 func skip_tutorial() -> void:
 	skipping = true
+	Music.fade_out(SKIP_MUSIC_FADE) # Along with the fade to black
 	tutorial_text.unpin_hint()
 	combat_manager._pause_combat()
 	player_turn_ui.lock_input()
@@ -405,6 +406,8 @@ func outro_scene():
 	await stage(SPOT_OUTRO, player_visual)
 
 	hop()
+	music_ended = true
+	Music.fade_out(OUTRO_MUSIC_FADE) # The music ends as the basics do, and no later line brings it back
 	await say("That’s all the basics!", "happy")
 	await say("Between encounters I’ll set up a %s for us." % bb("items", "shop"), "normal")
 	await say("Spend your %s there on different stuff, like %s and %s." % [bb("bolts", "bolts"), bb("items", "items"), bb("abilities", "abilities")], "normal")
@@ -420,12 +423,26 @@ func outro_scene():
 
 # HELPERS
 
+var music_started := false
+var music_ended := false
+
+const OUTRO_MUSIC_FADE := 4.0 # Seconds the music takes to fade out at "That's all the basics!"
+const SKIP_MUSIC_FADE := 0.8
+
+# The tutorial music plays once, from the first line to "That's all the basics!"
+func _start_music() -> void:
+	if music_started or music_ended:
+		return
+	music_started = true
+	Music.play_tutorial()
+
 func bb(key: String, text: String) -> String:
 	return "[color=%s]%s[/color]" % [TUTORIAL_COLORS[key], text]
 
 func say(text: String, mood := "normal"):
 	if skipping:
 		await wait(1000.0) # The scene is about to change; the script stops here
+	_start_music() # The tutorial music starts with his first line
 	_set_mood(mood)
 	_stop_ufo_idle() # He holds still while he talks, so the tail of the bubble keeps pointing at him
 	await bubble.say_and_wait(text, _bubble_target())
@@ -440,11 +457,13 @@ func end_say():
 func overlay_say(text: String, mood := "normal"):
 	if skipping:
 		await wait(1000.0)
+	_start_music()
 	_set_mood(mood)
 	_stop_ufo_idle()
 	await bubble.say(text, _bubble_target(), true)
 
 func _set_mood(mood: String):
+	bubble.set_mood(mood)
 	match mood:
 		"happy":
 			ufo.play_happy()

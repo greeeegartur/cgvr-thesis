@@ -7,7 +7,7 @@
 script = ExtResource("1_j780e")
 id = "harden"
 name = "Harden"
-description = "On use, gain up to +2 defense for a single turn!"
+description = "Gain up to +2 defense for the current turn!"
 type = "Ability"
 icon = ExtResource("1_5wvt6")
 metadata/_custom_type_script = "uid://yjimuc2myefo"

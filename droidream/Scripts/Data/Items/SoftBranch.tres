@@ -7,6 +7,6 @@
 script = ExtResource("1_ihcb7")
 id = "soft_branch"
 display_name = "Soft Branch"
-description = "A stick with a bundle of leaves! Grants +1 power for the next 2 turns on use."
+description = "A stick with a bundle of leaves! On use, grants +1 power for the next 2 turns."
 icon = ExtResource("1_kabta")
 metadata/_custom_type_script = "uid://heqkiwbydg3j"

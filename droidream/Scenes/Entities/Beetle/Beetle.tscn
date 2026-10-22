@@ -124,6 +124,56 @@ tracks/2/keys = {
 "update": 1,
 "values": [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
 }
+tracks/3/type = "method"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath(".")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0.1, 0.3, 0.5, 0.7, 1.3, 1.41, 1.52, 1.63, 1.74, 2.13, 2.34, 2.54, 2.74),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"values": [{
+"args": ["beetle_walk", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["beetle_walk", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["beetle_walk", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["beetle_walk", 0.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["beetle_walk", 2.0, 0.0, 1.25, 0.0],
+"method": &"sfx"
+}, {
+"args": ["beetle_walk", 2.0, 0.0, 1.25, 0.0],
+"method": &"sfx"
+}, {
+"args": ["beetle_walk", 2.0, 0.0, 1.25, 0.0],
+"method": &"sfx"
+}, {
+"args": ["beetle_walk", 2.0, 0.0, 1.25, 0.0],
+"method": &"sfx"
+}, {
+"args": ["beetle_walk", 2.0, 0.0, 1.25, 0.0],
+"method": &"sfx"
+}, {
+"args": ["beetle_walk", -2.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["beetle_walk", -2.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["beetle_walk", -2.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}, {
+"args": ["beetle_walk", -2.0, 0.0, 1.0, 0.0],
+"method": &"sfx"
+}]
+}
 
 [sub_resource type="Animation" id="Animation_hei77"]
 resource_name = "death"
@@ -210,6 +260,8 @@ _data = {
 [node name="EnemyVisual" type="Node2D" unique_id=704724827]
 z_index = 1
 script = ExtResource("1_edmr7")
+step_sound = "beetle_walk"
+step_interval = 0.2
 
 [node name="EnemyAxisBar" parent="." unique_id=1910260031 instance=ExtResource("5_hei77")]
 offset_left = -41.6

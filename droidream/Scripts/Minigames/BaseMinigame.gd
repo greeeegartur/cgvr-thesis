@@ -13,6 +13,11 @@ signal completed(success : bool)
 # Base minigame variables (duration and timer)
 @export var max_duration = 5.0
 var elapsed = 0.0
+var end_sound: Node # The dream-end sound once it plays
+var end_sound_started := false
+var end_serial := 0
+var timer_running_sound := true # False once the timer stopped early, so the dream-end sound stays quiet
+const DREAM_EXIT_FADE := 0.8
 var running = false
 
 # Damage signal for CombatManager, including position
@@ -47,8 +52,27 @@ func _process(delta):
 		return
 	
 	elapsed += delta
+	_update_end_sound()
 	if elapsed >= max_duration:
 		on_timeout()
+
+# SOUNDS
+# The dream-end sound starts when its own length is left on the timer, so it ends exactly when the timer reaches 0
+func _update_end_sound() -> void:
+	if end_sound_started or not timer_running_sound:
+		return
+	var remaining: float = max_duration - elapsed
+	var length: float = Sfx.length_of("dream_end")
+	if remaining <= length:
+		end_sound_started = true
+		end_sound = Sfx.play_ui("dream_end", { "from": length - remaining })
+		end_serial = Sfx.serial_of(end_sound)
+
+# The timer stopped before 0 (a win or a reveal): the dream-end sound fades away and does not start anymore
+func stop_timer_sound() -> void:
+	timer_running_sound = false
+	if end_sound_started:
+		Sfx.stop(end_sound, 0.2, end_serial)
 
 func on_timeout():
 	# Notify child class, child minigames decide whether win or loss
@@ -74,7 +98,11 @@ func end(success : bool):
 	running = false
 	set_process(false)
 	set_process_input(false)
+	stop_timer_sound()
 	
+	# The box tweens out with the exit sound fading away on a sine
+	var exit_sound := Sfx.play_ui("dream_exit")
+	Sfx.stop(exit_sound, DREAM_EXIT_FADE, Sfx.serial_of(exit_sound))
 	completed.emit(success)
 	await animate_out()
 	queue_free()
