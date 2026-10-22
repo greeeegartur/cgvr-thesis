@@ -1,7 +1,7 @@
 extends Node
 
 # The game's sound system: plays sound effects from a pool of players on the SFX bus (panned a little by where they happen on screen)
-# and music on the Music bus; both buses follow the volume sliders in Settings
+# (the music lives in Music.gd); the SFX bus follows the volume slider in Settings
 
 const POOL_SIZE := 24 # Players for sounds that happen in the world (panned)
 const FLAT_POOL_SIZE := 12 # Players for centered sounds (UI, Tuh-U's voice, minigames on the screen)
@@ -9,11 +9,12 @@ const PAN_STRENGTH := 0.0 # Every sound plays centered (panning by screen positi
 const SFX_BUS := "SFX"
 const MUFFLED_BUS := "SFX Muffled" # A low-passed branch of the SFX bus for hollow, distant versions of a sound
 const MUFFLED_CUTOFF := 900.0
-const MUSIC_BUS := "Music"
 const SILENT_DB := -60.0
 const CUT_FADE := 0.04 # A cut sound fades over this, so it never clicks
 const PRESS_STEP_MAX := 7 # Semitones the press ladder climbs at most (a fifth)
 const LIMITER_CEILING_DB := -1.0 # Stacked sounds are kept below this, so they never clip
+const MASTER_CEILING_DB := -0.5 # The sound effects and the music together never go above this
+const DUCK_IDS := ["hurt", "block_break", "killed", "tamed", "all_perfect"] # The music dips under these
 
 const SOUND_FILES := [
 	preload("res://Scripts/Data/Sounds/option_move.tres"),
@@ -62,8 +63,6 @@ var flat_pool: Array[AudioStreamPlayer] = []
 var serial := 0 # Every play gets a number, so a late fade or cut never stops a player that was reused meanwhile
 var paused := false
 var press_step := 0 # The rising press ladder of the current tame sequence or ability
-var music_players: Array[AudioStreamPlayer] = []
-var music_index := 0
 var log_plays := OS.is_debug_build() and OS.get_cmdline_user_args().has("--sfx-log") # Prints every play with its frame (for checking a recorded playthrough)
 
 func _ready() -> void:
@@ -84,11 +83,6 @@ func _ready() -> void:
 		player.bus = SFX_BUS
 		add_child(player)
 		flat_pool.append(player)
-	for i in 2:
-		var player := AudioStreamPlayer.new()
-		player.bus = MUSIC_BUS
-		add_child(player)
-		music_players.append(player)
 
 # A limiter at the end of the SFX bus, so many sounds at once are squeezed instead of clipping
 func _add_limiter() -> void:
@@ -101,6 +95,9 @@ func _add_limiter() -> void:
 	var limiter := AudioEffectHardLimiter.new()
 	limiter.ceiling_db = LIMITER_CEILING_DB
 	AudioServer.add_bus_effect(index, limiter)
+	var master_limiter := AudioEffectHardLimiter.new()
+	master_limiter.ceiling_db = MASTER_CEILING_DB
+	AudioServer.add_bus_effect(0, master_limiter)
 
 # A bus that sends into SFX through a low-pass filter (so the SFX slider and the limiter still apply)
 func _add_muffled_bus() -> void:
@@ -129,6 +126,8 @@ func play(id: String, at: Variant = null, options := {}) -> Node:
 	if data.cooldown > 0.0 and now - int(last_played.get(id, -100000)) < int(data.cooldown * 1000.0):
 		return null
 	last_played[id] = now
+	if id in DUCK_IDS:
+		Music.duck()
 
 	# Voice cap: restarting sounds stop their voice, others replace the oldest once the cap is reached
 	var playing := _voices_of(id)
@@ -254,27 +253,6 @@ func set_paused(on: bool) -> void:
 	for player in pool + flat_pool:
 		if player.playing and not player.get_meta("ui", false):
 			player.stream_paused = on
-
-# MUSIC
-# Plays a music track, crossfading from the one before (the Music slider sets its volume)
-func play_music(stream: AudioStream, fade := 1.0) -> void:
-	var old := music_players[music_index]
-	if old.playing and old.stream == stream:
-		return
-	music_index = 1 - music_index
-	var new := music_players[music_index]
-	new.stream = stream
-	new.volume_db = SILENT_DB
-	new.play()
-	fade_to(new, 0.0, fade)
-	if old.playing:
-		stop(old, fade)
-
-# Fades the music out
-func stop_music(fade := 1.0) -> void:
-	for player in music_players:
-		if player.playing:
-			stop(player, fade)
 
 # HELPERS
 # The players currently playing a sound id, oldest first

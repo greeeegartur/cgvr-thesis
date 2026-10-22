@@ -863,6 +863,7 @@ func _start_minigame(enemy: CombatEntity, play_explosion := true):
 	var minigame = EnemyDatabase.MINIGAME_SCENES[enemy.minigame_id].instantiate()
 	minigame.process_mode = Node.PROCESS_MODE_ALWAYS
 	_world_gray_out(true) # BG grays out as minigame appears
+	Music.set_calm("dream", true) # The music blends into the tutorial track for the dream
 	minigame_layer.add_child(minigame)
 	
 	# Minigame on-screen position settings
@@ -898,6 +899,8 @@ func _start_minigame(enemy: CombatEntity, play_explosion := true):
 	
 	await on_minigame_complete(enemy, success)
 	_world_gray_out(false)
+	if not _check_victory(): # After the last dream the rewards follow, and the music stays calm
+		Music.set_calm("dream", false)
 	if combat_has_ended:
 		return
 	

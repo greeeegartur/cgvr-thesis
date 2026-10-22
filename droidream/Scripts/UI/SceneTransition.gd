@@ -19,6 +19,7 @@ static func go_to_title(tree: SceneTree) -> void:
 	layer.add_child(black)
 	tree.root.add_child(layer)
 	
+	Music.fade_out(FADE_TIME)
 	var tween := black.create_tween()
 	tween.set_ignore_time_scale(true)
 	tween.tween_property(black, "modulate:a", 1.0, FADE_TIME)

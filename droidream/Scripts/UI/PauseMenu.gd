@@ -157,6 +157,7 @@ func open() -> void:
 	Engine.time_scale = 0.0
 	active = true
 	Sfx.set_paused(true)
+	Music.set_paused_dim(true)
 	Sfx.play_ui("option_select")
 	
 	visible = true
@@ -178,6 +179,7 @@ func close() -> void:
 	Engine.time_scale = stored_time_scale
 	active = false
 	Sfx.set_paused(false)
+	Music.set_paused_dim(false)
 	state = State.CLOSED
 
 func _animate_in() -> void:

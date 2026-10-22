@@ -254,6 +254,7 @@ func _exit_stop():
 	set_process_input(false)
 	line_id += 1
 	combat_manager._world_gray_out(false, true) # The world lights up again while the shop leaves
+	Music.set_calm("stop", false) # ...and the encounter music comes back
 	_hide_line() # Tuh-U's bubble goes away
 	_animate_items_out() # The cards drop and fade with the box and the button, then Tuh-U lifts away
 	detail.pop_out()

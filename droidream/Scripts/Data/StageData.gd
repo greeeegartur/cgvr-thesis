@@ -32,7 +32,7 @@ class_name StageData
 # Generation fairness: weight multipliers that make repeats less likely
 const SAME_ENCOUNTER_PENALTY := 0.3 # Per copy already picked in this encounter (2nd copy x0.3, 3rd x0.09)
 const PREVIOUS_ENCOUNTER_PENALTY := 0.7 # For creatures that appeared in the previous encounter
-const NO_CHIP_PENALTY := 0.6 # For creatures whose type the player has no chips left for
+const NO_CHIP_PENALTY := 0.78 # For creatures whose type the player has no chips left for: it counts only a little, so the right chip is often missing
 const MIN_WEIGHT := 0.02
 
 # Creatures of the last generated encounter (shared by all stages)

@@ -20,6 +20,9 @@ class_name StageFlowController
 
 @onready var background := $"../World/CombatBackground"
 
+const INTRO_FADE := 0.9 # The black fades away (and the encounter music fades in) over this
+const DEATH_MUSIC_FADE := 1.0
+const ENDING_MUSIC_FADE := 3.0
 const PLAYER_COMBAT_POS := Vector2(96, 277)
 const PLAYER_WALK_IN_OFFSET := Vector2(-190, 0)
 
@@ -70,7 +73,8 @@ func _start_stage_with_intro(enemies: Array, reset := false):
 	player_visual.position = PLAYER_COMBAT_POS + PLAYER_WALK_IN_OFFSET
 	player_visual.set_home_position()
 	
-	await _fade_from_black()
+	Music.play_encounter(INTRO_FADE) # The encounter music comes in with the fade from black (also after a retry)
+	await _fade_from_black(INTRO_FADE)
 	await player_visual.walk_in_to(PLAYER_COMBAT_POS, PLAYER_WALK_IN_OFFSET)
 	
 	await get_tree().create_timer(0.3).timeout
@@ -107,6 +111,7 @@ func _on_player_died():
 	await _play_death_sequence()
 
 func _play_death_sequence():
+	Music.fade_out(DEATH_MUSIC_FADE)
 	combat_ui.hide_player_stats_hud()
 	combat_manager.player_turn_ui.hide_player_turn_ui()
 	tutorial_text.hide_text()
@@ -146,6 +151,8 @@ func _on_back_to_title():
 const REWARDS_DELAY := 0.4 # Seconds after the victory camera starts before the rewards appear
 
 func _play_victory_sequence(rewards: Dictionary):
+	Music.set_calm("stop", true) # The music blends into the tutorial track while the world is dimmed
+	Music.set_calm("dream", false)
 	# Combat end
 	combat_manager._pause_combat() # 1. Pausing combat
 	combat_ui.hide_player_stats_hud()
@@ -216,6 +223,7 @@ func _is_demo_final_stage() -> bool:
 	return area_manager.area_index == 0 and area_manager.stage_index == 4
 
 func _enter_demo_ending_stop():
+	Music.fade_out(ENDING_MUSIC_FADE) # The music fades away as the ending begins
 	combat_manager._world_gray_out(false, true) # The dim of the rewards and boons goes
 	tutorial_text.hide_text()
 	combat_ui.hide_player_stats_hud()
