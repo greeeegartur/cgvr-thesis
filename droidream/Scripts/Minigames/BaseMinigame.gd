@@ -19,6 +19,9 @@ var end_serial := 0
 var timer_running_sound := true # False once the timer stopped early, so the dream-end sound stays quiet
 const DREAM_EXIT_FADE := 0.8
 var running = false
+const PLACE_TRIES := 40
+const PLACE_ROUNDS := 10
+const PLACE_SHRINK := 0.9
 
 # Damage signal for CombatManager, including position
 signal damage_taken(amount: float, world_position: Vector2)
@@ -55,6 +58,38 @@ func _process(delta):
 	_update_end_sound()
 	if elapsed >= max_duration:
 		on_timeout()
+
+# PLACEMENT
+# Places nodes (each with a Sprite2D child) at random spots so their sprites never overlap; centers stay within center_range of the origin.
+# Each node gets up to PLACE_TRIES spots; if the box is too crowded, every node shrinks a little and the whole group tries again
+static func place_apart(nodes: Array, center_range: Vector2, margin := 4.0) -> void:
+	for round_index in PLACE_ROUNDS:
+		var placed: Array[Rect2] = []
+		var fits := true
+		for node in nodes:
+			var half := _sprite_half_size(node)
+			var found := false
+			for attempt in PLACE_TRIES:
+				var spot := Vector2(randf_range(-center_range.x, center_range.x), randf_range(-center_range.y, center_range.y))
+				var rect := Rect2(spot - half, half * 2.0).grow(margin * 0.5)
+				if placed.all(func(other: Rect2): return not other.intersects(rect)):
+					node.position = spot
+					placed.append(rect)
+					found = true
+					break
+			if not found:
+				fits = false
+				break
+		if fits:
+			return
+		for node in nodes:
+			node.scale *= PLACE_SHRINK
+
+static func _sprite_half_size(node: Node2D) -> Vector2:
+	var sprite := node.get_node_or_null("Sprite2D") as Sprite2D
+	if sprite == null or sprite.texture == null:
+		return Vector2(24, 24) * node.scale
+	return (sprite.get_rect().size * sprite.scale * node.scale).abs() * 0.5
 
 # SOUNDS
 # The dream-end sound starts when its own length is left on the timer, so it ends exactly when the timer reaches 0
@@ -138,6 +173,7 @@ func animate_out():
 func set_duration(value: float):
 	max_duration = value
 	ControlTextures.swap_in(self) # Every minigame's _ready calls this first: the key pictures of the scheme in use
+	Utils.ignore_mouse(self) # Clicks reach the game (Duck Flap, Bat Flash, Frog Guess)
 
 # In Combat scene methods
 func _enter_tree():

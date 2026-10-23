@@ -61,6 +61,8 @@ var attack_timer_running = false
 # Player block window variables for handling blocking logic
 var last_block_press_time = -1.0
 var current_block_window = Vector2.ZERO
+var cue_attacker: EnemyVisual = null # The creature whose attack is playing, for the block window cue
+var cue_on := false
 var block_on_cooldown = false
 const BLOCK_COOLDOWN = 0.45
 const BLOCK_INPUT_LOCKOUT_MSEC := 250 # Cooldown in-between blocks
@@ -69,7 +71,7 @@ var enemy_attack_started_handlers: Dictionary = {}
 var enemy_attack_hit_handlers: Dictionary = {}
 var enemy_attack_finished_handlers: Dictionary = {}
 
-const HIT_RETURN_DELAY := 0.4 # After a hit that did not tame, before the Droid walks home
+const HIT_RETURN_DELAY := 0.27 # After a hit that did not tame, before the Droid walks home
 var tame_sequence: TameSequence
 var sequence_chip_roll := false
 
@@ -107,7 +109,8 @@ const QUICK_TAME_MAX_BONUS_CURRENCY := 3
 const QUICK_TAME_BONUS_ITEMS := 1
 
 # Creature-specific variables and constants
-const DUCK_TYPE_REVEAL_DURATION := 1.45
+const DUCK_TYPE_REVEAL_DURATION := 2.45
+const DUCK_TYPE_TEXT_EXTRA := 1.0 # The duck's type text stays this much longer than other info texts
 const DUCK_TYPE_COLORS := {
 	CombatTypes.EntityType.SKY: Color("f7ff3c"),
 	CombatTypes.EntityType.EARTH: Color("8b5a2b"),
@@ -200,6 +203,23 @@ func _process(delta):
 	
 	if attack_timer_running:
 		attack_time += delta
+	_update_block_cue()
+
+# The block window cue: while a hit can be blocked (and has not been yet) the Droid nudges, the camera pushes in,
+# the screen edges darken and the attacker's sounds get a little louder; it all lets go when the window closes or on a block
+func _update_block_cue() -> void:
+	var blocked: bool = last_block_press_time >= current_block_window.x and last_block_press_time <= current_block_window.y
+	var want: bool = attack_timer_running and is_instance_valid(cue_attacker) and not cue_attacker.is_defeated \
+		and attack_time >= current_block_window.x and attack_time <= current_block_window.y and not blocked
+	if want == cue_on:
+		return
+	cue_on = want
+	if want:
+		player_visual.play_window_nudge()
+	if is_instance_valid(cue_attacker):
+		cue_attacker.set_block_window(want)
+	camera.set_window_push(want)
+	vfx.set_edge_vignette(want)
 
 # Sets up the player and enemy(s) battle data
 func _setup_entities(enemy_ids):
@@ -237,7 +257,7 @@ func _setup_entities(enemy_ids):
 		visual.global_position = enemy_positions[i].global_position # Moving to intended position
 		visual.home_position = visual.global_position # Setting as home position
 		visual.attack_offset = EnemyDatabase.get_attack_offset(enemy_ids[i]) # Setting offset for attack position
-		visual.move_speed = EnemyDatabase.get_move_speed(enemy_ids[i]) # Setting move speed for enemy during attacks
+		visual.move_time = EnemyDatabase.get_move_time(enemy_ids[i]) # How long it takes to reach the Droid and to walk back
 		enemy_visuals[entity] = visual # Adding to enemy_visuals
 		
 		# UI
@@ -285,7 +305,7 @@ func _spawn_enemy(enemy_id: String, slot_index: int, spawner: CombatEntity):
 	visual.global_position = target_pos + Vector2(0, -260)
 	visual.home_position = target_pos
 	visual.attack_offset = EnemyDatabase.get_attack_offset(enemy_id)
-	visual.move_speed = EnemyDatabase.get_move_speed(enemy_id)
+	visual.move_time = EnemyDatabase.get_move_time(enemy_id)
 	visual.z_index = 1
 	enemy_visuals[entity] = visual
 	_check_slot_order()
@@ -816,8 +836,7 @@ func _apply_axis_shift_with_multiplier(enemy: CombatEntity, guess_type: CombatTy
 		
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
 		enemy_visual.shake(multiplier >= 1.5)
-		#vfx.play_damage_vfx(enemy_visual, abs(actual_shift), multiplier >= 1.5)
-		#vfx.play_crit_feedback(enemy_visual)
+		_show_shift_number(enemy_visual, actual_shift, multiplier, true)
 		
 		_try_restore_chip(guess_type, true) # Always true for Multi-tame, but might change
 		
@@ -835,10 +854,17 @@ func _apply_axis_shift_with_multiplier(enemy: CombatEntity, guess_type: CombatTy
 		
 		enemy_visual.update_axis(enemy.axis_value, actual_shift)
 		enemy_visual.shake(multiplier >= 1.5)
-		#vfx.play_damage_vfx(enemy_visual, abs(actual_shift), multiplier >= 1.5)
+		_show_shift_number(enemy_visual, actual_shift, multiplier, false)
 		_try_restore_chip(guess_type, true)
 		
 		await _resolve_enemy_state(enemy)
+
+# The number of a Multi-tame or Ball hit: how far the creature's meter really moved (rounded, nothing for no change)
+func _show_shift_number(enemy_visual: EnemyVisual, actual_shift: float, multiplier: float, tame_side: bool) -> void:
+	if is_zero_approx(actual_shift):
+		return
+	var tier := DamageNumber.Tier.STRONG if multiplier >= TameSequence.MULT_ANY_PERFECT and multiplier < 1.5 else DamageNumber.Tier.NORMAL
+	vfx.spawn_damage_number(enemy_visual, abs(actual_shift), multiplier >= 1.5, false, tier, tame_side)
 
 # Logic for starting enemy's minigame in combat
 # play_explosion is false when the explosion VFX was already played for a group of creatures (consecutive minigames)
@@ -960,7 +986,8 @@ func _enemy_attack_single(enemy: CombatEntity):
 	# Setting enemy attack
 	var visual = enemy_visuals[enemy]
 	visual.z_index = 3
-	var pattern = enemy.attack_patterns.pick_random() # Picks random attack pattern assigned to the enemy
+	var pattern = _pick_attack_pattern(enemy)
+	enemy.last_pattern_id = pattern.pattern_id
 	
 	# Support patterns
 	if pattern.is_support:
@@ -1028,6 +1055,7 @@ func _play_enemy_attack_pattern(enemy: CombatEntity, enemy_visual: EnemyVisual, 
 	var on_attack_started = func(): # Marks start of the attacking animation for block timing
 		attack_time = 0.0
 		attack_timer_running = true
+		cue_attacker = enemy_visual
 		print("!!! DEBUG: attack timer started")
 		print("!!! DEBUG: pattern duration is ", pattern.total_duration)
 	
@@ -1046,6 +1074,8 @@ func _play_enemy_attack_pattern(enemy: CombatEntity, enemy_visual: EnemyVisual, 
 	
 	var on_attack_finished = func(): # Checks if combat has ended
 		attack_timer_running = false
+		_update_block_cue()
+		cue_attacker = null
 		print("!!! DEBUG: attack finished at:", "%.3f" % attack_time)
 		
 		enemy_visual.z_index = 1
@@ -1412,7 +1442,7 @@ func _resolve_multi_tame_hit(target: CombatEntity, multiplier: float):
 		if enemy_visuals.has(enemy): # Check just in case visuals are inactive or not
 			var visual = enemy_visuals[enemy]
 			visual.hop(2)
-			vfx.play_damage_vfx(visual, player.attack_power * multiplier, multiplier >= 1.5)
+			vfx.play_damage_vfx(visual, 0.0, multiplier >= 1.5, false, multiplier, false, false) # The burst now; the number shows the real meter change below
 			_hit_impact(visual, HIT_STOP_NORMAL)
 			vfx.play_multihit_feedback(visual)
 	
@@ -1703,6 +1733,40 @@ func cycle_target(dir: int):
 	# Finds index for the selected enemy based on dir
 	target_index = wrapi(target_index + dir, 0, alive.size())
 	_set_selected_enemy(alive[target_index])
+
+# The mouse aims: hovering a creature makes it the target, a click aims and confirms (clicking the Droid confirms a self target)
+func _unhandled_input(event):
+	if not Utils.is_pointer_pick(event):
+		return
+	var click := event is InputEventMouseButton
+	if player_turn_ui.state == player_turn_ui.State.SELF_SELECT:
+		if click and Utils.mouse_over_sprite(player_visual.get_node("Visual/Sprite2D")):
+			get_viewport().set_input_as_handled()
+			UIList.send_confirm()
+		return
+	if player_turn_ui.state != player_turn_ui.State.ENEMY_SELECT:
+		return
+	var alive := _get_alive_enemies()
+	var hovered: CombatEntity = null
+	var best := INF
+	for enemy in alive: # Overlapping frames: the creature whose middle is closest wins
+		if not enemy_visuals.has(enemy):
+			continue
+		var sprite: Sprite2D = enemy_visuals[enemy].get_node("Visual/Sprite2D")
+		if Utils.mouse_over_sprite(sprite):
+			var distance := sprite.get_local_mouse_position().length()
+			if distance < best:
+				best = distance
+				hovered = enemy
+	if hovered == null:
+		return
+	if hovered != selected_enemy:
+		Sfx.play_ui("option_move")
+		target_index = alive.find(hovered)
+		_set_selected_enemy(hovered)
+	if click:
+		get_viewport().set_input_as_handled()
+		UIList.send_confirm()
 
 # Setter for selected_enemy -> listens to UI and sets the currently selected enemy (and keeps it after selection is confirmed)
 func _set_selected_enemy(enemy: CombatEntity):
@@ -2344,7 +2408,9 @@ func _apply_human_at_heart(killed_count: int):
 	vfx.spawn_damage_number(player_visual, total_heal, false, true)
 	vfx.play_buff_particles(player_visual, BuffParticles.Kind.HEAL)
 	vfx.play_buff_particles(player_visual, BuffParticles.Kind.POWER)
-	vfx.play_human_at_heart_feedback(player_visual, human_at_heart_trigger_counter)
+	var gain_text := str(int(round(total_power_gain))) if is_equal_approx(total_power_gain, round(total_power_gain)) else String.num(total_power_gain, 2) # 0.5, 0.75, 1
+	vfx.spawn_info(player_visual, "[color=#e72237]Human at Heart[/color]\n[color=#eff238]+%s power[/color]" % gain_text) # The gains as an indicator
+	vfx.play_human_at_heart_feedback(player_visual, human_at_heart_trigger_counter) # ...and its escalating line
 	human_at_heart_trigger_counter += 1
 
 # Tracks all player karma and outcomes for creatures for difficulty modifiers and game ending
@@ -2461,6 +2527,17 @@ func _disconnect_enemy_attack_handlers(enemy_visual: EnemyVisual):
 			enemy_visual.attack_finished.disconnect(finished_cb)
 		enemy_attack_finished_handlers.erase(enemy_visual)
 
+# A random attack pattern of the creature; a heal is never picked twice in a row, nor when the creature's meter sits in the middle (nothing to heal)
+func _pick_attack_pattern(enemy: CombatEntity) -> EnemyAttackPattern:
+	var choices: Array = enemy.attack_patterns.filter(func(p):
+		if p.pattern_id != "frog_heal":
+			return true
+		return enemy.last_pattern_id != "frog_heal" and not is_zero_approx(enemy.axis_value)
+	)
+	if choices.is_empty():
+		choices = enemy.attack_patterns # Only heals left: the rule gives way rather than the creature skipping its turn
+	return choices.pick_random()
+
 # Frog enemy's (or other enemies that might heal) healing method; moves the creature's axis toward 0
 func _support_frog_heal(enemy: CombatEntity):
 	if enemy == null:
@@ -2513,7 +2590,7 @@ func _reveal_duck_type(enemy: CombatEntity):
 		return
 	
 	var color: Color = DUCK_TYPE_COLORS.get(enemy.type, Color.WHITE)
-	vfx.spawn_info(visual, "%s" % CombatTypes.type_bbcode(enemy.type))
+	vfx.spawn_info(visual, "%s" % CombatTypes.type_bbcode(enemy.type), DUCK_TYPE_TEXT_EXTRA)
 	await _flash_enemy_type_color(visual, color, DUCK_TYPE_REVEAL_DURATION)
 
 func tutorial_begin_player_turn_locked():

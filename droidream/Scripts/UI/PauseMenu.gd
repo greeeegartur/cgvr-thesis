@@ -1,7 +1,8 @@
 extends CanvasLayer
 class_name PauseMenu
 
-# The pause menu: ESC freezes the game (game time stops, so every timer, tween and animation stops) and opens Resume / Options / Quit over a dimmed world
+# The pause menu: ESC freezes the game (game time stops, so every timer, tween and animation stops) and opens Resume / Options / (Restart) / Quit over a dimmed world
+# Restart is only offered in the combat scene, and not once the demo ending has begun
 
 enum State { CLOSED, MAIN, CONFIRM_QUIT, OPTIONS, QUITTING }
 
@@ -26,6 +27,10 @@ var hint_size := Vector2.ZERO
 var open_tween: Tween
 var options: OptionsMenu
 var note_tween: Tween
+var confirm_kind := "" # "quit", "restart" or "prompt" while the Yes/No list is open
+var prompt_heading := ""
+var prompt_yes: Callable # A prompt (the tutorial's Skip tutorial?) runs this on Yes
+var main_entries: Array[String] = [] # The rows of the main list, in order
 
 func _ready() -> void:
 	layer = 100
@@ -104,6 +109,13 @@ func _input(event: InputEvent) -> void:
 	if state == State.OPTIONS:
 		return # The options container takes the input
 	
+	# The key that opened a prompt (T for Skip tutorial?) closes it again
+	if is_prompt_open() and event is InputEventKey and event.pressed and event.physical_keycode == KEY_T:
+		Sfx.play_cancel()
+		_back_to_main()
+		get_viewport().set_input_as_handled()
+		return
+	
 	if event.is_action_pressed("pause"):
 		match state:
 			State.CLOSED:
@@ -115,7 +127,7 @@ func _input(event: InputEvent) -> void:
 				close()
 				get_viewport().set_input_as_handled()
 			State.CONFIRM_QUIT:
-				_show_main()
+				_back_to_main()
 				get_viewport().set_input_as_handled()
 		return
 	
@@ -136,7 +148,7 @@ func _input(event: InputEvent) -> void:
 	elif event.is_action_pressed("ui_cancel"):
 		Sfx.play_cancel()
 		if state == State.CONFIRM_QUIT:
-			_show_main()
+			_back_to_main()
 		else:
 			close()
 
@@ -182,6 +194,18 @@ func close() -> void:
 	Music.set_paused_dim(false)
 	state = State.CLOSED
 
+# Closes without the animation and lets time run again at once (a prompt's Yes starts its own fade right away)
+func _close_now() -> void:
+	if open_tween:
+		open_tween.kill()
+	visible = false
+	Engine.time_scale = stored_time_scale
+	active = false
+	Sfx.set_paused(false)
+	Music.set_paused_dim(false)
+	state = State.CLOSED
+	confirm_kind = ""
+
 func _animate_in() -> void:
 	if open_tween:
 		open_tween.kill()
@@ -196,21 +220,62 @@ func _animate_in() -> void:
 	open_tween.tween_property(panel, "scale", Vector2.ONE, OPEN_TIME).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	open_tween.tween_property(hint, "modulate:a", 1.0, OPEN_TIME)
 
-# Main list: Resume / Options / Quit
+# Main list: Resume / Options / (Restart) / Quit
 func _show_main() -> void:
 	state = State.MAIN
 	_set_hint([["Z", "Confirm"], ["X", "Resume"]])
-	_set_content("Paused", "", [{ "text": "Resume" }, { "text": "Options" }, { "text": "Quit" }], 0)
+	main_entries = ["Resume", "Options"]
+	if _can_restart():
+		main_entries.append("Restart")
+	main_entries.append("Quit")
+	var rows := []
+	for entry in main_entries:
+		rows.append({ "text": entry })
+	_set_content("Paused", "", rows, 0)
 	if list.confirmed.is_connected(_on_confirm_quit):
 		list.confirmed.disconnect(_on_confirm_quit)
 	if not list.confirmed.is_connected(_on_main_confirmed):
 		list.confirmed.connect(_on_main_confirmed)
 
-# Confirmation list: Yes / No, with No preselected
-func _show_confirm() -> void:
+# Restart is offered in the combat scene only, and not once the demo ending has begun
+func _can_restart() -> bool:
+	var scene := get_tree().current_scene
+	return scene != null and scene.get_node_or_null("StageFlowController") != null and not scene.has_meta("no_restart")
+
+# A Yes/No question on its own, with the game frozen and the sound muffled like the pause menu (the tutorial's Skip tutorial?)
+# No, Cancel, Escape or close() leave the game exactly where it was; Yes closes at once and runs on_yes
+func open_prompt(heading: String, on_yes: Callable) -> void:
+	if state != State.CLOSED or not _can_open():
+		return
+	open()
+	prompt_heading = heading
+	prompt_yes = on_yes
+	_show_confirm("prompt")
+
+func is_prompt_open() -> bool:
+	return state == State.CONFIRM_QUIT and confirm_kind == "prompt"
+
+# Back from the Yes/No list to the main list, on the row that opened it (a prompt just closes)
+func _back_to_main() -> void:
+	if confirm_kind == "prompt":
+		confirm_kind = ""
+		close()
+		return
+	var row := "Restart" if confirm_kind == "restart" else "Quit"
+	_show_main()
+	list.select(main_entries.find(row), false)
+
+# Confirmation list: Yes / No, with No preselected (kind is "quit" or "restart")
+func _show_confirm(kind := "quit") -> void:
 	state = State.CONFIRM_QUIT
+	confirm_kind = kind
 	_set_hint([["Z", "Confirm"], ["X", "Back"]])
-	_set_content("Quit to title?", "Your progress won't save.", [{ "text": "Yes" }, { "text": "No" }], 1)
+	var heading := "Restart?" if kind == "restart" else "Quit to title?"
+	var note_text := "Your progress won't save."
+	if kind == "prompt":
+		heading = prompt_heading
+		note_text = ""
+	_set_content(heading, note_text, [{ "text": "Yes" }, { "text": "No" }], 1)
 	if list.confirmed.is_connected(_on_main_confirmed):
 		list.confirmed.disconnect(_on_main_confirmed)
 	if not list.confirmed.is_connected(_on_confirm_quit):
@@ -258,13 +323,15 @@ func _set_content(title_text: String, note_text: String, entries: Array, selecte
 	panel.pivot_offset = panel.size / 2.0
 
 func _on_main_confirmed(index: int) -> void:
-	match index:
-		0:
+	match main_entries[index]:
+		"Resume":
 			close()
-		1:
+		"Options":
 			_open_options()
-		2:
-			_show_confirm()
+		"Restart":
+			_show_confirm("restart")
+		"Quit":
+			_show_confirm("quit")
 
 # Options opens its own container over the pause menu; the pause panel waits behind it
 func _open_options() -> void:
@@ -280,6 +347,12 @@ func _on_options_closed() -> void:
 func _on_confirm_quit(index: int) -> void:
 	if index == 0:
 		state = State.QUITTING
-		SceneTransition.go_to_title(get_tree())
+		if confirm_kind == "prompt":
+			_close_now()
+			prompt_yes.call()
+		elif confirm_kind == "restart":
+			SceneTransition.restart_combat(get_tree())
+		else:
+			SceneTransition.go_to_title(get_tree())
 	else:
-		_show_main()
+		_back_to_main()

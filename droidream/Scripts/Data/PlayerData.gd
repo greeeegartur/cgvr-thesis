@@ -40,6 +40,7 @@ func _ready():
 	reset_run()
 
 func reset_run():
+	StageData.last_encounter.clear() # A new run does not avoid the previous run's last encounter
 	MinigameCountdown.reset() # Every minigame counts down again in the new run
 	ShopDialogue.reset() # Tuh-U greets you like a first visit again
 	# Reset stats

@@ -10,7 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://6spw051sn4fb" path="res://Graphics/Sprites/Minigames/BatFlash/bat1.png" id="4_na8lq"]
 [ext_resource type="Texture2D" uid="uid://bksy11ggmldbb" path="res://Graphics/Sprites/Minigames/BatFlash/bat2.png" id="5_4vwvk"]
 [ext_resource type="Texture2D" uid="uid://bq1vqpld04ay4" path="res://Graphics/Sprites/Minigames/BatFlash/overlay.png" id="7_liy6e"]
-[ext_resource type="Texture2D" uid="uid://g1cpi65b1lxo" path="res://Graphics/Sprites/UI/WASD.png" id="9_wng6b"]
+[ext_resource type="Texture2D" uid="uid://g1cpi65b1lxo" path="res://Graphics/Sprites/UI/Arrows.png" id="9_wng6b"]
 [ext_resource type="Shader" uid="uid://bhfgry4jukyo5" path="res://Scenes/Minigames/BatFlash/flash.gdshader" id="10_0uxlo"]
 [ext_resource type="Texture2D" uid="uid://b0axro84k6yfj" path="res://Graphics/Sprites/UI/Z.png" id="10_b55n2"]
 

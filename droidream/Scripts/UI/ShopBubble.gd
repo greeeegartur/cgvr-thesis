@@ -108,7 +108,7 @@ func _is_letter(character: String) -> bool:
 	return character != " " and character.to_upper() != character.to_lower() or character.is_valid_int()
 
 func _input(event: InputEvent) -> void:
-	if skippable and event.is_action_pressed("ui_accept"):
+	if skippable and Settings.is_confirm(event):
 		skip_requested = true
 
 # A line that waits for Confirm before it returns (the ending's dialogue)
@@ -120,7 +120,7 @@ func say_and_wait(text: String, target: Vector2) -> void:
 	await get_tree().process_frame # The press that skipped the typing does not count
 	while mine == serial:
 		await get_tree().process_frame
-		if not PauseMenu.active and Input.is_action_just_pressed("ui_accept"):
+		if not PauseMenu.active and Settings.confirm_just_pressed():
 			break
 	waiting = false
 	set_process(false)

@@ -73,7 +73,7 @@ func play_flair(bbcode_text: String, glow_color := Color("#fff27a"), font_size :
 	queue_free()
 
 # Smaller and longer-lived text for items, abilities and reveals
-func play_info(bbcode_text: String):
+func play_info(bbcode_text: String, info_time := INFO_LIFETIME):
 	label.text = bbcode_text
 	label.add_theme_font_size_override("normal_font_size", 16)
 	label.add_theme_constant_override("outline_size", 4)
@@ -85,9 +85,9 @@ func play_info(bbcode_text: String):
 	tween.tween_property(label, "modulate:a", 1.0, 0.12)
 	tween.tween_property(self, "scale", Vector2.ONE, 0.18)\
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "position:y", position.y - 24, INFO_LIFETIME)\
+	tween.tween_property(self, "position:y", position.y - 24, info_time)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tween.tween_property(label, "modulate:a", 0.0, 0.35).set_delay(INFO_LIFETIME - 0.35)
+	tween.tween_property(label, "modulate:a", 0.0, 0.35).set_delay(info_time - 0.35)
 	await tween.finished
 	queue_free()
 

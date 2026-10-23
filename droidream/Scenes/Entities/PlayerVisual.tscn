@@ -845,7 +845,6 @@ script = ExtResource("1_sbipa")
 worry_emote = ExtResource("2_k74ei")
 exclamation_emote = ExtResource("3_f4nlf")
 question_emote = ExtResource("20_wv7sg")
-move_speed = 250.0
 
 [node name="PlayerHUD" type="Control" parent="." unique_id=919468022]
 z_index = 1

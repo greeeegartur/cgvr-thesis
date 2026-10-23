@@ -17,6 +17,7 @@ const STAT_TEXT_MAX_WIDTH := 36.0 # Space between a stat icon and its slot row
 
 signal turn_order_toggled(enabled: bool)
 var turn_order_enabled := false
+var turn_order_locked := false # True in the tutorial until the controls bar has shown the turn order key
 
 var selected_attack_type := CombatTypes.EntityType.SKY
 var stats_hud_tween: Tween
@@ -43,6 +44,8 @@ func setup(combat_manager: CombatManager):
 
 func _unhandled_input(event):
 	if event.is_action_pressed("toggle_turn_order"):
+		if turn_order_locked and not TutorialText.turn_order_seen:
+			return # The tutorial unlocks it once its key has been shown
 		_toggle_turn_order()
 		return
 
@@ -173,8 +176,9 @@ func show_player_stats_hud():
 	await stats_hud_tween.finished
 
 # Shows which encounter of the run the player is on (the tutorial never calls this, so it has no counter)
-func show_encounter(index: int, animate := true) -> void:
+func show_encounter(index: int, total: int, animate := true) -> void:
 	encounter_counter.visible = true
+	encounter_counter.set_count(total)
 	encounter_counter.set_progress(index, animate)
 
 func _combat_end(_victory := true, _rewards := {}):

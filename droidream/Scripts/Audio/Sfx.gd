@@ -60,6 +60,7 @@ var loop_streams := {} # id -> a looping copy of the stream
 var last_played := {} # id -> time of the last play (msec), for cooldowns
 var pool: Array[AudioStreamPlayer2D] = []
 var flat_pool: Array[AudioStreamPlayer] = []
+var owner_offsets := {} # Instance id -> dB a node's sounds are raised by (a creature's block window)
 var serial := 0 # Every play gets a number, so a late fade or cut never stops a player that was reused meanwhile
 var paused := false
 var press_step := 0 # The rising press ladder of the current tame sequence or ability
@@ -145,6 +146,8 @@ func play(id: String, at: Variant = null, options := {}) -> Node:
 	player.set_meta("serial", serial)
 	player.set_meta("started", now)
 	player.set_meta("ui", data.ui)
+	var owner_id: int = at.get_instance_id() if at is Node2D else 0
+	player.set_meta("owner", owner_id)
 	if not centered:
 		player.global_position = at.global_position if at is Node2D else at
 
@@ -156,14 +159,15 @@ func play(id: String, at: Variant = null, options := {}) -> Node:
 	player.stream_paused = false
 
 	var fade_in: float = options.get("fade_in", 0.0)
-	player.volume_db = SILENT_DB if fade_in > 0.0 else base_db
+	var level_db: float = base_db + float(owner_offsets.get(owner_id, 0.0))
+	player.volume_db = SILENT_DB if fade_in > 0.0 else level_db
 	player.play(float(options.get("from", 0.0)))
 	if log_plays:
 		print("SFX %d %s %.1f %.3f %.2f" % [Engine.get_process_frames(), id, base_db, player.pitch_scale, float(options.get("from", 0.0))])
 	if paused and not data.ui:
 		player.stream_paused = true
 	if fade_in > 0.0:
-		fade_to(player, base_db, fade_in)
+		fade_to(player, level_db, fade_in)
 	if options.has("length"):
 		_cut_after(player, float(options["length"]))
 	return player
@@ -232,6 +236,17 @@ func length_of(id: String) -> float:
 	var data: SoundData = sounds.get(id)
 	return data.stream.get_length() if data else 0.0
 
+# Raises (or lowers) every sound of one node by offset_db: the playing ones fade there, new ones start there
+func set_owner_level(owner: Node, offset_db: float, fade := 0.08) -> void:
+	var id := owner.get_instance_id()
+	if offset_db == 0.0:
+		owner_offsets.erase(id)
+	else:
+		owner_offsets[id] = offset_db
+	for player in pool:
+		if player.playing and player.get_meta("owner", 0) == id:
+			fade_to(player, float(player.get_meta("base_db", 0.0)) + offset_db, fade)
+
 # Whether a sound with this id is playing right now
 func is_playing(id: String) -> bool:
 	return not _voices_of(id).is_empty()
@@ -245,6 +260,7 @@ func stop_id(id: String, fade := 0.0) -> void:
 func stop_all() -> void:
 	for player in pool + flat_pool:
 		player.stop()
+	owner_offsets.clear()
 
 # PAUSE
 # The pause menu freezes the gameplay sounds where they are; menu sounds keep playing

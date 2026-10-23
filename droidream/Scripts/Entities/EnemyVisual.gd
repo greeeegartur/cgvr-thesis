@@ -36,6 +36,7 @@ var selection_pulse: SelectionPulse
 const IDLE_SOUND_GAP := 600 # Msec; idle sounds of different creatures never come closer, so only one idle creature is heard at a time
 const IDLE_VOLUME := -14.0 # Idle sounds (a frog hopping in place) are much quieter than the same sound in an attack
 static var last_idle_sound := 0
+const WINDOW_BOOST_DB := 3.0 # Its attack sounds are this much louder while a hit's block window is open
 
 # Shake variables
 @export var shake_strength = 3.0
@@ -47,7 +48,7 @@ var support_animation_name: String
 var home_position : Vector2 # The enemy's original position
 var attack_position : Vector2 # The position where the enemy's pattern will connect to the (intended) player sprite
 var attack_offset := Vector2.ZERO # The attack position's offset for the enemy (different for every enemy)
-var move_speed := 0 # Pixels per second, different for every enemy
+var move_time := Vector2(0.85, 0.78) # Seconds to reach the Droid (x) and to walk back home (y), set per creature
 var is_defeated := false # Checks if visual can play any other animations
 
 # Enemy moves to position, attacks, returns back to original position
@@ -122,8 +123,7 @@ func _unpin_meter() -> void:
 
 # Movement methods for connecting patterns using tweens (same methods just in reverse)
 func _move_to_attack_position(target: Vector2):
-	var dist = global_position.distance_to(target)
-	var duration = dist / move_speed # t = d/v
+	var duration := move_time.x
 	
 	play_steps(duration)
 	var tween := create_tween()
@@ -133,8 +133,7 @@ func _move_to_attack_position(target: Vector2):
 	await tween.finished
 
 func _move_to_home_position():
-	var dist = global_position.distance_to(home_position)
-	var duration = dist / move_speed # t = d/v
+	var duration := move_time.y
 	
 	play_steps(duration)
 	var tween := create_tween()
@@ -164,6 +163,10 @@ func sfx(id: String, volume := 0.0, from := 0.0, pitch := 1.0, length := 0.0) ->
 	if length > 0.0:
 		options["length"] = length
 	Sfx.play(id, self, options)
+
+# While a hit's block window is open its sounds are a little louder (the playing ones rise smoothly, new ones start louder)
+func set_block_window(open: bool) -> void:
+	Sfx.set_owner_level(self, WINDOW_BOOST_DB if open else 0.0)
 
 # A quiet sound from the idle loop (a frog hopping in place); only one idle creature is heard at a time
 func idle_sfx(id: String) -> void:

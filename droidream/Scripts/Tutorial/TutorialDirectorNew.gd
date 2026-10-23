@@ -59,6 +59,8 @@ var skipping := false
 
 func _ready():
 	ControlTextures.swap_in(get_tree().current_scene) # The key pictures of the scheme in use
+	TutorialText.turn_order_seen = false
+	combat_manager.ui.turn_order_locked = true
 	var bubble_layer := CanvasLayer.new()
 	bubble_layer.layer = BUBBLE_LAYER
 	add_child(bubble_layer)
@@ -72,7 +74,7 @@ func _ready():
 
 	PlayerData.set_guesses(4, 4, 4) # All types have chips for the type question; only Earth keeps them after it
 	tutorial_text.visible = true # The scene keeps it hidden for the first tutorial; the hints and the controls bar are used here
-	tutorial_text.pin_hint([["SPACE", "Skip tutorial"]]) # Space leaves the tutorial at any time
+	tutorial_text.pin_hint([["T", "Skip tutorial"]]) # T asks to leave the tutorial at any time
 	ufo.visible = false
 	ufo.reparent(tutorial_overlay, true) # Once, while he faces right: reparenting a flipped node would turn it upside down
 	ufo.rotation = 0.0
@@ -86,13 +88,14 @@ func _ready():
 	lock_input()
 	await play_tutorial()
 
-# Space skips the whole tutorial at any time (not while the pause menu is open)
+# T asks "Skip tutorial?" at any time (the tutorial freezes while it's open); T again closes it. Space is a plain Confirm now
 func _input(event: InputEvent) -> void:
-	if skipping or PauseMenu.active:
+	if skipping:
 		return
-	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_SPACE:
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_T:
+		if not PauseMenu.active: # While it is open, the pause menu takes the keys (and closes the prompt on T itself)
+			get_parent().get_node("PauseMenu").open_prompt("Skip tutorial?", skip_tutorial)
 		get_viewport().set_input_as_handled()
-		skip_tutorial()
 
 # Leaves the tutorial for the game: a fade, a fresh run and the combat scene
 func skip_tutorial() -> void:
@@ -203,7 +206,7 @@ func intro_scene():
 	await stage(beetle_spot(), beetle_visual)
 	await say("This is a %s." % bb("creatures", "creature"), "down")
 	await say("To get past it, you need to choose your %s." % bb("taming", "intent"), "normal")
-	await say("You can either %s or %s a creature." % [bb("hurt", "kill"), bb("taming", "tame")], "normal")
+	await say("You can %s or %s a creature." % [bb("hurt", "kill"), bb("taming", "tame")], "normal")
 	await say("Doing either requires you to know the %s." % bb("type", "creature’s type"), "normal")
 	await end_say()
 
@@ -215,7 +218,7 @@ func gear_scene():
 	tutorial_text.show_hint(TutorialText.HintType.PLAYER_TURN)
 	await wait(PAUSE_SETTLE) # The gear pops in first
 
-	await say("Here you can see your different options in %s." % bb("creatures", "encounters"), "normal")
+	await say("Here you can see your different options.", "normal")
 	await overlay_say("Try selecting %s!" % bb("taming", "Tame"), "happy")
 
 	unlock_gear()
@@ -230,7 +233,9 @@ func type_scene():
 	await stage(SPOT_GEAR, player_visual) # He stays where he is (the same beat): his bubble is above the panel, which stays clear
 
 	await say("A creature can be one of these %s." % bb("type", "types"), "down")
-	await overlay_say("What %s do you think this %s is?" % [bb("type", "type"), bb("creatures", "creature")], "normal")
+	# A normal line first (a Confirm is needed), so it isn't mistaken for a line to skip; it then stays up while the panel opens
+	await say("What %s do you think this %s is?" % [bb("type", "type"), bb("creatures", "creature")], "normal")
+	await get_tree().process_frame # The Confirm that closed the line never picks a type
 
 	var answer := await ask_type()
 	await end_say()
@@ -246,7 +251,6 @@ func type_scene():
 		await say("By %s the creature as this %s, you will %s it." % [bb("taming", "taming"), bb("type", "type"), bb("hurt", "kill")], "normal")
 		await say("This one walks on the ground, so it’s an %s creature." % bb("earth", "earth"), "normal")
 	face_right() # Toward the beetle
-	await say("Usually just looking at a creature is enough to know its %s." % bb("type", "type"), "normal")
 	await end_say()
 	await player_turn_ui._close_menu("attack") # The panel closes here and opens again when the player tames, so it never stands where Tuh-U flies next
 	await wait(PAUSE_SHORT)
@@ -255,12 +259,11 @@ func type_scene():
 func taming_scene():
 	await stage(beetle_spot(), enemy_visual_for_beetle()) # Right above the beetle, looking down on it
 
-	await say("When %s, you'll have to match icons that fly towards the %s." % [bb("taming", "taming"), bb("creatures", "creature")], "down")
-	await say("During this, press Z when two icons %s!" % bb("taming", "meet"), "down")
-	await say("The more you %s, the better you %s!" % [bb("taming", "match"), bb("taming", "tame")], "happy")
+	await say("When taming, you have to [b]press[/b] when two icons %s near the %s!" % [bb("taming", "meet"), bb("creatures", "creature")], "down")
+	await say("The more you %s, the better you'll %s!" % [bb("taming", "match"), bb("taming", "tame")], "happy")
 	await stage(SPOT_GEAR, player_visual) # Back on the Droid's side, out of the way of its walk and the icons
 	hop()
-	await overlay_say("Now try %s it as an %s creature!" % [bb("taming", "taming"), bb("earth", "earth")], "normal")
+	await overlay_say("Now try %s it as an %s!" % [bb("taming", "taming"), bb("earth", "earth creature")], "normal")
 
 	await unlock_type_panel()
 	await wait_until(func(): return player_turn_ui.state == player_turn_ui.State.ENEMY_SELECT)
@@ -276,9 +279,7 @@ func taming_scene():
 		await say("Wow, you’ve got a real knack for this!", "happy")
 	else:
 		await say("That was great!", "happy")
-	await say("There’s also the %s option in the options menu if taming feels too difficult." % bb("taming", "'easier timing'"), "normal")
-	await say("You can always access it when pressing ESC!", "normal")
-	# A slight pause, then Tuh-U steps back to his spot ready for the next lines
+	await say("There’s also the %s option in the Options menu when [b]pressing ESC[/b]." % bb("taming", "'easier timing'"), "normal")
 	await stage(beetle_spot(), enemy_visual_for_beetle()) # Above the beetle again, facing it, for its turn
 	await say("Every time you %s, one of that %s is used." % [bb("taming", "tame"), bb("type", "type")], "normal")
 	hop()
@@ -287,8 +288,8 @@ func taming_scene():
 
 # BLOCKING: the beetle attacks, the player presses Z to block
 func blocking_scene():
-	await say("%s fight back too! This is a jungle after all." % bb("creatures", "Creatures"), "sad")
-	await say("When one attacks, press Z right before it hits to %s." % bb("items", "block"), "normal")
+	await say("%s will try to fight! This is a jungle after all." % bb("creatures", "Creatures"), "sad")
+	await say("When one attacks, [b]press[/b] right before the hit to %s." % bb("items", "block some damage"), "normal")
 	await say("Get ready! This one's about to attack!", "sad")
 	await end_say()
 
@@ -309,12 +310,8 @@ func blocking_scene():
 			await say("Nice block!", "happy")
 			await end_say()
 			break
-		if attempt == 0:
-			await say("Yowch! That seems like it hurt.", "sad")
-			await say("For practice let’s try that one more time!", "normal")
-			await end_say()
 		else:
-			await say("Don't worry, you’ll get the hang of it!", "happy")
+			await say("That seems like it hurt. You'll get the hang of it though!", "sad")
 			await end_say()
 	await wait(PAUSE_SHORT)
 
@@ -324,14 +321,12 @@ func abilities_items_scene():
 
 	player_turn_ui._move_gear(1)
 	await wait(PAUSE_SETTLE) # The gear turns to abilities
-	await say("Your %s are stronger actions that can help you during encounters." % bb("abilities", "abilities"), "happy")
-	await say("After use, they'll need some time to %s." % bb("water", "cool down"), "normal")
+	await say("%s are strong actions that help you during encounters. They need to %s after use, though." % [bb("abilities", "Abilities"), bb("water", "cool down")], "happy")
 	await end_say()
 
 	player_turn_ui._move_gear(1)
 	await wait(PAUSE_SETTLE)
-	await say("And your %s are single-use consumables that do a plethora of cool stuff!" % bb("items", "items"), "happy")
-	await say("%s drop them when %s, so %s is encouraged!" % [bb("creatures", "Creatures"), bb("taming", "tamed"), bb("taming", "taming")], "happy")
+	await say("%s are single-use consumables that do lots of stuff! %s drop them when %s!" % [bb("items", "Items"), bb("creatures", "Creatures"), bb("taming", "tamed")], "happy")
 	await end_say()
 
 	player_turn_ui._move_gear(1)
@@ -339,7 +334,7 @@ func abilities_items_scene():
 	reveal_hud(false) # The top left appears as he mentions it
 	hop()
 	await say("Whatever you own shows up in the %s." % bb("droid", "top left"), "normal")
-	await say("You can get %s and %s from %s, rewards and shops." % [bb("abilities", "abilities"), bb("items", "items"), bb("creatures", "creatures")], "normal")
+	await say("You can get everything in rewards and shops!", "happy")
 	await end_say()
 
 # DREAM: the beetle is one hit from trusting, the player tries its dream
@@ -352,12 +347,12 @@ func dream_scene():
 	await say("Once a %s is close to being tamed, it starts to %s you." % [bb("creatures", "creature"), bb("trust", "trust")], "down")
 	await say("And once it does, you, as a %s, are able to %s." % [bb("droid", "droid"), bb("trust", "seal that bond")], "normal")
 	await say("You’ll see a vision called a %s, and you must %s it to finish taming!" % [bb("trust", "dream"), bb("trust", "realise")], "happy")
-	await say("Each new dream starts with a countdown. You can turn it off in the options menu.", "normal")
+	await say("Each new %s starts with a countdown. You can turn this off in Options." % bb("trust", "dream"), "normal")
 
 	await stage(SPOT_GEAR, player_visual)
 	hop()
 	bubble_widths = [190.0, 230.0] # One wide line, so it stays below the HUD rows
-	await overlay_say("Let’s try %s!" % bb("trust", "sealing a dream"), "happy")
+	await overlay_say("Let’s try %s!" % bb("trust", "entering a dream"), "happy")
 	bubble_widths = BUBBLE_WIDTHS
 	unlock_gear()
 	await wait_until(func(): return player_turn_ui.state == player_turn_ui.State.ATTACK_TYPE_SELECT)
@@ -395,7 +390,7 @@ func explain_dream(_minigame):
 		await say("Good job %s!" % bb("trust", "realising the dream"), "happy")
 	else:
 		await say("Don’t worry, it was just practice! You'll get it next time.", "sad")
-	await say("Most %s only have to be %s once, but some are more powerful!" % [bb("creatures", "creatures"), bb("taming", "tamed")], "normal")
+	await say("Some more powerful %s have to be %s more than once!" % [bb("creatures", "creatures"), bb("taming", "tamed")], "normal")
 	await end_say()
 	await wait(PAUSE_SHORT)
 
@@ -409,8 +404,7 @@ func outro_scene():
 	music_ended = true
 	Music.fade_out(OUTRO_MUSIC_FADE) # The music ends as the basics do, and no later line brings it back
 	await say("That’s all the basics!", "happy")
-	await say("Between encounters I’ll set up a %s for us." % bb("items", "shop"), "normal")
-	await say("Spend your %s there on different stuff, like %s and %s." % [bb("bolts", "bolts"), bb("items", "items"), bb("abilities", "abilities")], "normal")
+	await say("Between encounters I’ll set up a %s, where you can spend your %s." % [bb("items", "shop"), bb("bolts", "bolts")], "normal")
 	reveal_hud(true) # The bolts appear as he mentions them
 	await say("You can see your %s in the top right." % bb("bolts", "bolts"), "normal")
 	hop()
@@ -581,7 +575,7 @@ func wait_until(condition: Callable):
 		if PauseMenu.active:
 			continue
 		idle += get_process_delta_time()
-		if Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("ui_left") or Input.is_action_just_pressed("ui_right") \
+		if Settings.confirm_just_pressed() or Input.is_action_just_pressed("ui_left") or Input.is_action_just_pressed("ui_right") \
 				or Input.is_action_just_pressed("ui_up") or Input.is_action_just_pressed("ui_down"):
 			idle = 0.0
 		if not hinted and idle > STUTTER_TIME:

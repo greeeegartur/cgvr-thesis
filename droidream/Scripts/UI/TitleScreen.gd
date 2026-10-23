@@ -45,6 +45,7 @@ func _ready():
 	_build_menu()
 	_build_popup()
 	options = OptionsMenu.new()
+	options.muffled_close = false
 	options.closed.connect(_on_options_closed)
 	add_child(options)
 	controls_hint = preload("res://Scenes/UI/TutorialText.tscn").instantiate()

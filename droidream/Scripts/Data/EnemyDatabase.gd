@@ -35,27 +35,27 @@ var MINIGAME_SCENES = {
 const DATA = {
 	"beetle": {
 		"attack_offset": Vector2(92.3, 3),
-		"move_speed": 240.0,
+		"move_time": Vector2(0.85, 0.78),
 		"drop_item_ids": ["beetlejuice", "ball", "soft_branch"]
 	},
 	"bat": {
 		"attack_offset": Vector2(95, 0),
-		"move_speed": 280.0,
+		"move_time": Vector2(0.80, 0.73),
 		"drop_item_ids": ["hypno_bone", "soft_branch", "memory_chip"]
 	},
 	"frog": {
 		"attack_offset": Vector2(98.6, 0),
-		"move_speed": 200.0,
+		"move_time": Vector2(1.00, 0.90),
 		"drop_item_ids": ["thick_jelly", "ice_cube", "ball"]
 	},
 	"duck": {
 		"attack_offset": Vector2(109.85, 5),
-		"move_speed": 260.0,
+		"move_time": Vector2(0.75, 0.70),
 		"drop_item_ids": ["soft_branch", "memory_chip", "ball", "ice_cube"]
 	},
 	"dummy": {
 		"attack_offset": Vector2(0, 0),
-		"move_speed": 0.0,
+		"move_time": Vector2(0.85, 0.78),
 		"drop_item_ids": []
 	}
 }
@@ -127,8 +127,9 @@ func get_enemy(id: String):
 func get_attack_offset(enemy_id: String) -> Vector2:
 	return DATA[enemy_id].attack_offset
 
-func get_move_speed(enemy_id: String) -> float:
-	return DATA[enemy_id].move_speed
+# Seconds a creature takes to reach the Droid (x) and to walk back home (y), whatever its slot: each creature has its own pace (the frog is heavy, the duck quick)
+func get_move_time(enemy_id: String) -> Vector2:
+	return DATA[enemy_id].move_time
 
 func get_drop_item_ids(enemy_id: String):
 	return DATA[enemy_id].drop_item_ids
