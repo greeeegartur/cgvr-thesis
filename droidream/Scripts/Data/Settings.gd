@@ -28,6 +28,9 @@ var minigame_countdown := false
 var easier_timing := false # Wider windows for the tame timing icons
 var controls_scheme := "default" # "default", "wasd" or "custom"
 var custom_keys := {} # action -> physical keycode, for the custom scheme
+const SWITCH_TIME := 2000 # Msec a fullscreen switch may take (the window keeps reporting its old mode meanwhile)
+var switch_until := 0
+var fullscreen := false # Not saved: the game always opens windowed (a browser only allows fullscreen from a key press anyway)
 
 signal controls_changed # The control scheme or the keys changed: key pictures update
 
@@ -36,10 +39,33 @@ var original_events := {} # The input map as the project defines it; these alway
 func _ready() -> void:
 	for action in CONTROL_ACTIONS:
 		original_events[action] = InputMap.action_get_events(action).duplicate()
+	get_window().size_changed.connect(_sync_fullscreen) # Leaving fullscreen with Escape or the browser's own button is noticed too
 	_ensure_buses()
 	load_settings()
 	apply_audio()
 	apply_controls()
+
+# FULLSCREEN
+# F11 or Alt + Enter switches fullscreen on and off anywhere in the game
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F11 or (event.keycode == KEY_ENTER and event.alt_pressed):
+			set_fullscreen(not fullscreen)
+			get_viewport().set_input_as_handled()
+
+func set_fullscreen(on: bool) -> void:
+	fullscreen = on
+	switch_until = Time.get_ticks_msec() + SWITCH_TIME
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if on else DisplayServer.WINDOW_MODE_WINDOWED)
+	changed.emit()
+
+func _sync_fullscreen() -> void:
+	if Time.get_ticks_msec() < switch_until:
+		return # The switch we asked for is still under way
+	var real := DisplayServer.window_get_mode() in [DisplayServer.WINDOW_MODE_FULLSCREEN, DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN]
+	if real != fullscreen:
+		fullscreen = real
+		changed.emit()
 
 # Reads the settings file; a missing or damaged file leaves the defaults
 func load_settings() -> void:
