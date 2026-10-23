@@ -250,6 +250,10 @@ func _unhandled_input(event):
 		get_viewport().set_input_as_handled()
 		return
 	
+	if state == State.OPTION_SELECT and Utils.is_pointer_pick(event):
+		_handle_gear_mouse(event)
+		return
+	
 	match state:
 		State.OPTION_SELECT:
 			_handle_gear_input(event)
@@ -270,6 +274,22 @@ func _handle_gear_input(event):
 		_move_gear(1)
 	elif event.is_action_pressed("ui_accept"): # Player presses Z
 		_confirm_gear_option()
+
+# Clicking an option of the gear that is not selected turns the gear to it; clicking the selected one confirms it
+func _handle_gear_mouse(event: InputEvent):
+	if not event is InputEventMouseButton:
+		return # Hovering alone never turns the gear (it spun too fast under a moving mouse)
+	for i in gear_options.size():
+		var option: Node2D = _get_gear_option_node(i)
+		var sprite: Sprite2D = option.get_node_or_null(option.name + "Sprite")
+		if not Utils.mouse_over_sprite(sprite):
+			continue
+		get_viewport().set_input_as_handled()
+		if i != gear_index:
+			_move_gear(1 if wrapi(i - gear_index, 0, gear_options.size()) == 1 else -1)
+		else:
+			UIList.send_confirm()
+		return
 
 func _handle_target_input(event):
 	if state == State.ENEMY_SELECT:

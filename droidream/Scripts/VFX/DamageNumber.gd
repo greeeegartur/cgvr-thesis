@@ -20,6 +20,10 @@ static func placed(layer: Node, at: Vector2) -> Vector2:
 
 # Pops in with a white flash, holds a beat, floats up and fades; the tier and direction decide the look
 func play(value: float, is_critical: bool, is_heal := false, tier := Tier.NORMAL, tame_side := false):
+	value = Utils.quantize_min(absf(value)) # Every number on screen is a quarter step (11.625 shows as 11.75), and never "0"
+	if value <= 0.0:
+		queue_free()
+		return
 	if is_critical:
 		tier = maxi(tier, Tier.PERFECT)
 	var size: int = SIZES[tier]

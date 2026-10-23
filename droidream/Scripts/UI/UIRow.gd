@@ -18,12 +18,14 @@ const DIM := Color(0.55, 0.55, 0.55)
 const SELECTED_REST := Color(0.85, 0.85, 0.85) # Selected text rests a little below white and flashes up to it on the beat
 const FLASH_SHADER := preload("res://Scenes/UI/FlashWhite.gdshader")
 const BOUNCE_TIME := 0.16 # Jolt when the cursor arrives
+const COLUMN_WIDTH := 52.0 # Each column of a table row (the Controls page)
 
 var content: HBoxContainer
 var icon_rect: TextureRect
 var text_label: Label
 var right_label: Label
 var pip_box: HBoxContainer
+var column_box: HBoxContainer
 var spacer: Control
 var row_height := ROW_HEIGHT # Taller rows for bigger text
 var font_size := FONT_SIZE
@@ -62,6 +64,11 @@ func _init() -> void:
 	spacer.custom_minimum_size.x = 8
 	content.add_child(spacer)
 	
+	column_box = HBoxContainer.new()
+	column_box.add_theme_constant_override("separation", 0)
+	column_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content.add_child(column_box)
+	
 	right_label = _make_label()
 	content.add_child(right_label)
 	
@@ -73,7 +80,7 @@ func _init() -> void:
 	flash_material = ShaderMaterial.new()
 	flash_material.shader = FLASH_SHADER
 	content.material = flash_material
-	for node in [icon_rect, text_label, right_label, pip_box]:
+	for node in [icon_rect, text_label, right_label, pip_box, column_box]:
 		node.use_parent_material = true
 	
 	set_selected(false, false)
@@ -104,6 +111,21 @@ func setup(icon: Texture2D, text: String, right_text := "", pips := 0, pips_dim 
 	right_label.text = right_text
 	right_label.visible = right_text != ""
 	set_pips(pips, pips_dim, dim_from_end)
+
+# Fixed-width centered cells at the end of the row, lined up between rows (a table such as the Controls page)
+func set_columns(texts: Array) -> void:
+	for child in column_box.get_children():
+		column_box.remove_child(child)
+		child.queue_free()
+	column_box.visible = not texts.is_empty()
+	for text in texts:
+		var cell := _make_label()
+		cell.add_theme_font_size_override("font_size", font_size)
+		cell.text = text
+		cell.custom_minimum_size.x = COLUMN_WIDTH
+		cell.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cell.use_parent_material = true
+		column_box.add_child(cell)
 
 # Rebuilds the cooldown pips
 func set_pips(pips: int, pips_dim := 0, dim_from_end := false) -> void:

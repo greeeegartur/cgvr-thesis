@@ -1,11 +1,11 @@
 extends CanvasLayer
 class_name OptionsMenu
 
-# The Options container used by the title screen and the pause menu: audio sliders, camera shake, minigame countdown and easier timing toggles, and the controls pages
+# The Options container used by the title screen and the pause menu: audio sliders, camera shake, minigame countdown and easier timing toggles, and the Controls page
 
 signal closed
 
-enum Page { MAIN, CONTROLS, CUSTOM }
+enum Page { MAIN, CONTROLS }
 
 const FONT_BOLD := preload("res://Graphics/Fonts/PixelOperator-Bold.ttf")
 const MIN_WIDTH := 190.0
@@ -16,8 +16,12 @@ const ACTION_NAMES := {
 	"ui_accept": "Confirm", "ui_cancel": "Cancel", "toggle_turn_order": "Turn order"
 }
 const OPEN_TIME := 0.18
+const ARROW_NAMES := { "ui_up": "Up", "ui_down": "Down", "ui_left": "Left", "ui_right": "Right", "ui_accept": "Z", "ui_cancel": "X", "toggle_turn_order": "C" }
+const WASD_NAMES := { "ui_up": "W", "ui_down": "S", "ui_left": "A", "ui_right": "D", "ui_accept": "LMB", "ui_cancel": "RMB", "toggle_turn_order": "E" }
+const COLUMN_TITLES := ["Arrows", "WASD", "Custom"]
 
 var is_open := false
+var muffled_close := true # Leaving plays the muffled close (in the game); the title uses the normal back sound, like its Play popup
 var page := Page.MAIN
 var capturing := ""  # The action whose key is being chosen ("" when not capturing)
 var dim: ColorRect
@@ -25,6 +29,7 @@ var panel: UIPanel
 var title: Label
 var note: Label
 var list: UIList
+var header: Control # The column titles over the Controls table
 var hint: HBoxContainer
 var hint_size := Vector2.ZERO
 var open_tween: Tween
@@ -59,7 +64,18 @@ func _build() -> void:
 	list.max_visible_rows = 9 # The custom keys page has 9 rows
 	list.min_width = LIST_WIDTH
 	list.confirmed.connect(_on_confirmed)
+	list.clicked.connect(_on_clicked)
 	panel.add_child(list)
+	
+	header = Control.new()
+	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for column_title in COLUMN_TITLES:
+		var cell := _make_label(16, true)
+		cell.text = column_title
+		cell.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cell.size = Vector2(UIRow.COLUMN_WIDTH, 18)
+		header.add_child(cell)
+	panel.add_child(header)
 	
 	hint = HBoxContainer.new()
 	hint.add_theme_constant_override("separation", 16)
@@ -118,6 +134,15 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.echo and not (event.is_action("ui_left") or event.is_action("ui_right")):
 		return
 	
+	# The mouse wheel over a slider steps it
+	if event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+		var row := list._row_at(list.get_global_mouse_position())
+		if page == Page.MAIN and row in [0, 1]:
+			if row != list.selected_index:
+				list.select(row)
+			_adjust(1 if event.button_index == MOUSE_BUTTON_WHEEL_UP else -1)
+		return
+	
 	if event.is_action_pressed("ui_up"):
 		list.move(-1)
 	elif event.is_action_pressed("ui_down"):
@@ -148,28 +173,17 @@ func _main_entries() -> Array:
 		{ "text": "Back" }
 	]
 
-func _show_controls() -> void:
+func _show_controls(selected := 0) -> void:
 	page = Page.CONTROLS
-	_fill("Controls", "", _controls_entries(), 0, [["Z", "Choose"], ["X", "Back"]])
+	_fill("Controls", "", _controls_entries(), selected, [["Z", "Change key"], ["X", "Back"]])
 
+# One row per action: its arrows key, its WASD / mouse key and its custom key (the one being chosen shows "...")
 func _controls_entries() -> Array:
-	var scheme := Settings.controls_scheme
-	return [
-		{ "text": "Arrows + Z X C", "right": "In use" if scheme == "default" else "" },
-		{ "text": "WASD + U I O", "right": "In use" if scheme == "wasd" else "" },
-		{ "text": "Custom", "right": "In use" if scheme == "custom" else "" },
-		{ "text": "Back" }
-	]
-
-func _show_custom(selected := 0) -> void:
-	page = Page.CUSTOM
-	_fill("Custom keys", "The arrows, Z, X and C always work too\nTextures for these controls will show as default.", _custom_entries(), selected, [["Z", "Change key"], ["X", "Back"]])
-
-func _custom_entries() -> Array:
 	var entries := []
 	for action in Settings.CONTROL_ACTIONS:
-		entries.append({ "text": ACTION_NAMES[action], "right": Settings.key_name(Settings.key_for(action)) })
-	entries.append({ "text": "Reset controls" })
+		var custom := "..." if capturing == action else (Settings.key_name(Settings.custom_keys[action]) if Settings.custom_keys.has(action) else "-")
+		entries.append({ "text": ACTION_NAMES[action], "columns": [ARROW_NAMES[action], WASD_NAMES[action], custom] })
+	entries.append({ "text": "Reset custom controls" })
 	entries.append({ "text": "Back" })
 	return entries
 
@@ -200,6 +214,13 @@ func _layout() -> void:
 		note.position = Vector2(0, y)
 		note.size = Vector2(width, note_size.y)
 		y += note_size.y + 4.0
+	header.visible = page == Page.CONTROLS
+	if header.visible: # Over the columns, which end where the rows' content ends (unselected rows)
+		header.position = Vector2((width - list_size.x) / 2.0, y)
+		var columns_end := list_size.x - UIRow.SLIDE - UIRow.RIGHT_PAD
+		for i in header.get_child_count():
+			header.get_child(i).position = Vector2(columns_end - (COLUMN_TITLES.size() - i) * UIRow.COLUMN_WIDTH, 0)
+		y += 18.0
 	list.position = Vector2((width - list_size.x) / 2.0, y)
 	y += list_size.y + 10.0
 	hint.size = Vector2(width, hint_size.y)
@@ -211,6 +232,7 @@ func _layout() -> void:
 	title.position += origin
 	note.position += origin
 	list.position += origin
+	header.position += origin
 	hint.position += origin
 	
 	var screen := get_viewport().get_visible_rect().size
@@ -275,30 +297,34 @@ func _on_confirmed(index: int) -> void:
 				7:
 					_back()
 		Page.CONTROLS:
-			match index:
-				0:
-					Settings.set_scheme("default")
-					list.update_rows(_controls_entries())
-				1:
-					Settings.set_scheme("wasd")
-					list.update_rows(_controls_entries())
-				2:
-					Settings.set_scheme("custom")
-					_show_custom()
-				3:
-					_back()
-		Page.CUSTOM:
 			var actions: Array = Settings.CONTROL_ACTIONS
 			if index < actions.size():
 				_start_capture(actions[index])
 			elif index == actions.size():
 				Settings.reset_controls()
-				_show_controls()
+				list.update_rows(_controls_entries())
 			else:
 				_back()
 
+# A click on a volume pip sets that step (the first pip mutes when the volume is already on it)
+func _on_clicked(index: int) -> void:
+	if page != Page.MAIN or index > 1:
+		return
+	var pips: Array = list.rows[index].pip_box.get_children()
+	for i in pips.size():
+		if pips[i].get_global_rect().grow(1.0).has_point(list.get_global_mouse_position()):
+			var current := Settings.music if index == 0 else Settings.sfx
+			var step := 0 if i == 0 and current == 1 else i + 1
+			if index == 0:
+				Settings.set_music(step)
+			else:
+				Settings.set_sfx(step)
+			Sfx.play_ui("option_move")
+			list.update_rows(_main_entries())
+			return
+
 func _back() -> void:
-	if page == Page.MAIN:
+	if page == Page.MAIN and muffled_close:
 		Sfx.play_menu_close() # Leaving the options is a muffled close
 	else:
 		Sfx.play_cancel()
@@ -308,25 +334,20 @@ func _back() -> void:
 		Page.CONTROLS:
 			_show_main()
 			list.select(6, false)
-		Page.CUSTOM:
-			_show_controls()
-			list.select(2, false)
 
 # KEY CAPTURE
 func _start_capture(action: String) -> void:
 	capturing = action
+	list.update_rows(_controls_entries())
 	_show_note("Press a key for %s (ESC cancels)" % ACTION_NAMES[action], 0.0)
 
 func _capture_key(event: InputEventKey) -> void:
 	Sfx.play_ui("option_select")
 	var action := capturing
 	capturing = ""
-	if event.physical_keycode == KEY_ESCAPE:
-		_show_note("", 0.0)
-		_show_custom(Settings.CONTROL_ACTIONS.find(action))
-		return
-	var accepted := Settings.set_custom_key(action, event.physical_keycode)
-	_show_custom(Settings.CONTROL_ACTIONS.find(action))
+	_show_note("", 0.0)
+	var accepted := event.physical_keycode == KEY_ESCAPE or Settings.set_custom_key(action, event.physical_keycode)
+	list.update_rows(_controls_entries())
 	if not accepted:
 		_show_note("That key is reserved", 1.4)
 

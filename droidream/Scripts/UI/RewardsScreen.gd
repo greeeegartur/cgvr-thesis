@@ -23,10 +23,13 @@ var rows: Array[RewardRow] = []
 const ROW_FINAL_SCALE := 1.0 # Scale rows keep after their pop (reduced for all rows if they would not fit in the container)
 const ROW_GAP := 4.0 # Empty space between two rows, small so the list reads as one block
 
+func _ready():
+	Utils.ignore_mouse(self) # The panel and its text would eat the clicks; a click anywhere confirms
+
 func _unhandled_input(event):
 	if not visible:
 		return
-	if event.is_action_pressed("ui_accept"):
+	if Settings.is_confirm(event):
 		# First press finishes the whole reveal, the next press confirms
 		if revealing:
 			skipping = true
@@ -107,6 +110,7 @@ func _add_row(reward: Dictionary) -> RewardRow:
 	var row: RewardRow = reward_row_scene.instantiate()
 	slot.add_child(row)
 	row.setup(reward.icon, reward.name, reward.amount)
+	Utils.ignore_mouse(slot) # A click on a row still confirms the screen
 	
 	rows.append(row)
 	return row

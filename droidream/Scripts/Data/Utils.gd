@@ -81,3 +81,23 @@ func snap_axis(value: float, axis_max: float) -> float:
 	if v <= -axis_max + AXIS_SNAP:
 		return -axis_max
 	return v
+
+# Whether the mouse is over a sprite's current frame (clicking creatures and the gear's options)
+func mouse_over_sprite(sprite: Sprite2D) -> bool:
+	return sprite != null and sprite.is_visible_in_tree() and sprite.get_rect().has_point(sprite.get_local_mouse_position())
+
+# A mouse move (not a resting cursor) or a left click: the two mouse inputs that pick things
+func is_pointer_pick(event: InputEvent) -> bool:
+	return (event is InputEventMouseMotion and event.relative != Vector2.ZERO) \
+		or (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT)
+
+# Whether the mouse is over a control that is on screen and not fading (shop and boon cards)
+func mouse_over_control(control: Control) -> bool:
+	return UIList.is_shown(control) and control.get_global_rect().has_point(control.get_global_mouse_position())
+
+# Lets mouse events pass through every control under a node, so a box drawn with controls never eats the clicks its game listens for
+func ignore_mouse(node: Node) -> void:
+	if node is Control:
+		node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for child in node.get_children():
+		ignore_mouse(child)

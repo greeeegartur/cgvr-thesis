@@ -5,6 +5,7 @@ class_name UIList
 
 signal selected_changed(index: int)
 signal confirmed(index: int)
+signal clicked(index: int) # A left click on a row, just before it confirms (owners that need the exact spot read the mouse, the volume pips)
 
 @export var max_visible_rows := 6 # More rows than this scroll
 @export var row_height := UIRow.ROW_HEIGHT # Taller rows for bigger text
@@ -24,6 +25,8 @@ var rows: Array[UIRow] = []
 var selected_index := 0
 var scroll_row := 0.0 # First visible row (rows move up by this)
 var scroll_tween: Tween
+
+static var active_list: UIList = null # The list selected last: while it is on screen, lists behind it ignore the mouse
 
 func _init() -> void:
 	cursor = UICursor.new()
@@ -48,6 +51,7 @@ func set_rows(entries: Array) -> void:
 		row.font_size = font_size
 		row.bold = bold
 		row.setup(entry.get("icon"), entry.get("text", ""), entry.get("right", ""), entry.get("pips", 0), entry.get("pips_dim", 0), entry.get("pips_dim_end", false))
+		row.set_columns(entry.get("columns", []))
 		add_child(row)
 		rows.append(row)
 	
@@ -64,6 +68,7 @@ func update_rows(entries: Array) -> void:
 	for i in rows.size():
 		var entry: Dictionary = entries[i]
 		rows[i].setup(entry.get("icon"), entry.get("text", ""), entry.get("right", ""), entry.get("pips", 0), entry.get("pips_dim", 0), entry.get("pips_dim_end", false))
+		rows[i].set_columns(entry.get("columns", []))
 	_layout()
 
 func count() -> int:
@@ -83,6 +88,8 @@ func select(index: int, animate := true) -> void:
 		selected_index = 0
 		return
 	selected_index = clampi(index, 0, rows.size() - 1)
+	if is_visible_in_tree():
+		active_list = self
 	_refresh_selection(animate)
 	selected_changed.emit(selected_index)
 
@@ -92,6 +99,59 @@ func confirm() -> void:
 		if play_sounds:
 			Sfx.play_ui("option_select")
 		confirmed.emit(selected_index)
+
+# THE MOUSE
+# Moving the mouse over a row selects it (only moving: a resting cursor never takes the selection back from the keys);
+# a left click on a row selects it and sends a Confirm, so the owner judges it exactly like a Z press
+func _input(event: InputEvent) -> void:
+	var is_motion: bool = event is InputEventMouseMotion and event.relative != Vector2.ZERO
+	var is_click: bool = event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT
+	if not (is_motion or is_click) or not _takes_mouse():
+		return
+	var index := _row_at(get_global_mouse_position())
+	if index == -1:
+		return
+	if index != selected_index:
+		if play_sounds:
+			Sfx.play_ui("option_move")
+		select(index)
+	if is_click:
+		get_viewport().set_input_as_handled()
+		clicked.emit(index)
+		send_confirm()
+
+# A Confirm press and release, as if Z was pressed (the owners' own input code takes it)
+static func send_confirm() -> void:
+	for pressed in [true, false]:
+		var action := InputEventAction.new()
+		action.action = "ui_accept"
+		action.pressed = pressed
+		Input.parse_input_event(action)
+
+# On screen, fully faded in, and not behind the list in use
+func _takes_mouse() -> bool:
+	if rows.is_empty() or not is_shown(self):
+		return false
+	return active_list == self or not is_instance_valid(active_list) or not is_shown(active_list)
+
+# Visible and not fading (every parent fully opaque), so panels mid-transition ignore the mouse
+static func is_shown(item: CanvasItem) -> bool:
+	if not item.is_visible_in_tree():
+		return false
+	var node: Node = item
+	while node is CanvasItem:
+		if node.modulate.a < 0.99 or node.self_modulate.a < 0.99:
+			return false
+		node = node.get_parent()
+	return true
+
+func _row_at(point: Vector2) -> int:
+	if not get_global_rect().has_point(point):
+		return -1
+	for i in rows.size():
+		if rows[i].get_global_rect().has_point(point):
+			return i
+	return -1
 
 # Size the list needs: the widest row by the visible rows
 func get_wanted_size() -> Vector2:

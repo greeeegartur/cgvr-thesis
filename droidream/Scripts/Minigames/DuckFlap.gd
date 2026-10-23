@@ -98,7 +98,7 @@ func _unhandled_input(event):
 	if not running or player_locked:
 		return
 
-	if event.is_action_pressed("ui_accept"):
+	if Settings.is_confirm(event):
 		if not flight_started:
 			flight_started = true
 		flap()

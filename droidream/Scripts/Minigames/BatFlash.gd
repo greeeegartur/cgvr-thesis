@@ -31,8 +31,13 @@ var base_light_scale := 2.42
 var base_light_radius := 0.25
 var bats_remaining := 0
 var timer_active := true
+var follow_mouse := false # Moving the mouse steers the light until a direction key is pressed (last input wins)
 
 const DAMAGE := 0.25
+const BAT_RANGE := Vector2(116, 96) # Where bat centers may go
+const BAT_DRIFT_SPEED := 14.0 # Pixels per second, a slow wander
+const BAT_DART_SPEED := 70.0 # After a hit
+const BAT_DART_TIME := 0.35
 
 func _ready():
 	# Setup with bat spawning
@@ -56,6 +61,7 @@ func _process(delta):
 	super._process(delta) # For elapsing variable and minigame end condition
 	
 	handle_movement(delta)
+	_drift_bats(delta)
 	if timer_active:
 		update_timer_ui()
 	
@@ -79,7 +85,11 @@ func handle_movement(delta):
 	
 	dir = dir.normalized()
 	
-	flashlight.position += dir * flashlight_speed * delta
+	if dir != Vector2.ZERO:
+		follow_mouse = false
+		flashlight.position += dir * flashlight_speed * delta
+	elif follow_mouse: # Toward the mouse, never faster than the keys move it, so it trails behind and can't snap onto a bat
+		flashlight.position = flashlight.position.move_toward(play_area.get_local_mouse_position(), flashlight_speed * delta)
 	
 	var radius = 40.0
 	flashlight.position.x = clamp(flashlight.position.x, radius, play_area.size.x - radius)
@@ -90,8 +100,32 @@ func _unhandled_input(event):
 	if not running:
 		return
 	
-	if event.is_action_pressed("ui_accept"):
+	if event is InputEventMouseMotion and event.relative != Vector2.ZERO:
+		follow_mouse = true
+	elif event.is_action_pressed("ui_up") or event.is_action_pressed("ui_down") or event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right"):
+		follow_mouse = false # Even a tap shorter than a frame hands the light back to the keys
+	if Settings.is_confirm(event):
 		flash()
+
+# The bats drift slowly around the box (bouncing off its edges); a bat that was just hit darts away from the light for a moment
+func _drift_bats(delta: float) -> void:
+	if not running:
+		return
+	for bat in bats_node.get_children():
+		if not bat.has_meta("velocity") or bat.hp <= 0:
+			continue # A falling bat leaves on its own
+		var velocity: Vector2 = bat.get_meta("velocity")
+		var dart: float = bat.get_meta("dart", 0.0)
+		var speed := BAT_DART_SPEED if dart > 0.0 else BAT_DRIFT_SPEED
+		bat.position += velocity.normalized() * speed * delta
+		if absf(bat.position.x) > BAT_RANGE.x:
+			velocity.x = -signf(bat.position.x) * absf(velocity.x)
+			bat.position.x = clampf(bat.position.x, -BAT_RANGE.x, BAT_RANGE.x)
+		if absf(bat.position.y) > BAT_RANGE.y:
+			velocity.y = -signf(bat.position.y) * absf(velocity.y)
+			bat.position.y = clampf(bat.position.y, -BAT_RANGE.y, BAT_RANGE.y)
+		bat.set_meta("velocity", velocity)
+		bat.set_meta("dart", maxf(dart - delta, 0.0))
 
 # Bat flashing logic, checks an Area2D overlapping entities and applies take_damage to them if inside
 func flash():
@@ -106,6 +140,10 @@ func flash():
 	for area in overlapping:
 		if area.is_in_group("flash_bat"):
 			area.take_damage(1)
+			# It darts away from the light
+			var away: Vector2 = area.global_position - flash_area.global_position
+			area.set_meta("velocity", away.normalized() if away.length() > 0.5 else Vector2.from_angle(randf() * TAU))
+			area.set_meta("dart", BAT_DART_TIME)
 	
 	play_flash_effect()
 	
@@ -139,18 +177,13 @@ func spawn_bats():
 		var bat = BatScene.instantiate()
 		bats_node.add_child(bat)
 		
-		bat.position = get_random_screen_position()
 		bat.scale = Vector2.ONE * scale
 		var bat_hp = randi_range(2, 3)
 		bat.setup(chosen_variant, bat_hp)
 		
 		bat.died.connect(_on_bat_died)
-
-func get_random_screen_position(padding: float = 10.0) -> Vector2:
-	# In bounds, don't want to do math for this
-	var x = randf_range(-116, 116)
-	var y = randf_range(-96, 96)
-	return Vector2(x, y)
+		bat.set_meta("velocity", Vector2.from_angle(randf() * TAU) * BAT_DRIFT_SPEED)
+	place_apart(bats_node.get_children(), BAT_RANGE) # No bat starts hidden behind another
 
 
 # Bat dying logic

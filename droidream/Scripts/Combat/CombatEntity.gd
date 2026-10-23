@@ -13,6 +13,7 @@ var attack_power := 0.0
 var defense := 0.0
 var trust_max := 1
 var trust := 0
+var last_pattern_id := "" # The attack pattern of its previous turn (a heal is never picked twice in a row)
 var axis_value := 0.0 # New axis that has a value between {-axis_max; axis_max}
 var axis_max := 1.0 # axis_max = tamed, while -axis_max = killed
 var attack_patterns : Array[EnemyAttackPattern]

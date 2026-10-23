@@ -15,7 +15,7 @@
 [ext_resource type="Texture2D" uid="uid://dmri53hoxksq" path="res://Graphics/Sprites/Title/titleLayer_13_0001.png" id="12_o6bmn"]
 [ext_resource type="FontFile" uid="uid://b3ktskch5v4g4" path="res://Graphics/Fonts/PixelOperator.ttf" id="13_qu6cc"]
 [ext_resource type="Texture2D" uid="uid://dxbd5kdjuqyr5" path="res://Graphics/Sprites/UI/Combat_Select.png" id="15_swiah"]
-[ext_resource type="Texture2D" uid="uid://g1cpi65b1lxo" path="res://Graphics/Sprites/UI/WASD.png" id="16_75epk"]
+[ext_resource type="Texture2D" uid="uid://g1cpi65b1lxo" path="res://Graphics/Sprites/UI/Arrows.png" id="16_75epk"]
 [ext_resource type="Texture2D" uid="uid://b0axro84k6yfj" path="res://Graphics/Sprites/UI/Z.png" id="17_3ah5x"]
 
 [sub_resource type="Animation" id="Animation_4hokt"]

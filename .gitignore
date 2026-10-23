@@ -21,6 +21,7 @@ droidream/android/
 droidream/export_credentials.cfg
 *.translation
 *.import
+*.uid
 
 # Build output
 builds/

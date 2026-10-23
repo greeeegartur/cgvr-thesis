@@ -32,6 +32,7 @@ func play():
 	_current_input_index = 0
 	_completed_stages = 0
 	_running = true
+	Settings.controls_changed.connect(_refresh_textures) # The keys follow the family pressed last
 	
 	_show_stage(_current_stage)
 	
@@ -125,7 +126,18 @@ func _play_wrong_feedback(slot: TextureRect):
 	tween.tween_property(slot, "position", original_pos + Vector2(4, 0), 0.03)
 	tween.tween_property(slot, "position", original_pos, 0.03)
 
+# Switching families mid-stage swaps the pictures and keeps the slots' feedback
+func _refresh_textures():
+	if not _running or _current_stage >= _stages.size():
+		return
+	var seq: Array = _stages[_current_stage]
+	for i in mini(seq.size(), sequence_row.get_child_count()):
+		sequence_row.get_child(i).texture = _get_texture_for_action(seq[i])
+
 func _get_texture_for_action(action: String) -> Texture2D:
+	var family_texture := ControlTextures.direction(action)
+	if family_texture:
+		return family_texture
 	match action:
 		"ui_up":
 			return up_texture

@@ -167,7 +167,7 @@ func _run_icon(icon: TameIcon) -> int:
 		icon.set_progress(_progress_at(elapsed))
 		icon.set_preview_time(elapsed)
 		
-		if not PauseMenu.active and Input.is_action_just_pressed("ui_accept"):
+		if not PauseMenu.active and Settings.confirm_just_pressed():
 			result = judge(absf(elapsed - HALF), Settings.easier_timing, PlayerData.has_ability("recalibration"))
 			pressed.emit()
 			break

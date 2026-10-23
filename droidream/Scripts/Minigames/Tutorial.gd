@@ -31,7 +31,7 @@ func _unhandled_input(event):
 	if not running:
 		return
 	
-	if event.is_action_pressed("ui_accept"):
+	if Settings.is_confirm(event):
 		await end(true)
 
 func set_tutorial_paused(paused: bool):

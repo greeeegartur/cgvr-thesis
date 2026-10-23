@@ -46,7 +46,7 @@ func start_stage(reset := false):
 	print("Entering stage: ", area_manager.stage_index)
 	print(enemies)
 	
-	combat_ui.show_encounter(area_manager.stage_index, not reset)
+	combat_ui.show_encounter(area_manager.stage_index, area_manager.get_current_area().stages.size(), not reset)
 	if _should_play_area_intro():
 		await _start_stage_with_intro(enemies, reset)
 	else:
@@ -119,7 +119,7 @@ func _play_death_sequence():
 	camera.ability_push_in(player_visual, Vector2(1.5, 1.5), 1.6) # A slow push toward the Droid while it falls
 	
 	await player_visual.play_defeat()
-	var summary := "Stage %d of 5  \u00b7  Tamed %d  \u00b7  Killed %d" % [area_manager.stage_index + 1, PlayerData.get_total_tamed_count(), PlayerData.get_total_killed_count()]
+	var summary := "Stage %d of %d  \u00b7  Tamed %d  \u00b7  Killed %d" % [area_manager.stage_index + 1, area_manager.get_current_area().stages.size(), PlayerData.get_total_tamed_count(), PlayerData.get_total_killed_count()]
 	await death_screen.show_death(player_visual, summary)
 	
 	# Confirmation handled by death screen signals
@@ -220,9 +220,10 @@ func _transition_to_next_area(area: AreaData):
 	#await player_visual.walk_in()
 
 func _is_demo_final_stage() -> bool:
-	return area_manager.area_index == 0 and area_manager.stage_index == 4
+	return area_manager.area_index == 0 and area_manager.stage_index == area_manager.get_current_area().stages.size() - 1 # The demo ends after the Jungle's last stage
 
 func _enter_demo_ending_stop():
+	get_tree().current_scene.set_meta("no_restart", true) # The pause menu no longer offers Restart once the ending has begun
 	Music.fade_out(ENDING_MUSIC_FADE) # The music fades away as the ending begins
 	combat_manager._world_gray_out(false, true) # The dim of the rewards and boons goes
 	tutorial_text.hide_text()

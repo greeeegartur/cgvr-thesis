@@ -100,6 +100,18 @@ func _build_shop_ui():
 func _unhandled_input(event):
 	if state != State.ACTIVE:
 		return
+	if Utils.is_pointer_pick(event): # Hovering a card (or Next) selects it, a click selects and activates it
+		var targets: Array = []
+		targets.append_array(cards)
+		targets.append(next_button)
+		for i in targets.size():
+			if Utils.mouse_over_control(targets[i]):
+				_move_selection(i - selection_index)
+				if event is InputEventMouseButton:
+					get_viewport().set_input_as_handled()
+					UIList.send_confirm()
+				return
+		return
 	
 	if event.is_action_pressed("ui_right"):
 		_move_selection(1)

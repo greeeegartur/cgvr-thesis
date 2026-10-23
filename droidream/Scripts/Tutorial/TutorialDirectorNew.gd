@@ -59,6 +59,8 @@ var skipping := false
 
 func _ready():
 	ControlTextures.swap_in(get_tree().current_scene) # The key pictures of the scheme in use
+	TutorialText.turn_order_seen = false
+	combat_manager.ui.turn_order_locked = true
 	var bubble_layer := CanvasLayer.new()
 	bubble_layer.layer = BUBBLE_LAYER
 	add_child(bubble_layer)
@@ -72,7 +74,7 @@ func _ready():
 
 	PlayerData.set_guesses(4, 4, 4) # All types have chips for the type question; only Earth keeps them after it
 	tutorial_text.visible = true # The scene keeps it hidden for the first tutorial; the hints and the controls bar are used here
-	tutorial_text.pin_hint([["SPACE", "Skip tutorial"]]) # Space leaves the tutorial at any time
+	tutorial_text.pin_hint([["T", "Skip tutorial"]]) # T asks to leave the tutorial at any time
 	ufo.visible = false
 	ufo.reparent(tutorial_overlay, true) # Once, while he faces right: reparenting a flipped node would turn it upside down
 	ufo.rotation = 0.0
@@ -86,13 +88,14 @@ func _ready():
 	lock_input()
 	await play_tutorial()
 
-# Space skips the whole tutorial at any time (not while the pause menu is open)
+# T asks "Skip tutorial?" at any time (the tutorial freezes while it's open); T again closes it. Space is a plain Confirm now
 func _input(event: InputEvent) -> void:
-	if skipping or PauseMenu.active:
+	if skipping:
 		return
-	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_SPACE:
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_T:
+		if not PauseMenu.active: # While it is open, the pause menu takes the keys (and closes the prompt on T itself)
+			get_parent().get_node("PauseMenu").open_prompt("Skip tutorial?", skip_tutorial)
 		get_viewport().set_input_as_handled()
-		skip_tutorial()
 
 # Leaves the tutorial for the game: a fade, a fresh run and the combat scene
 func skip_tutorial() -> void:
@@ -230,7 +233,9 @@ func type_scene():
 	await stage(SPOT_GEAR, player_visual) # He stays where he is (the same beat): his bubble is above the panel, which stays clear
 
 	await say("A creature can be one of these %s." % bb("type", "types"), "down")
-	await overlay_say("What %s do you think this %s is?" % [bb("type", "type"), bb("creatures", "creature")], "normal")
+	# A normal line first (a Confirm is needed), so it isn't mistaken for a line to skip; it then stays up while the panel opens
+	await say("What %s do you think this %s is?" % [bb("type", "type"), bb("creatures", "creature")], "normal")
+	await get_tree().process_frame # The Confirm that closed the line never picks a type
 
 	var answer := await ask_type()
 	await end_say()
@@ -254,7 +259,7 @@ func type_scene():
 func taming_scene():
 	await stage(beetle_spot(), enemy_visual_for_beetle()) # Right above the beetle, looking down on it
 
-	await say("When taming, you have to press when two icons %s near the %s!" % [bb("taming", "meet"), bb("creatures", "creature")], "down")
+	await say("When taming, you have to [b]press[/b] when two icons %s near the %s!" % [bb("taming", "meet"), bb("creatures", "creature")], "down")
 	await say("The more you %s, the better you'll %s!" % [bb("taming", "match"), bb("taming", "tame")], "happy")
 	await stage(SPOT_GEAR, player_visual) # Back on the Droid's side, out of the way of its walk and the icons
 	hop()
@@ -274,7 +279,7 @@ func taming_scene():
 		await say("Wow, you’ve got a real knack for this!", "happy")
 	else:
 		await say("That was great!", "happy")
-	await say("There’s also the %s option in the Options menu when pressing ESC." % bb("taming", "'easier timing'"), "normal")
+	await say("There’s also the %s option in the Options menu when [b]pressing ESC[/b]." % bb("taming", "'easier timing'"), "normal")
 	await stage(beetle_spot(), enemy_visual_for_beetle()) # Above the beetle again, facing it, for its turn
 	await say("Every time you %s, one of that %s is used." % [bb("taming", "tame"), bb("type", "type")], "normal")
 	hop()
@@ -284,7 +289,7 @@ func taming_scene():
 # BLOCKING: the beetle attacks, the player presses Z to block
 func blocking_scene():
 	await say("%s will try to fight! This is a jungle after all." % bb("creatures", "Creatures"), "sad")
-	await say("When one attacks, press right before the hit to %s." % bb("items", "block some damage"), "normal")
+	await say("When one attacks, [b]press[/b] right before the hit to %s." % bb("items", "block some damage"), "normal")
 	await say("Get ready! This one's about to attack!", "sad")
 	await end_say()
 
@@ -570,7 +575,7 @@ func wait_until(condition: Callable):
 		if PauseMenu.active:
 			continue
 		idle += get_process_delta_time()
-		if Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("ui_left") or Input.is_action_just_pressed("ui_right") \
+		if Settings.confirm_just_pressed() or Input.is_action_just_pressed("ui_left") or Input.is_action_just_pressed("ui_right") \
 				or Input.is_action_just_pressed("ui_up") or Input.is_action_just_pressed("ui_down"):
 			idle = 0.0
 		if not hinted and idle > STUTTER_TIME:

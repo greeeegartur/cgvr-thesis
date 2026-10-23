@@ -3,11 +3,9 @@ class_name EncounterCounter
 
 # A row of pips in the top right of the HUD that shows which encounter of the stage run the player is on: cleared pips are filled, the current one is larger and pulses, the last one is a flag
 
-const COUNT := 5
 const SPACING := 14.0 # Distance between two pip centers
 const PIP := 6.0 # Size of a normal pip
 const CURRENT_PIP := 8.0 # Size of the current pip
-const ROW_SIZE := Vector2((COUNT - 1) * SPACING + CURRENT_PIP + 2.0, 12.0)
 const LINE_COLOR := Color(1, 1, 1, 0.35)
 const DONE_COLOR := Color(1, 1, 1, 1)
 const TODO_COLOR := Color(0.55, 0.55, 0.6, 1)
@@ -16,6 +14,7 @@ const OUTLINE := Color(0, 0, 0, 0.85)
 const POP_TIME := 0.22
 const PULSE_SPEED := 4.0
 
+var count := 5 # Encounters in the area (the last pip is the flag)
 var index := 0 # The current encounter (0 is the first)
 var pop_index := -1 # The pip that just got filled
 var pop := 1.0 # 0 to 1, how far its pop has come
@@ -24,12 +23,27 @@ var tween: Tween
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	custom_minimum_size = ROW_SIZE
-	size = ROW_SIZE
+	custom_minimum_size = _row_size()
+	size = _row_size()
+
+# Width of the row for the current count (the pips, plus room for the bigger current pip)
+func _row_size() -> Vector2:
+	return Vector2((count - 1) * SPACING + CURRENT_PIP + 2.0, 12.0)
+
+# Sets how many encounters the row shows; the row keeps its right edge where it is
+func set_count(new_count: int) -> void:
+	if new_count == count or new_count < 1:
+		return
+	var right := position.x + size.x
+	count = new_count
+	custom_minimum_size = _row_size()
+	size = _row_size()
+	position.x = right - size.x
+	queue_redraw()
 
 # Shows the encounter the player is on; moving forward plays the fill and grow animation, anything else just snaps
 func set_progress(new_index: int, animate := true) -> void:
-	new_index = clampi(new_index, 0, COUNT - 1)
+	new_index = clampi(new_index, 0, count - 1)
 	if tween:
 		tween.kill()
 	if animate and new_index == index + 1:
@@ -52,13 +66,13 @@ func _process(_delta: float) -> void:
 		queue_redraw()
 
 func _draw() -> void:
-	var center_y := ROW_SIZE.y * 0.5
+	var center_y := _row_size().y * 0.5
 	var first_x := CURRENT_PIP * 0.5 + 1.0
-	draw_line(Vector2(first_x, center_y), Vector2(first_x + (COUNT - 1) * SPACING, center_y), LINE_COLOR, 1.0)
+	draw_line(Vector2(first_x, center_y), Vector2(first_x + (count - 1) * SPACING, center_y), LINE_COLOR, 1.0)
 
-	for i in COUNT:
+	for i in count:
 		var center := Vector2(first_x + i * SPACING, center_y).round()
-		var is_last := i == COUNT - 1
+		var is_last := i == count - 1
 		if i < index:
 			# Cleared; the one that just got filled pops
 			var scale_now := 1.0 + (0.5 * sin(pop * PI) if i == pop_index else 0.0)

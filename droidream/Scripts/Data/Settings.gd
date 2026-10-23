@@ -9,30 +9,31 @@ const MAX_STEP := 10 # Volume sliders have 10 steps
 const MUSIC_BUS := "Music"
 const SFX_BUS := "SFX"
 
-# Actions the controls choice can add keys to, with the key each scheme gives them (physical keycodes)
+# Both control families always work: the arrows with Z X C, and WASD with the mouse (left click Confirm, right click Cancel) and E.
+# On top, each action can get one custom key. The key pictures follow the family pressed last (physical keycodes)
 const CONTROL_ACTIONS := ["ui_up", "ui_down", "ui_left", "ui_right", "ui_accept", "ui_cancel", "toggle_turn_order"]
 const DEFAULT_KEYS := {
 	"ui_up": KEY_UP, "ui_down": KEY_DOWN, "ui_left": KEY_LEFT, "ui_right": KEY_RIGHT,
 	"ui_accept": KEY_Z, "ui_cancel": KEY_X, "toggle_turn_order": KEY_C
 }
 const WASD_KEYS := {
-	"ui_up": KEY_W, "ui_down": KEY_S, "ui_left": KEY_A, "ui_right": KEY_D,
-	"ui_accept": KEY_U, "ui_cancel": KEY_I, "toggle_turn_order": KEY_O
+	"ui_up": KEY_W, "ui_down": KEY_S, "ui_left": KEY_A, "ui_right": KEY_D, "toggle_turn_order": KEY_E
 }
-const RESERVED_KEYS := [KEY_ESCAPE, KEY_ENTER, KEY_KP_ENTER] # Pause and the engine's own confirm keys
+const CLICK_ACTION := "click" # Left click: Confirm in timing moments (taming, blocking, lines, Duck Flap...); menus take it through their rows instead
+const RESERVED_KEYS := [KEY_ESCAPE, KEY_ENTER, KEY_KP_ENTER, KEY_SPACE, KEY_T] # Pause, the engine's own confirm keys, Space (a silent Confirm) and T (skip tutorial)
 
 var music := MAX_STEP
 var sfx := MAX_STEP
 var camera_shake := true
 var minigame_countdown := false
 var easier_timing := false # Wider windows for the tame timing icons
-var controls_scheme := "default" # "default", "wasd" or "custom"
-var custom_keys := {} # action -> physical keycode, for the custom scheme
+var custom_keys := {} # action -> physical keycode; only the actions that have a custom key
+var input_family := "arrows" # "arrows", "wasd" or "custom": the family pressed last, which the key pictures show
 const SWITCH_TIME := 2000 # Msec a fullscreen switch may take (the window keeps reporting its old mode meanwhile)
 var switch_until := 0
 var fullscreen := false # Not saved: the game always opens windowed (a browser only allows fullscreen from a key press anyway)
 
-signal controls_changed # The control scheme or the keys changed: key pictures update
+signal controls_changed # The keys or the family in use changed: key pictures update
 
 var original_events := {} # The input map as the project defines it; these always stay bound (the failsafe)
 
@@ -40,6 +41,7 @@ func _ready() -> void:
 	for action in CONTROL_ACTIONS:
 		original_events[action] = InputMap.action_get_events(action).duplicate()
 	get_window().size_changed.connect(_sync_fullscreen) # Leaving fullscreen with Escape or the browser's own button is noticed too
+	get_window().window_input.connect(_track_family) # Before any node takes the event, so menus that eat their input still switch the pictures
 	_ensure_buses()
 	load_settings()
 	apply_audio()
@@ -77,11 +79,14 @@ func load_settings() -> void:
 	camera_shake = bool(file.get_value("gameplay", "camera_shake", true))
 	minigame_countdown = bool(file.get_value("gameplay", "minigame_countdown", false))
 	easier_timing = bool(file.get_value("gameplay", "easier_timing", false))
-	controls_scheme = str(file.get_value("controls", "scheme", "default"))
-	if not controls_scheme in ["default", "wasd", "custom"]:
-		controls_scheme = "default"
+	# Older files saved a scheme and a full custom list that started from the default keys: only real custom keys are kept
+	custom_keys = {}
 	var saved = file.get_value("controls", "custom_keys", {})
-	custom_keys = saved if saved is Dictionary else {}
+	if saved is Dictionary and str(file.get_value("controls", "scheme", "custom")) == "custom":
+		for action in saved:
+			var keycode = saved[action]
+			if action in CONTROL_ACTIONS and keycode is int and keycode != DEFAULT_KEYS[action] and keycode != WASD_KEYS.get(action, 0) and not keycode in RESERVED_KEYS:
+				custom_keys[action] = keycode
 
 func save_settings() -> void:
 	var file := ConfigFile.new()
@@ -90,7 +95,6 @@ func save_settings() -> void:
 	file.set_value("gameplay", "camera_shake", camera_shake)
 	file.set_value("gameplay", "minigame_countdown", minigame_countdown)
 	file.set_value("gameplay", "easier_timing", easier_timing)
-	file.set_value("controls", "scheme", controls_scheme)
 	file.set_value("controls", "custom_keys", custom_keys)
 	file.save(FILE_PATH)
 
@@ -144,71 +148,99 @@ func set_minigame_countdown(value: bool) -> void:
 	changed.emit()
 
 # CONTROLS
-# The key an action uses in the chosen scheme (what the Controls screen shows)
-func key_for(action: String) -> int:
-	match controls_scheme:
-		"wasd":
-			return WASD_KEYS[action]
-		"custom":
-			return custom_keys.get(action, DEFAULT_KEYS[action])
-	return DEFAULT_KEYS[action]
-
 func key_name(keycode: int) -> String:
 	return OS.get_keycode_string(keycode)
 
-func set_scheme(scheme: String) -> void:
-	controls_scheme = scheme
-	if scheme == "custom" and custom_keys.is_empty():
-		for action in CONTROL_ACTIONS:
-			custom_keys[action] = DEFAULT_KEYS[action] # The custom list starts from the default keys
-	apply_controls()
-	save_settings()
-	_refresh_key_pictures()
-	changed.emit()
-
-# Gives an action a custom key; when another action already uses that key the two keys swap. Returns false for reserved keys
+# Gives an action a custom key; when another action already has that custom key the two swap. Returns false for reserved keys
 func set_custom_key(action: String, keycode: int) -> bool:
 	if keycode in RESERVED_KEYS:
 		return false
-	for each in CONTROL_ACTIONS:
-		if not custom_keys.has(each):
-			custom_keys[each] = DEFAULT_KEYS[each]
-	var previous: int = custom_keys[action]
+	var previous: int = custom_keys.get(action, 0)
 	for other in CONTROL_ACTIONS:
-		if other != action and custom_keys[other] == keycode:
-			custom_keys[other] = previous
-	custom_keys[action] = keycode
-	controls_scheme = "custom"
-	apply_controls()
-	save_settings()
-	changed.emit()
+		if other != action and custom_keys.get(other, 0) == keycode:
+			if previous != 0:
+				custom_keys[other] = previous
+			else:
+				custom_keys.erase(other)
+	if keycode == DEFAULT_KEYS[action] or keycode == WASD_KEYS.get(action, 0):
+		custom_keys.erase(action) # Its own fixed key: nothing extra to bind
+	else:
+		custom_keys[action] = keycode
+	_controls_updated()
 	return true
 
-# Back to the default keys only
+# Clears every custom key
 func reset_controls() -> void:
-	controls_scheme = "default"
 	custom_keys.clear()
+	if input_family == "custom":
+		input_family = "arrows"
+	_controls_updated()
+
+func _controls_updated() -> void:
 	apply_controls()
 	save_settings()
+	ControlTextures.clear_custom()
 	_refresh_key_pictures()
 	changed.emit()
 
-# Key pictures everywhere (hints, the controls bar and the minigames' sprites) follow the scheme in use
+# Key pictures everywhere (hints, the controls bar and the minigames' sprites) follow the family in use
 func _refresh_key_pictures() -> void:
 	controls_changed.emit()
 	ControlTextures.swap_in(get_tree().root)
 
-# Rebuilds the input map: the original keys always stay, the chosen scheme's keys are added on top
+# The family of the last key or click: a custom key shows the custom pictures, a click or WASD the WASD ones, the arrows and Z X C the default ones
+func _track_family(event: InputEvent) -> void:
+	var family := ""
+	if event is InputEventKey and event.pressed and not event.echo:
+		var keycode: int = event.physical_keycode
+		if keycode in custom_keys.values():
+			family = "custom"
+		elif keycode in WASD_KEYS.values():
+			family = "wasd"
+		elif keycode in DEFAULT_KEYS.values():
+			family = "arrows"
+	elif event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]:
+		family = "wasd"
+	if family != "" and family != input_family:
+		input_family = family
+		_refresh_key_pictures()
+
+# A Confirm from the keys or a left click (for timing moments, where a click anywhere counts)
+func is_confirm(event: InputEvent) -> bool:
+	return event.is_action_pressed("ui_accept") or event.is_action_pressed(CLICK_ACTION)
+
+func confirm_just_pressed() -> bool:
+	return Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed(CLICK_ACTION)
+
+# Rebuilds the input map: the project's keys and the WASD family, minus any fixed key another action took as its custom key, plus the custom keys
 func apply_controls() -> void:
 	for action in CONTROL_ACTIONS:
+		var taken := []
+		for other in custom_keys:
+			if other != action:
+				taken.append(custom_keys[other])
 		InputMap.action_erase_events(action)
 		for event in original_events[action]:
+			if event is InputEventKey and (event.physical_keycode if event.physical_keycode != 0 else event.keycode) in taken:
+				continue
 			InputMap.action_add_event(action, event)
-		if controls_scheme == "default":
-			continue
-		var extra := key_for(action)
-		if extra == DEFAULT_KEYS[action]:
-			continue
-		var key_event := InputEventKey.new()
-		key_event.physical_keycode = extra
-		InputMap.action_add_event(action, key_event)
+		var extra := []
+		if WASD_KEYS.has(action):
+			extra.append(WASD_KEYS[action])
+		if custom_keys.has(action):
+			extra.append(custom_keys[action])
+		for keycode in extra:
+			if keycode in taken:
+				continue
+			var key_event := InputEventKey.new()
+			key_event.physical_keycode = keycode
+			InputMap.action_add_event(action, key_event)
+		if action == "ui_cancel":
+			var right := InputEventMouseButton.new()
+			right.button_index = MOUSE_BUTTON_RIGHT
+			InputMap.action_add_event(action, right)
+	if not InputMap.has_action(CLICK_ACTION):
+		InputMap.add_action(CLICK_ACTION)
+		var left := InputEventMouseButton.new()
+		left.button_index = MOUSE_BUTTON_LEFT
+		InputMap.action_add_event(CLICK_ACTION, left)

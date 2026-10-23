@@ -21,6 +21,7 @@ const GRACE := 0.08 # A press this close before or after the full zone still cou
 func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process_unhandled_input(true)
+	Utils.ignore_mouse(self) # A click anywhere throws
 	_reset_visuals()
 
 func play():
@@ -50,7 +51,7 @@ func _unhandled_input(event):
 	if not running or resolved:
 		return
 	
-	if event.is_action_pressed("ui_accept"):
+	if Settings.is_confirm(event):
 		_resolve()
 
 func _resolve():

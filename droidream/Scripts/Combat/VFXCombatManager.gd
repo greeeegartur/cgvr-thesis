@@ -28,6 +28,8 @@ class_name VFXCombatManager
 @export var block_flash_color = Color("00d200ff")
 var COLORS : Dictionary
 
+const EDGE_VIGNETTE_SHADER := preload("res://Scenes/VFX/EdgeVignette.gdshader")
+const EDGE_VIGNETTE_ALPHA := 0.32
 const INFO_ABOVE_HEAD := Vector2(-48, -66) # From a character's feet to a text box centered just above its head
 
 func _ready():
@@ -36,11 +38,13 @@ func _ready():
 	vignette.modulate = crit_flash_color
 
 # VFX method package for hits; the multiplier of a tame sequence picks the burst and number tier (below 1: small, 1.25 and up: strong, all perfect: critical)
-func play_damage_vfx(target_visual: Node2D, damage: float, is_critical: bool, is_block = false, multiplier := 1.0, tame_side := false):
+# show_number false plays only the burst (the number follows once the real meter change is known)
+func play_damage_vfx(target_visual: Node2D, damage: float, is_critical: bool, is_block = false, multiplier := 1.0, tame_side := false, show_number := true):
 	var color = crit_flash_color if is_critical else normal_flash_color
 	color = block_flash_color if is_block else color
 	var tier := DamageNumber.Tier.STRONG if multiplier >= TameSequence.MULT_ANY_PERFECT and not is_critical else DamageNumber.Tier.NORMAL
-	spawn_damage_number(target_visual, damage, is_critical, false, tier, tame_side)
+	if show_number:
+		spawn_damage_number(target_visual, damage, is_critical, false, tier, tame_side)
 	var strength := HitBurst.Strength.NORMAL
 	if is_critical:
 		strength = HitBurst.Strength.CRIT
@@ -145,6 +149,27 @@ func play_vignette(color: Color, max_alpha := 0.5, in_time := 0.05, out_time := 
 	tween.tween_property(vignette, "modulate:a", max_alpha, in_time)
 	tween.tween_property(vignette, "modulate:a", 0.0, out_time)
 
+# A soft dark vignette at the screen edges while a block window is open
+var edge_vignette: ColorRect
+var edge_tween: Tween
+func set_edge_vignette(on: bool) -> void:
+	if edge_vignette == null:
+		var layer := CanvasLayer.new()
+		layer.layer = 1 # Over the world, under the UI
+		add_child(layer)
+		edge_vignette = ColorRect.new()
+		edge_vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
+		edge_vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var material := ShaderMaterial.new()
+		material.shader = EDGE_VIGNETTE_SHADER
+		edge_vignette.material = material
+		edge_vignette.modulate.a = 0.0
+		layer.add_child(edge_vignette)
+	if edge_tween:
+		edge_tween.kill()
+	edge_tween = create_tween()
+	edge_tween.tween_property(edge_vignette, "modulate:a", EDGE_VIGNETTE_ALPHA if on else 0.0, 0.1 if on else 0.18)
+
 # Plays speedlines similar to vignette
 func play_speedlines(color: Color, max_alpha := 0.5, in_time := 0.05, out_time := 0.25):
 	speedlines.modulate = color
@@ -177,7 +202,7 @@ func spawn_feedback(target_visual: Node2D, text: String):
 	feedback.play(text)
 
 # Item, ability and reveal texts: smaller and longer than combat feedback so they are easy to read
-func spawn_info(target_visual: Node2D, text: String):
+func spawn_info(target_visual: Node2D, text: String, extra_time := 0.0):
 	if not HitFeedbackScene:
 		return
 	
@@ -185,7 +210,7 @@ func spawn_info(target_visual: Node2D, text: String):
 	feedback_layer.add_child(feedback)
 	feedback.position = ActionFeedback.place(feedback_layer, target_visual.position + Vector2(0, -20), ActionFeedback.FEEDBACK_BOX, 24.0, 14.0)
 	Sfx.play("modifier_indicator", target_visual) # Ability, item and status texts
-	feedback.play_info(text)
+	feedback.play_info(text, feedback.INFO_LIFETIME + extra_time)
 
 # An info text right above a character's head (not moved aside by other texts, only kept on screen)
 func spawn_info_above(target_visual: Node2D, text: String):

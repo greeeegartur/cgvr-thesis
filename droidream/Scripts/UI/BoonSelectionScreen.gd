@@ -3,6 +3,7 @@ class_name BoonSelectionScreen
 
 signal boon_selected
 
+const BOON_ENTER_TIME := ScreenMotion.ENTER_TIME + 0.2 # The gears and cards pop in a little slower than other screens
 const CARD_TICK_LENGTH := 0.085 # Only the first syllable of the blip
 const CARD_TICK_PITCH_STEP := 0.1 # Each card's tick is this much higher than the one before
 const HOP_PIXELS := 3.0 # Height of the selected card's hop
@@ -29,6 +30,7 @@ var selected := 0
 var input_locked := true
 
 func _ready():
+	Utils.ignore_mouse(self) # The cards' text would eat the clicks: the whole card picks it
 	gear_tweens.resize(3)
 	pulse_tweens.resize(3)
 	for gear in gears:
@@ -55,9 +57,9 @@ func show_boons(rolled_boons):
 	for i in range(3):
 		var delay: float = i * ScreenMotion.STAGGER
 		var gear_tween := create_tween().set_parallel(true)
-		gear_tween.tween_property(gears[i], "scale", Vector2.ONE, ScreenMotion.ENTER_TIME).set_delay(delay)\
+		gear_tween.tween_property(gears[i], "scale", Vector2.ONE, BOON_ENTER_TIME).set_delay(delay)\
 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		gear_tween.tween_property(gears[i], "modulate:a", 1.0, ScreenMotion.ENTER_TIME * 0.6).set_delay(delay)
+		gear_tween.tween_property(gears[i], "modulate:a", 1.0, BOON_ENTER_TIME * 0.6).set_delay(delay)
 		
 		containers[i].slot_center_y = gears[i].position.y
 		containers[i].set_boon(boons[i])
@@ -69,16 +71,29 @@ func show_boons(rolled_boons):
 			Sfx.play_ui("text_speech", { "pitch": 1.0 + i * CARD_TICK_PITCH_STEP, "length": CARD_TICK_LENGTH, "volume": -3.0 }) # The same soft tick as the reward count, a little higher with each card
 		)
 		var card_tween := create_tween().set_parallel(true)
-		card_tween.tween_property(containers[i], "scale", Vector2.ONE, ScreenMotion.ENTER_TIME).set_delay(card_delay)\
+		card_tween.tween_property(containers[i], "scale", Vector2.ONE, BOON_ENTER_TIME).set_delay(card_delay)\
 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		card_tween.tween_property(containers[i], "modulate:a", 1.0, ScreenMotion.ENTER_TIME * 0.5).set_delay(card_delay)
+		card_tween.tween_property(containers[i], "modulate:a", 1.0, BOON_ENTER_TIME * 0.5).set_delay(card_delay)
 	
-	await get_tree().create_timer(ScreenMotion.STAGGER * 3.5 + ScreenMotion.ENTER_TIME).timeout # Lets the last card finish popping in before it starts pulsing
+	await get_tree().create_timer(ScreenMotion.STAGGER * 3.5 + BOON_ENTER_TIME).timeout # Lets the last card finish popping in before it starts pulsing
 	input_locked = false
 	_update_selection()
 
 func _unhandled_input(event):
 	if not visible:
+		return
+	if Utils.is_pointer_pick(event): # Hovering a card selects it, a click selects and confirms it
+		for i in range(3):
+			if Utils.mouse_over_control(containers[i]):
+				if i != selected:
+					if not input_locked:
+						Sfx.play_ui("option_move")
+					selected = i
+					_update_selection()
+				if event is InputEventMouseButton:
+					get_viewport().set_input_as_handled()
+					UIList.send_confirm()
+				return
 		return
 	if event.is_action_pressed("ui_down"):
 		if not input_locked:

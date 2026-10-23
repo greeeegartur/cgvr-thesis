@@ -16,6 +16,7 @@ const ZOOM_ACTION := Vector2(1.34, 1.34) # Zoom while the Droid tames or blocks,
 const VICTORY_ZOOM := Vector2(2.4, 2.4)
 const VICTORY_DROID_POSITION := Vector2(140, 215) # Where the Droid appears on screen during the rewards and the boon selection
 const ZOOM_LOWER := 28.0 # Pixels the view moves down per 1.0 of extra zoom
+const WINDOW_PUSH := 1.035 # How far the camera pushes in while a block window is open
 const RESET_TIME := 0.9 # Going back to the normal frame is slow and eased, so the changes between screens feel smooth
 const ACTION_LOWER := 18.0 # Taming and blocking frames sit a little lower: more ground, less empty background
 const GROUP_PADDING := 90.0 # Space kept on each side of the outermost subjects
@@ -156,6 +157,17 @@ func _set_shake(value: Vector2) -> void:
 	shake_offset = value
 
 # For critical hits
+# A slight push in while a block window is open, released when it closes (relative, so it never fights the other zoom changes)
+var window_pushed := false
+func set_window_push(on: bool) -> void:
+	if on == window_pushed or not Settings.camera_shake:
+		window_pushed = on and Settings.camera_shake
+		return
+	window_pushed = on
+	var tween := create_tween()
+	tween.tween_property(self, "zoom", zoom * (WINDOW_PUSH if on else 1.0 / WINDOW_PUSH), 0.1 if on else 0.15)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
 func pop_zoom(amount := 0.18, duration := 0.17):
 	var tween := create_tween()
 	tween.tween_property(self, "zoom", zoom * (1.0 + amount), duration * 0.4)

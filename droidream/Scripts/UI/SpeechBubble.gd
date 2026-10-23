@@ -47,7 +47,7 @@ func _ready():
 	visible = false
 
 func _input(event):
-	if is_typing and event.is_action_pressed("ui_accept"):
+	if is_typing and Settings.is_confirm(event):
 		skip_requested = true
 
 func _process(float):
@@ -189,7 +189,7 @@ func wait_for_confirm():
 	
 	while true:
 		await get_tree().process_frame
-		if not PauseMenu.active and Input.is_action_just_pressed("ui_accept"):
+		if not PauseMenu.active and Settings.confirm_just_pressed():
 			break
 
 # Text fitting methods

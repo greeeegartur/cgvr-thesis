@@ -34,11 +34,27 @@ const SAME_ENCOUNTER_PENALTY := 0.3 # Per copy already picked in this encounter 
 const PREVIOUS_ENCOUNTER_PENALTY := 0.7 # For creatures that appeared in the previous encounter
 const NO_CHIP_PENALTY := 0.78 # For creatures whose type the player has no chips left for: it counts only a little, so the right chip is often missing
 const MIN_WEIGHT := 0.02
+const REPEAT_TRIES := 5 # Rolls before a repeat of the previous encounter is allowed (a stage with only one possible set never hangs)
 
 # Creatures of the last generated encounter (shared by all stages)
 static var last_encounter: Array = []
 
+# Rolls the creatures of an encounter; an encounter with exactly the same creatures as the previous one (in any order) is rolled again, a few times at most
 func generate():
+	var previous := last_encounter.duplicate()
+	previous.sort()
+	var result := _roll()
+	for attempt in REPEAT_TRIES - 1:
+		var sorted := result.duplicate()
+		sorted.sort()
+		if previous.is_empty() or sorted != previous:
+			break
+		result = _roll()
+	last_encounter = result.duplicate()
+	return result
+
+# One roll of an encounter's creatures (the fairness multipliers lower repeats and creatures without chips)
+func _roll() -> Array:
 	var count = Utils.weighted_pick(enemy_count_weights)
 	var result := []
 	
@@ -53,7 +69,6 @@ func generate():
 			weights[enemy_id] = max(MIN_WEIGHT, base * _fairness_multiplier(enemy_id, result))
 		result.append(Utils.weighted_pick(weights))
 	
-	last_encounter = result.duplicate()
 	return result
 
 # Lowers a creature's odds based on this encounter so far, the previous encounter and the player's chips

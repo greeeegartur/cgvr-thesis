@@ -34,7 +34,8 @@ var emote_tween: Tween
 # Position variables
 var home_position : Vector2 # The player's original position
 var attack_position : Vector2 # The position where the player's pattern will connect to the enemy sprite
-@export var move_speed := 400.0 # Pixels per second
+@export var move_time_out := 0.8 # Seconds the Droid takes to walk to its target, whatever the distance
+@export var move_time_back := 0.7 # ...and back home
 
 # HUD variables
 @onready var hp_icon := $PlayerHUD/HPIcon
@@ -103,8 +104,7 @@ func play_shrug() -> void:
 
 # Movement methods for connecting patterns using tweens (same methods just in reverse, identical to EnemyVisual)
 func _move_to_attack_position(target: Vector2):
-	var dist = global_position.distance_to(target)
-	var duration = dist / move_speed # t = d/v
+	var duration := move_time_out
 	
 	anim.play("player_walk")
 	var tween := create_tween()
@@ -114,8 +114,7 @@ func _move_to_attack_position(target: Vector2):
 	await tween.finished
 
 func _move_to_home_position():
-	var dist = global_position.distance_to(home_position)
-	var duration = dist / move_speed # t = d/v
+	var duration := move_time_back
 	
 	anim.play("player_walk")
 	var tween := create_tween()
@@ -124,6 +123,18 @@ func _move_to_home_position():
 		.set_ease(Tween.EASE_IN)
 	await tween.finished
 	anim.play("player_idle")
+
+# A small nudge when a block window opens: a quick squash and a lean toward the attacker, like the start of the block pose
+func play_window_nudge() -> void:
+	if in_ability_animation:
+		return
+	var visual_node: Node2D = $Visual
+	var rest_scale := visual_node.scale
+	var tween := create_tween()
+	tween.tween_property(visual_node, "scale", rest_scale * Vector2(1.06, 0.94), 0.05).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(visual_node, "rotation", deg_to_rad(3.0), 0.05)
+	tween.tween_property(visual_node, "scale", rest_scale, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(visual_node, "rotation", 0.0, 0.12)
 
 # Plays a sound from an animation's method track (its steps), at the Droid
 func sfx(id: String, volume := 0.0, from := 0.0, pitch := 1.0, length := 0.0) -> void:
@@ -146,7 +157,7 @@ func _unhandled_input(event):
 	if not input_enabled:
 		return
 	
-	if event.is_action_pressed("ui_accept"):
+	if Settings.is_confirm(event):
 		action_pressed.emit()
 		# action_pressed emit here
 

@@ -46,7 +46,7 @@ const HINTS := {
 
 # Keys on the controls bar and the input actions that flash them when pressed
 const KEY_ACTIONS := {
-	"Z": ["ui_accept"],
+	"Z": ["ui_accept", "click"],
 	"X": ["ui_cancel"],
 	"C": ["toggle_turn_order"],
 	"ARROWS": ["ui_left", "ui_right", "ui_up", "ui_down"]
@@ -60,8 +60,8 @@ const OUTLINE_SIZE := 6
 const TEXT_DROP := 3 # Space above each text piece so its letters sit on the middle line of the key icons
 const BAR_MARGIN := Vector2(10, 6) # Space between the controls bar and the bottom left corner
 # Key icon sizes (whole numbers so pixels stay crisp): big enough to read at a glance, the arrow cluster is already tall
-const MESSAGE_ICON_SCALE := { "Z": 2, "X": 2, "C": 2, "ARROWS": 1, "SPACE": 2 }
-const BAR_ICON_SCALE := { "Z": 1.7, "X": 1.7, "C": 1.7, "ARROWS": 0.85, "SPACE": 1.7 }
+const MESSAGE_ICON_SCALE := { "Z": 2, "X": 2, "C": 2, "ARROWS": 1, "SPACE": 2, "T": 2 }
+const BAR_ICON_SCALE := { "Z": 1.7, "X": 1.7, "C": 1.7, "ARROWS": 0.85, "SPACE": 1.7, "T": 1.7 }
 const SCREEN_MARGIN := 8.0
 const HUD_KEEP_CLEAR := Rect2(0, 0, 290, 90) # The top-left HUD: text about a subject is pushed below it
 const HUD_KEEP_CLEAR_RIGHT := Rect2(560, 0, 80, 38) # The encounter counter and the bolts in the top right
@@ -70,6 +70,7 @@ const POP_DROP := 10.0 # How far above its place the text starts when it pops in
 const FLOAT_PIXELS := 2.0 # How far the text rises on the beat
 const FADE_TIME := 0.2
 
+static var turn_order_seen := false # Set once a controls bar with the turn order key (C) has shown
 var current_state: HintType
 var message: Control # The instruction line
 var bar: Control # The controls bar
@@ -111,6 +112,9 @@ func show_hint(type: HintType, p_anchor: Node2D = null) -> void:
 		message.modulate.a = 0.0
 		add_child(message)
 	if data.has("bar"):
+		for pair in data["bar"]:
+			if pair[0] == "C":
+				turn_order_seen = true # The tutorial unlocks the turn order once its key has been shown
 		bar = _build_bar(data.bar)
 		bar.modulate.a = 0.0
 		add_child(bar)
@@ -147,8 +151,8 @@ func _place_pinned() -> void:
 	var screen := get_viewport().get_visible_rect().size
 	pinned.position = Vector2(screen.x - pinned_size.x - BAR_MARGIN.x, screen.y - pinned_size.y - BAR_MARGIN.y)
 	for icon in pinned_icons:
-		if icon.key_name == "SPACE":
-			icon.set_pressed(Input.is_physical_key_pressed(KEY_SPACE))
+		if icon.key_name == "T":
+			icon.set_pressed(Input.is_physical_key_pressed(KEY_T))
 
 func _update(delta: float) -> void:
 	_place_pinned()

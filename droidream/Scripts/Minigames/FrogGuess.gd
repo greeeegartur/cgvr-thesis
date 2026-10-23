@@ -26,6 +26,9 @@ const MAX_SCALE := 1.6
 const DAMAGE_PER_MISS := 0.25
 const REVEAL_SCALE := 2.0
 const POSITION_ATTEMPTS := 16
+const ENTITY_RANGE := Vector2(116, 96) # Where frog centers may go
+const POP_TIME := 0.18
+const POP_STAGGER := 0.035 # Nine frogs are all in within about half a second
 
 func _ready():
 	set_duration(8.5)
@@ -61,7 +64,7 @@ func _unhandled_input(event):
 		change_guess(-1)
 	elif event.is_action_pressed("ui_right"):
 		change_guess(1)
-	elif event.is_action_pressed("ui_accept"):
+	elif Settings.is_confirm(event):
 		confirm_guess()
 
 func change_guess(amount: int) -> void:
@@ -103,31 +106,23 @@ func spawn_entities() -> void:
 		var random_color := Color.from_hsv(randf(), randf_range(0.35, 0.9), randf_range(0.75, 1.0))
 		
 		frog.setup(texture, is_real_frog, random_color, random_scale)
-		frog.position = get_random_position_for_entity()
-
-func get_random_position_for_entity() -> Vector2: # Copy pasted from Bat Flash
-	var x = randf_range(-116, 116)
-	var y = randf_range(-96, 96)
-	return Vector2(x, y)
 	
+	# Placed so no frog hides another (counting must be fair), then hidden until the dream starts: they pop in one after another
+	place_apart(entities_node.get_children(), ENTITY_RANGE)
+	for frog in entities_node.get_children():
+		frog.set_meta("target_scale", frog.scale)
+		frog.scale = Vector2.ZERO
 
-func overlaps_existing(candidate_pos: Vector2, candidate_half_size: Vector2) -> bool:
-	for child in entities_node.get_children():
-		var sprite := child.get_node("Sprite2D") as Sprite2D
-		var tex_size := Vector2(48, 48)
-		if sprite.texture:
-			tex_size = sprite.texture.get_size()
-		
-		var other_half = tex_size * child.scale * 0.5
-		var dist = candidate_pos - child.position
-		
-		var min_dist_x = candidate_half_size.x + other_half.x - 8.0
-		var min_dist_y = candidate_half_size.y + other_half.y - 8.0
-		
-		if abs(dist.x) < min_dist_x and abs(dist.y) < min_dist_y:
-			return true
-	
-	return false
+# The frogs pop in as the dream starts, one after another, so counting can begin right away
+func start():
+	super.start()
+	var frogs := entities_node.get_children()
+	frogs.shuffle()
+	for i in frogs.size():
+		var frog: Node2D = frogs[i]
+		var tween := create_tween()
+		tween.tween_property(frog, "scale", frog.get_meta("target_scale"), POP_TIME).set_delay(i * POP_STAGGER)\
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func confirm_guess() -> void:
 	Sfx.play_ui("option_select")
