@@ -124,6 +124,8 @@ func stop_now() -> void:
 	fade_rate = 0.0
 
 func _begin(new_mode: Mode, fade_in: float) -> void:
+	set_paused_dim(false) # A new scene never starts muffled (quitting from the pause menu leaves the pause on)
+	pause_amount = 0.0
 	title_player.stop()
 	game_player.stop()
 	mode = new_mode
@@ -164,6 +166,10 @@ func _process(_delta: float) -> void:
 	var dt := minf((now - last_usec) / 1000000.0, 0.1) # Real time, so the pause (time scale 0) and hit-stops do not freeze the fades
 	last_usec = now
 
+	# The pause muffle is kept up to date even while nothing plays, so it can never stay stuck on
+	pause_amount = move_toward(pause_amount, 1.0 if pause_on else 0.0, dt / PAUSE_TIME)
+	_apply_pause_filter()
+
 	if mode == Mode.NONE:
 		return
 
@@ -182,7 +188,6 @@ func _process(_delta: float) -> void:
 			blend_rate = 0.0
 
 	duck_level = maxf(duck_level - dt / DUCK_RELEASE, 0.0)
-	pause_amount = move_toward(pause_amount, 1.0 if pause_on else 0.0, dt / PAUSE_TIME)
 	_apply()
 
 # Sets the levels: the fade, the ducking and the pause on the player, the blend on the two tracks
@@ -196,6 +201,10 @@ func _apply() -> void:
 		game_streams.set_sync_stream_volume(0, linear_to_db(maxf(1.0 - blend, 0.0001)))
 		game_streams.set_sync_stream_volume(1, linear_to_db(maxf(blend, 0.0001)))
 
+	_apply_pause_filter()
+
+# The low-pass of the pause: open while the game runs, closing down as the pause menu opens
+func _apply_pause_filter() -> void:
 	if lowpass_index != -1:
 		var index := AudioServer.get_bus_index(MUSIC_BUS)
 		AudioServer.set_bus_effect_enabled(index, lowpass_index, pause_amount > 0.001)
