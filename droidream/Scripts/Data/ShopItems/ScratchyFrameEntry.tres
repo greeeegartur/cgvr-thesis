@@ -8,7 +8,7 @@
 script = ExtResource("1_547mf")
 id = "scratchy_frame"
 display_name = "Scratchy Frame"
-description = "When damaged, the creature will be tamed towards the closest intent. This cannot kill or tame the creature."
+description = "When a creature damages you, it will be tamed towards its closest intent. This cannot kill or tame the creature."
 type = 1
 icon = ExtResource("1_fyo3u")
 cost = 6
