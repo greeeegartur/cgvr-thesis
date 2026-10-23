@@ -1,6 +1,6 @@
-name: Web build and itch.io release
+name: Builds and itch.io release
 
-# main  -> exports the Web preset and publishes it to itch.io
+# main  -> exports Web, Windows, Linux and macOS and publishes each to its own itch.io channel (a push replaces that channel's build)
 # PRs to dev/main and manual runs -> build only, so export problems show up before a release
 on:
   push:
@@ -12,17 +12,15 @@ on:
 env:
   GODOT_VERSION: "4.7"
   PROJECT_PATH: droidream
-  EXPORT_PRESET: Web
   ITCH_USER: greeeegartur
   ITCH_GAME: droidream
-  ITCH_CHANNEL: html5
 
 concurrency:
   group: web-release-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  export-web:
+  export:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,16 +40,39 @@ jobs:
         # first import builds the .godot cache (git-ignored); non-zero exit on harmless warnings is tolerated
         run: godot --headless --path "$PROJECT_PATH" --import || true
 
+      - name: Use built-in ad-hoc signing for macOS
+        # the preset signs with Xcode's codesign, which a Linux runner does not have; only this runner's copy changes
+        run: sed -i 's/^codesign\/codesign=3$/codesign\/codesign=1/' "$PROJECT_PATH/export_presets.cfg"
+
       - name: Export Web build
         run: |
           mkdir -p build/web
-          godot --headless --path "$PROJECT_PATH" --export-release "$EXPORT_PRESET" "$GITHUB_WORKSPACE/build/web/index.html"
+          godot --headless --path "$PROJECT_PATH" --export-release "Web" "$GITHUB_WORKSPACE/build/web/index.html"
           test -f build/web/index.html
+
+      - name: Export Windows build
+        run: |
+          mkdir -p build/windows
+          godot --headless --path "$PROJECT_PATH" --export-release "Windows Desktop" "$GITHUB_WORKSPACE/build/windows/Droidream.exe"
+          test -f build/windows/Droidream.exe
+
+      - name: Export Linux build
+        run: |
+          mkdir -p build/linux
+          godot --headless --path "$PROJECT_PATH" --export-release "Linux" "$GITHUB_WORKSPACE/build/linux/Droidream.x86_64"
+          test -f build/linux/Droidream.x86_64
+
+      - name: Export macOS build
+        # a .zip holding Droidream.app (a .dmg can only be made on a Mac)
+        run: |
+          mkdir -p build/mac
+          godot --headless --path "$PROJECT_PATH" --export-release "macOS" "$GITHUB_WORKSPACE/build/mac/Droidream.zip"
+          test -f build/mac/Droidream.zip
 
       - uses: actions/upload-artifact@v4
         with:
-          name: droidream-web
-          path: build/web
+          name: droidream-builds
+          path: build
 
       - name: Publish to itch.io
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -62,4 +83,8 @@ jobs:
           curl -fsSL -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
           unzip -q butler.zip -d butler-bin
           chmod +x butler-bin/butler
-          ./butler-bin/butler push build/web "$ITCH_USER/$ITCH_GAME:$ITCH_CHANNEL" --userversion "$GITHUB_SHA"
+          # channel names tag the platform on itch.io (windows / linux / mac); each push replaces that channel's build
+          ./butler-bin/butler push build/web "$ITCH_USER/$ITCH_GAME:html5" --userversion "$GITHUB_SHA"
+          ./butler-bin/butler push build/windows "$ITCH_USER/$ITCH_GAME:windows" --userversion "$GITHUB_SHA"
+          ./butler-bin/butler push build/linux "$ITCH_USER/$ITCH_GAME:linux" --userversion "$GITHUB_SHA"
+          ./butler-bin/butler push build/mac/Droidream.zip "$ITCH_USER/$ITCH_GAME:mac" --userversion "$GITHUB_SHA"
