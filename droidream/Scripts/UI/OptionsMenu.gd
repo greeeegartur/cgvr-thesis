@@ -143,6 +143,7 @@ func _main_entries() -> Array:
 		{ "text": "Camera shake", "right": _on_off(Settings.camera_shake) },
 		{ "text": "Minigame countdown", "right": _on_off(Settings.minigame_countdown) },
 		{ "text": "Easier timing", "right": _on_off(Settings.easier_timing) },
+		{ "text": "Fullscreen", "right": _on_off(Settings.fullscreen) },
 		{ "text": "Controls" },
 		{ "text": "Back" }
 	]
@@ -255,6 +256,8 @@ func _adjust(direction: int) -> void:
 			Settings.set_minigame_countdown(not Settings.minigame_countdown)
 		4:
 			Settings.set_easier_timing(not Settings.easier_timing)
+		5:
+			Settings.set_fullscreen(not Settings.fullscreen)
 		_:
 			return
 	# Sliders play the move sound at their new level (the SFX slider is heard right away), toggles click like a confirm
@@ -265,11 +268,11 @@ func _on_confirmed(index: int) -> void:
 	match page:
 		Page.MAIN:
 			match index:
-				2, 3, 4:
+				2, 3, 4, 5:
 					_adjust(1)
-				5:
-					_show_controls()
 				6:
+					_show_controls()
+				7:
 					_back()
 		Page.CONTROLS:
 			match index:
@@ -304,7 +307,7 @@ func _back() -> void:
 			close()
 		Page.CONTROLS:
 			_show_main()
-			list.select(5, false)
+			list.select(6, false)
 		Page.CUSTOM:
 			_show_controls()
 			list.select(2, false)
