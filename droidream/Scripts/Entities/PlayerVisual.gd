@@ -45,6 +45,7 @@ var attack_position : Vector2 # The position where the player's pattern will con
 var hp_tween: Tween
 
 func _ready():
+	Utils.ignore_mouse($PlayerHUD) # The HP heart never swallows a click meant for blocking or targeting
 	selection_pulse = SelectionPulse.new(self, $Visual, $Visual/Sprite2D)
 	set_home_position()
 	anim.animation_finished.connect(_on_anim_finished)
@@ -157,9 +158,13 @@ func _unhandled_input(event):
 	if not input_enabled:
 		return
 	
-	if Settings.is_confirm(event):
+	if event.is_action_pressed("ui_accept"):
 		action_pressed.emit()
-		# action_pressed emit here
+
+# A click blocks too; it is read from the input state, so a damage number or bar drawn under the cursor can never swallow it
+func _process(_delta):
+	if input_enabled and not PauseMenu.active and Input.is_action_just_pressed(Settings.CLICK_ACTION):
+		action_pressed.emit()
 
 # Plays the block pose on every block button press, regardless of timing or cooldown
 func play_block_press():

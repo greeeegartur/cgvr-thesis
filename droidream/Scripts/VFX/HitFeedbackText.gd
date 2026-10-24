@@ -4,6 +4,10 @@ extends Node2D
 
 @onready var label: RichTextLabel = $RichTextLabel
 
+# Only decoration: the mouse passes through (a click on the Droid under a number still blocks)
+func _ready():
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
 var float_height := 50
 const lifetime := 0.6
 const INFO_LIFETIME := 1.4
