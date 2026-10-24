@@ -106,6 +106,7 @@ func _extend_layers_down() -> void:
 		fill.position = Vector2(-width / 2.0, height / 2.0)
 		fill.size = Vector2(width, FILL_HEIGHT)
 		fill.use_parent_material = true # The fill gets the same contrast as its layer
+		fill.mouse_filter = Control.MOUSE_FILTER_IGNORE # Scenery: clicks pass through to the game
 		sprite.add_child(fill)
 
 # For layers that are see-through at the bottom (the foreground plants): the last row is stretched down, so the elements that touch the edge keep going

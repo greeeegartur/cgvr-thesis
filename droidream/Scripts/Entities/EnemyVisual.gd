@@ -79,6 +79,7 @@ func on_attack_hit():
 	attack_hit.emit()
 
 func _ready():
+	Utils.ignore_mouse($EnemyAxisBar) # The meter never swallows a click meant for targeting this creature
 	# Making visual visible (for some reason does not render otherwise)
 	top_level = true
 	visible = true

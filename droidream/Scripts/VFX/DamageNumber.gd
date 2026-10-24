@@ -14,6 +14,10 @@ const DRIFT := 30.0
 
 @onready var label : RichTextLabel = $Label
 
+# Only decoration: the mouse passes through (a click on the Droid under a number still blocks)
+func _ready():
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
 # Where a damage number should start so it stays visible and clear of other numbers and feedback texts
 static func placed(layer: Node, at: Vector2) -> Vector2:
 	return ActionFeedback.place(layer, at, BOX, RISE, DRIFT)
