@@ -48,7 +48,7 @@ var support_animation_name: String
 var home_position : Vector2 # The enemy's original position
 var attack_position : Vector2 # The position where the enemy's pattern will connect to the (intended) player sprite
 var attack_offset := Vector2.ZERO # The attack position's offset for the enemy (different for every enemy)
-var move_time := Vector2(0.85, 0.78) # Seconds to reach the Droid (x) and to walk back home (y), set per creature
+var move_time := Vector2(1.05, 0.98) # Seconds to reach the Droid (x) and to walk back home (y), set per creature
 var is_defeated := false # Checks if visual can play any other animations
 
 # Enemy moves to position, attacks, returns back to original position
@@ -257,7 +257,10 @@ func clear_minigame_highlight():
 	
 	# Hides the arrow directly (hide_target_arrow ignores defeated creatures)
 	target_arrow.visible = false
-	target_arrow_anim.play("RESET")
+	if is_defeated:
+		target_arrow_anim.stop() # The arrow's RESET also writes the body's modulate, which would undo the tamed fade
+	else:
+		target_arrow_anim.play("RESET")
 
 # Builds the secondary arrow, the count label and the shared selection effect once
 func _setup_target_markers():

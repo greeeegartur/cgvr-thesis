@@ -34,8 +34,8 @@ var emote_tween: Tween
 # Position variables
 var home_position : Vector2 # The player's original position
 var attack_position : Vector2 # The position where the player's pattern will connect to the enemy sprite
-@export var move_time_out := 0.8 # Seconds the Droid takes to walk to its target, whatever the distance
-@export var move_time_back := 0.7 # ...and back home
+@export var move_time_out := 1.0 # Seconds the Droid takes to walk to its target, whatever the distance
+@export var move_time_back := 0.9 # ...and back home
 
 # HUD variables
 @onready var hp_icon := $PlayerHUD/HPIcon
@@ -116,6 +116,9 @@ func _move_to_attack_position(target: Vector2):
 
 func _move_to_home_position():
 	var duration := move_time_back
+	if global_position.distance_to(home_position) < 1.0: # Already home: no walking on the spot (dream after dream)
+		anim.play("player_idle")
+		return
 	
 	anim.play("player_walk")
 	var tween := create_tween()

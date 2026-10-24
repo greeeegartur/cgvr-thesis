@@ -868,7 +868,8 @@ func _show_shift_number(enemy_visual: EnemyVisual, actual_shift: float, multipli
 
 # Logic for starting enemy's minigame in combat
 # play_explosion is false when the explosion VFX was already played for a group of creatures (consecutive minigames)
-func _start_minigame(enemy: CombatEntity, play_explosion := true):
+# return_home is false when another dream follows right away (Multi-tame, Ball): the Droid stays put and the next dream opens at once
+func _start_minigame(enemy: CombatEntity, play_explosion := true, return_home := true):
 	if not EnemyDatabase.MINIGAME_SCENES.has(enemy.minigame_id):
 		push_error("Missing minigame: " + enemy.minigame_id)
 		return
@@ -932,12 +933,14 @@ func _start_minigame(enemy: CombatEntity, play_explosion := true):
 	
 	if success and enemy.is_tamed():
 		await _resolve_enemy_state(enemy)
-		await player_visual.return_to_home()
+		if return_home:
+			await player_visual.return_to_home()
 		
 		if _check_victory():
 			_end_combat(true)
 	
-	await player_visual.return_to_home()
+	if return_home:
+		await player_visual.return_to_home()
 	
 	#if is_instance_valid(minigame):
 		#minigame.queue_free()
@@ -2257,7 +2260,11 @@ func _resolve_pending_minigames():
 			if enemy_visuals.has(enemy):
 				await enemy_visuals[enemy].play_minigame_highlight()
 		
-		await _start_minigame(enemy, not group_explosion)
+		var next_follows := false # Another dream is still waiting after this one
+		for later in ready.slice(i + 1):
+			if not later.is_killed() and not later.is_tamed() and later.is_minigame_ready():
+				next_follows = true
+		await _start_minigame(enemy, not group_explosion, not next_follows)
 		
 		if enemy_visuals.has(enemy):
 			enemy_visuals[enemy].clear_minigame_highlight()
