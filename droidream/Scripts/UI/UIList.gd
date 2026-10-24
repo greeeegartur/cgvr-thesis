@@ -88,8 +88,7 @@ func select(index: int, animate := true) -> void:
 		selected_index = 0
 		return
 	selected_index = clampi(index, 0, rows.size() - 1)
-	if is_visible_in_tree():
-		active_list = self
+	active_list = self # Even while still hidden: owners often select the first row just before showing a popup
 	_refresh_selection(animate)
 	selected_changed.emit(selected_index)
 
