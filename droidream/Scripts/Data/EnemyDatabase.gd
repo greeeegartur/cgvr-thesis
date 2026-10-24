@@ -35,27 +35,27 @@ var MINIGAME_SCENES = {
 const DATA = {
 	"beetle": {
 		"attack_offset": Vector2(92.3, 3),
-		"move_time": Vector2(0.85, 0.78),
+		"move_time": Vector2(1.05, 0.98),
 		"drop_item_ids": ["beetlejuice", "ball", "soft_branch"]
 	},
 	"bat": {
 		"attack_offset": Vector2(95, 0),
-		"move_time": Vector2(0.80, 0.73),
+		"move_time": Vector2(1.00, 0.93),
 		"drop_item_ids": ["hypno_bone", "soft_branch", "memory_chip"]
 	},
 	"frog": {
 		"attack_offset": Vector2(98.6, 0),
-		"move_time": Vector2(1.00, 0.90),
+		"move_time": Vector2(1.20, 1.10),
 		"drop_item_ids": ["thick_jelly", "ice_cube", "ball"]
 	},
 	"duck": {
 		"attack_offset": Vector2(109.85, 5),
-		"move_time": Vector2(0.75, 0.70),
+		"move_time": Vector2(0.95, 0.90),
 		"drop_item_ids": ["soft_branch", "memory_chip", "ball", "ice_cube"]
 	},
 	"dummy": {
 		"attack_offset": Vector2(0, 0),
-		"move_time": Vector2(0.85, 0.78),
+		"move_time": Vector2(1.05, 0.98),
 		"drop_item_ids": []
 	}
 }

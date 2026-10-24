@@ -43,7 +43,7 @@ const NEXT_SIZE := Vector2(62, 32)
 const NEXT_ARROW_SPACE := 14.0 # The arrow takes the right side, so the text is nudged left to look centered
 const ENDING_WIDTHS := [120.0, 150.0, 190.0, 230.0] # The ending's lines are longer than the shop's
 const CARDS_AFTER_ENTRY := 0.6 # Seconds into Tuh-U's glide when the cards start to appear
-const LINE_TIME := 2.4 # Seconds a line of Tuh-U stays up
+const LINE_TIME := 2.8 # Seconds a line of Tuh-U stays up
 
 var shop_layer: CanvasLayer # Screen-fixed layer above the dimmed world
 var card_row: Control
